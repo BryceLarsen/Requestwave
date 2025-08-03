@@ -141,7 +141,7 @@ backend:
         comment: "Implemented request creation, status updates (pending/accepted/played/rejected), and real-time polling endpoint"
 
   - task: "CSV Song Upload"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "server.py"
     stuck_count: 0
@@ -151,6 +151,9 @@ backend:
       - working: "NA"
         agent: "main"
         comment: "User requested CSV upload functionality - needs to be implemented with proper parsing and bulk insertion"
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented CSV upload with preview/validation endpoints, supports Title/Artist/Genre/Mood/Year/Notes columns, includes duplicate checking and error handling"
 
   - task: "Advanced Song Filtering"
     implemented: true
