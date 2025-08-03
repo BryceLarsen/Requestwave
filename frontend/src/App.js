@@ -294,6 +294,79 @@ const MusicianDashboard = () => {
     }
   };
 
+  // CSV Upload functions
+  const handleCsvFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setCsvFile(file);
+      setCsvPreview(null);
+      setCsvError('');
+    }
+  };
+
+  const handleCsvDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && file.name.toLowerCase().endsWith('.csv')) {
+      setCsvFile(file);
+      setCsvPreview(null);
+      setCsvError('');
+    } else {
+      setCsvError('Please drop a valid CSV file');
+    }
+  };
+
+  const previewCsv = async () => {
+    if (!csvFile) return;
+    
+    setCsvUploading(true);
+    setCsvError('');
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', csvFile);
+      
+      const response = await axios.post(`${API}/songs/csv/preview`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      setCsvPreview(response.data);
+    } catch (error) {
+      setCsvError(error.response?.data?.detail || 'Error previewing CSV file');
+    } finally {
+      setCsvUploading(false);
+    }
+  };
+
+  const uploadCsv = async () => {
+    if (!csvFile) return;
+    
+    setCsvUploading(true);
+    setCsvError('');
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', csvFile);
+      
+      const response = await axios.post(`${API}/songs/csv/upload`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      // Reset form and refresh songs
+      setCsvFile(null);
+      setCsvPreview(null);
+      setShowCsvUpload(false);
+      fetchSongs();
+      
+      alert(`Success! ${response.data.songs_added} songs imported${response.data.errors.length > 0 ? ' with some warnings' : ''}`);
+      
+    } catch (error) {
+      setCsvError(error.response?.data?.detail || 'Error uploading CSV file');
+    } finally {
+      setCsvUploading(false);
+    }
+  };
+
   const audienceUrl = `${window.location.origin}/musician/${musician.slug}`;
 
   if (loading) {
