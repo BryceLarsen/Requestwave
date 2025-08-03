@@ -494,6 +494,99 @@ async def get_filter_options(slug: str):
         "years": sorted([y for y in data.get("years", []) if y], reverse=True)
     }
 
+# CSV Upload endpoints
+@api_router.post("/songs/csv/preview", response_model=CSVPreviewResponse)
+async def preview_csv_upload(
+    file: UploadFile = File(...),
+    musician_id: str = Depends(get_current_musician)
+):
+    """Preview CSV upload without saving to database"""
+    validate_csv_file(file)
+    
+    try:
+        content = await file.read()
+        result = parse_csv_content(content)
+        
+        # Return preview with first 10 rows
+        preview_songs = result['songs'][:10]
+        preview = []
+        
+        for song in preview_songs:
+            preview.append({
+                'title': song['title'],
+                'artist': song['artist'],
+                'genres': song['genres'],
+                'moods': song['moods'],
+                'year': song['year'],
+                'notes': song['notes'],
+                'row_number': song['row_number']
+            })
+        
+        return CSVPreviewResponse(
+            preview=preview,
+            total_rows=len(result['songs']) + len(result['errors']),
+            valid_rows=len(result['songs']),
+            errors=result['errors']
+        )
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+
+@api_router.post("/songs/csv/upload", response_model=CSVUploadResponse)
+async def upload_csv_songs(
+    file: UploadFile = File(...),
+    musician_id: str = Depends(get_current_musician)
+):
+    """Upload and save songs from CSV file"""
+    validate_csv_file(file)
+    
+    try:
+        content = await file.read()
+        result = parse_csv_content(content)
+        
+        songs_added = 0
+        
+        # Insert valid songs into database
+        for song_data in result['songs']:
+            song_dict = {
+                "id": str(uuid.uuid4()),
+                "musician_id": musician_id,
+                "title": song_data['title'],
+                "artist": song_data['artist'],
+                "genres": song_data['genres'],
+                "moods": song_data['moods'],
+                "year": song_data['year'],
+                "notes": song_data['notes'],
+                "created_at": datetime.utcnow()
+            }
+            
+            # Check for duplicates (same title and artist for this musician)
+            existing = await db.songs.find_one({
+                "musician_id": musician_id,
+                "title": {"$regex": f"^{re.escape(song_data['title'])}$", "$options": "i"},
+                "artist": {"$regex": f"^{re.escape(song_data['artist'])}$", "$options": "i"}
+            })
+            
+            if not existing:
+                await db.songs.insert_one(song_dict)
+                songs_added += 1
+            else:
+                result['errors'].append(f"Row {song_data['row_number']}: Duplicate song '{song_data['title']}' by '{song_data['artist']}' already exists")
+        
+        return CSVUploadResponse(
+            success=True,
+            message=f"Successfully imported {songs_added} songs",
+            songs_added=songs_added,
+            errors=result['errors']
+        )
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+
 # Health check
 @api_router.get("/health")
 async def health_check():
