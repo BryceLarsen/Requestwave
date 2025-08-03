@@ -1,4 +1,5 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -6,10 +7,13 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional, Dict, Any
 import uuid
-from datetime import datetime
-
+from datetime import datetime, timedelta
+import bcrypt
+import jwt
+import re
+from pymongo import ASCENDING, DESCENDING
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -19,42 +23,377 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create the main app without a prefix
-app = FastAPI()
+# JWT Configuration
+JWT_SECRET = os.environ.get('JWT_SECRET', 'requestwave-secret-key')
+JWT_ALGORITHM = 'HS256'
+JWT_EXPIRATION_HOURS = 24
 
-# Create a router with the /api prefix
+# Create the main app
+app = FastAPI(title="RequestWave API", description="Live music request platform")
 api_router = APIRouter(prefix="/api")
 
+# Security
+security = HTTPBearer()
 
-# Define Models
-class StatusCheck(BaseModel):
+# Models
+class MusicianRegister(BaseModel):
+    name: str
+    email: str
+    password: str
+
+class MusicianLogin(BaseModel):
+    email: str
+    password: str
+
+class Musician(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    name: str
+    email: str
+    slug: str  # URL-friendly unique identifier
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+class Song(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    musician_id: str
+    title: str
+    artist: str
+    genres: List[str] = []
+    moods: List[str] = []
+    year: Optional[int] = None
+    notes: str = ""
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
-async def root():
-    return {"message": "Hello World"}
+class SongCreate(BaseModel):
+    title: str
+    artist: str
+    genres: List[str] = []
+    moods: List[str] = []
+    year: Optional[int] = None
+    notes: str = ""
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.dict()
-    status_obj = StatusCheck(**status_dict)
-    _ = await db.status_checks.insert_one(status_obj.dict())
-    return status_obj
+class RequestCreate(BaseModel):
+    song_id: str
+    requester_name: str
+    requester_email: str
+    dedication: str = ""
+    tip_amount: float = 0.0
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    status_checks = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**status_check) for status_check in status_checks]
+class Request(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    musician_id: str
+    song_id: str
+    song_title: str
+    song_artist: str
+    requester_name: str
+    requester_email: str
+    dedication: str = ""
+    tip_amount: float = 0.0
+    status: str = "pending"  # pending, accepted, played, rejected
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
-# Include the router in the main app
+class AuthResponse(BaseModel):
+    token: str
+    musician: Musician
+
+class MusicianPublic(BaseModel):
+    id: str
+    name: str
+    slug: str
+
+# Utility functions
+def create_slug(name: str) -> str:
+    """Create URL-friendly slug from musician name"""
+    slug = re.sub(r'[^\w\s-]', '', name.lower())
+    slug = re.sub(r'[-\s]+', '-', slug)
+    return slug.strip('-')
+
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+
+def create_jwt_token(musician_id: str) -> str:
+    expiration = datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS)
+    payload = {
+        'musician_id': musician_id,
+        'exp': expiration
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+async def get_current_musician(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+    """Get current authenticated musician ID from JWT token"""
+    try:
+        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        musician_id = payload.get('musician_id')
+        if not musician_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        # Verify musician exists
+        musician = await db.musicians.find_one({"id": musician_id})
+        if not musician:
+            raise HTTPException(status_code=401, detail="Musician not found")
+        
+        return musician_id
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+# Auth endpoints
+@api_router.post("/auth/register", response_model=AuthResponse)
+async def register_musician(musician_data: MusicianRegister):
+    # Check if email already exists
+    existing = await db.musicians.find_one({"email": musician_data.email})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Create unique slug
+    base_slug = create_slug(musician_data.name)
+    slug = base_slug
+    counter = 1
+    while await db.musicians.find_one({"slug": slug}):
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+    
+    # Create musician
+    hashed_password = hash_password(musician_data.password)
+    musician_dict = {
+        "id": str(uuid.uuid4()),
+        "name": musician_data.name,
+        "email": musician_data.email,
+        "password": hashed_password,
+        "slug": slug,
+        "created_at": datetime.utcnow()
+    }
+    
+    await db.musicians.insert_one(musician_dict)
+    
+    # Create JWT token
+    token = create_jwt_token(musician_dict["id"])
+    
+    # Return response without password
+    musician = Musician(**{k: v for k, v in musician_dict.items() if k != "password"})
+    return AuthResponse(token=token, musician=musician)
+
+@api_router.post("/auth/login", response_model=AuthResponse)
+async def login_musician(login_data: MusicianLogin):
+    # Find musician
+    musician_doc = await db.musicians.find_one({"email": login_data.email})
+    if not musician_doc or not verify_password(login_data.password, musician_doc["password"]):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Create JWT token
+    token = create_jwt_token(musician_doc["id"])
+    
+    # Return response without password
+    musician = Musician(**{k: v for k, v in musician_doc.items() if k != "password"})
+    return AuthResponse(token=token, musician=musician)
+
+# Musician endpoints
+@api_router.get("/musicians/{slug}", response_model=MusicianPublic)
+async def get_musician_by_slug(slug: str):
+    musician = await db.musicians.find_one({"slug": slug})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    return MusicianPublic(
+        id=musician["id"],
+        name=musician["name"],
+        slug=musician["slug"]
+    )
+
+# Song endpoints
+@api_router.get("/songs", response_model=List[Song])
+async def get_my_songs(musician_id: str = Depends(get_current_musician)):
+    songs = await db.songs.find({"musician_id": musician_id}).sort("created_at", DESCENDING).to_list(1000)
+    return [Song(**song) for song in songs]
+
+@api_router.post("/songs", response_model=Song)
+async def create_song(song_data: SongCreate, musician_id: str = Depends(get_current_musician)):
+    song_dict = song_data.dict()
+    song_dict.update({
+        "id": str(uuid.uuid4()),
+        "musician_id": musician_id,
+        "created_at": datetime.utcnow()
+    })
+    
+    await db.songs.insert_one(song_dict)
+    return Song(**song_dict)
+
+@api_router.put("/songs/{song_id}", response_model=Song)
+async def update_song(song_id: str, song_data: SongCreate, musician_id: str = Depends(get_current_musician)):
+    # Verify song belongs to musician
+    song = await db.songs.find_one({"id": song_id, "musician_id": musician_id})
+    if not song:
+        raise HTTPException(status_code=404, detail="Song not found")
+    
+    # Update song
+    update_data = song_data.dict()
+    await db.songs.update_one(
+        {"id": song_id},
+        {"$set": update_data}
+    )
+    
+    # Return updated song
+    updated_song = await db.songs.find_one({"id": song_id})
+    return Song(**updated_song)
+
+@api_router.delete("/songs/{song_id}")
+async def delete_song(song_id: str, musician_id: str = Depends(get_current_musician)):
+    # Verify song belongs to musician
+    result = await db.songs.delete_one({"id": song_id, "musician_id": musician_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Song not found")
+    
+    return {"message": "Song deleted successfully"}
+
+@api_router.get("/musicians/{slug}/songs", response_model=List[Song])
+async def get_musician_songs(
+    slug: str,
+    genre: Optional[str] = None,
+    artist: Optional[str] = None,
+    mood: Optional[str] = None,
+    year: Optional[int] = None
+):
+    """Get songs for a musician with filtering support"""
+    # Get musician
+    musician = await db.musicians.find_one({"slug": slug})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    # Build filter query
+    query = {"musician_id": musician["id"]}
+    
+    # Apply filters with AND logic
+    if genre:
+        query["genres"] = {"$in": [genre]}
+    
+    if artist:
+        query["artist"] = {"$regex": artist, "$options": "i"}  # Case insensitive partial match
+    
+    if mood:
+        query["moods"] = {"$in": [mood]}
+    
+    if year:
+        query["year"] = year
+    
+    # Get filtered songs
+    songs = await db.songs.find(query).sort("title", ASCENDING).to_list(1000)
+    return [Song(**song) for song in songs]
+
+# Request endpoints
+@api_router.post("/requests", response_model=Request)
+async def create_request(request_data: RequestCreate):
+    # Get song details
+    song = await db.songs.find_one({"id": request_data.song_id})
+    if not song:
+        raise HTTPException(status_code=404, detail="Song not found")
+    
+    # Create request
+    request_dict = request_data.dict()
+    request_dict.update({
+        "id": str(uuid.uuid4()),
+        "musician_id": song["musician_id"],
+        "song_title": song["title"],
+        "song_artist": song["artist"],
+        "status": "pending",
+        "created_at": datetime.utcnow()
+    })
+    
+    await db.requests.insert_one(request_dict)
+    return Request(**request_dict)
+
+@api_router.get("/requests/musician/{musician_id}", response_model=List[Request])
+async def get_musician_requests(musician_id: str = Depends(get_current_musician)):
+    """Get all requests for the authenticated musician"""
+    requests = await db.requests.find({"musician_id": musician_id}).sort("created_at", DESCENDING).to_list(1000)
+    return [Request(**request) for request in requests]
+
+@api_router.put("/requests/{request_id}/status")
+async def update_request_status(
+    request_id: str, 
+    status: str, 
+    musician_id: str = Depends(get_current_musician)
+):
+    """Update request status (pending, accepted, played, rejected)"""
+    if status not in ["pending", "accepted", "played", "rejected"]:
+        raise HTTPException(status_code=400, detail="Invalid status")
+    
+    # Verify request belongs to musician
+    result = await db.requests.update_one(
+        {"id": request_id, "musician_id": musician_id},
+        {"$set": {"status": status}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    return {"message": "Request status updated"}
+
+@api_router.get("/requests/updates/{musician_id}")
+async def get_request_updates(musician_id: str):
+    """Polling endpoint for real-time updates (can be upgraded to WebSocket later)"""
+    requests = await db.requests.find({"musician_id": musician_id}).sort("created_at", DESCENDING).limit(50).to_list(50)
+    return {
+        "requests": [Request(**request) for request in requests],
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+# Get available filter options for a musician
+@api_router.get("/musicians/{slug}/filters")
+async def get_filter_options(slug: str):
+    """Get available filter options for a musician's songs"""
+    # Get musician
+    musician = await db.musicians.find_one({"slug": slug})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    # Aggregate unique values
+    pipeline = [
+        {"$match": {"musician_id": musician["id"]}},
+        {"$group": {
+            "_id": None,
+            "genres": {"$addToSet": "$genres"},
+            "artists": {"$addToSet": "$artist"},
+            "moods": {"$addToSet": "$moods"},
+            "years": {"$addToSet": "$year"}
+        }}
+    ]
+    
+    result = await db.songs.aggregate(pipeline).to_list(1)
+    if not result:
+        return {"genres": [], "artists": [], "moods": [], "years": []}
+    
+    data = result[0]
+    
+    # Flatten arrays and remove nulls
+    genres = []
+    for genre_list in data.get("genres", []):
+        if genre_list:
+            genres.extend(genre_list)
+    
+    moods = []
+    for mood_list in data.get("moods", []):
+        if mood_list:
+            moods.extend(mood_list)
+    
+    return {
+        "genres": sorted(list(set(genres))),
+        "artists": sorted([a for a in data.get("artists", []) if a]),
+        "moods": sorted(list(set(moods))),
+        "years": sorted([y for y in data.get("years", []) if y], reverse=True)
+    }
+
+# Health check
+@api_router.get("/health")
+async def health_check():
+    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+
+# Include the router
 app.include_router(api_router)
 
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -63,11 +402,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+# Logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")

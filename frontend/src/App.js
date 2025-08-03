@@ -1,54 +1,827 @@
-import { useEffect } from "react";
-import "./App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams, Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const Home = () => {
-  const helloWorldApi = async () => {
+// Auth Context
+const AuthContext = createContext();
+
+const AuthProvider = ({ children }) => {
+  const [musician, setMusician] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token'));
+
+  useEffect(() => {
+    const storedMusician = localStorage.getItem('musician');
+    if (storedMusician && token) {
+      setMusician(JSON.parse(storedMusician));
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+  }, [token]);
+
+  const login = (authData) => {
+    setMusician(authData.musician);
+    setToken(authData.token);
+    localStorage.setItem('token', authData.token);
+    localStorage.setItem('musician', JSON.stringify(authData.musician));
+    axios.defaults.headers.common['Authorization'] = `Bearer ${authData.token}`;
+  };
+
+  const logout = () => {
+    setMusician(null);
+    setToken(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('musician');
+    delete axios.defaults.headers.common['Authorization'];
+  };
+
+  return (
+    <AuthContext.Provider value={{ musician, token, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  return context;
+};
+
+// Realtime Service (structured for easy WebSocket upgrade)
+class RealtimeService {
+  constructor(musicianId, onUpdate) {
+    this.musicianId = musicianId;
+    this.onUpdate = onUpdate;
+    this.polling = false;
+    this.interval = null;
+  }
+
+  startPolling() {
+    if (this.polling) return;
+    this.polling = true;
+    
+    this.fetchUpdates();
+    this.interval = setInterval(() => {
+      this.fetchUpdates();
+    }, 3000); // Poll every 3 seconds
+  }
+
+  stopPolling() {
+    this.polling = false;
+    if (this.interval) {
+      clearInterval(this.interval);
+      this.interval = null;
+    }
+  }
+
+  async fetchUpdates() {
     try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
+      const response = await axios.get(`${API}/requests/updates/${this.musicianId}`);
+      this.onUpdate(response.data);
+    } catch (error) {
+      console.error('Error fetching updates:', error);
+    }
+  }
+
+  // Future WebSocket method (placeholder)
+  connectWebSocket() {
+    // TODO: Implement WebSocket connection
+    // const ws = new WebSocket(`ws://localhost:8001/ws/musician/${this.musicianId}`);
+    // ws.onmessage = (event) => this.onUpdate(JSON.parse(event.data));
+  }
+}
+
+// Components
+const AuthForm = ({ mode, onSwitch }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const endpoint = mode === 'login' ? 'auth/login' : 'auth/register';
+      const payload = mode === 'login' 
+        ? { email: formData.email, password: formData.password }
+        : formData;
+
+      const response = await axios.post(`${API}/${endpoint}`, payload);
+      login(response.data);
+      navigate('/dashboard');
+    } catch (error) {
+      setError(error.response?.data?.detail || 'Authentication failed');
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center px-4">
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-white mb-2">RequestWave</h1>
+          <p className="text-purple-200">Connect with your audience through music</p>
+        </div>
+
+        <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-xl">
+          <h2 className="text-2xl font-bold text-white text-center mb-6">
+            {mode === 'login' ? 'Welcome Back' : 'Join RequestWave'}
+          </h2>
+
+          {error && (
+            <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {mode === 'register' && (
+              <input
+                type="text"
+                placeholder="Your Stage Name"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                required
+              />
+            )}
+            
+            <input
+              type="email"
+              placeholder="Email Address"
+              value={formData.email}
+              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              required
+            />
+            
+            <input
+              type="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={(e) => setFormData({...formData, password: e.target.value})}
+              className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              required
+            />
+            
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 disabled:opacity-50"
+            >
+              {loading ? 'Please wait...' : (mode === 'login' ? 'Sign In' : 'Create Account')}
+            </button>
+          </form>
+
+          <div className="text-center mt-6">
+            <button
+              onClick={() => onSwitch(mode === 'login' ? 'register' : 'login')}
+              className="text-purple-300 hover:text-white transition duration-300"
+            >
+              {mode === 'login' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
-function App() {
+const MusicianDashboard = () => {
+  const { musician, logout } = useAuth();
+  const [activeTab, setActiveTab] = useState('songs');
+  const [songs, setSongs] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [realtimeService, setRealtimeService] = useState(null);
+
+  // Song form state
+  const [songForm, setSongForm] = useState({
+    title: '',
+    artist: '',
+    genres: [],
+    moods: [],
+    year: '',
+    notes: ''
+  });
+
+  useEffect(() => {
+    fetchSongs();
+    fetchRequests();
+    
+    // Setup real-time updates
+    const service = new RealtimeService(musician.id, (data) => {
+      setRequests(data.requests);
+    });
+    setRealtimeService(service);
+    service.startPolling();
+
+    return () => {
+      if (service) service.stopPolling();
+    };
+  }, [musician.id]);
+
+  const fetchSongs = async () => {
+    try {
+      const response = await axios.get(`${API}/songs`);
+      setSongs(response.data);
+    } catch (error) {
+      console.error('Error fetching songs:', error);
+    }
+  };
+
+  const fetchRequests = async () => {
+    try {
+      const response = await axios.get(`${API}/requests/musician/${musician.id}`);
+      setRequests(response.data);
+    } catch (error) {
+      console.error('Error fetching requests:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddSong = async (e) => {
+    e.preventDefault();
+    try {
+      const songData = {
+        ...songForm,
+        genres: songForm.genres.filter(g => g.trim()),
+        moods: songForm.moods.filter(m => m.trim()),
+        year: songForm.year ? parseInt(songForm.year) : null
+      };
+      
+      await axios.post(`${API}/songs`, songData);
+      setSongForm({
+        title: '',
+        artist: '',
+        genres: [],
+        moods: [],
+        year: '',
+        notes: ''
+      });
+      fetchSongs();
+    } catch (error) {
+      console.error('Error adding song:', error);
+    }
+  };
+
+  const updateRequestStatus = async (requestId, status) => {
+    try {
+      await axios.put(`${API}/requests/${requestId}/status?status=${status}`);
+      fetchRequests();
+    } catch (error) {
+      console.error('Error updating request:', error);
+    }
+  };
+
+  const audienceUrl = `${window.location.origin}/musician/${musician.slug}`;
+
+  if (loading) {
+    return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Loading...</div>;
+  }
+
   return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Header */}
+      <header className="bg-gray-800 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <h1 className="text-2xl font-bold text-purple-400">RequestWave</h1>
+            <div className="flex items-center space-x-4">
+              <span className="text-gray-300">Welcome, {musician.name}</span>
+              <button
+                onClick={logout}
+                className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition duration-300"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Audience Link */}
+        <div className="bg-purple-800/50 rounded-xl p-6 mb-8">
+          <h2 className="text-xl font-bold mb-2">Your Audience Link</h2>
+          <p className="text-purple-200 mb-4">Share this link with your audience for song requests:</p>
+          <div className="flex items-center space-x-4">
+            <input
+              type="text"
+              value={audienceUrl}
+              readOnly
+              className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white"
+            />
+            <button
+              onClick={() => navigator.clipboard.writeText(audienceUrl)}
+              className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition duration-300"
+            >
+              Copy
+            </button>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex space-x-1 bg-gray-800 rounded-lg p-1 mb-8">
+          {['songs', 'requests'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 py-2 px-4 rounded-lg font-medium transition duration-300 ${
+                activeTab === tab
+                  ? 'bg-purple-600 text-white'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'requests' && requests.filter(r => r.status === 'pending').length > 0 && (
+                <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-xs">
+                  {requests.filter(r => r.status === 'pending').length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Songs Tab */}
+        {activeTab === 'songs' && (
+          <div>
+            {/* Add Song Form */}
+            <div className="bg-gray-800 rounded-xl p-6 mb-8">
+              <h2 className="text-xl font-bold mb-4">Add New Song</h2>
+              <form onSubmit={handleAddSong} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Song Title"
+                  value={songForm.title}
+                  onChange={(e) => setSongForm({...songForm, title: e.target.value})}
+                  className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Artist"
+                  value={songForm.artist}
+                  onChange={(e) => setSongForm({...songForm, artist: e.target.value})}
+                  className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Genres (comma separated)"
+                  value={songForm.genres.join(', ')}
+                  onChange={(e) => setSongForm({...songForm, genres: e.target.value.split(',').map(g => g.trim())})}
+                  className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                />
+                <input
+                  type="text"
+                  placeholder="Moods (comma separated)"
+                  value={songForm.moods.join(', ')}
+                  onChange={(e) => setSongForm({...songForm, moods: e.target.value.split(',').map(m => m.trim())})}
+                  className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                />
+                <input
+                  type="number"
+                  placeholder="Year"
+                  value={songForm.year}
+                  onChange={(e) => setSongForm({...songForm, year: e.target.value})}
+                  className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                />
+                <input
+                  type="text"
+                  placeholder="Notes (optional)"
+                  value={songForm.notes}
+                  onChange={(e) => setSongForm({...songForm, notes: e.target.value})}
+                  className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                />
+                <button
+                  type="submit"
+                  className="md:col-span-2 bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300"
+                >
+                  Add Song
+                </button>
+              </form>
+            </div>
+
+            {/* Songs List */}
+            <div className="bg-gray-800 rounded-xl p-6">
+              <h2 className="text-xl font-bold mb-4">Your Songs ({songs.length})</h2>
+              <div className="space-y-4">
+                {songs.map((song) => (
+                  <div key={song.id} className="bg-gray-700 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-bold text-lg">{song.title}</h3>
+                        <p className="text-gray-300">by {song.artist}</p>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {song.genres.map((genre, idx) => (
+                            <span key={idx} className="bg-blue-600 text-xs px-2 py-1 rounded">{genre}</span>
+                          ))}
+                          {song.moods.map((mood, idx) => (
+                            <span key={idx} className="bg-green-600 text-xs px-2 py-1 rounded">{mood}</span>
+                          ))}
+                          {song.year && <span className="bg-gray-600 text-xs px-2 py-1 rounded">{song.year}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {songs.length === 0 && (
+                  <p className="text-gray-400 text-center py-8">No songs added yet. Add your first song above!</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Requests Tab */}
+        {activeTab === 'requests' && (
+          <div className="bg-gray-800 rounded-xl p-6">
+            <h2 className="text-xl font-bold mb-4">Song Requests ({requests.length})</h2>
+            <div className="space-y-4">
+              {requests.map((request) => (
+                <div key={request.id} className="bg-gray-700 rounded-lg p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="font-bold text-lg">{request.song_title}</h3>
+                      <p className="text-gray-300">by {request.song_artist}</p>
+                      <p className="text-purple-300 mt-2">Requested by: {request.requester_name}</p>
+                      {request.dedication && (
+                        <p className="text-gray-400 italic mt-1">"{request.dedication}"</p>
+                      )}
+                      {request.tip_amount > 0 && (
+                        <p className="text-green-400 font-bold mt-1">Tip: ${request.tip_amount}</p>
+                      )}
+                    </div>
+                    <div className="flex flex-col space-y-2 ml-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                        request.status === 'pending' ? 'bg-yellow-600' :
+                        request.status === 'accepted' ? 'bg-blue-600' :
+                        request.status === 'played' ? 'bg-green-600' :
+                        'bg-red-600'
+                      }`}>
+                        {request.status.toUpperCase()}
+                      </span>
+                      {request.status === 'pending' && (
+                        <div className="flex space-x-1">
+                          <button
+                            onClick={() => updateRequestStatus(request.id, 'accepted')}
+                            className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            onClick={() => updateRequestStatus(request.id, 'rejected')}
+                            className="bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
+                      {request.status === 'accepted' && (
+                        <button
+                          onClick={() => updateRequestStatus(request.id, 'played')}
+                          className="bg-purple-600 hover:bg-purple-700 text-xs px-2 py-1 rounded"
+                        >
+                          Mark Played
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {requests.length === 0 && (
+                <p className="text-gray-400 text-center py-8">No requests yet. Share your audience link to start receiving requests!</p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
-}
+};
 
-export default App;
+const AudienceInterface = () => {
+  const { slug } = useParams();
+  const [musician, setMusician] = useState(null);
+  const [songs, setSongs] = useState([]);
+  const [filteredSongs, setFilteredSongs] = useState([]);
+  const [filters, setFilters] = useState({});
+  const [selectedFilters, setSelectedFilters] = useState({
+    genre: '',
+    artist: '',
+    mood: '',
+    year: ''
+  });
+  const [requestForm, setRequestForm] = useState({
+    requester_name: '',
+    requester_email: '',
+    dedication: '',
+    tip_amount: 0
+  });
+  const [selectedSong, setSelectedSong] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    fetchMusician();
+    fetchSongs();
+    fetchFilters();
+  }, [slug]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [songs, selectedFilters]);
+
+  const fetchMusician = async () => {
+    try {
+      const response = await axios.get(`${API}/musicians/${slug}`);
+      setMusician(response.data);
+    } catch (error) {
+      console.error('Error fetching musician:', error);
+    }
+  };
+
+  const fetchSongs = async () => {
+    try {
+      const response = await axios.get(`${API}/musicians/${slug}/songs`);
+      setSongs(response.data);
+    } catch (error) {
+      console.error('Error fetching songs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchFilters = async () => {
+    try {
+      const response = await axios.get(`${API}/musicians/${slug}/filters`);
+      setFilters(response.data);
+    } catch (error) {
+      console.error('Error fetching filters:', error);
+    }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...songs];
+
+    if (selectedFilters.genre) {
+      filtered = filtered.filter(song => song.genres.includes(selectedFilters.genre));
+    }
+    if (selectedFilters.artist) {
+      filtered = filtered.filter(song => 
+        song.artist.toLowerCase().includes(selectedFilters.artist.toLowerCase())
+      );
+    }
+    if (selectedFilters.mood) {
+      filtered = filtered.filter(song => song.moods.includes(selectedFilters.mood));
+    }
+    if (selectedFilters.year) {
+      filtered = filtered.filter(song => song.year === parseInt(selectedFilters.year));
+    }
+
+    setFilteredSongs(filtered);
+  };
+
+  const handleRequest = async (song) => {
+    if (!requestForm.requester_name || !requestForm.requester_email) {
+      alert('Please enter your name and email');
+      return;
+    }
+
+    try {
+      await axios.post(`${API}/requests`, {
+        song_id: song.id,
+        ...requestForm,
+        tip_amount: parseFloat(requestForm.tip_amount) || 0
+      });
+      
+      setSuccess('Request sent successfully!');
+      setSelectedSong(null);
+      setRequestForm({
+        requester_name: '',
+        requester_email: '',
+        dedication: '',
+        tip_amount: 0
+      });
+      
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error) {
+      console.error('Error submitting request:', error);
+    }
+  };
+
+  if (loading) {
+    return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Loading...</div>;
+  }
+
+  if (!musician) {
+    return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Musician not found</div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Header */}
+      <header className="bg-gray-800 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-purple-400 mb-2">{musician.name}</h1>
+            <p className="text-gray-300">Request your favorite songs!</p>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {success && (
+          <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 mb-6 text-green-200">
+            {success}
+          </div>
+        )}
+
+        {/* Filters */}
+        <div className="bg-gray-800 rounded-xl p-6 mb-8">
+          <h2 className="text-xl font-bold mb-4">Filter Songs</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <select
+              value={selectedFilters.genre}
+              onChange={(e) => setSelectedFilters({...selectedFilters, genre: e.target.value})}
+              className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+            >
+              <option value="">All Genres</option>
+              {filters.genres?.map((genre) => (
+                <option key={genre} value={genre}>{genre}</option>
+              ))}
+            </select>
+            
+            <input
+              type="text"
+              placeholder="Artist name..."
+              value={selectedFilters.artist}
+              onChange={(e) => setSelectedFilters({...selectedFilters, artist: e.target.value})}
+              className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+            />
+            
+            <select
+              value={selectedFilters.mood}
+              onChange={(e) => setSelectedFilters({...selectedFilters, mood: e.target.value})}
+              className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+            >
+              <option value="">All Moods</option>
+              {filters.moods?.map((mood) => (
+                <option key={mood} value={mood}>{mood}</option>
+              ))}
+            </select>
+            
+            <select
+              value={selectedFilters.year}
+              onChange={(e) => setSelectedFilters({...selectedFilters, year: e.target.value})}
+              className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+            >
+              <option value="">All Years</option>
+              {filters.years?.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Songs Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredSongs.map((song) => (
+            <div key={song.id} className="bg-gray-800 rounded-xl p-6 hover:bg-gray-700 transition duration-300">
+              <h3 className="font-bold text-xl mb-2">{song.title}</h3>
+              <p className="text-gray-300 mb-3">by {song.artist}</p>
+              
+              <div className="flex flex-wrap gap-2 mb-4">
+                {song.genres.map((genre, idx) => (
+                  <span key={idx} className="bg-blue-600 text-xs px-2 py-1 rounded">{genre}</span>
+                ))}
+                {song.moods.map((mood, idx) => (
+                  <span key={idx} className="bg-green-600 text-xs px-2 py-1 rounded">{mood}</span>
+                ))}
+                {song.year && <span className="bg-gray-600 text-xs px-2 py-1 rounded">{song.year}</span>}
+              </div>
+              
+              <button
+                onClick={() => setSelectedSong(song)}
+                className="w-full bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300"
+              >
+                Request This Song
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {filteredSongs.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-400 text-xl">No songs match your filters</p>
+          </div>
+        )}
+
+        {/* Request Modal */}
+        {selectedSong && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+              <h2 className="text-xl font-bold mb-4">Request: {selectedSong.title}</h2>
+              <p className="text-gray-300 mb-6">by {selectedSong.artist}</p>
+              
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Your Name"
+                  value={requestForm.requester_name}
+                  onChange={(e) => setRequestForm({...requestForm, requester_name: e.target.value})}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                  required
+                />
+                
+                <input
+                  type="email"
+                  placeholder="Your Email"
+                  value={requestForm.requester_email}
+                  onChange={(e) => setRequestForm({...requestForm, requester_email: e.target.value})}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                  required
+                />
+                
+                <textarea
+                  placeholder="Dedication message (optional)"
+                  value={requestForm.dedication}
+                  onChange={(e) => setRequestForm({...requestForm, dedication: e.target.value})}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                  rows="3"
+                />
+                
+                <input
+                  type="number"
+                  placeholder="Tip Amount ($)"
+                  value={requestForm.tip_amount}
+                  onChange={(e) => setRequestForm({...requestForm, tip_amount: e.target.value})}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              
+              <div className="flex space-x-4 mt-6">
+                <button
+                  onClick={() => setSelectedSong(null)}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 py-2 rounded-lg transition duration-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleRequest(selectedSong)}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300"
+                >
+                  Send Request
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const LandingPage = () => {
+  const [authMode, setAuthMode] = useState('login');
+
+  return <AuthForm mode={authMode} onSwitch={setAuthMode} />;
+};
+
+const App = () => {
+  const { musician } = useAuth();
+
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={musician ? <Navigate to="/dashboard" /> : <LandingPage />} />
+        <Route path="/dashboard" element={musician ? <MusicianDashboard /> : <Navigate to="/" />} />
+        <Route path="/musician/:slug" element={<AudienceInterface />} />
+      </Routes>
+    </Router>
+  );
+};
+
+const AppWithAuth = () => (
+  <AuthProvider>
+    <App />
+  </AuthProvider>
+);
+
+export default AppWithAuth;
