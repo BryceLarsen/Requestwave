@@ -102,6 +102,18 @@ class MusicianPublic(BaseModel):
     name: str
     slug: str
 
+class CSVUploadResponse(BaseModel):
+    success: bool
+    message: str
+    songs_added: int
+    errors: List[str] = []
+
+class CSVPreviewResponse(BaseModel):
+    preview: List[Dict[str, Any]]
+    total_rows: int
+    valid_rows: int
+    errors: List[str] = []
+
 # Utility functions
 def create_slug(name: str) -> str:
     """Create URL-friendly slug from musician name"""
