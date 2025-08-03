@@ -250,3 +250,5 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "Initial RequestWave core functionality implemented. Need to add CSV upload feature requested by user, then test all core functionality including auth, song management, real-time requests, and filtering."
+  - agent: "main"
+    message: "CSV upload functionality fully implemented! Backend has preview and upload endpoints with validation, frontend has drag-drop interface with preview table. Ready to test all features including the new CSV upload capability."
