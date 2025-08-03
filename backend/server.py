@@ -154,6 +154,101 @@ async def get_current_musician(credentials: HTTPAuthorizationCredentials = Depen
     except jwt.JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+def parse_csv_content(content: bytes) -> List[Dict[str, Any]]:
+    """Parse CSV content and return list of song dictionaries"""
+    try:
+        content_str = content.decode('utf-8')
+        reader = csv.DictReader(io.StringIO(content_str))
+        
+        songs = []
+        errors = []
+        
+        # Expected columns (case insensitive)
+        expected_cols = {'title', 'artist', 'genre', 'mood', 'year', 'notes'}
+        
+        # Get actual column names (case insensitive mapping)
+        if not reader.fieldnames:
+            raise ValueError("CSV file appears to be empty or invalid")
+        
+        col_mapping = {}
+        for field in reader.fieldnames:
+            field_lower = field.lower().strip()
+            if field_lower in expected_cols:
+                col_mapping[field] = field_lower
+        
+        # Check if we have required columns
+        if 'title' not in col_mapping.values() or 'artist' not in col_mapping.values():
+            raise ValueError("CSV must contain 'Title' and 'Artist' columns")
+        
+        for row_num, row in enumerate(reader, start=2):  # start=2 because row 1 is header
+            try:
+                # Clean and map the row data
+                song_data = {}
+                for original_col, mapped_col in col_mapping.items():
+                    value = row.get(original_col, '').strip()
+                    song_data[mapped_col] = value
+                
+                # Process required fields
+                if not song_data.get('title'):
+                    errors.append(f"Row {row_num}: Title is required")
+                    continue
+                
+                if not song_data.get('artist'):
+                    errors.append(f"Row {row_num}: Artist is required")
+                    continue
+                
+                # Process genres and moods (comma-separated)
+                genres = []
+                if song_data.get('genre'):
+                    genres = [g.strip() for g in song_data['genre'].split(',') if g.strip()]
+                
+                moods = []
+                if song_data.get('mood'):
+                    moods = [m.strip() for m in song_data['mood'].split(',') if m.strip()]
+                
+                # Process year
+                year = None
+                if song_data.get('year'):
+                    try:
+                        year = int(song_data['year'])
+                        if year < 1900 or year > datetime.now().year + 1:
+                            errors.append(f"Row {row_num}: Year must be between 1900 and {datetime.now().year + 1}")
+                            continue
+                    except ValueError:
+                        errors.append(f"Row {row_num}: Year must be a valid number")
+                        continue
+                
+                # Create song object
+                song = {
+                    'title': song_data['title'],
+                    'artist': song_data['artist'],
+                    'genres': genres,
+                    'moods': moods,
+                    'year': year,
+                    'notes': song_data.get('notes', ''),
+                    'row_number': row_num
+                }
+                
+                songs.append(song)
+                
+            except Exception as e:
+                errors.append(f"Row {row_num}: Error processing row - {str(e)}")
+        
+        return {'songs': songs, 'errors': errors}
+        
+    except UnicodeDecodeError:
+        raise ValueError("File encoding not supported. Please use UTF-8 encoded CSV file.")
+    except Exception as e:
+        raise ValueError(f"Error parsing CSV: {str(e)}")
+
+def validate_csv_file(file: UploadFile) -> None:
+    """Validate uploaded CSV file"""
+    if not file.filename.lower().endswith('.csv'):
+        raise HTTPException(status_code=400, detail="File must be a CSV file")
+    
+    if file.size > 5 * 1024 * 1024:  # 5MB limit
+        raise HTTPException(status_code=400, detail="File size must be less than 5MB")
+
 # Auth endpoints
 @api_router.post("/auth/register", response_model=AuthResponse)
 async def register_musician(musician_data: MusicianRegister):
