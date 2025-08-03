@@ -1,0 +1,551 @@
+#!/usr/bin/env python3
+"""
+Comprehensive Backend API Tests for RequestWave
+Tests authentication, song management, requests, CSV upload, and filtering
+"""
+
+import requests
+import json
+import os
+import time
+from typing import Dict, Any, Optional
+
+# Configuration
+BASE_URL = "https://50f49a8f-eef5-4681-b7d7-3b871edd2590.preview.emergentagent.com/api"
+TEST_MUSICIAN = {
+    "name": "Jazz Virtuoso",
+    "email": "jazz.virtuoso@requestwave.com",
+    "password": "SecurePassword123!"
+}
+
+class RequestWaveAPITester:
+    def __init__(self):
+        self.base_url = BASE_URL
+        self.auth_token = None
+        self.musician_id = None
+        self.musician_slug = None
+        self.test_song_id = None
+        self.test_request_id = None
+        self.results = {
+            "passed": 0,
+            "failed": 0,
+            "errors": []
+        }
+
+    def log_result(self, test_name: str, success: bool, message: str = ""):
+        """Log test result"""
+        status = "✅ PASS" if success else "❌ FAIL"
+        print(f"{status}: {test_name}")
+        if message:
+            print(f"   {message}")
+        
+        if success:
+            self.results["passed"] += 1
+        else:
+            self.results["failed"] += 1
+            self.results["errors"].append(f"{test_name}: {message}")
+
+    def make_request(self, method: str, endpoint: str, data: Any = None, files: Any = None, headers: Dict = None) -> requests.Response:
+        """Make HTTP request with proper headers"""
+        url = f"{self.base_url}{endpoint}"
+        
+        # Default headers
+        request_headers = {"Content-Type": "application/json"}
+        if self.auth_token:
+            request_headers["Authorization"] = f"Bearer {self.auth_token}"
+        
+        # Override with custom headers
+        if headers:
+            request_headers.update(headers)
+        
+        # Remove Content-Type for file uploads
+        if files:
+            request_headers.pop("Content-Type", None)
+        
+        try:
+            if method.upper() == "GET":
+                response = requests.get(url, headers=request_headers, params=data)
+            elif method.upper() == "POST":
+                if files:
+                    response = requests.post(url, headers={k: v for k, v in request_headers.items() if k != "Content-Type"}, files=files, data=data)
+                else:
+                    response = requests.post(url, headers=request_headers, json=data)
+            elif method.upper() == "PUT":
+                response = requests.put(url, headers=request_headers, json=data)
+            elif method.upper() == "DELETE":
+                response = requests.delete(url, headers=request_headers)
+            else:
+                raise ValueError(f"Unsupported method: {method}")
+            
+            return response
+        except Exception as e:
+            print(f"Request failed: {e}")
+            raise
+
+    def test_health_check(self):
+        """Test health check endpoint"""
+        try:
+            response = self.make_request("GET", "/health")
+            if response.status_code == 200:
+                data = response.json()
+                if "status" in data and data["status"] == "healthy":
+                    self.log_result("Health Check", True, "API is healthy")
+                else:
+                    self.log_result("Health Check", False, f"Unexpected response: {data}")
+            else:
+                self.log_result("Health Check", False, f"Status code: {response.status_code}")
+        except Exception as e:
+            self.log_result("Health Check", False, f"Exception: {str(e)}")
+
+    def test_musician_registration(self):
+        """Test musician registration"""
+        try:
+            response = self.make_request("POST", "/auth/register", TEST_MUSICIAN)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "token" in data and "musician" in data:
+                    self.auth_token = data["token"]
+                    self.musician_id = data["musician"]["id"]
+                    self.musician_slug = data["musician"]["slug"]
+                    self.log_result("Musician Registration", True, f"Registered musician: {data['musician']['name']}")
+                else:
+                    self.log_result("Musician Registration", False, f"Missing token or musician in response: {data}")
+            elif response.status_code == 400:
+                # Musician might already exist, try login instead
+                self.test_musician_login()
+            else:
+                self.log_result("Musician Registration", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Musician Registration", False, f"Exception: {str(e)}")
+
+    def test_musician_login(self):
+        """Test musician login"""
+        try:
+            login_data = {
+                "email": TEST_MUSICIAN["email"],
+                "password": TEST_MUSICIAN["password"]
+            }
+            response = self.make_request("POST", "/auth/login", login_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "token" in data and "musician" in data:
+                    self.auth_token = data["token"]
+                    self.musician_id = data["musician"]["id"]
+                    self.musician_slug = data["musician"]["slug"]
+                    self.log_result("Musician Login", True, f"Logged in musician: {data['musician']['name']}")
+                else:
+                    self.log_result("Musician Login", False, f"Missing token or musician in response: {data}")
+            else:
+                self.log_result("Musician Login", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Musician Login", False, f"Exception: {str(e)}")
+
+    def test_jwt_token_validation(self):
+        """Test JWT token validation by accessing protected endpoint"""
+        try:
+            if not self.auth_token:
+                self.log_result("JWT Token Validation", False, "No auth token available")
+                return
+            
+            response = self.make_request("GET", "/songs")
+            
+            if response.status_code == 200:
+                self.log_result("JWT Token Validation", True, "Token successfully validated")
+            elif response.status_code == 401:
+                self.log_result("JWT Token Validation", False, "Token validation failed - unauthorized")
+            else:
+                self.log_result("JWT Token Validation", False, f"Unexpected status code: {response.status_code}")
+        except Exception as e:
+            self.log_result("JWT Token Validation", False, f"Exception: {str(e)}")
+
+    def test_create_song(self):
+        """Test song creation"""
+        try:
+            song_data = {
+                "title": "Test Jazz Standard",
+                "artist": "Miles Davis",
+                "genres": ["Jazz", "Bebop"],
+                "moods": ["Smooth", "Sophisticated"],
+                "year": 1959,
+                "notes": "Classic jazz standard for testing"
+            }
+            
+            response = self.make_request("POST", "/songs", song_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "id" in data and data["title"] == song_data["title"]:
+                    self.test_song_id = data["id"]
+                    self.log_result("Create Song", True, f"Created song: {data['title']}")
+                else:
+                    self.log_result("Create Song", False, f"Unexpected response structure: {data}")
+            else:
+                self.log_result("Create Song", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Create Song", False, f"Exception: {str(e)}")
+
+    def test_get_songs(self):
+        """Test retrieving songs"""
+        try:
+            response = self.make_request("GET", "/songs")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    self.log_result("Get Songs", True, f"Retrieved {len(data)} songs")
+                else:
+                    self.log_result("Get Songs", False, f"Expected list, got: {type(data)}")
+            else:
+                self.log_result("Get Songs", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Get Songs", False, f"Exception: {str(e)}")
+
+    def test_update_song(self):
+        """Test song update"""
+        try:
+            if not self.test_song_id:
+                self.log_result("Update Song", False, "No test song ID available")
+                return
+            
+            update_data = {
+                "title": "Updated Jazz Standard",
+                "artist": "Miles Davis",
+                "genres": ["Jazz", "Cool Jazz"],
+                "moods": ["Mellow", "Contemplative"],
+                "year": 1959,
+                "notes": "Updated notes for testing"
+            }
+            
+            response = self.make_request("PUT", f"/songs/{self.test_song_id}", update_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data["title"] == update_data["title"]:
+                    self.log_result("Update Song", True, f"Updated song: {data['title']}")
+                else:
+                    self.log_result("Update Song", False, f"Title not updated correctly: {data}")
+            else:
+                self.log_result("Update Song", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Update Song", False, f"Exception: {str(e)}")
+
+    def test_get_musician_by_slug(self):
+        """Test getting musician by slug"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Get Musician by Slug", False, "No musician slug available")
+                return
+            
+            response = self.make_request("GET", f"/musicians/{self.musician_slug}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "id" in data and "name" in data and "slug" in data:
+                    self.log_result("Get Musician by Slug", True, f"Retrieved musician: {data['name']}")
+                else:
+                    self.log_result("Get Musician by Slug", False, f"Missing required fields: {data}")
+            else:
+                self.log_result("Get Musician by Slug", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Get Musician by Slug", False, f"Exception: {str(e)}")
+
+    def test_advanced_filtering(self):
+        """Test advanced song filtering"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Advanced Filtering", False, "No musician slug available")
+                return
+            
+            # Test filtering by genre
+            params = {"genre": "Jazz"}
+            response = self.make_request("GET", f"/musicians/{self.musician_slug}/songs", params)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    # Check if all returned songs have Jazz genre
+                    jazz_songs = [song for song in data if "Jazz" in song.get("genres", [])]
+                    if len(jazz_songs) == len(data):
+                        self.log_result("Advanced Filtering - Genre", True, f"Found {len(data)} Jazz songs")
+                    else:
+                        self.log_result("Advanced Filtering - Genre", False, f"Filter not working correctly")
+                else:
+                    self.log_result("Advanced Filtering - Genre", False, f"Expected list, got: {type(data)}")
+            else:
+                self.log_result("Advanced Filtering - Genre", False, f"Status code: {response.status_code}")
+            
+            # Test filtering by artist
+            params = {"artist": "Miles"}
+            response = self.make_request("GET", f"/musicians/{self.musician_slug}/songs", params)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    self.log_result("Advanced Filtering - Artist", True, f"Found {len(data)} songs by Miles")
+                else:
+                    self.log_result("Advanced Filtering - Artist", False, f"Expected list, got: {type(data)}")
+            else:
+                self.log_result("Advanced Filtering - Artist", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Advanced Filtering", False, f"Exception: {str(e)}")
+
+    def test_create_request(self):
+        """Test creating a song request"""
+        try:
+            if not self.test_song_id:
+                self.log_result("Create Request", False, "No test song ID available")
+                return
+            
+            request_data = {
+                "song_id": self.test_song_id,
+                "requester_name": "Jazz Fan",
+                "requester_email": "fan@example.com",
+                "dedication": "For my anniversary!",
+                "tip_amount": 5.0
+            }
+            
+            response = self.make_request("POST", "/requests", request_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "id" in data and data["status"] == "pending":
+                    self.test_request_id = data["id"]
+                    self.log_result("Create Request", True, f"Created request: {data['id']}")
+                else:
+                    self.log_result("Create Request", False, f"Unexpected response structure: {data}")
+            else:
+                self.log_result("Create Request", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Create Request", False, f"Exception: {str(e)}")
+
+    def test_get_musician_requests(self):
+        """Test getting musician requests"""
+        try:
+            response = self.make_request("GET", f"/requests/musician/{self.musician_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    self.log_result("Get Musician Requests", True, f"Retrieved {len(data)} requests")
+                else:
+                    self.log_result("Get Musician Requests", False, f"Expected list, got: {type(data)}")
+            else:
+                self.log_result("Get Musician Requests", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Get Musician Requests", False, f"Exception: {str(e)}")
+
+    def test_update_request_status(self):
+        """Test updating request status"""
+        try:
+            if not self.test_request_id:
+                self.log_result("Update Request Status", False, "No test request ID available")
+                return
+            
+            # Test updating to accepted
+            response = self.make_request("PUT", f"/requests/{self.test_request_id}/status", {"status": "accepted"})
+            
+            if response.status_code == 200:
+                self.log_result("Update Request Status", True, "Successfully updated request status")
+            else:
+                self.log_result("Update Request Status", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Update Request Status", False, f"Exception: {str(e)}")
+
+    def test_real_time_polling(self):
+        """Test real-time polling endpoint"""
+        try:
+            if not self.musician_id:
+                self.log_result("Real-time Polling", False, "No musician ID available")
+                return
+            
+            response = self.make_request("GET", f"/requests/updates/{self.musician_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "requests" in data and "timestamp" in data:
+                    self.log_result("Real-time Polling", True, f"Polling endpoint working, timestamp: {data['timestamp']}")
+                else:
+                    self.log_result("Real-time Polling", False, f"Missing required fields: {data}")
+            else:
+                self.log_result("Real-time Polling", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Real-time Polling", False, f"Exception: {str(e)}")
+
+    def test_csv_preview_valid(self):
+        """Test CSV preview with valid file"""
+        try:
+            with open('/app/test_songs_valid.csv', 'rb') as f:
+                files = {'file': ('test_songs_valid.csv', f, 'text/csv')}
+                response = self.make_request("POST", "/songs/csv/preview", files=files)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "preview" in data and "total_rows" in data and "valid_rows" in data:
+                    self.log_result("CSV Preview - Valid File", True, f"Preview shows {data['valid_rows']} valid rows out of {data['total_rows']}")
+                else:
+                    self.log_result("CSV Preview - Valid File", False, f"Missing required fields: {data}")
+            else:
+                self.log_result("CSV Preview - Valid File", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("CSV Preview - Valid File", False, f"Exception: {str(e)}")
+
+    def test_csv_preview_invalid(self):
+        """Test CSV preview with invalid file"""
+        try:
+            with open('/app/test_songs_invalid.csv', 'rb') as f:
+                files = {'file': ('test_songs_invalid.csv', f, 'text/csv')}
+                response = self.make_request("POST", "/songs/csv/preview", files=files)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "errors" in data and len(data["errors"]) > 0:
+                    self.log_result("CSV Preview - Invalid File", True, f"Correctly detected {len(data['errors'])} errors")
+                else:
+                    self.log_result("CSV Preview - Invalid File", False, f"Should have detected errors: {data}")
+            else:
+                self.log_result("CSV Preview - Invalid File", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("CSV Preview - Invalid File", False, f"Exception: {str(e)}")
+
+    def test_csv_preview_missing_columns(self):
+        """Test CSV preview with missing required columns"""
+        try:
+            with open('/app/test_songs_missing_columns.csv', 'rb') as f:
+                files = {'file': ('test_songs_missing_columns.csv', f, 'text/csv')}
+                response = self.make_request("POST", "/songs/csv/preview", files=files)
+            
+            if response.status_code == 400:
+                self.log_result("CSV Preview - Missing Columns", True, "Correctly rejected file with missing columns")
+            else:
+                self.log_result("CSV Preview - Missing Columns", False, f"Should have returned 400, got: {response.status_code}")
+        except Exception as e:
+            self.log_result("CSV Preview - Missing Columns", False, f"Exception: {str(e)}")
+
+    def test_csv_upload_valid(self):
+        """Test CSV upload with valid file"""
+        try:
+            with open('/app/test_songs_valid.csv', 'rb') as f:
+                files = {'file': ('test_songs_valid.csv', f, 'text/csv')}
+                response = self.make_request("POST", "/songs/csv/upload", files=files)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "success" in data and data["success"] and "songs_added" in data:
+                    self.log_result("CSV Upload - Valid File", True, f"Successfully uploaded {data['songs_added']} songs")
+                else:
+                    self.log_result("CSV Upload - Valid File", False, f"Upload failed: {data}")
+            else:
+                self.log_result("CSV Upload - Valid File", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("CSV Upload - Valid File", False, f"Exception: {str(e)}")
+
+    def test_csv_duplicate_detection(self):
+        """Test CSV duplicate detection by uploading same file twice"""
+        try:
+            # Upload the same file again to test duplicate detection
+            with open('/app/test_songs_valid.csv', 'rb') as f:
+                files = {'file': ('test_songs_valid.csv', f, 'text/csv')}
+                response = self.make_request("POST", "/songs/csv/upload", files=files)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "errors" in data and len(data["errors"]) > 0:
+                    # Check if errors mention duplicates
+                    duplicate_errors = [error for error in data["errors"] if "duplicate" in error.lower()]
+                    if duplicate_errors:
+                        self.log_result("CSV Duplicate Detection", True, f"Correctly detected {len(duplicate_errors)} duplicates")
+                    else:
+                        self.log_result("CSV Duplicate Detection", False, f"No duplicate errors found: {data['errors']}")
+                else:
+                    self.log_result("CSV Duplicate Detection", False, f"Should have detected duplicates: {data}")
+            else:
+                self.log_result("CSV Duplicate Detection", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("CSV Duplicate Detection", False, f"Exception: {str(e)}")
+
+    def test_delete_song(self):
+        """Test song deletion (run last to clean up)"""
+        try:
+            if not self.test_song_id:
+                self.log_result("Delete Song", False, "No test song ID available")
+                return
+            
+            response = self.make_request("DELETE", f"/songs/{self.test_song_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "message" in data:
+                    self.log_result("Delete Song", True, "Successfully deleted song")
+                else:
+                    self.log_result("Delete Song", False, f"Unexpected response: {data}")
+            else:
+                self.log_result("Delete Song", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Delete Song", False, f"Exception: {str(e)}")
+
+    def run_all_tests(self):
+        """Run all tests in order"""
+        print("🚀 Starting RequestWave Backend API Tests")
+        print("=" * 50)
+        
+        # Health check
+        self.test_health_check()
+        
+        # Authentication tests
+        self.test_musician_registration()
+        self.test_jwt_token_validation()
+        
+        # Song management tests
+        self.test_create_song()
+        self.test_get_songs()
+        self.test_update_song()
+        
+        # Musician profile tests
+        self.test_get_musician_by_slug()
+        
+        # Advanced filtering tests
+        self.test_advanced_filtering()
+        
+        # Request management tests
+        self.test_create_request()
+        self.test_get_musician_requests()
+        self.test_update_request_status()
+        self.test_real_time_polling()
+        
+        # CSV upload tests
+        self.test_csv_preview_valid()
+        self.test_csv_preview_invalid()
+        self.test_csv_preview_missing_columns()
+        self.test_csv_upload_valid()
+        self.test_csv_duplicate_detection()
+        
+        # Cleanup
+        self.test_delete_song()
+        
+        # Print summary
+        print("\n" + "=" * 50)
+        print("🏁 Test Summary")
+        print("=" * 50)
+        print(f"✅ Passed: {self.results['passed']}")
+        print(f"❌ Failed: {self.results['failed']}")
+        
+        if self.results['errors']:
+            print("\n🔍 Failed Tests:")
+            for error in self.results['errors']:
+                print(f"   • {error}")
+        
+        return self.results['failed'] == 0
+
+if __name__ == "__main__":
+    tester = RequestWaveAPITester()
+    success = tester.run_all_tests()
+    
+    if success:
+        print("\n🎉 All tests passed!")
+        exit(0)
+    else:
+        print(f"\n💥 {tester.results['failed']} tests failed!")
+        exit(1)

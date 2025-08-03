@@ -1,0 +1,5 @@
+Title,Artist,Genre,Mood,Year,Notes
+,Queen,"Rock,Progressive Rock","Epic,Dramatic",1975,Missing title
+Hotel California,,"Rock,Country Rock","Mysterious,Dark",1976,Missing artist
+Imagine,John Lennon,"Pop,Folk","Peaceful,Hopeful",abc,Invalid year
+Billie Jean,Michael Jackson,"Pop,R&B","Groovy,Confident",2030,Future year invalid
