@@ -439,6 +439,146 @@ const MusicianDashboard = () => {
         {/* Songs Tab */}
         {activeTab === 'songs' && (
           <div>
+            {/* Song Management Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Song Management</h2>
+              <button
+                onClick={() => setShowCsvUpload(!showCsvUpload)}
+                className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold transition duration-300"
+              >
+                {showCsvUpload ? 'Hide CSV Upload' : 'Upload CSV'}
+              </button>
+            </div>
+
+            {/* CSV Upload Section */}
+            {showCsvUpload && (
+              <div className="bg-gray-800 rounded-xl p-6 mb-8">
+                <h3 className="text-lg font-bold mb-4">Upload Songs from CSV</h3>
+                <p className="text-gray-300 mb-4 text-sm">
+                  Expected CSV format: Title, Artist, Genre, Mood, Year, Notes
+                  <br />
+                  <span className="text-purple-300">Genres and Moods can be comma-separated (e.g., "Rock, Jazz")</span>
+                </p>
+
+                {!csvFile ? (
+                  <div
+                    className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-purple-500 transition duration-300"
+                    onDrop={handleCsvDrop}
+                    onDragOver={(e) => e.preventDefault()}
+                    onClick={() => document.getElementById('csvFileInput').click()}
+                  >
+                    <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                      <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <p className="text-gray-300">
+                      <span className="font-bold text-purple-400">Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-gray-400 text-sm">CSV files only (max 5MB)</p>
+                    <input
+                      id="csvFileInput"
+                      type="file"
+                      accept=".csv"
+                      onChange={handleCsvFileSelect}
+                      className="hidden"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* File Info */}
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-bold">{csvFile.name}</p>
+                          <p className="text-sm text-gray-300">{(csvFile.size / 1024).toFixed(1)} KB</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setCsvFile(null);
+                            setCsvPreview(null);
+                            setCsvError('');
+                          }}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex space-x-4">
+                      <button
+                        onClick={previewCsv}
+                        disabled={csvUploading}
+                        className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-bold transition duration-300 disabled:opacity-50"
+                      >
+                        {csvUploading ? 'Processing...' : 'Preview'}
+                      </button>
+                      {csvPreview && (
+                        <button
+                          onClick={uploadCsv}
+                          disabled={csvUploading}
+                          className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold transition duration-300 disabled:opacity-50"
+                        >
+                          {csvUploading ? 'Uploading...' : `Import ${csvPreview.valid_rows} Songs`}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* CSV Preview */}
+                    {csvPreview && (
+                      <div className="bg-gray-700 rounded-lg p-4">
+                        <h4 className="font-bold mb-2">
+                          Preview: {csvPreview.valid_rows} of {csvPreview.total_rows} rows valid
+                        </h4>
+                        
+                        {csvPreview.errors.length > 0 && (
+                          <div className="mb-4">
+                            <h5 className="text-red-400 font-bold mb-2">Errors:</h5>
+                            <div className="bg-red-900/20 rounded p-2 max-h-32 overflow-y-auto">
+                              {csvPreview.errors.map((error, idx) => (
+                                <p key={idx} className="text-red-300 text-sm">{error}</p>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b border-gray-600">
+                                <th className="text-left p-2">Title</th>
+                                <th className="text-left p-2">Artist</th>
+                                <th className="text-left p-2">Genres</th>
+                                <th className="text-left p-2">Moods</th>
+                                <th className="text-left p-2">Year</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {csvPreview.preview.map((song, idx) => (
+                                <tr key={idx} className="border-b border-gray-600">
+                                  <td className="p-2">{song.title}</td>
+                                  <td className="p-2">{song.artist}</td>
+                                  <td className="p-2">{song.genres.join(', ')}</td>
+                                  <td className="p-2">{song.moods.join(', ')}</td>
+                                  <td className="p-2">{song.year || '-'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {csvError && (
+                      <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-200">
+                        {csvError}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Add Song Form */}
             <div className="bg-gray-800 rounded-xl p-6 mb-8">
               <h2 className="text-xl font-bold mb-4">Add New Song</h2>
