@@ -207,6 +207,13 @@ const MusicianDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [realtimeService, setRealtimeService] = useState(null);
 
+  // CSV Upload state
+  const [csvFile, setCsvFile] = useState(null);
+  const [csvPreview, setCsvPreview] = useState(null);
+  const [csvUploading, setCsvUploading] = useState(false);
+  const [csvError, setCsvError] = useState('');
+  const [showCsvUpload, setShowCsvUpload] = useState(false);
+
   // Song form state
   const [songForm, setSongForm] = useState({
     title: '',
