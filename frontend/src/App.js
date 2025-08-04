@@ -1680,6 +1680,45 @@ const MusicianDashboard = () => {
             </div>
           </div>
         )}
+
+        {/* QR Code Modal */}
+        {showQRModal && qrCode && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-gray-800 rounded-xl p-8 w-full max-w-md text-center">
+              <h2 className="text-2xl font-bold mb-4">Your QR Code</h2>
+              <p className="text-gray-300 mb-6">Share this QR code with your audience</p>
+              
+              <div className="bg-white rounded-lg p-4 mb-6 inline-block">
+                <img src={qrCode.qr_code} alt="QR Code" className="w-64 h-64" />
+              </div>
+              
+              <div className="text-xs text-gray-400 mb-6 break-all">
+                {qrCode.audience_url}
+              </div>
+              
+              <div className="flex flex-col space-y-3">
+                <button
+                  onClick={downloadQRCode}
+                  className="bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-bold transition duration-300"
+                >
+                  Download QR Code
+                </button>
+                <button
+                  onClick={printQRFlyer}
+                  className="bg-green-600 hover:bg-green-700 py-3 rounded-lg font-bold transition duration-300"
+                >
+                  Print Flyer with Instructions
+                </button>
+                <button
+                  onClick={() => setShowQRModal(false)}
+                  className="bg-gray-600 hover:bg-gray-700 py-3 rounded-lg transition duration-300"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
