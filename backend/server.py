@@ -656,7 +656,7 @@ async def update_design_settings(design_data: DesignUpdate, musician_id: str = D
 
 # Spotify Integration
 @api_router.post("/songs/spotify/import")
-async def import_from_spotify(import_data: SpotifyPlaylistImport, musician_id: str = Depends(get_current_musician)):
+async def import_from_spotify(import_data: PlaylistImport, musician_id: str = Depends(get_current_musician)):
     """Import songs from a Spotify public playlist"""
     try:
         # Extract playlist ID from URL
