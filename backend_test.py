@@ -912,6 +912,413 @@ class RequestWaveAPITester:
             if 'original_token' in locals():
                 self.auth_token = original_token
 
+    def test_phase2_request_count_tracking(self):
+        """Test Phase 2: Request count tracking functionality"""
+        try:
+            if not self.test_song_id:
+                self.log_result("Phase 2 Request Count Tracking", False, "No test song ID available")
+                return
+            
+            print(f"🔍 Testing request count tracking for song ID: {self.test_song_id}")
+            
+            # First, verify the song has request_count: 0 initially
+            songs_response = self.make_request("GET", "/songs")
+            if songs_response.status_code == 200:
+                songs = songs_response.json()
+                test_song = next((song for song in songs if song["id"] == self.test_song_id), None)
+                
+                if test_song:
+                    initial_count = test_song.get("request_count", 0)
+                    print(f"📊 Initial request_count: {initial_count}")
+                    
+                    if initial_count == 0:
+                        self.log_result("Phase 2 Request Count - Initial Value", True, "Song has request_count: 0 initially")
+                    else:
+                        self.log_result("Phase 2 Request Count - Initial Value", False, f"Expected request_count: 0, got: {initial_count}")
+                        return
+                else:
+                    self.log_result("Phase 2 Request Count - Initial Value", False, "Test song not found")
+                    return
+            else:
+                self.log_result("Phase 2 Request Count - Initial Value", False, f"Could not retrieve songs: {songs_response.status_code}")
+                return
+            
+            # Create multiple requests for the song
+            request_count = 3
+            created_requests = []
+            
+            for i in range(request_count):
+                request_data = {
+                    "song_id": self.test_song_id,
+                    "requester_name": f"Fan {i+1}",
+                    "requester_email": f"fan{i+1}@example.com",
+                    "dedication": f"Request #{i+1}",
+                    "tip_amount": 2.0
+                }
+                
+                response = self.make_request("POST", "/requests", request_data)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    created_requests.append(data["id"])
+                    print(f"📊 Created request #{i+1}: {data['id']}")
+                else:
+                    self.log_result("Phase 2 Request Count - Create Requests", False, f"Failed to create request #{i+1}: {response.status_code}")
+                    return
+            
+            # Verify that each request incremented the song's request_count
+            songs_response = self.make_request("GET", "/songs")
+            if songs_response.status_code == 200:
+                songs = songs_response.json()
+                test_song = next((song for song in songs if song["id"] == self.test_song_id), None)
+                
+                if test_song:
+                    final_count = test_song.get("request_count", 0)
+                    print(f"📊 Final request_count: {final_count}")
+                    
+                    if final_count == request_count:
+                        self.log_result("Phase 2 Request Count Tracking", True, f"✅ Request count correctly incremented from 0 to {final_count} after {request_count} requests")
+                    else:
+                        self.log_result("Phase 2 Request Count Tracking", False, f"❌ Expected request_count: {request_count}, got: {final_count}")
+                else:
+                    self.log_result("Phase 2 Request Count Tracking", False, "Test song not found after creating requests")
+            else:
+                self.log_result("Phase 2 Request Count Tracking", False, f"Could not retrieve songs after creating requests: {songs_response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Phase 2 Request Count Tracking", False, f"Exception: {str(e)}")
+
+    def test_phase2_popularity_sorting(self):
+        """Test Phase 2: Popularity sorting functionality"""
+        try:
+            print("🔍 Testing popularity sorting with different sort_by parameters")
+            
+            # Create multiple test songs with different request counts
+            test_songs = [
+                {"title": "Popular Song A", "artist": "Artist A", "genres": ["Pop"], "moods": ["Upbeat"], "year": 2023},
+                {"title": "Popular Song B", "artist": "Artist B", "genres": ["Rock"], "moods": ["Energetic"], "year": 2022},
+                {"title": "Popular Song C", "artist": "Artist C", "genres": ["Jazz"], "moods": ["Smooth"], "year": 2021}
+            ]
+            
+            created_song_ids = []
+            
+            # Create the test songs
+            for song_data in test_songs:
+                response = self.make_request("POST", "/songs", song_data)
+                if response.status_code == 200:
+                    song_id = response.json()["id"]
+                    created_song_ids.append(song_id)
+                    print(f"📊 Created test song: {song_data['title']} (ID: {song_id})")
+                else:
+                    self.log_result("Phase 2 Popularity Sorting - Create Test Songs", False, f"Failed to create song: {song_data['title']}")
+                    return
+            
+            # Create different numbers of requests for each song to establish popularity order
+            # Song A: 5 requests (most popular)
+            # Song B: 3 requests (medium popular)  
+            # Song C: 1 request (least popular)
+            request_counts = [5, 3, 1]
+            
+            for i, (song_id, count) in enumerate(zip(created_song_ids, request_counts)):
+                for j in range(count):
+                    request_data = {
+                        "song_id": song_id,
+                        "requester_name": f"Fan {j+1}",
+                        "requester_email": f"fan{j+1}@song{i}.com",
+                        "dedication": f"Request for song {i+1}",
+                        "tip_amount": 1.0
+                    }
+                    
+                    response = self.make_request("POST", "/requests", request_data)
+                    if response.status_code != 200:
+                        self.log_result("Phase 2 Popularity Sorting - Create Requests", False, f"Failed to create request for song {i+1}")
+                        return
+                
+                print(f"📊 Created {count} requests for song {test_songs[i]['title']}")
+            
+            # Test different sorting options
+            sort_tests = [
+                ("popularity", "Most requested first"),
+                ("title", "A-Z by title"),
+                ("artist", "A-Z by artist"),
+                ("year", "Newest first by year"),
+                ("created_at", "Default - newest first by creation")
+            ]
+            
+            for sort_by, description in sort_tests:
+                params = {"sort_by": sort_by}
+                response = self.make_request("GET", "/songs", params)
+                
+                if response.status_code == 200:
+                    songs = response.json()
+                    
+                    if sort_by == "popularity":
+                        # Verify songs are sorted by request_count descending
+                        request_counts = [song.get("request_count", 0) for song in songs]
+                        is_sorted_desc = all(request_counts[i] >= request_counts[i+1] for i in range(len(request_counts)-1))
+                        
+                        if is_sorted_desc:
+                            self.log_result(f"Phase 2 Popularity Sorting - {sort_by}", True, f"✅ Songs correctly sorted by popularity: {request_counts[:5]}")
+                        else:
+                            self.log_result(f"Phase 2 Popularity Sorting - {sort_by}", False, f"❌ Songs not sorted by popularity: {request_counts[:5]}")
+                    
+                    elif sort_by == "title":
+                        # Verify songs are sorted by title ascending
+                        titles = [song.get("title", "") for song in songs]
+                        is_sorted_asc = all(titles[i].lower() <= titles[i+1].lower() for i in range(len(titles)-1))
+                        
+                        if is_sorted_asc:
+                            self.log_result(f"Phase 2 Popularity Sorting - {sort_by}", True, f"✅ Songs correctly sorted by title A-Z")
+                        else:
+                            self.log_result(f"Phase 2 Popularity Sorting - {sort_by}", False, f"❌ Songs not sorted by title A-Z: {titles[:5]}")
+                    
+                    elif sort_by == "artist":
+                        # Verify songs are sorted by artist ascending
+                        artists = [song.get("artist", "") for song in songs]
+                        is_sorted_asc = all(artists[i].lower() <= artists[i+1].lower() for i in range(len(artists)-1))
+                        
+                        if is_sorted_asc:
+                            self.log_result(f"Phase 2 Popularity Sorting - {sort_by}", True, f"✅ Songs correctly sorted by artist A-Z")
+                        else:
+                            self.log_result(f"Phase 2 Popularity Sorting - {sort_by}", False, f"❌ Songs not sorted by artist A-Z: {artists[:5]}")
+                    
+                    elif sort_by == "year":
+                        # Verify songs are sorted by year descending (newest first)
+                        years = [song.get("year", 0) or 0 for song in songs]
+                        is_sorted_desc = all(years[i] >= years[i+1] for i in range(len(years)-1))
+                        
+                        if is_sorted_desc:
+                            self.log_result(f"Phase 2 Popularity Sorting - {sort_by}", True, f"✅ Songs correctly sorted by year (newest first)")
+                        else:
+                            self.log_result(f"Phase 2 Popularity Sorting - {sort_by}", False, f"❌ Songs not sorted by year: {years[:5]}")
+                    
+                    else:  # created_at (default)
+                        self.log_result(f"Phase 2 Popularity Sorting - {sort_by}", True, f"✅ Default sorting working")
+                    
+                else:
+                    self.log_result(f"Phase 2 Popularity Sorting - {sort_by}", False, f"Failed to get songs with sort_by={sort_by}: {response.status_code}")
+                    
+        except Exception as e:
+            self.log_result("Phase 2 Popularity Sorting", False, f"Exception: {str(e)}")
+
+    def test_phase2_request_count_field(self):
+        """Test Phase 2: Request count field in song data"""
+        try:
+            print("🔍 Testing request_count field presence in all song responses")
+            
+            # Get all songs
+            response = self.make_request("GET", "/songs")
+            
+            if response.status_code == 200:
+                songs = response.json()
+                
+                if len(songs) > 0:
+                    missing_request_count = []
+                    invalid_request_count = []
+                    
+                    for song in songs:
+                        # Check if request_count field exists
+                        if "request_count" not in song:
+                            missing_request_count.append(song.get("title", "Unknown"))
+                        else:
+                            # Check if request_count is a valid integer >= 0
+                            request_count = song["request_count"]
+                            if not isinstance(request_count, int) or request_count < 0:
+                                invalid_request_count.append(f"{song.get('title', 'Unknown')}: {request_count}")
+                    
+                    if len(missing_request_count) == 0 and len(invalid_request_count) == 0:
+                        self.log_result("Phase 2 Request Count Field", True, f"✅ All {len(songs)} songs have valid request_count field")
+                    else:
+                        error_msg = ""
+                        if missing_request_count:
+                            error_msg += f"Missing request_count: {missing_request_count[:3]}. "
+                        if invalid_request_count:
+                            error_msg += f"Invalid request_count: {invalid_request_count[:3]}."
+                        self.log_result("Phase 2 Request Count Field", False, f"❌ {error_msg}")
+                    
+                    # Test that older songs without request_count get 0 as default
+                    zero_count_songs = [song for song in songs if song.get("request_count", 0) == 0]
+                    if len(zero_count_songs) > 0:
+                        self.log_result("Phase 2 Request Count Field - Default Value", True, f"✅ {len(zero_count_songs)} songs have request_count: 0 (default for older songs)")
+                    else:
+                        self.log_result("Phase 2 Request Count Field - Default Value", True, f"✅ No songs with request_count: 0 (all have been requested)")
+                        
+                else:
+                    self.log_result("Phase 2 Request Count Field", True, "✅ No songs to test (empty database)")
+                    
+            else:
+                self.log_result("Phase 2 Request Count Field", False, f"Failed to get songs: {response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Phase 2 Request Count Field", False, f"Exception: {str(e)}")
+
+    def test_phase2_edge_cases(self):
+        """Test Phase 2: Edge cases for request tracking"""
+        try:
+            print("🔍 Testing Phase 2 edge cases")
+            
+            # Test requesting a non-existent song (should return 404)
+            fake_song_id = "non-existent-song-id-12345"
+            request_data = {
+                "song_id": fake_song_id,
+                "requester_name": "Test Fan",
+                "requester_email": "fan@example.com",
+                "dedication": "Test request",
+                "tip_amount": 1.0
+            }
+            
+            response = self.make_request("POST", "/requests", request_data)
+            
+            if response.status_code == 404:
+                self.log_result("Phase 2 Edge Cases - Non-existent Song", True, "✅ Correctly returned 404 for non-existent song")
+            else:
+                self.log_result("Phase 2 Edge Cases - Non-existent Song", False, f"❌ Expected 404, got: {response.status_code}")
+            
+            # Test sorting with empty database (create a new musician for this)
+            empty_musician_data = {
+                "name": "Empty Musician",
+                "email": "empty@requestwave.com",
+                "password": "SecurePassword123!"
+            }
+            
+            # Save current auth
+            original_token = self.auth_token
+            
+            # Register new musician
+            register_response = self.make_request("POST", "/auth/register", empty_musician_data)
+            if register_response.status_code == 200:
+                empty_auth_data = register_response.json()
+                self.auth_token = empty_auth_data["token"]
+                
+                # Test sorting with empty song list
+                for sort_by in ["popularity", "title", "artist", "year", "created_at"]:
+                    params = {"sort_by": sort_by}
+                    response = self.make_request("GET", "/songs", params)
+                    
+                    if response.status_code == 200:
+                        songs = response.json()
+                        if len(songs) == 0:
+                            self.log_result(f"Phase 2 Edge Cases - Empty DB Sort ({sort_by})", True, f"✅ Sorting works with empty database")
+                        else:
+                            self.log_result(f"Phase 2 Edge Cases - Empty DB Sort ({sort_by})", False, f"❌ Expected empty list, got {len(songs)} songs")
+                    else:
+                        self.log_result(f"Phase 2 Edge Cases - Empty DB Sort ({sort_by})", False, f"❌ Failed to get songs: {response.status_code}")
+                
+                # Restore original auth
+                self.auth_token = original_token
+            else:
+                self.log_result("Phase 2 Edge Cases - Empty Database Setup", False, "Could not create empty musician for testing")
+            
+            # Test multiple requests for same song increment correctly
+            if self.test_song_id:
+                # Get current request count
+                songs_response = self.make_request("GET", "/songs")
+                if songs_response.status_code == 200:
+                    songs = songs_response.json()
+                    test_song = next((song for song in songs if song["id"] == self.test_song_id), None)
+                    
+                    if test_song:
+                        initial_count = test_song.get("request_count", 0)
+                        
+                        # Create 2 more requests
+                        for i in range(2):
+                            request_data = {
+                                "song_id": self.test_song_id,
+                                "requester_name": f"Edge Case Fan {i+1}",
+                                "requester_email": f"edge{i+1}@example.com",
+                                "dedication": f"Edge case request #{i+1}",
+                                "tip_amount": 1.0
+                            }
+                            
+                            response = self.make_request("POST", "/requests", request_data)
+                            if response.status_code != 200:
+                                self.log_result("Phase 2 Edge Cases - Multiple Requests", False, f"Failed to create edge case request #{i+1}")
+                                return
+                        
+                        # Verify count increased by 2
+                        songs_response = self.make_request("GET", "/songs")
+                        if songs_response.status_code == 200:
+                            songs = songs_response.json()
+                            test_song = next((song for song in songs if song["id"] == self.test_song_id), None)
+                            
+                            if test_song:
+                                final_count = test_song.get("request_count", 0)
+                                expected_count = initial_count + 2
+                                
+                                if final_count == expected_count:
+                                    self.log_result("Phase 2 Edge Cases - Multiple Requests", True, f"✅ Request count correctly incremented from {initial_count} to {final_count}")
+                                else:
+                                    self.log_result("Phase 2 Edge Cases - Multiple Requests", False, f"❌ Expected {expected_count}, got {final_count}")
+                            else:
+                                self.log_result("Phase 2 Edge Cases - Multiple Requests", False, "Test song not found after creating requests")
+                        else:
+                            self.log_result("Phase 2 Edge Cases - Multiple Requests", False, "Could not verify final request count")
+                    else:
+                        self.log_result("Phase 2 Edge Cases - Multiple Requests", False, "Test song not found for multiple requests test")
+                else:
+                    self.log_result("Phase 2 Edge Cases - Multiple Requests", False, "Could not get initial request count")
+            else:
+                self.log_result("Phase 2 Edge Cases - Multiple Requests", False, "No test song available for multiple requests test")
+                
+        except Exception as e:
+            self.log_result("Phase 2 Edge Cases", False, f"Exception: {str(e)}")
+
+    def run_phase2_tests(self):
+        """Run Phase 2 Request Tracking & Popularity Features tests"""
+        print("🚨 PHASE 2 TESTING - Request Tracking & Popularity Features")
+        print("=" * 70)
+        print("Testing Phase 2 Request Tracking & Popularity Features:")
+        print("1. Request Count Tracking")
+        print("2. Popularity Sorting")
+        print("3. Request Count in Song Data")
+        print("4. Edge Cases")
+        print("=" * 70)
+        
+        # Authentication setup
+        self.test_musician_registration()
+        self.test_jwt_token_validation()
+        
+        # Create a test song for request tracking
+        self.test_create_song()
+        
+        print("\n🔥 PHASE 2 TEST #1: REQUEST COUNT TRACKING")
+        print("-" * 50)
+        self.test_phase2_request_count_tracking()
+        
+        print("\n🔥 PHASE 2 TEST #2: POPULARITY SORTING")
+        print("-" * 50)
+        self.test_phase2_popularity_sorting()
+        
+        print("\n🔥 PHASE 2 TEST #3: REQUEST COUNT FIELD")
+        print("-" * 50)
+        self.test_phase2_request_count_field()
+        
+        print("\n🔥 PHASE 2 TEST #4: EDGE CASES")
+        print("-" * 50)
+        self.test_phase2_edge_cases()
+        
+        # Print summary
+        print("\n" + "=" * 70)
+        print("🏁 PHASE 2 TEST SUMMARY")
+        print("=" * 70)
+        print(f"✅ Passed: {self.results['passed']}")
+        print(f"❌ Failed: {self.results['failed']}")
+        
+        if self.results['errors']:
+            print("\n🔍 Failed Tests:")
+            for error in self.results['errors']:
+                print(f"   • {error}")
+        
+        # Specific summary for Phase 2 features
+        phase2_tests = [error for error in self.results['errors'] if 'phase 2' in error.lower()]
+        
+        print(f"\n📊 PHASE 2 REQUEST TRACKING & POPULARITY: {'✅ WORKING' if len(phase2_tests) == 0 else '❌ FAILING'}")
+        if phase2_tests:
+            for error in phase2_tests:
+                print(f"   • {error}")
+        
+        return self.results['failed'] == 0
+
     def run_critical_fixes_test(self):
         """Run ONLY the critical fixes tests requested in the review"""
         print("🚨 CRITICAL FIXES TESTING - RequestWave Backend API")
