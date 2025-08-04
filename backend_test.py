@@ -791,6 +791,14 @@ class RequestWaveAPITester:
         self.test_csv_upload_valid()
         self.test_csv_duplicate_detection()
         
+        # Playlist import tests (NEW)
+        self.test_playlist_import_authentication()
+        self.test_playlist_import_invalid_urls()
+        self.test_spotify_playlist_import()
+        self.test_apple_music_playlist_import()
+        self.test_playlist_import_song_data_quality()
+        self.test_playlist_import_duplicate_detection()
+        
         # Cleanup
         self.test_delete_song()
         
