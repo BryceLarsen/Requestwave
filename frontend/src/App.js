@@ -602,6 +602,51 @@ const MusicianDashboard = () => {
     }
   };
 
+  const fetchDesignSettings = async () => {
+    try {
+      const response = await axios.get(`${API}/design/settings`);
+      setDesignSettings(response.data);
+    } catch (error) {
+      console.error('Error fetching design settings:', error);
+    }
+  };
+
+  const handleDesignUpdate = async (e) => {
+    e.preventDefault();
+    setDesignError('');
+    
+    try {
+      await axios.put(`${API}/design/settings`, designSettings);
+      alert('Design settings updated successfully!');
+    } catch (error) {
+      if (error.response?.status === 402) {
+        setDesignError('Design customization is a Pro feature. Upgrade to access these settings.');
+        setShowUpgrade(true);
+      } else {
+        setDesignError(error.response?.data?.detail || 'Error updating design settings');
+      }
+    }
+  };
+
+  const handleArtistPhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        setDesignError('Image size must be less than 2MB');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setDesignSettings({
+          ...designSettings,
+          artist_photo: event.target.result
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const updateRequestStatus = async (requestId, status) => {
     try {
       await axios.put(`${API}/requests/${requestId}/status?status=${status}`);
