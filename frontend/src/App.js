@@ -178,63 +178,161 @@ const AuthForm = ({ mode, onSwitch }) => {
         </div>
 
         <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-xl">
-          <h2 className="text-2xl font-bold text-white text-center mb-6">
-            {mode === 'login' ? 'Welcome Back' : 'Join RequestWave'}
-          </h2>
+          {!showForgotPassword ? (
+            <>
+              <h2 className="text-2xl font-bold text-white text-center mb-6">
+                {mode === 'login' ? 'Welcome Back' : 'Join RequestWave'}
+              </h2>
 
-          {error && (
-            <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200">
-              {error}
-            </div>
+              {error && (
+                <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200">
+                  {error}
+                </div>
+              )}
+
+              {resetMessage && (
+                <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 mb-4 text-green-200">
+                  {resetMessage}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {mode === 'register' && (
+                  <input
+                    type="text"
+                    placeholder="Your Stage Name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    required
+                  />
+                )}
+                
+                <input
+                  type="email"
+                  placeholder="Email Address"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  required
+                />
+                
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  required
+                />
+                
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 disabled:opacity-50"
+                >
+                  {loading ? 'Please wait...' : (mode === 'login' ? 'Sign In' : 'Create Account')}
+                </button>
+              </form>
+
+              <div className="text-center mt-6 space-y-2">
+                <button
+                  onClick={() => onSwitch(mode === 'login' ? 'register' : 'login')}
+                  className="text-purple-300 hover:text-white transition duration-300 block"
+                >
+                  {mode === 'login' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
+                </button>
+                {mode === 'login' && (
+                  <button
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-purple-300 hover:text-white transition duration-300"
+                  >
+                    Forgot your password?
+                  </button>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="text-2xl font-bold text-white text-center mb-6">
+                Reset Password
+              </h2>
+
+              {error && (
+                <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200">
+                  {error}
+                </div>
+              )}
+
+              {resetMessage && (
+                <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 mb-4 text-green-200">
+                  {resetMessage}
+                </div>
+              )}
+
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                {resetStep === 1 ? (
+                  <>
+                    <input
+                      type="email"
+                      placeholder="Enter your email address"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      required
+                    />
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 disabled:opacity-50"
+                    >
+                      {loading ? 'Sending...' : 'Send Reset Code'}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      placeholder="Enter reset code"
+                      value={resetCode}
+                      onChange={(e) => setResetCode(e.target.value)}
+                      className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      required
+                    />
+                    <input
+                      type="password"
+                      placeholder="Enter new password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      required
+                    />
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 disabled:opacity-50"
+                    >
+                      {loading ? 'Resetting...' : 'Reset Password'}
+                    </button>
+                  </>
+                )}
+              </form>
+
+              <div className="text-center mt-6">
+                <button
+                  onClick={() => {
+                    setShowForgotPassword(false);
+                    setResetStep(1);
+                    setError('');
+                    setResetMessage('');
+                  }}
+                  className="text-purple-300 hover:text-white transition duration-300"
+                >
+                  Back to login
+                </button>
+              </div>
+            </>
           )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === 'register' && (
-              <input
-                type="text"
-                placeholder="Your Stage Name"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                required
-              />
-            )}
-            
-            <input
-              type="email"
-              placeholder="Email Address"
-              value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
-              className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              required
-            />
-            
-            <input
-              type="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={(e) => setFormData({...formData, password: e.target.value})}
-              className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              required
-            />
-            
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 disabled:opacity-50"
-            >
-              {loading ? 'Please wait...' : (mode === 'login' ? 'Sign In' : 'Create Account')}
-            </button>
-          </form>
-
-          <div className="text-center mt-6">
-            <button
-              onClick={() => onSwitch(mode === 'login' ? 'register' : 'login')}
-              className="text-purple-300 hover:text-white transition duration-300"
-            >
-              {mode === 'login' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
-            </button>
-          </div>
         </div>
       </div>
     </div>
