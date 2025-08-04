@@ -894,59 +894,76 @@ const MusicianDashboard = () => {
             )}
           </div>
           
-          <div className="flex items-center space-x-4">
-            <input
-              type="text"
-              value={audienceUrl}
-              readOnly
-              className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white"
-            />
-            <button
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(audienceUrl);
-                  // Provide visual feedback
-                  const button = event.target;
-                  const originalText = button.textContent;
-                  button.textContent = 'Copied!';
-                  button.style.backgroundColor = '#059669'; // green-600
-                  setTimeout(() => {
-                    button.textContent = originalText;
-                    button.style.backgroundColor = ''; // reset to original
-                  }, 2000);
-                } catch (err) {
-                  console.error('Failed to copy text: ', err);
-                  // Fallback for browsers that don't support clipboard API
-                  const textArea = document.createElement('textarea');
-                  textArea.value = audienceUrl;
-                  document.body.appendChild(textArea);
-                  textArea.select();
-                  document.execCommand('copy');
-                  document.body.removeChild(textArea);
-                  
-                  // Provide visual feedback for fallback
-                  const button = event.target;
-                  const originalText = button.textContent;
-                  button.textContent = 'Copied!';
-                  button.style.backgroundColor = '#059669';
-                  setTimeout(() => {
-                    button.textContent = originalText;
-                    button.style.backgroundColor = '';
-                  }, 2000);
-                }
-              }}
-              className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition duration-300"
-            >
-              Copy
-            </button>
-            {subscriptionStatus && subscriptionStatus.plan === 'free' && !subscriptionStatus.can_make_request && (
+          <div className="flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-4">
+            <div className="flex items-center space-x-4 flex-1">
+              <input
+                type="text"
+                value={audienceUrl}
+                readOnly
+                className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white"
+              />
               <button
-                onClick={() => setShowUpgrade(true)}
-                className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold transition duration-300"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(audienceUrl);
+                    // Provide visual feedback
+                    const button = event.target;
+                    const originalText = button.textContent;
+                    button.textContent = 'Copied!';
+                    button.style.backgroundColor = '#059669'; // green-600
+                    setTimeout(() => {
+                      button.textContent = originalText;
+                      button.style.backgroundColor = ''; // reset to original
+                    }, 2000);
+                  } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                    // Fallback for browsers that don't support clipboard API
+                    const textArea = document.createElement('textarea');
+                    textArea.value = audienceUrl;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    
+                    // Provide visual feedback for fallback
+                    const button = event.target;
+                    const originalText = button.textContent;
+                    button.textContent = 'Copied!';
+                    button.style.backgroundColor = '#059669';
+                    setTimeout(() => {
+                      button.textContent = originalText;
+                      button.style.backgroundColor = '';
+                    }, 2000);
+                  }
+                }}
+                className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition duration-300"
               >
-                Upgrade to Pro
+                Copy
               </button>
-            )}
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={generateQRCode}
+                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-medium transition duration-300"
+              >
+                QR Code
+              </button>
+              <button
+                onClick={generateAndDownloadFlyer}
+                className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-medium transition duration-300"
+              >
+                Print Flyer
+              </button>
+              {subscriptionStatus && subscriptionStatus.plan === 'free' && !subscriptionStatus.can_make_request && (
+                <button
+                  onClick={() => setShowUpgrade(true)}
+                  className="bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-lg font-bold transition duration-300"
+                >
+                  Upgrade
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
