@@ -466,6 +466,275 @@ class RequestWaveAPITester:
         except Exception as e:
             self.log_result("CSV Duplicate Detection", False, f"Exception: {str(e)}")
 
+    def test_spotify_playlist_import(self):
+        """Test Spotify playlist import functionality"""
+        try:
+            if not self.auth_token:
+                self.log_result("Spotify Playlist Import", False, "No auth token available")
+                return
+            
+            # Test with a valid Spotify playlist URL
+            playlist_data = {
+                "playlist_url": "https://open.spotify.com/playlist/37i9dQZEVXbLRQDuF5jeBp",
+                "platform": "spotify"
+            }
+            
+            response = self.make_request("POST", "/songs/playlist/import", playlist_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "success" in data and data["success"] and "songs_added" in data:
+                    if data["songs_added"] > 0:
+                        self.log_result("Spotify Playlist Import", True, f"Successfully imported {data['songs_added']} songs from Spotify playlist")
+                        
+                        # Verify songs were actually added to database
+                        songs_response = self.make_request("GET", "/songs")
+                        if songs_response.status_code == 200:
+                            songs = songs_response.json()
+                            spotify_songs = [song for song in songs if "spotify" in song.get("notes", "").lower() or "demo" in song.get("notes", "").lower()]
+                            if len(spotify_songs) > 0:
+                                self.log_result("Spotify Playlist Import - Database Verification", True, f"Found {len(spotify_songs)} imported songs in database")
+                            else:
+                                self.log_result("Spotify Playlist Import - Database Verification", False, "No imported songs found in database")
+                    else:
+                        self.log_result("Spotify Playlist Import", False, f"No songs were imported: {data}")
+                else:
+                    self.log_result("Spotify Playlist Import", False, f"Unexpected response structure: {data}")
+            else:
+                self.log_result("Spotify Playlist Import", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Spotify Playlist Import", False, f"Exception: {str(e)}")
+
+    def test_apple_music_playlist_import(self):
+        """Test Apple Music playlist import functionality"""
+        try:
+            if not self.auth_token:
+                self.log_result("Apple Music Playlist Import", False, "No auth token available")
+                return
+            
+            # Test with a valid Apple Music playlist URL
+            playlist_data = {
+                "playlist_url": "https://music.apple.com/us/playlist/todays-hits/pl.f4d106fed2bd41149aaacabb233eb5eb",
+                "platform": "apple_music"
+            }
+            
+            response = self.make_request("POST", "/songs/playlist/import", playlist_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "success" in data and data["success"] and "songs_added" in data:
+                    if data["songs_added"] > 0:
+                        self.log_result("Apple Music Playlist Import", True, f"Successfully imported {data['songs_added']} songs from Apple Music playlist")
+                        
+                        # Verify songs were actually added to database
+                        songs_response = self.make_request("GET", "/songs")
+                        if songs_response.status_code == 200:
+                            songs = songs_response.json()
+                            apple_songs = [song for song in songs if "apple" in song.get("notes", "").lower() or "demo" in song.get("notes", "").lower()]
+                            if len(apple_songs) > 0:
+                                self.log_result("Apple Music Playlist Import - Database Verification", True, f"Found {len(apple_songs)} imported songs in database")
+                            else:
+                                self.log_result("Apple Music Playlist Import - Database Verification", False, "No imported songs found in database")
+                    else:
+                        self.log_result("Apple Music Playlist Import", False, f"No songs were imported: {data}")
+                else:
+                    self.log_result("Apple Music Playlist Import", False, f"Unexpected response structure: {data}")
+            else:
+                self.log_result("Apple Music Playlist Import", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Apple Music Playlist Import", False, f"Exception: {str(e)}")
+
+    def test_playlist_import_authentication(self):
+        """Test playlist import requires authentication"""
+        try:
+            # Save current token
+            original_token = self.auth_token
+            
+            # Test without token
+            self.auth_token = None
+            playlist_data = {
+                "playlist_url": "https://open.spotify.com/playlist/37i9dQZEVXbLRQDuF5jeBp",
+                "platform": "spotify"
+            }
+            
+            response = self.make_request("POST", "/songs/playlist/import", playlist_data)
+            
+            if response.status_code == 401:
+                self.log_result("Playlist Import Authentication - No Token", True, "Correctly rejected request without auth token")
+            else:
+                self.log_result("Playlist Import Authentication - No Token", False, f"Should have returned 401, got: {response.status_code}")
+            
+            # Test with invalid token
+            self.auth_token = "invalid_token_12345"
+            response = self.make_request("POST", "/songs/playlist/import", playlist_data)
+            
+            if response.status_code == 401:
+                self.log_result("Playlist Import Authentication - Invalid Token", True, "Correctly rejected request with invalid token")
+            else:
+                self.log_result("Playlist Import Authentication - Invalid Token", False, f"Should have returned 401, got: {response.status_code}")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+        except Exception as e:
+            self.log_result("Playlist Import Authentication", False, f"Exception: {str(e)}")
+
+    def test_playlist_import_invalid_urls(self):
+        """Test playlist import with invalid URLs"""
+        try:
+            if not self.auth_token:
+                self.log_result("Playlist Import Invalid URLs", False, "No auth token available")
+                return
+            
+            # Test invalid Spotify URL
+            invalid_spotify_data = {
+                "playlist_url": "https://invalid-spotify-url.com/playlist/123",
+                "platform": "spotify"
+            }
+            
+            response = self.make_request("POST", "/songs/playlist/import", invalid_spotify_data)
+            
+            if response.status_code == 400:
+                self.log_result("Playlist Import - Invalid Spotify URL", True, "Correctly rejected invalid Spotify URL")
+            else:
+                self.log_result("Playlist Import - Invalid Spotify URL", False, f"Should have returned 400, got: {response.status_code}")
+            
+            # Test invalid Apple Music URL
+            invalid_apple_data = {
+                "playlist_url": "https://invalid-apple-url.com/playlist/123",
+                "platform": "apple_music"
+            }
+            
+            response = self.make_request("POST", "/songs/playlist/import", invalid_apple_data)
+            
+            if response.status_code == 400:
+                self.log_result("Playlist Import - Invalid Apple Music URL", True, "Correctly rejected invalid Apple Music URL")
+            else:
+                self.log_result("Playlist Import - Invalid Apple Music URL", False, f"Should have returned 400, got: {response.status_code}")
+            
+            # Test unsupported platform
+            unsupported_platform_data = {
+                "playlist_url": "https://open.spotify.com/playlist/37i9dQZEVXbLRQDuF5jeBp",
+                "platform": "youtube"
+            }
+            
+            response = self.make_request("POST", "/songs/playlist/import", unsupported_platform_data)
+            
+            if response.status_code == 400:
+                self.log_result("Playlist Import - Unsupported Platform", True, "Correctly rejected unsupported platform")
+            else:
+                self.log_result("Playlist Import - Unsupported Platform", False, f"Should have returned 400, got: {response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Playlist Import Invalid URLs", False, f"Exception: {str(e)}")
+
+    def test_playlist_import_song_data_quality(self):
+        """Test that imported songs have proper data quality"""
+        try:
+            if not self.auth_token:
+                self.log_result("Playlist Import Song Data Quality", False, "No auth token available")
+                return
+            
+            # Import a playlist first
+            playlist_data = {
+                "playlist_url": "https://open.spotify.com/playlist/37i9dQZEVXbLRQDuF5jeBp",
+                "platform": "spotify"
+            }
+            
+            import_response = self.make_request("POST", "/songs/playlist/import", playlist_data)
+            
+            if import_response.status_code == 200:
+                import_data = import_response.json()
+                if import_data.get("songs_added", 0) > 0:
+                    # Get all songs and check the imported ones
+                    songs_response = self.make_request("GET", "/songs")
+                    if songs_response.status_code == 200:
+                        songs = songs_response.json()
+                        
+                        # Find recently imported songs (demo songs from playlist import)
+                        imported_songs = [song for song in songs if "demo" in song.get("notes", "").lower() or "spotify" in song.get("notes", "").lower()]
+                        
+                        if imported_songs:
+                            quality_issues = []
+                            
+                            for song in imported_songs:
+                                # Check required fields
+                                if not song.get("title") or song["title"].strip() == "":
+                                    quality_issues.append(f"Song missing title: {song}")
+                                if not song.get("artist") or song["artist"].strip() == "":
+                                    quality_issues.append(f"Song missing artist: {song}")
+                                
+                                # Check optional but expected fields
+                                if not song.get("genres") or len(song["genres"]) == 0:
+                                    quality_issues.append(f"Song missing genres: {song['title']}")
+                                if not song.get("moods") or len(song["moods"]) == 0:
+                                    quality_issues.append(f"Song missing moods: {song['title']}")
+                                if not song.get("year"):
+                                    quality_issues.append(f"Song missing year: {song['title']}")
+                            
+                            if len(quality_issues) == 0:
+                                self.log_result("Playlist Import Song Data Quality", True, f"All {len(imported_songs)} imported songs have proper data quality")
+                            else:
+                                self.log_result("Playlist Import Song Data Quality", False, f"Found {len(quality_issues)} data quality issues: {quality_issues[:3]}")
+                        else:
+                            self.log_result("Playlist Import Song Data Quality", False, "No imported songs found to check quality")
+                    else:
+                        self.log_result("Playlist Import Song Data Quality", False, "Could not retrieve songs to check quality")
+                else:
+                    self.log_result("Playlist Import Song Data Quality", False, "No songs were imported to check quality")
+            else:
+                self.log_result("Playlist Import Song Data Quality", False, f"Could not import playlist for quality check: {import_response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Playlist Import Song Data Quality", False, f"Exception: {str(e)}")
+
+    def test_playlist_import_duplicate_detection(self):
+        """Test that playlist import detects and handles duplicates"""
+        try:
+            if not self.auth_token:
+                self.log_result("Playlist Import Duplicate Detection", False, "No auth token available")
+                return
+            
+            # Import the same playlist twice
+            playlist_data = {
+                "playlist_url": "https://open.spotify.com/playlist/37i9dQZEVXbLRQDuF5jeBp",
+                "platform": "spotify"
+            }
+            
+            # First import
+            first_response = self.make_request("POST", "/songs/playlist/import", playlist_data)
+            
+            if first_response.status_code == 200:
+                first_data = first_response.json()
+                first_songs_added = first_data.get("songs_added", 0)
+                
+                if first_songs_added > 0:
+                    # Second import (should detect duplicates)
+                    second_response = self.make_request("POST", "/songs/playlist/import", playlist_data)
+                    
+                    if second_response.status_code == 200:
+                        second_data = second_response.json()
+                        second_songs_added = second_data.get("songs_added", 0)
+                        songs_skipped = second_data.get("songs_skipped", 0)
+                        errors = second_data.get("errors", [])
+                        
+                        # Check if duplicates were detected
+                        duplicate_errors = [error for error in errors if "duplicate" in error.lower() or "skipped" in error.lower()]
+                        
+                        if songs_skipped > 0 or duplicate_errors:
+                            self.log_result("Playlist Import Duplicate Detection", True, f"Correctly detected duplicates: {songs_skipped} skipped, {len(duplicate_errors)} duplicate errors")
+                        else:
+                            self.log_result("Playlist Import Duplicate Detection", False, f"Should have detected duplicates but didn't: {second_data}")
+                    else:
+                        self.log_result("Playlist Import Duplicate Detection", False, f"Second import failed: {second_response.status_code}")
+                else:
+                    self.log_result("Playlist Import Duplicate Detection", False, "First import added no songs, cannot test duplicates")
+            else:
+                self.log_result("Playlist Import Duplicate Detection", False, f"First import failed: {first_response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Playlist Import Duplicate Detection", False, f"Exception: {str(e)}")
+
     def test_delete_song(self):
         """Test song deletion (run last to clean up)"""
         try:
