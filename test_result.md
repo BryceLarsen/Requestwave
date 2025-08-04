@@ -151,10 +151,10 @@ backend:
 
   - task: "CSV Song Upload"
     implemented: true
-    working: "NA"
+    working: false
     file: "server.py"
-    stuck_count: 0
-    priority: "high"
+    stuck_count: 1
+    priority: "critical"
     needs_retesting: true
     status_history:
       - working: "NA"
@@ -163,6 +163,9 @@ backend:
       - working: "NA"
         agent: "main"
         comment: "Implemented CSV upload with preview/validation endpoints, supports Title/Artist/Genre/Mood/Year/Notes columns, includes duplicate checking and error handling"
+      - working: false
+        agent: "user"
+        comment: "User reported: 'I tried uploading a csv file and it came back with invalid token' - CSV upload authentication is broken"
 
   - task: "Advanced Song Filtering"
     implemented: true
