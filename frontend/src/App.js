@@ -663,6 +663,95 @@ const MusicianDashboard = () => {
     }
   };
 
+  const generateQRCode = async () => {
+    try {
+      const response = await axios.get(`${API}/qr-code`);
+      setQrCode(response.data);
+      setShowQRModal(true);
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      alert('Error generating QR code');
+    }
+  };
+
+  const downloadQRCode = () => {
+    if (!qrCode) return;
+    
+    const link = document.createElement('a');
+    link.href = qrCode.qr_code;
+    link.download = `${musician.name}-qr-code.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const generateAndDownloadFlyer = async () => {
+    try {
+      const response = await axios.get(`${API}/qr-flyer`);
+      const link = document.createElement('a');
+      link.href = response.data.flyer;
+      link.download = `${musician.name}-qr-flyer.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error generating flyer:', error);
+      alert('Error generating flyer');
+    }
+  };
+
+  const printQRFlyer = async () => {
+    try {
+      const response = await axios.get(`${API}/qr-flyer`);
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>RequestWave QR Flyer - ${musician.name}</title>
+            <style>
+              body { margin: 0; padding: 20px; text-align: center; }
+              img { max-width: 100%; height: auto; }
+              @media print { body { padding: 0; } }
+            </style>
+          </head>
+          <body>
+            <img src="${response.data.flyer}" alt="QR Code Flyer" />
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    } catch (error) {
+      console.error('Error printing flyer:', error);
+      alert('Error generating flyer for printing');
+    }
+  };
+
+  const handlePlaylistImport = async (e) => {
+    e.preventDefault();
+    if (!playlistUrl.trim()) {
+      setPlaylistError('Please enter a playlist URL');
+      return;
+    }
+
+    setImportingPlaylist(true);
+    setPlaylistError('');
+
+    try {
+      const response = await axios.post(`${API}/songs/playlist/import`, {
+        playlist_url: playlistUrl,
+        platform: playlistPlatform
+      });
+      
+      alert(response.data.message);
+      setPlaylistUrl('');
+    } catch (error) {
+      setPlaylistError(error.response?.data?.detail || 'Error importing playlist');
+    } finally {
+      setImportingPlaylist(false);
+    }
+  };
+
   const updateRequestStatus = async (requestId, status) => {
     try {
       await axios.put(`${API}/requests/${requestId}/status?status=${status}`);
