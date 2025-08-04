@@ -1032,11 +1032,13 @@ class RequestWaveAPITester:
 
 if __name__ == "__main__":
     tester = RequestWaveAPITester()
-    success = tester.run_all_tests()
+    
+    # Run ONLY the critical fixes tests as requested in the review
+    success = tester.run_critical_fixes_test()
     
     if success:
-        print("\n🎉 All tests passed!")
+        print("\n🎉 All critical fixes tests passed!")
         exit(0)
     else:
-        print(f"\n💥 {tester.results['failed']} tests failed!")
+        print(f"\n💥 {tester.results['failed']} critical fixes tests failed!")
         exit(1)
