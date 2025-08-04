@@ -1524,6 +1524,15 @@ const AudienceInterface = () => {
   const [songs, setSongs] = useState([]);
   const [filteredSongs, setFilteredSongs] = useState([]);
   const [filters, setFilters] = useState({});
+  const [designSettings, setDesignSettings] = useState({
+    color_scheme: 'purple',
+    layout_mode: 'grid',
+    artist_photo: null,
+    show_year: true,
+    show_notes: true,
+    musician_name: '',
+    bio: ''
+  });
   const [selectedFilters, setSelectedFilters] = useState({
     genre: '',
     artist: '',
@@ -1539,11 +1548,54 @@ const AudienceInterface = () => {
   const [selectedSong, setSelectedSong] = useState(null);
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Color scheme mappings
+  const colorSchemes = {
+    purple: {
+      primary: 'bg-purple-600 hover:bg-purple-700',
+      secondary: 'bg-purple-800/50',
+      accent: 'text-purple-400',
+      button: 'bg-purple-600 hover:bg-purple-700',
+      badge: 'bg-purple-600'
+    },
+    blue: {
+      primary: 'bg-blue-600 hover:bg-blue-700',
+      secondary: 'bg-blue-800/50',
+      accent: 'text-blue-400',
+      button: 'bg-blue-600 hover:bg-blue-700',
+      badge: 'bg-blue-600'
+    },
+    green: {
+      primary: 'bg-green-600 hover:bg-green-700',
+      secondary: 'bg-green-800/50',
+      accent: 'text-green-400',
+      button: 'bg-green-600 hover:bg-green-700',
+      badge: 'bg-green-600'
+    },
+    red: {
+      primary: 'bg-red-600 hover:bg-red-700',
+      secondary: 'bg-red-800/50',
+      accent: 'text-red-400',
+      button: 'bg-red-600 hover:bg-red-700',
+      badge: 'bg-red-600'
+    },
+    orange: {
+      primary: 'bg-orange-600 hover:bg-orange-700',
+      secondary: 'bg-orange-800/50',
+      accent: 'text-orange-400',
+      button: 'bg-orange-600 hover:bg-orange-700',
+      badge: 'bg-orange-600'
+    }
+  };
+
+  const colors = colorSchemes[designSettings.color_scheme] || colorSchemes.purple;
 
   useEffect(() => {
     fetchMusician();
     fetchSongs();
     fetchFilters();
+    fetchDesignSettings();
   }, [slug]);
 
   useEffect(() => {
@@ -1556,6 +1608,15 @@ const AudienceInterface = () => {
       setMusician(response.data);
     } catch (error) {
       console.error('Error fetching musician:', error);
+    }
+  };
+
+  const fetchDesignSettings = async () => {
+    try {
+      const response = await axios.get(`${API}/musicians/${slug}/design`);
+      setDesignSettings(response.data);
+    } catch (error) {
+      console.error('Error fetching design settings:', error);
     }
   };
 
@@ -1635,41 +1696,97 @@ const AudienceInterface = () => {
     }
   };
 
+  const clearFilters = () => {
+    setSelectedFilters({
+      genre: '',
+      artist: '',
+      mood: '',
+      year: ''
+    });
+  };
+
   if (loading) {
-    return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-500"></div>
+      </div>
+    );
   }
 
   if (!musician) {
-    return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Musician not found</div>;
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Musician not found</h1>
+          <p className="text-gray-400">The requested musician profile does not exist.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {/* Header */}
-      <header className="bg-gray-800 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-purple-400 mb-2">{musician.name}</h1>
-            <p className="text-gray-300">Request your favorite songs!</p>
+      {/* Mobile-Optimized Header */}
+      <header className="bg-gray-800 shadow-lg sticky top-0 z-40">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center space-x-4">
+            {designSettings.artist_photo && (
+              <img
+                src={designSettings.artist_photo}
+                alt={designSettings.musician_name}
+                className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover"
+              />
+            )}
+            <div className="flex-1 min-w-0">
+              <h1 className={`text-xl md:text-2xl font-bold ${colors.accent} truncate`}>
+                {designSettings.musician_name}
+              </h1>
+              {designSettings.bio && (
+                <p className="text-gray-300 text-sm md:text-base truncate">{designSettings.bio}</p>
+              )}
+            </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`md:hidden ${colors.primary} px-4 py-2 rounded-lg font-medium transition duration-300`}
+            >
+              Filters
+            </button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-4 md:py-8">
         {success && (
-          <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 mb-6 text-green-200">
+          <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 md:p-4 mb-4 md:mb-6 text-green-200">
             {success}
           </div>
         )}
 
-        {/* Filters */}
-        <div className="bg-gray-800 rounded-xl p-6 mb-8">
-          <h2 className="text-xl font-bold mb-4">Filter Songs</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Mobile/Desktop Filters */}
+        <div className={`${colors.secondary} rounded-xl p-4 md:p-6 mb-4 md:mb-8 ${showFilters ? 'block' : 'hidden md:block'}`}>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+            <h2 className="text-lg md:text-xl font-bold mb-2 md:mb-0">Find a Song</h2>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={clearFilters}
+                className="text-gray-300 hover:text-white text-sm transition duration-300"
+              >
+                Clear Filters
+              </button>
+              <button
+                onClick={() => setShowFilters(false)}
+                className="md:hidden text-gray-300 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
             <select
               value={selectedFilters.genre}
               onChange={(e) => setSelectedFilters({...selectedFilters, genre: e.target.value})}
-              className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+              className="bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
             >
               <option value="">All Genres</option>
               {filters.genres?.map((genre) => (
@@ -1682,13 +1799,13 @@ const AudienceInterface = () => {
               placeholder="Artist name..."
               value={selectedFilters.artist}
               onChange={(e) => setSelectedFilters({...selectedFilters, artist: e.target.value})}
-              className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+              className="bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white placeholder-gray-400 text-sm md:text-base"
             />
             
             <select
               value={selectedFilters.mood}
               onChange={(e) => setSelectedFilters({...selectedFilters, mood: e.target.value})}
-              className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+              className="bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
             >
               <option value="">All Moods</option>
               {filters.moods?.map((mood) => (
@@ -1699,7 +1816,7 @@ const AudienceInterface = () => {
             <select
               value={selectedFilters.year}
               onChange={(e) => setSelectedFilters({...selectedFilters, year: e.target.value})}
-              className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+              className="bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
             >
               <option value="">All Years</option>
               {filters.years?.map((year) => (
@@ -1709,45 +1826,112 @@ const AudienceInterface = () => {
           </div>
         </div>
 
-        {/* Songs Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Songs Display */}
+        <div className="mb-4">
+          <p className="text-gray-400 text-sm md:text-base">
+            {filteredSongs.length} song{filteredSongs.length !== 1 ? 's' : ''} found
+          </p>
+        </div>
+
+        {/* List/Grid Toggle for larger screens */}
+        <div className="hidden md:flex justify-end mb-6">
+          <div className="flex bg-gray-800 rounded-lg p-1">
+            <button
+              onClick={() => setDesignSettings({...designSettings, layout_mode: 'grid'})}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition duration-300 ${
+                designSettings.layout_mode === 'grid'
+                  ? colors.primary + ' text-white'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Grid
+            </button>
+            <button
+              onClick={() => setDesignSettings({...designSettings, layout_mode: 'list'})}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition duration-300 ${
+                designSettings.layout_mode === 'list'
+                  ? colors.primary + ' text-white'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              List
+            </button>
+          </div>
+        </div>
+
+        {/* Songs Grid/List */}
+        <div className={`${
+          designSettings.layout_mode === 'list' 
+            ? 'space-y-3 md:space-y-4' 
+            : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6'
+        }`}>
           {filteredSongs.map((song) => (
-            <div key={song.id} className="bg-gray-800 rounded-xl p-6 hover:bg-gray-700 transition duration-300">
-              <h3 className="font-bold text-xl mb-2">{song.title}</h3>
-              <p className="text-gray-300 mb-3">by {song.artist}</p>
-              
-              <div className="flex flex-wrap gap-2 mb-4">
-                {song.genres.map((genre, idx) => (
-                  <span key={idx} className="bg-blue-600 text-xs px-2 py-1 rounded">{genre}</span>
-                ))}
-                {song.moods.map((mood, idx) => (
-                  <span key={idx} className="bg-green-600 text-xs px-2 py-1 rounded">{mood}</span>
-                ))}
-                {song.year && <span className="bg-gray-600 text-xs px-2 py-1 rounded">{song.year}</span>}
+            <div
+              key={song.id}
+              className={`bg-gray-800 rounded-xl p-4 md:p-6 hover:bg-gray-700 transition duration-300 ${
+                designSettings.layout_mode === 'list' ? 'flex items-center space-x-4' : ''
+              }`}
+            >
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-lg md:text-xl mb-1 md:mb-2 truncate">{song.title}</h3>
+                <p className="text-gray-300 mb-2 md:mb-3 truncate">by {song.artist}</p>
+                
+                <div className="flex flex-wrap gap-1 md:gap-2 mb-3 md:mb-4">
+                  {song.genres.map((genre, idx) => (
+                    <span key={idx} className="bg-blue-600 text-xs px-2 py-1 rounded">{genre}</span>
+                  ))}
+                  {song.moods.map((mood, idx) => (
+                    <span key={idx} className="bg-green-600 text-xs px-2 py-1 rounded">{mood}</span>
+                  ))}
+                  {designSettings.show_year && song.year && (
+                    <span className="bg-gray-600 text-xs px-2 py-1 rounded">{song.year}</span>
+                  )}
+                </div>
+                
+                {designSettings.show_notes && song.notes && (
+                  <p className="text-gray-400 text-xs md:text-sm italic mb-3 md:mb-4">"{song.notes}"</p>
+                )}
               </div>
               
               <button
                 onClick={() => setSelectedSong(song)}
-                className="w-full bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300"
+                className={`${colors.button} w-full md:w-auto px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold transition duration-300 text-sm md:text-base whitespace-nowrap`}
               >
-                Request This Song
+                Request Song
               </button>
             </div>
           ))}
         </div>
 
         {filteredSongs.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-400 text-xl">No songs match your filters</p>
+          <div className="text-center py-12 md:py-16">
+            <div className="text-4xl md:text-6xl mb-4">🎵</div>
+            <p className="text-gray-400 text-lg md:text-xl mb-2">No songs match your search</p>
+            <button
+              onClick={clearFilters}
+              className={`${colors.button} px-6 py-2 rounded-lg font-medium transition duration-300`}
+            >
+              Clear Filters
+            </button>
           </div>
         )}
 
-        {/* Request Modal */}
+        {/* Request Modal - Mobile Optimized */}
         {selectedSong && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
-              <h2 className="text-xl font-bold mb-4">Request: {selectedSong.title}</h2>
-              <p className="text-gray-300 mb-6">by {selectedSong.artist}</p>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center p-4 z-50">
+            <div className="bg-gray-800 rounded-t-xl md:rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex-1 min-w-0 mr-4">
+                  <h2 className="text-xl font-bold mb-1 truncate">Request: {selectedSong.title}</h2>
+                  <p className="text-gray-300 truncate">by {selectedSong.artist}</p>
+                </div>
+                <button
+                  onClick={() => setSelectedSong(null)}
+                  className="text-gray-400 hover:text-white text-2xl leading-none"
+                >
+                  ×
+                </button>
+              </div>
               
               <div className="space-y-4">
                 <input
@@ -1755,7 +1939,7 @@ const AudienceInterface = () => {
                   placeholder="Your Name"
                   value={requestForm.requester_name}
                   onChange={(e) => setRequestForm({...requestForm, requester_name: e.target.value})}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
                   required
                 />
                 
@@ -1764,7 +1948,7 @@ const AudienceInterface = () => {
                   placeholder="Your Email"
                   value={requestForm.requester_email}
                   onChange={(e) => setRequestForm({...requestForm, requester_email: e.target.value})}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
                   required
                 />
                 
@@ -1772,7 +1956,7 @@ const AudienceInterface = () => {
                   placeholder="Dedication message (optional)"
                   value={requestForm.dedication}
                   onChange={(e) => setRequestForm({...requestForm, dedication: e.target.value})}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
                   rows="3"
                 />
                 
@@ -1781,22 +1965,22 @@ const AudienceInterface = () => {
                   placeholder="Tip Amount ($)"
                   value={requestForm.tip_amount}
                   onChange={(e) => setRequestForm({...requestForm, tip_amount: e.target.value})}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
                   min="0"
                   step="0.01"
                 />
               </div>
               
-              <div className="flex space-x-4 mt-6">
+              <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 mt-6">
                 <button
                   onClick={() => setSelectedSong(null)}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 py-2 rounded-lg transition duration-300"
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 py-3 rounded-lg transition duration-300 order-2 md:order-1"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => handleRequest(selectedSong)}
-                  className="flex-1 bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300"
+                  className={`flex-1 ${colors.button} py-3 rounded-lg font-bold transition duration-300 order-1 md:order-2`}
                 >
                   Send Request
                 </button>
