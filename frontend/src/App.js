@@ -836,6 +836,67 @@ const MusicianDashboard = () => {
     }
   }, [sortBy]);
 
+  // NEW: Phase 3 - Analytics functions
+  const fetchAnalytics = async () => {
+    setAnalyticsLoading(true);
+    try {
+      const response = await axios.get(`${API}/analytics/daily?days=${analyticsDays}`);
+      setAnalyticsData(response.data);
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  const fetchRequesters = async () => {
+    try {
+      const response = await axios.get(`${API}/analytics/requesters`);
+      setRequestersData(response.data.requesters);
+    } catch (error) {
+      console.error('Error fetching requesters:', error);
+    }
+  };
+
+  const exportRequestersCSV = async () => {
+    try {
+      const response = await axios.get(`${API}/analytics/export-requesters`, {
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `requesters-${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+      
+      alert('Requesters CSV exported successfully!');
+    } catch (error) {
+      console.error('Error exporting requesters CSV:', error);
+      alert('Error exporting requesters. Please try again.');
+    }
+  };
+
+  const handleTimeframeChange = (timeframe) => {
+    setAnalyticsTimeframe(timeframe);
+    let days = 7;
+    if (timeframe === 'weekly') days = 7;
+    else if (timeframe === 'monthly') days = 30;
+    else days = 7; // daily default
+    
+    setAnalyticsDays(days);
+  };
+
+  // Fetch analytics when tab is active or timeframe changes
+  React.useEffect(() => {
+    if (activeTab === 'analytics') {
+      fetchAnalytics();
+      fetchRequesters();
+    }
+  }, [activeTab, analyticsDays]);
+
   const fetchDesignSettings = async () => {
     try {
       const response = await axios.get(`${API}/design/settings`);
