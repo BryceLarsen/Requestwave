@@ -386,6 +386,7 @@ const MusicianDashboard = () => {
       setShowProfile(false);
       // Update the musician name in auth context if it changed
       if (response.data.name !== musician.name) {
+        const { login } = useAuth();
         login({
           token: localStorage.getItem('token'),
           musician: { ...musician, name: response.data.name }
