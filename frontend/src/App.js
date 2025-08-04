@@ -133,6 +133,42 @@ const AuthForm = ({ mode, onSwitch }) => {
     }
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    if (resetStep === 1) {
+      // Send reset code
+      try {
+        const response = await axios.post(`${API}/auth/forgot-password`, { email: resetEmail });
+        setResetMessage(`Reset code sent! For development: ${response.data.reset_code}`);
+        setResetStep(2);
+      } catch (error) {
+        setError(error.response?.data?.detail || 'Error sending reset code');
+      }
+    } else {
+      // Confirm reset with code and new password
+      try {
+        await axios.post(`${API}/auth/reset-password`, {
+          email: resetEmail,
+          reset_code: resetCode,
+          new_password: newPassword
+        });
+        setResetMessage('Password reset successful! You can now login with your new password.');
+        setShowForgotPassword(false);
+        setResetStep(1);
+        setResetEmail('');
+        setResetCode('');
+        setNewPassword('');
+      } catch (error) {
+        setError(error.response?.data?.detail || 'Error resetting password');
+      }
+    }
+    
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
