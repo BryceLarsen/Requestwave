@@ -406,7 +406,39 @@ const MusicianDashboard = () => {
               className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white"
             />
             <button
-              onClick={() => navigator.clipboard.writeText(audienceUrl)}
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(audienceUrl);
+                  // Provide visual feedback
+                  const button = event.target;
+                  const originalText = button.textContent;
+                  button.textContent = 'Copied!';
+                  button.style.backgroundColor = '#059669'; // green-600
+                  setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = ''; // reset to original
+                  }, 2000);
+                } catch (err) {
+                  console.error('Failed to copy text: ', err);
+                  // Fallback for browsers that don't support clipboard API
+                  const textArea = document.createElement('textarea');
+                  textArea.value = audienceUrl;
+                  document.body.appendChild(textArea);
+                  textArea.select();
+                  document.execCommand('copy');
+                  document.body.removeChild(textArea);
+                  
+                  // Provide visual feedback for fallback
+                  const button = event.target;
+                  const originalText = button.textContent;
+                  button.textContent = 'Copied!';
+                  button.style.backgroundColor = '#059669';
+                  setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '';
+                  }, 2000);
+                }
+              }}
               className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition duration-300"
             >
               Copy
