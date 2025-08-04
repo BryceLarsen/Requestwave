@@ -21,6 +21,10 @@ import qrcode
 from PIL import Image, ImageDraw, ImageFont
 import base64
 from io import BytesIO
+import httpx
+from bs4 import BeautifulSoup
+import asyncio
+import json
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
