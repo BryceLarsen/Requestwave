@@ -1135,6 +1135,57 @@ const MusicianDashboard = () => {
               </div>
             )}
 
+            {/* Playlist Import Section */}
+            <div className="bg-gray-800 rounded-xl p-6 mb-8">
+              <h3 className="text-lg font-bold mb-4">Import from Music Playlist</h3>
+              <p className="text-gray-300 mb-4 text-sm">
+                Import songs from Spotify or Apple Music public playlists
+              </p>
+
+              {playlistError && (
+                <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200">
+                  {playlistError}
+                </div>
+              )}
+
+              <form onSubmit={handlePlaylistImport} className="space-y-4">
+                <div>
+                  <label className="block text-gray-300 text-sm font-bold mb-2">Platform</label>
+                  <select
+                    value={playlistPlatform}
+                    onChange={(e) => setPlaylistPlatform(e.target.value)}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  >
+                    <option value="spotify">Spotify</option>
+                    <option value="apple_music">Apple Music</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-gray-300 text-sm font-bold mb-2">Playlist URL</label>
+                  <input
+                    type="url"
+                    placeholder={playlistPlatform === 'spotify' 
+                      ? 'https://open.spotify.com/playlist/...' 
+                      : 'https://music.apple.com/playlist/...'
+                    }
+                    value={playlistUrl}
+                    onChange={(e) => setPlaylistUrl(e.target.value)}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                    required
+                  />
+                </div>
+                
+                <button
+                  type="submit"
+                  disabled={importingPlaylist}
+                  className="w-full bg-green-600 hover:bg-green-700 py-2 rounded-lg font-bold transition duration-300 disabled:opacity-50"
+                >
+                  {importingPlaylist ? 'Importing...' : `Import from ${playlistPlatform === 'apple_music' ? 'Apple Music' : 'Spotify'}`}
+                </button>
+              </form>
+            </div>
+
             {/* Add Song Form */}
             <div className="bg-gray-800 rounded-xl p-6 mb-8">
               <h2 className="text-xl font-bold mb-4">
