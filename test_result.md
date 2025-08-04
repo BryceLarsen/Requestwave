@@ -282,10 +282,10 @@ test_plan:
 
   - task: "Forgot Password Feature"
     implemented: true
-    working: "NA"
+    working: false
     file: "server.py, App.js"
-    stuck_count: 0
-    priority: "medium"
+    stuck_count: 1
+    priority: "critical"
     needs_retesting: true
     status_history:
       - working: "NA"
@@ -294,6 +294,9 @@ test_plan:
       - working: "NA"
         agent: "main"
         comment: "IMPLEMENTED: Added forgot password with 2-step process (email -> reset code + new password), includes backend endpoints and frontend UI integration"
+      - working: false
+        agent: "user"
+        comment: "User reported: 'i tried forgot password and it still wont work' - forgot password functionality is broken and not working as expected"
 
   - task: "Song Edit Functionality"
     implemented: true
