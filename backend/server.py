@@ -453,6 +453,24 @@ async def get_musician_by_slug(slug: str):
         slug=musician["slug"]
     )
 
+@api_router.get("/musicians/{slug}/design")
+async def get_musician_design(slug: str):
+    """Get musician's public design settings"""
+    musician = await db.musicians.find_one({"slug": slug})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    design_settings = musician.get("design_settings", {})
+    return {
+        "color_scheme": design_settings.get("color_scheme", "purple"),
+        "layout_mode": design_settings.get("layout_mode", "grid"),
+        "artist_photo": design_settings.get("artist_photo"),
+        "show_year": design_settings.get("show_year", True),
+        "show_notes": design_settings.get("show_notes", True),
+        "musician_name": musician["name"],
+        "bio": musician.get("bio", "")
+    }
+
 @api_router.get("/profile", response_model=MusicianProfile)
 async def get_profile(musician_id: str = Depends(get_current_musician)):
     """Get current musician's profile"""
