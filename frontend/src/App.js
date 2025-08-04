@@ -384,6 +384,16 @@ const MusicianDashboard = () => {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgrading, setUpgrading] = useState(false);
 
+  // Design settings state
+  const [designSettings, setDesignSettings] = useState({
+    color_scheme: 'purple',
+    layout_mode: 'grid',
+    artist_photo: null,
+    show_year: true,
+    show_notes: true
+  });
+  const [designError, setDesignError] = useState('');
+
   useEffect(() => {
     fetchSongs();
     fetchRequests();
