@@ -396,6 +396,9 @@ const MusicianDashboard = () => {
   const [filteredSongs, setFilteredSongs] = useState([]);
   const [songError, setSongError] = useState('');
 
+  // NEW: Phase 2 - Sorting and popularity state
+  const [sortBy, setSortBy] = useState('created_at'); // 'created_at', 'popularity', 'title', 'artist', 'year'
+
   // Profile management state
   const [showProfile, setShowProfile] = useState(false);
   const [profile, setProfile] = useState({
