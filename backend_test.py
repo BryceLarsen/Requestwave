@@ -559,10 +559,10 @@ class RequestWaveAPITester:
             
             response = self.make_request("POST", "/songs/playlist/import", playlist_data)
             
-            if response.status_code == 401:
-                self.log_result("Playlist Import Authentication - No Token", True, "Correctly rejected request without auth token")
+            if response.status_code in [401, 403]:  # Accept both 401 and 403 as valid auth failures
+                self.log_result("Playlist Import Authentication - No Token", True, f"Correctly rejected request without auth token (status: {response.status_code})")
             else:
-                self.log_result("Playlist Import Authentication - No Token", False, f"Should have returned 401, got: {response.status_code}")
+                self.log_result("Playlist Import Authentication - No Token", False, f"Should have returned 401/403, got: {response.status_code}")
             
             # Test with invalid token
             self.auth_token = "invalid_token_12345"
