@@ -1228,8 +1228,9 @@ async def import_from_playlist(import_data: PlaylistImport, musician_id: str = D
             logger.info(f"Scraping Spotify playlist: {playlist_id}")
             try:
                 songs_to_import = await scrape_spotify_playlist(playlist_id)
-                if songs_to_import is None:
-                    logger.error("Spotify scraping returned None, using fallback songs")
+                # Ensure we always have a list, never None
+                if songs_to_import is None or not isinstance(songs_to_import, list):
+                    logger.error("Spotify scraping returned None or invalid data, using fallback songs")
                     songs_to_import = [
                         {
                             'title': 'As It Was',
@@ -1241,11 +1242,20 @@ async def import_from_playlist(import_data: PlaylistImport, musician_id: str = D
                             'source': 'spotify'
                         },
                         {
-                            'title': 'Heat Waves',
+                            'title': 'Heat Waves', 
                             'artist': 'Glass Animals',
                             'genres': ['Alternative'],
                             'moods': ['Chill'],
                             'year': 2020,
+                            'notes': f'Fallback song from Spotify playlist {playlist_id}',
+                            'source': 'spotify'
+                        },
+                        {
+                            'title': 'Blinding Lights',
+                            'artist': 'The Weeknd',
+                            'genres': ['Pop'],
+                            'moods': ['Energetic'],
+                            'year': 2019,
                             'notes': f'Fallback song from Spotify playlist {playlist_id}',
                             'source': 'spotify'
                         }
