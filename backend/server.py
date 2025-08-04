@@ -350,6 +350,20 @@ async def update_song(song_id: str, song_data: SongCreate, musician_id: str = De
     if not song:
         raise HTTPException(status_code=404, detail="Song not found")
     
+    # Check for duplicates (excluding the current song being edited)
+    existing = await db.songs.find_one({
+        "musician_id": musician_id,
+        "id": {"$ne": song_id},  # Exclude current song
+        "title": {"$regex": f"^{re.escape(song_data.title)}$", "$options": "i"},
+        "artist": {"$regex": f"^{re.escape(song_data.artist)}$", "$options": "i"}
+    })
+    
+    if existing:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Another song '{song_data.title}' by '{song_data.artist}' already exists in your library"
+        )
+    
     # Update song
     update_data = song_data.dict()
     await db.songs.update_one(
