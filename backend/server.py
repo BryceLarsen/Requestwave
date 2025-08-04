@@ -706,6 +706,44 @@ async def reset_password(reset_data: PasswordResetConfirm):
     
     return {"message": "Password reset successful"}
 
+# QR Code endpoints
+@api_router.get("/qr-code")
+async def generate_musician_qr(musician_id: str = Depends(get_current_musician)):
+    """Generate QR code for musician's audience link"""
+    musician = await db.musicians.find_one({"id": musician_id})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    # Construct audience URL
+    base_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+    audience_url = f"{base_url}/musician/{musician['slug']}"
+    
+    qr_code_base64 = generate_qr_code(audience_url)
+    
+    return {
+        "qr_code": f"data:image/png;base64,{qr_code_base64}",
+        "audience_url": audience_url
+    }
+
+@api_router.get("/qr-flyer")
+async def generate_qr_flyer_endpoint(musician_id: str = Depends(get_current_musician)):
+    """Generate printable QR flyer for musician"""
+    musician = await db.musicians.find_one({"id": musician_id})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    # Construct audience URL
+    base_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+    audience_url = f"{base_url}/musician/{musician['slug']}"
+    
+    flyer_base64 = generate_qr_flyer(musician['name'], audience_url)
+    
+    return {
+        "flyer": f"data:image/png;base64,{flyer_base64}",
+        "musician_name": musician['name'],
+        "audience_url": audience_url
+    }
+
 # Design Settings endpoints (Pro feature)
 @api_router.get("/design/settings", response_model=DesignSettings)
 async def get_design_settings(musician_id: str = Depends(get_current_musician)):
