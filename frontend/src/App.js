@@ -378,6 +378,22 @@ const MusicianDashboard = () => {
 
   // Song editing state
   const [editingSong, setEditingSong] = useState(null);
+
+  // NEW: Batch editing and filtering state
+  const [selectedSongs, setSelectedSongs] = useState(new Set());
+  const [showBatchEdit, setShowBatchEdit] = useState(false);
+  const [batchEditForm, setBatchEditForm] = useState({
+    artist: '',
+    genres: '',
+    moods: '',
+    year: ''
+  });
+  const [songFilter, setSongFilter] = useState('');
+  const [genreFilter, setGenreFilter] = useState('');
+  const [artistFilter, setArtistFilter] = useState('');
+  const [moodFilter, setMoodFilter] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
+  const [filteredSongs, setFilteredSongs] = useState([]);
   const [songError, setSongError] = useState('');
 
   // Profile management state
