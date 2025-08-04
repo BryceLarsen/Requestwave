@@ -1263,6 +1263,371 @@ class RequestWaveAPITester:
         except Exception as e:
             self.log_result("Phase 2 Edge Cases", False, f"Exception: {str(e)}")
 
+    def test_analytics_requesters(self):
+        """Test Phase 3: Requester Analytics Endpoint"""
+        try:
+            if not self.auth_token:
+                self.log_result("Analytics Requesters", False, "No auth token available")
+                return
+            
+            print("🔍 Testing requester analytics endpoint")
+            
+            # First create some test requests with different requesters
+            test_requests = [
+                {"requester_name": "Alice Johnson", "requester_email": "alice@example.com", "tip_amount": 5.0},
+                {"requester_name": "Bob Smith", "requester_email": "bob@example.com", "tip_amount": 3.0},
+                {"requester_name": "Alice Johnson", "requester_email": "alice@example.com", "tip_amount": 2.0},  # Same person, different request
+                {"requester_name": "Charlie Brown", "requester_email": "charlie@example.com", "tip_amount": 0.0}
+            ]
+            
+            # Create requests if we have a test song
+            if self.test_song_id:
+                for req_data in test_requests:
+                    request_data = {
+                        "song_id": self.test_song_id,
+                        "requester_name": req_data["requester_name"],
+                        "requester_email": req_data["requester_email"],
+                        "dedication": "Test request for analytics",
+                        "tip_amount": req_data["tip_amount"]
+                    }
+                    
+                    response = self.make_request("POST", "/requests", request_data)
+                    if response.status_code != 200:
+                        print(f"⚠️ Failed to create test request for {req_data['requester_name']}")
+            
+            # Test the analytics endpoint
+            response = self.make_request("GET", "/analytics/requesters")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if "requesters" in data and isinstance(data["requesters"], list):
+                    requesters = data["requesters"]
+                    
+                    # Verify response structure
+                    if len(requesters) > 0:
+                        first_requester = requesters[0]
+                        required_fields = ["name", "email", "request_count", "total_tips", "latest_request"]
+                        
+                        missing_fields = [field for field in required_fields if field not in first_requester]
+                        
+                        if not missing_fields:
+                            # Verify sorting (most frequent first)
+                            request_counts = [req["request_count"] for req in requesters]
+                            is_sorted_desc = all(request_counts[i] >= request_counts[i+1] for i in range(len(request_counts)-1))
+                            
+                            if is_sorted_desc:
+                                self.log_result("Analytics Requesters", True, f"✅ Retrieved {len(requesters)} requesters, sorted by request count")
+                                
+                                # Verify aggregation logic
+                                alice_requests = [req for req in requesters if req["email"] == "alice@example.com"]
+                                if alice_requests and alice_requests[0]["request_count"] >= 2:
+                                    self.log_result("Analytics Requesters - Aggregation", True, f"✅ Correctly aggregated multiple requests per requester")
+                                else:
+                                    self.log_result("Analytics Requesters - Aggregation", False, "❌ Request aggregation not working correctly")
+                            else:
+                                self.log_result("Analytics Requesters", False, f"❌ Requesters not sorted by request count: {request_counts}")
+                        else:
+                            self.log_result("Analytics Requesters", False, f"❌ Missing required fields: {missing_fields}")
+                    else:
+                        self.log_result("Analytics Requesters", True, "✅ No requesters found (empty result)")
+                else:
+                    self.log_result("Analytics Requesters", False, f"❌ Invalid response structure: {data}")
+            else:
+                self.log_result("Analytics Requesters", False, f"❌ Status code: {response.status_code}, Response: {response.text}")
+                
+        except Exception as e:
+            self.log_result("Analytics Requesters", False, f"❌ Exception: {str(e)}")
+
+    def test_analytics_export_csv(self):
+        """Test Phase 3: Export Requesters CSV Endpoint"""
+        try:
+            if not self.auth_token:
+                self.log_result("Analytics Export CSV", False, "No auth token available")
+                return
+            
+            print("🔍 Testing requester CSV export endpoint")
+            
+            response = self.make_request("GET", "/analytics/export-requesters")
+            
+            if response.status_code == 200:
+                # Check Content-Type header
+                content_type = response.headers.get("content-type", "")
+                if "text/csv" in content_type:
+                    # Check Content-Disposition header for file download
+                    content_disposition = response.headers.get("content-disposition", "")
+                    if "attachment" in content_disposition and "filename=" in content_disposition:
+                        # Verify CSV content structure
+                        csv_content = response.text
+                        lines = csv_content.strip().split('\n')
+                        
+                        if len(lines) > 0:
+                            # Check CSV headers
+                            header_line = lines[0]
+                            expected_headers = ["Name", "Email", "Request Count", "Total Tips", "Latest Request"]
+                            
+                            # Remove quotes and check headers
+                            actual_headers = [h.strip('"') for h in header_line.split(',')]
+                            
+                            if all(header in actual_headers for header in expected_headers):
+                                self.log_result("Analytics Export CSV", True, f"✅ CSV export working with {len(lines)} lines (including header)")
+                                self.log_result("Analytics Export CSV - Headers", True, f"✅ Correct CSV headers: {actual_headers}")
+                                self.log_result("Analytics Export CSV - Download", True, f"✅ Proper Content-Disposition header for download")
+                            else:
+                                self.log_result("Analytics Export CSV", False, f"❌ Missing CSV headers. Expected: {expected_headers}, Got: {actual_headers}")
+                        else:
+                            self.log_result("Analytics Export CSV", False, "❌ Empty CSV content")
+                    else:
+                        self.log_result("Analytics Export CSV", False, f"❌ Missing Content-Disposition header: {content_disposition}")
+                else:
+                    self.log_result("Analytics Export CSV", False, f"❌ Wrong Content-Type: {content_type}")
+            else:
+                self.log_result("Analytics Export CSV", False, f"❌ Status code: {response.status_code}, Response: {response.text}")
+                
+        except Exception as e:
+            self.log_result("Analytics Export CSV", False, f"❌ Exception: {str(e)}")
+
+    def test_analytics_daily(self):
+        """Test Phase 3: Daily Analytics Endpoint"""
+        try:
+            if not self.auth_token:
+                self.log_result("Analytics Daily", False, "No auth token available")
+                return
+            
+            print("🔍 Testing daily analytics endpoint")
+            
+            # Test default 7 days
+            response = self.make_request("GET", "/analytics/daily")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                required_fields = ["period", "daily_stats", "top_songs", "top_requesters", "totals"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if not missing_fields:
+                    # Verify daily_stats structure
+                    daily_stats = data["daily_stats"]
+                    if isinstance(daily_stats, list):
+                        if len(daily_stats) > 0:
+                            first_day = daily_stats[0]
+                            day_required_fields = ["date", "request_count", "tip_total", "unique_requesters"]
+                            day_missing_fields = [field for field in day_required_fields if field not in first_day]
+                            
+                            if not day_missing_fields:
+                                self.log_result("Analytics Daily - Structure", True, f"✅ Correct daily_stats structure with {len(daily_stats)} days")
+                            else:
+                                self.log_result("Analytics Daily - Structure", False, f"❌ Missing daily_stats fields: {day_missing_fields}")
+                        else:
+                            self.log_result("Analytics Daily - Structure", True, "✅ Empty daily_stats (no data in period)")
+                    else:
+                        self.log_result("Analytics Daily - Structure", False, f"❌ daily_stats should be list, got: {type(daily_stats)}")
+                    
+                    # Verify top_songs structure
+                    top_songs = data["top_songs"]
+                    if isinstance(top_songs, list):
+                        if len(top_songs) > 0:
+                            first_song = top_songs[0]
+                            if "song" in first_song and "count" in first_song:
+                                self.log_result("Analytics Daily - Top Songs", True, f"✅ Top songs structure correct with {len(top_songs)} songs")
+                            else:
+                                self.log_result("Analytics Daily - Top Songs", False, f"❌ Invalid top_songs structure: {first_song}")
+                        else:
+                            self.log_result("Analytics Daily - Top Songs", True, "✅ Empty top_songs (no requests in period)")
+                    else:
+                        self.log_result("Analytics Daily - Top Songs", False, f"❌ top_songs should be list, got: {type(top_songs)}")
+                    
+                    # Verify totals structure
+                    totals = data["totals"]
+                    if isinstance(totals, dict):
+                        totals_required_fields = ["total_requests", "total_tips", "unique_requesters"]
+                        totals_missing_fields = [field for field in totals_required_fields if field not in totals]
+                        
+                        if not totals_missing_fields:
+                            self.log_result("Analytics Daily - Totals", True, f"✅ Totals structure correct: {totals}")
+                        else:
+                            self.log_result("Analytics Daily - Totals", False, f"❌ Missing totals fields: {totals_missing_fields}")
+                    else:
+                        self.log_result("Analytics Daily - Totals", False, f"❌ totals should be dict, got: {type(totals)}")
+                    
+                    self.log_result("Analytics Daily", True, f"✅ Daily analytics working for {data['period']}")
+                else:
+                    self.log_result("Analytics Daily", False, f"❌ Missing required fields: {missing_fields}")
+            else:
+                self.log_result("Analytics Daily", False, f"❌ Status code: {response.status_code}, Response: {response.text}")
+            
+            # Test with different day ranges
+            for days in [7, 30]:
+                params = {"days": days}
+                response = self.make_request("GET", "/analytics/daily", params)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if f"Last {days} days" in data.get("period", ""):
+                        self.log_result(f"Analytics Daily - {days} Days", True, f"✅ {days} days parameter working")
+                    else:
+                        self.log_result(f"Analytics Daily - {days} Days", False, f"❌ Wrong period: {data.get('period')}")
+                else:
+                    self.log_result(f"Analytics Daily - {days} Days", False, f"❌ Status code: {response.status_code}")
+                    
+        except Exception as e:
+            self.log_result("Analytics Daily", False, f"❌ Exception: {str(e)}")
+
+    def test_analytics_authentication(self):
+        """Test Phase 3: Analytics Authentication & Security"""
+        try:
+            print("🔍 Testing analytics authentication requirements")
+            
+            # Save current token
+            original_token = self.auth_token
+            
+            analytics_endpoints = [
+                "/analytics/requesters",
+                "/analytics/export-requesters", 
+                "/analytics/daily"
+            ]
+            
+            for endpoint in analytics_endpoints:
+                # Test without token
+                self.auth_token = None
+                response = self.make_request("GET", endpoint)
+                
+                if response.status_code in [401, 403]:
+                    self.log_result(f"Analytics Auth - {endpoint} (No Token)", True, f"✅ Correctly rejected unauthorized request")
+                else:
+                    self.log_result(f"Analytics Auth - {endpoint} (No Token)", False, f"❌ Should have returned 401/403, got: {response.status_code}")
+                
+                # Test with invalid token
+                self.auth_token = "invalid_token_12345"
+                response = self.make_request("GET", endpoint)
+                
+                if response.status_code == 401:
+                    self.log_result(f"Analytics Auth - {endpoint} (Invalid Token)", True, f"✅ Correctly rejected invalid token")
+                else:
+                    self.log_result(f"Analytics Auth - {endpoint} (Invalid Token)", False, f"❌ Should have returned 401, got: {response.status_code}")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+        except Exception as e:
+            self.log_result("Analytics Authentication", False, f"❌ Exception: {str(e)}")
+            # Restore token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_analytics_data_quality(self):
+        """Test Phase 3: Analytics Data Quality and Edge Cases"""
+        try:
+            if not self.auth_token:
+                self.log_result("Analytics Data Quality", False, "No auth token available")
+                return
+            
+            print("🔍 Testing analytics data quality and edge cases")
+            
+            # Test with no data (should return empty results, not errors)
+            response = self.make_request("GET", "/analytics/requesters")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "requesters" in data and isinstance(data["requesters"], list):
+                    self.log_result("Analytics Data Quality - Empty Data", True, f"✅ Handles empty data correctly")
+                else:
+                    self.log_result("Analytics Data Quality - Empty Data", False, f"❌ Invalid response for empty data: {data}")
+            else:
+                self.log_result("Analytics Data Quality - Empty Data", False, f"❌ Status code: {response.status_code}")
+            
+            # Test daily analytics with edge case parameters
+            edge_case_params = [
+                {"days": 1},    # Single day
+                {"days": 365},  # Full year
+                {"days": 0}     # Invalid parameter
+            ]
+            
+            for params in edge_case_params:
+                response = self.make_request("GET", "/analytics/daily", params)
+                days = params["days"]
+                
+                if days == 0:
+                    # Should handle invalid parameter gracefully
+                    if response.status_code in [400, 422]:
+                        self.log_result(f"Analytics Data Quality - Invalid Days ({days})", True, f"✅ Correctly rejected invalid days parameter")
+                    else:
+                        self.log_result(f"Analytics Data Quality - Invalid Days ({days})", False, f"❌ Should reject days=0, got status: {response.status_code}")
+                else:
+                    # Should work with valid parameters
+                    if response.status_code == 200:
+                        data = response.json()
+                        if f"Last {days} days" in data.get("period", ""):
+                            self.log_result(f"Analytics Data Quality - Edge Case Days ({days})", True, f"✅ Handles {days} days correctly")
+                        else:
+                            self.log_result(f"Analytics Data Quality - Edge Case Days ({days})", False, f"❌ Wrong period for {days} days")
+                    else:
+                        self.log_result(f"Analytics Data Quality - Edge Case Days ({days})", False, f"❌ Status code: {response.status_code}")
+                        
+        except Exception as e:
+            self.log_result("Analytics Data Quality", False, f"❌ Exception: {str(e)}")
+
+    def run_phase3_analytics_tests(self):
+        """Run Phase 3 Analytics Dashboard tests"""
+        print("🚨 PHASE 3 TESTING - Analytics Dashboard Backend")
+        print("=" * 70)
+        print("Testing Phase 3 Analytics Dashboard Features:")
+        print("1. Requester Analytics Endpoint")
+        print("2. Export Requesters CSV Endpoint")
+        print("3. Daily Analytics Endpoint")
+        print("4. Authentication & Security")
+        print("5. Data Quality & Edge Cases")
+        print("=" * 70)
+        
+        # Authentication setup
+        self.test_musician_registration()
+        self.test_jwt_token_validation()
+        
+        # Create a test song for analytics data
+        self.test_create_song()
+        
+        print("\n🔥 PHASE 3 TEST #1: REQUESTER ANALYTICS")
+        print("-" * 50)
+        self.test_analytics_requesters()
+        
+        print("\n🔥 PHASE 3 TEST #2: CSV EXPORT")
+        print("-" * 50)
+        self.test_analytics_export_csv()
+        
+        print("\n🔥 PHASE 3 TEST #3: DAILY ANALYTICS")
+        print("-" * 50)
+        self.test_analytics_daily()
+        
+        print("\n🔥 PHASE 3 TEST #4: AUTHENTICATION & SECURITY")
+        print("-" * 50)
+        self.test_analytics_authentication()
+        
+        print("\n🔥 PHASE 3 TEST #5: DATA QUALITY & EDGE CASES")
+        print("-" * 50)
+        self.test_analytics_data_quality()
+        
+        # Print summary
+        print("\n" + "=" * 70)
+        print("🏁 PHASE 3 ANALYTICS TEST SUMMARY")
+        print("=" * 70)
+        print(f"✅ Passed: {self.results['passed']}")
+        print(f"❌ Failed: {self.results['failed']}")
+        
+        if self.results['errors']:
+            print("\n🔍 Failed Tests:")
+            for error in self.results['errors']:
+                print(f"   • {error}")
+        
+        # Specific summary for Phase 3 analytics features
+        analytics_tests = [error for error in self.results['errors'] if 'analytics' in error.lower()]
+        
+        print(f"\n📊 PHASE 3 ANALYTICS DASHBOARD: {'✅ WORKING' if len(analytics_tests) == 0 else '❌ FAILING'}")
+        if analytics_tests:
+            for error in analytics_tests:
+                print(f"   • {error}")
+        
+        return self.results['failed'] == 0
+
     def run_phase2_tests(self):
         """Run Phase 2 Request Tracking & Popularity Features tests"""
         print("🚨 PHASE 2 TESTING - Request Tracking & Popularity Features")
