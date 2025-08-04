@@ -909,6 +909,84 @@ const MusicianDashboard = () => {
             </div>
           </div>
         )}
+
+        {/* Profile Tab */}
+        {activeTab === 'profile' && (
+          <div className="bg-gray-800 rounded-xl p-6">
+            <h2 className="text-xl font-bold mb-4">Profile Settings</h2>
+            
+            {profileError && (
+              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200">
+                {profileError}
+              </div>
+            )}
+            
+            <form onSubmit={handleUpdateProfile} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-gray-300 text-sm font-bold mb-2">Stage Name</label>
+                  <input
+                    type="text"
+                    value={profile.name}
+                    onChange={(e) => setProfile({...profile, name: e.target.value})}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-300 text-sm font-bold mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={profile.email}
+                    disabled
+                    className="w-full bg-gray-600 border border-gray-600 rounded-lg px-4 py-2 text-gray-400"
+                    title="Email cannot be changed"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-gray-300 text-sm font-bold mb-2">Venmo Link (for tips)</label>
+                <input
+                  type="text"
+                  placeholder="@yourusername or venmo.com/yourusername"
+                  value={profile.venmo_link}
+                  onChange={(e) => setProfile({...profile, venmo_link: e.target.value})}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-gray-300 text-sm font-bold mb-2">Website</label>
+                <input
+                  type="url"
+                  placeholder="https://your-website.com"
+                  value={profile.website}
+                  onChange={(e) => setProfile({...profile, website: e.target.value})}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-gray-300 text-sm font-bold mb-2">Bio</label>
+                <textarea
+                  placeholder="Tell your audience about yourself..."
+                  value={profile.bio}
+                  onChange={(e) => setProfile({...profile, bio: e.target.value})}
+                  rows="4"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                />
+              </div>
+              
+              <button
+                type="submit"
+                className="w-full bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300"
+              >
+                Update Profile
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );
