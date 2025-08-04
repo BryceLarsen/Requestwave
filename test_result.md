@@ -399,10 +399,10 @@ test_plan:
 
   - task: "Apple Music Playlist Integration"
     implemented: true
-    working: "NA"
+    working: false
     file: "server.py, App.js"
-    stuck_count: 0
-    priority: "medium"
+    stuck_count: 1
+    priority: "high"
     needs_retesting: true
     status_history:
       - working: "NA"
@@ -411,6 +411,9 @@ test_plan:
       - working: "NA"
         agent: "main"
         comment: "IMPLEMENTED: Apple Music and Spotify playlist import with unified endpoint, URL parsing for both platforms, platform selection dropdown, and future-ready structure for API integration. Currently shows 'coming soon' messages with validated playlist IDs."
+      - working: false
+        agent: "user"
+        comment: "User reported BUG: 'i tried importing this playlist, and the import from spotify button doesnt do anything' with URL https://open.spotify.com/playlist/37i9dQZEVXbLRQDuF5jeBp - playlist import button not working"
 
 agent_communication:
   - agent: "main"
