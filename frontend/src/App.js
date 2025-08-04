@@ -738,15 +738,25 @@ const MusicianDashboard = () => {
     setPlaylistError('');
 
     try {
+      console.log('Attempting to import playlist:', playlistUrl, 'Platform:', playlistPlatform);
+      
       const response = await axios.post(`${API}/songs/playlist/import`, {
         playlist_url: playlistUrl,
         platform: playlistPlatform
       });
       
+      console.log('Import response:', response.data);
       alert(response.data.message);
       setPlaylistUrl('');
     } catch (error) {
-      setPlaylistError(error.response?.data?.detail || 'Error importing playlist');
+      console.error('Import error:', error);
+      console.error('Error response:', error.response);
+      
+      if (error.response?.status === 401) {
+        setPlaylistError('Please log in again to import playlists');
+      } else {
+        setPlaylistError(error.response?.data?.detail || 'Error importing playlist');
+      }
     } finally {
       setImportingPlaylist(false);
     }
