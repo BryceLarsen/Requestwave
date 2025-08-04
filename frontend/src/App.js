@@ -703,8 +703,37 @@ const MusicianDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Audience Link */}
         <div className="bg-purple-800/50 rounded-xl p-6 mb-8">
-          <h2 className="text-xl font-bold mb-2">Your Audience Link</h2>
-          <p className="text-purple-200 mb-4">Share this link with your audience for song requests:</p>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h2 className="text-xl font-bold mb-2">Your Audience Link</h2>
+              <p className="text-purple-200 mb-4">Share this link with your audience for song requests:</p>
+            </div>
+            {subscriptionStatus && (
+              <div className="text-right">
+                <div className={`px-3 py-1 rounded-full text-xs font-bold ${
+                  subscriptionStatus.plan === 'trial' ? 'bg-blue-600' :
+                  subscriptionStatus.plan === 'pro' ? 'bg-green-600' : 'bg-orange-600'
+                }`}>
+                  {subscriptionStatus.plan === 'trial' ? 'TRIAL' :
+                   subscriptionStatus.plan === 'pro' ? 'PRO' : 'FREE'}
+                </div>
+                <div className="text-purple-200 text-xs mt-1">
+                  {subscriptionStatus.plan === 'trial' ? 
+                    `Trial ends: ${new Date(subscriptionStatus.trial_ends_at).toLocaleDateString()}` :
+                    subscriptionStatus.plan === 'pro' ? 
+                    'Unlimited requests' :
+                    `${subscriptionStatus.requests_used}/${subscriptionStatus.requests_limit} requests used`
+                  }
+                </div>
+                {subscriptionStatus.plan === 'free' && subscriptionStatus.next_reset_date && (
+                  <div className="text-purple-300 text-xs">
+                    Resets: {new Date(subscriptionStatus.next_reset_date).toLocaleDateString()}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
           <div className="flex items-center space-x-4">
             <input
               type="text"
@@ -750,6 +779,14 @@ const MusicianDashboard = () => {
             >
               Copy
             </button>
+            {subscriptionStatus && subscriptionStatus.plan === 'free' && !subscriptionStatus.can_make_request && (
+              <button
+                onClick={() => setShowUpgrade(true)}
+                className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold transition duration-300"
+              >
+                Upgrade to Pro
+              </button>
+            )}
           </div>
         </div>
 
