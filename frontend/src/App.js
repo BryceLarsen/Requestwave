@@ -352,7 +352,7 @@ const AuthForm = ({ mode, onSwitch }) => {
 };
 
 const MusicianDashboard = () => {
-  const { musician, logout } = useAuth();
+  const { musician, token, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('songs');
   const [songs, setSongs] = useState([]);
   const [requests, setRequests] = useState([]);
