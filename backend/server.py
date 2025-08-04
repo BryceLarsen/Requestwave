@@ -31,6 +31,14 @@ JWT_SECRET = os.environ.get('JWT_SECRET', 'requestwave-secret-key')
 JWT_ALGORITHM = 'HS256'
 JWT_EXPIRATION_HOURS = 24
 
+# Stripe Configuration
+STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
+MONTHLY_SUBSCRIPTION_PRICE = 5.00  # $5/month
+
+# Free tier limits
+FREE_REQUESTS_LIMIT = 20
+TRIAL_DAYS = 7
+
 # Create the main app
 app = FastAPI(title="RequestWave API", description="Live music request platform")
 api_router = APIRouter(prefix="/api")
