@@ -387,6 +387,111 @@ async def check_request_allowed(musician_id: str) -> bool:
     status = await get_subscription_status(musician_id)
     return status.can_make_request
 
+def generate_qr_code(data: str, size: int = 10) -> str:
+    """Generate QR code and return as base64 string"""
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=size,
+        border=4,
+    )
+    qr.add_data(data)
+    qr.make(fit=True)
+    
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Convert to base64
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode()
+    
+    return img_str
+
+def generate_qr_flyer(musician_name: str, audience_url: str, qr_size: int = 8) -> str:
+    """Generate a printable QR flyer with instructions"""
+    # Create a larger canvas for the flyer
+    width, height = 600, 800
+    img = Image.new('RGB', (width, height), color='white')
+    draw = ImageDraw.Draw(img)
+    
+    try:
+        # Try to use a better font if available
+        title_font = ImageFont.truetype("arial.ttf", 36)
+        heading_font = ImageFont.truetype("arial.ttf", 24)
+        body_font = ImageFont.truetype("arial.ttf", 16)
+        small_font = ImageFont.truetype("arial.ttf", 12)
+    except:
+        # Fallback to default font
+        title_font = ImageFont.load_default()
+        heading_font = ImageFont.load_default()
+        body_font = ImageFont.load_default()
+        small_font = ImageFont.load_default()
+    
+    # Generate QR code
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=qr_size,
+        border=4,
+    )
+    qr.add_data(audience_url)
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Title
+    title_text = f"🎵 {musician_name} 🎵"
+    title_bbox = draw.textbbox((0, 0), title_text, font=title_font)
+    title_width = title_bbox[2] - title_bbox[0]
+    draw.text(((width - title_width) // 2, 50), title_text, fill="black", font=title_font)
+    
+    # Subtitle
+    subtitle_text = "Request Your Favorite Songs!"
+    subtitle_bbox = draw.textbbox((0, 0), subtitle_text, font=heading_font)
+    subtitle_width = subtitle_bbox[2] - subtitle_bbox[0]
+    draw.text(((width - subtitle_width) // 2, 100), subtitle_text, fill="black", font=heading_font)
+    
+    # QR Code
+    qr_size_pixels = qr_img.size[0]
+    qr_x = (width - qr_size_pixels) // 2
+    qr_y = 150
+    img.paste(qr_img, (qr_x, qr_y))
+    
+    # Instructions
+    instructions_y = qr_y + qr_size_pixels + 30
+    instructions = [
+        "How to Request Songs:",
+        "",
+        "1. Scan this QR code with your phone camera",
+        "2. Open the link that appears",
+        "3. Browse available songs",
+        "4. Select a song and fill out your request",
+        "5. Add a dedication message (optional)",
+        "6. Send your request!"
+    ]
+    
+    line_height = 25
+    for i, line in enumerate(instructions):
+        if i == 0:  # Title
+            line_bbox = draw.textbbox((0, 0), line, font=heading_font)
+            line_width = line_bbox[2] - line_bbox[0]
+            draw.text(((width - line_width) // 2, instructions_y), line, fill="black", font=heading_font)
+        elif line:  # Non-empty lines
+            draw.text((50, instructions_y + (i * line_height)), line, fill="black", font=body_font)
+        instructions_y += 5 if i == 0 else 0
+    
+    # Footer
+    footer_text = "Powered by RequestWave"
+    footer_bbox = draw.textbbox((0, 0), footer_text, font=small_font)
+    footer_width = footer_bbox[2] - footer_bbox[0]
+    draw.text(((width - footer_width) // 2, height - 40), footer_text, fill="gray", font=small_font)
+    
+    # Convert to base64
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode()
+    
+    return img_str
+
 # Auth endpoints
 @api_router.post("/auth/register", response_model=AuthResponse)
 async def register_musician(musician_data: MusicianRegister):
