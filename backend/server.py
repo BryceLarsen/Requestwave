@@ -320,6 +320,19 @@ async def get_my_songs(musician_id: str = Depends(get_current_musician)):
 
 @api_router.post("/songs", response_model=Song)
 async def create_song(song_data: SongCreate, musician_id: str = Depends(get_current_musician)):
+    # Check for duplicates (same title and artist for this musician)
+    existing = await db.songs.find_one({
+        "musician_id": musician_id,
+        "title": {"$regex": f"^{re.escape(song_data.title)}$", "$options": "i"},
+        "artist": {"$regex": f"^{re.escape(song_data.artist)}$", "$options": "i"}
+    })
+    
+    if existing:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Song '{song_data.title}' by '{song_data.artist}' already exists in your library"
+        )
+    
     song_dict = song_data.dict()
     song_dict.update({
         "id": str(uuid.uuid4()),
