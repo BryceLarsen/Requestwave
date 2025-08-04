@@ -802,11 +802,24 @@ async def create_request(request_data: RequestCreate):
     if not song:
         raise HTTPException(status_code=404, detail="Song not found")
     
+    musician_id = song["musician_id"]
+    
+    # Check if musician can receive more requests based on subscription
+    if not await check_request_allowed(musician_id):
+        subscription_status = await get_subscription_status(musician_id)
+        raise HTTPException(
+            status_code=402, 
+            detail={
+                "message": "Request limit reached. Musician needs to upgrade to Pro plan.",
+                "subscription_status": subscription_status.dict()
+            }
+        )
+    
     # Create request
     request_dict = request_data.dict()
     request_dict.update({
         "id": str(uuid.uuid4()),
-        "musician_id": song["musician_id"],
+        "musician_id": musician_id,
         "song_title": song["title"],
         "song_artist": song["artist"],
         "status": "pending",
