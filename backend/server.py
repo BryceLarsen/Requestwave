@@ -124,6 +124,25 @@ class PasswordResetConfirm(BaseModel):
     reset_code: str
     new_password: str
 
+class SubscriptionStatus(BaseModel):
+    plan: str  # "trial", "free", "pro"
+    requests_used: int
+    requests_limit: Optional[int]  # None for unlimited
+    trial_ends_at: Optional[datetime] = None
+    subscription_ends_at: Optional[datetime] = None
+    next_reset_date: Optional[datetime] = None
+    can_make_request: bool
+
+class PaymentTransaction(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    musician_id: str
+    amount: float
+    currency: str = "usd"
+    session_id: str
+    payment_status: str = "pending"
+    subscription_type: str = "monthly_unlimited"
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
 class CSVUploadResponse(BaseModel):
     success: bool
     message: str
