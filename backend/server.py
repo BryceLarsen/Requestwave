@@ -333,6 +333,127 @@ async def get_musician_by_slug(slug: str):
         slug=musician["slug"]
     )
 
+@api_router.get("/profile", response_model=MusicianProfile)
+async def get_profile(musician_id: str = Depends(get_current_musician)):
+    """Get current musician's profile"""
+    musician = await db.musicians.find_one({"id": musician_id})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    return MusicianProfile(
+        name=musician["name"],
+        email=musician["email"],
+        venmo_link=musician.get("venmo_link", ""),
+        bio=musician.get("bio", ""),
+        website=musician.get("website", "")
+    )
+
+@api_router.put("/profile", response_model=MusicianProfile)
+async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends(get_current_musician)):
+    """Update current musician's profile"""
+    musician = await db.musicians.find_one({"id": musician_id})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    update_data = {}
+    
+    # Only update fields that were provided
+    if profile_data.name is not None:
+        # Check if name changed and update slug if needed
+        if profile_data.name != musician["name"]:
+            new_slug = create_slug(profile_data.name)
+            # Ensure slug uniqueness
+            counter = 1
+            original_slug = new_slug
+            while await db.musicians.find_one({"slug": new_slug, "id": {"$ne": musician_id}}):
+                new_slug = f"{original_slug}-{counter}"
+                counter += 1
+            update_data["slug"] = new_slug
+        update_data["name"] = profile_data.name
+    
+    if profile_data.venmo_link is not None:
+        update_data["venmo_link"] = profile_data.venmo_link
+    if profile_data.bio is not None:
+        update_data["bio"] = profile_data.bio
+    if profile_data.website is not None:
+        update_data["website"] = profile_data.website
+    
+    if update_data:
+        await db.musicians.update_one(
+            {"id": musician_id},
+            {"$set": update_data}
+        )
+    
+    # Return updated profile
+    updated_musician = await db.musicians.find_one({"id": musician_id})
+    return MusicianProfile(
+        name=updated_musician["name"],
+        email=updated_musician["email"],
+        venmo_link=updated_musician.get("venmo_link", ""),
+        bio=updated_musician.get("bio", ""),
+        website=updated_musician.get("website", "")
+    )
+
+# Password Reset endpoints
+@api_router.post("/auth/forgot-password")
+async def forgot_password(reset_data: PasswordReset):
+    """Send password reset code (simplified version for MVP)"""
+    musician = await db.musicians.find_one({"email": reset_data.email})
+    if not musician:
+        # Don't reveal if email exists for security
+        return {"message": "If the email exists, a reset code will be sent"}
+    
+    # Generate simple 6-digit reset code (in production, use proper random generation)
+    import random
+    reset_code = str(random.randint(100000, 999999))
+    
+    # Store reset code with expiration (1 hour)
+    await db.password_resets.update_one(
+        {"email": reset_data.email},
+        {
+            "$set": {
+                "email": reset_data.email,
+                "reset_code": reset_code,
+                "expires_at": datetime.utcnow() + timedelta(hours=1),
+                "used": False
+            }
+        },
+        upsert=True
+    )
+    
+    # In production, send email with reset_code
+    # For development, return the code (remove this in production!)
+    return {"message": "Reset code sent", "reset_code": reset_code}
+
+@api_router.post("/auth/reset-password")
+async def reset_password(reset_data: PasswordResetConfirm):
+    """Confirm password reset with code"""
+    # Find valid reset code
+    reset_request = await db.password_resets.find_one({
+        "email": reset_data.email,
+        "reset_code": reset_data.reset_code,
+        "expires_at": {"$gt": datetime.utcnow()},
+        "used": False
+    })
+    
+    if not reset_request:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset code")
+    
+    # Update musician's password
+    hashed_password = hash_password(reset_data.new_password)
+    await db.musicians.update_one(
+        {"email": reset_data.email},
+        {"$set": {"password": hashed_password}}
+    )
+    
+    # Mark reset code as used
+    await db.password_resets.update_one(
+        {"email": reset_data.email, "reset_code": reset_data.reset_code},
+        {"$set": {"used": True}}
+    )
+    
+    return {"message": "Password reset successful"}
+
 # Song endpoints
 @api_router.get("/songs", response_model=List[Song])
 async def get_my_songs(musician_id: str = Depends(get_current_musician)):
