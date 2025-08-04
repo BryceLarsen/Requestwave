@@ -794,27 +794,60 @@ async def update_design_settings(design_data: DesignUpdate, musician_id: str = D
     
     return {"message": "Design settings updated successfully"}
 
-# Spotify Integration
-@api_router.post("/songs/spotify/import")
-async def import_from_spotify(import_data: PlaylistImport, musician_id: str = Depends(get_current_musician)):
-    """Import songs from a Spotify public playlist"""
+# Playlist Integration
+@api_router.post("/songs/playlist/import")
+async def import_from_playlist(import_data: PlaylistImport, musician_id: str = Depends(get_current_musician)):
+    """Import songs from Spotify or Apple Music playlist"""
     try:
-        # Extract playlist ID from URL
         playlist_url = import_data.playlist_url.strip()
-        playlist_id = None
+        platform = import_data.platform.lower()
         
-        # Handle different Spotify URL formats
-        if "open.spotify.com/playlist/" in playlist_url:
-            playlist_id = playlist_url.split("playlist/")[1].split("?")[0]
-        elif "spotify:playlist:" in playlist_url:
-            playlist_id = playlist_url.split("spotify:playlist:")[1]
+        if platform == "spotify":
+            # Handle different Spotify URL formats
+            playlist_id = None
+            if "open.spotify.com/playlist/" in playlist_url:
+                playlist_id = playlist_url.split("playlist/")[1].split("?")[0]
+            elif "spotify:playlist:" in playlist_url:
+                playlist_id = playlist_url.split("spotify:playlist:")[1]
+            else:
+                raise HTTPException(status_code=400, detail="Invalid Spotify playlist URL format")
+            
+            # For now, return placeholder response
+            # In production, integrate with Spotify Web API
+            return {
+                "message": f"Spotify import feature coming soon! Playlist ID: {playlist_id}",
+                "platform": "spotify",
+                "playlist_id": playlist_id
+            }
+            
+        elif platform == "apple_music":
+            # Handle Apple Music URL formats
+            playlist_id = None
+            if "music.apple.com" in playlist_url and "/playlist/" in playlist_url:
+                # Example: https://music.apple.com/us/playlist/name/pl.u-12345
+                parts = playlist_url.split("/playlist/")
+                if len(parts) > 1:
+                    playlist_id = parts[1].split("?")[0].split("/")[-1]
+            elif "music.apple.com" in playlist_url and "/pl." in playlist_url:
+                # Direct playlist ID format
+                playlist_id = playlist_url.split("/pl.")[-1].split("?")[0]
+                playlist_id = "pl." + playlist_id
+            else:
+                raise HTTPException(status_code=400, detail="Invalid Apple Music playlist URL format")
+            
+            # For now, return placeholder response
+            # In production, integrate with Apple Music API
+            return {
+                "message": f"Apple Music import feature coming soon! Playlist ID: {playlist_id}",
+                "platform": "apple_music", 
+                "playlist_id": playlist_id
+            }
+            
         else:
-            raise HTTPException(status_code=400, detail="Invalid Spotify playlist URL")
+            raise HTTPException(status_code=400, detail="Unsupported platform. Use 'spotify' or 'apple_music'")
         
-        # For now, we'll parse the playlist using a simplified approach
-        # In production, you'd need proper Spotify API integration
-        return {"message": f"Spotify import feature coming soon! Playlist ID: {playlist_id}"}
-        
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error importing playlist: {str(e)}")
 
