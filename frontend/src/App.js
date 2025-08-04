@@ -32,11 +32,13 @@ const AuthProvider = ({ children }) => {
   }, [token]);
 
   const login = (authData) => {
+    console.log('Logging in user:', authData.musician.name);
     setMusician(authData.musician);
     setToken(authData.token);
     localStorage.setItem('token', authData.token);
     localStorage.setItem('musician', JSON.stringify(authData.musician));
     axios.defaults.headers.common['Authorization'] = `Bearer ${authData.token}`;
+    console.log('Auth token set in axios headers');
   };
 
   const logout = () => {
