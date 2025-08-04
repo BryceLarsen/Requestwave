@@ -294,6 +294,9 @@ async def register_musician(musician_data: MusicianRegister):
         "email": musician_data.email,
         "password": hashed_password,
         "slug": slug,
+        "venmo_link": "",
+        "bio": "",
+        "website": "",
         "created_at": datetime.utcnow()
     }
     
