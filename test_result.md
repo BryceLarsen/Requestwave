@@ -276,3 +276,51 @@ test_plan:
       - working: true
         agent: "main"
         comment: "IMPROVED: Enhanced copy button with visual feedback ('Copied!' text), error handling, fallback for older browsers, and better UX. Original implementation had no feedback or error handling."
+
+  - task: "Forgot Password Feature"
+    implemented: false
+    working: "NA"
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "user"
+        comment: "User requested: 'add a forgot password option in login' - need to implement password reset functionality"
+
+  - task: "Song Edit Functionality"
+    implemented: false
+    working: "NA"
+    file: "App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "user"
+        comment: "User requested: 'a way to edit data for songs in all fields after they've been added to the list' - need edit song UI and backend integration"
+
+  - task: "Duplicate Song Detection"
+    implemented: false
+    working: "NA"
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "user"
+        comment: "User requested: 'check for doubles identical in song title and artist' - need to prevent duplicate entries"
+
+  - task: "Personal Data Edit (Profile Management)"
+    implemented: false
+    working: "NA"
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "user"
+        comment: "User requested: 'how can you edit personal data like venmo link?' - need profile management functionality"
