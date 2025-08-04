@@ -822,6 +822,13 @@ const MusicianDashboard = () => {
     filterSongs();
   }, [songs, songFilter, genreFilter, artistFilter, moodFilter, yearFilter]);
 
+  // NEW: Refetch songs when sort order changes
+  React.useEffect(() => {
+    if (musician) {
+      fetchSongs();
+    }
+  }, [sortBy]);
+
   const fetchDesignSettings = async () => {
     try {
       const response = await axios.get(`${API}/design/settings`);
