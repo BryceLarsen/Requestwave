@@ -2310,11 +2310,24 @@ const MusicianDashboard = () => {
                     />
                     <label
                       htmlFor="artist-photo-upload"
-                      className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg cursor-pointer transition duration-300"
+                      className={`inline-flex items-center px-4 py-2 rounded-lg cursor-pointer transition duration-300 ${
+                        subscriptionStatus?.plan_type === 'pro'
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                          : 'bg-gray-600 hover:bg-gray-500 text-gray-300'
+                      }`}
                     >
-                      Upload Photo
+                      {subscriptionStatus?.plan_type === 'pro' ? (
+                        <>📷 Upload Photo</>
+                      ) : (
+                        <>🔒 Upload Photo (Pro)</>
+                      )}
                     </label>
-                    <p className="text-xs text-gray-400 mt-1">Max 2MB, JPG/PNG</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {subscriptionStatus?.plan_type === 'pro' 
+                        ? 'Max 2MB, JPG/PNG' 
+                        : 'Pro feature - Max 2MB, JPG/PNG'
+                      }
+                    </p>
                   </div>
                 </div>
               </div>
