@@ -574,6 +574,80 @@ async def reset_password(reset_data: PasswordResetConfirm):
     
     return {"message": "Password reset successful"}
 
+# Design Settings endpoints (Pro feature)
+@api_router.get("/design/settings", response_model=DesignSettings)
+async def get_design_settings(musician_id: str = Depends(get_current_musician)):
+    """Get current design settings"""
+    musician = await db.musicians.find_one({"id": musician_id})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    design_settings = musician.get("design_settings", {})
+    return DesignSettings(**design_settings)
+
+@api_router.put("/design/settings")
+async def update_design_settings(design_data: DesignUpdate, musician_id: str = Depends(get_current_musician)):
+    """Update design settings (Pro feature only)"""
+    # Check if user has pro subscription
+    subscription_status = await get_subscription_status(musician_id)
+    if subscription_status.plan not in ["trial", "pro"]:
+        raise HTTPException(
+            status_code=402, 
+            detail="Design customization is a Pro feature. Upgrade to access these settings."
+        )
+    
+    musician = await db.musicians.find_one({"id": musician_id})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    # Get current settings
+    current_settings = musician.get("design_settings", {})
+    
+    # Update only provided fields
+    update_data = {}
+    if design_data.color_scheme is not None:
+        update_data["design_settings.color_scheme"] = design_data.color_scheme
+    if design_data.layout_mode is not None:
+        update_data["design_settings.layout_mode"] = design_data.layout_mode
+    if design_data.artist_photo is not None:
+        update_data["design_settings.artist_photo"] = design_data.artist_photo
+    if design_data.show_year is not None:
+        update_data["design_settings.show_year"] = design_data.show_year
+    if design_data.show_notes is not None:
+        update_data["design_settings.show_notes"] = design_data.show_notes
+    
+    if update_data:
+        await db.musicians.update_one(
+            {"id": musician_id},
+            {"$set": update_data}
+        )
+    
+    return {"message": "Design settings updated successfully"}
+
+# Spotify Integration
+@api_router.post("/songs/spotify/import")
+async def import_from_spotify(import_data: SpotifyPlaylistImport, musician_id: str = Depends(get_current_musician)):
+    """Import songs from a Spotify public playlist"""
+    try:
+        # Extract playlist ID from URL
+        playlist_url = import_data.playlist_url.strip()
+        playlist_id = None
+        
+        # Handle different Spotify URL formats
+        if "open.spotify.com/playlist/" in playlist_url:
+            playlist_id = playlist_url.split("playlist/")[1].split("?")[0]
+        elif "spotify:playlist:" in playlist_url:
+            playlist_id = playlist_url.split("spotify:playlist:")[1]
+        else:
+            raise HTTPException(status_code=400, detail="Invalid Spotify playlist URL")
+        
+        # For now, we'll parse the playlist using a simplified approach
+        # In production, you'd need proper Spotify API integration
+        return {"message": f"Spotify import feature coming soon! Playlist ID: {playlist_id}"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error importing playlist: {str(e)}")
+
 # Subscription endpoints
 @api_router.get("/subscription/status", response_model=SubscriptionStatus)
 async def get_subscription_status_endpoint(musician_id: str = Depends(get_current_musician)):
