@@ -15,9 +15,19 @@ const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const storedMusician = localStorage.getItem('musician');
-    if (storedMusician && token) {
-      setMusician(JSON.parse(storedMusician));
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    const storedToken = localStorage.getItem('token');
+    
+    if (storedMusician && token && storedToken) {
+      try {
+        setMusician(JSON.parse(storedMusician));
+        axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+        console.log('Auth restored from localStorage');
+      } catch (error) {
+        console.error('Error restoring auth:', error);
+        // Clear corrupted data
+        localStorage.removeItem('musician');
+        localStorage.removeItem('token');
+      }
     }
   }, [token]);
 
