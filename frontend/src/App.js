@@ -384,14 +384,7 @@ const MusicianDashboard = () => {
       const response = await axios.put(`${API}/profile`, profile);
       setProfile(response.data);
       setShowProfile(false);
-      // Update the musician name in auth context if it changed
-      if (response.data.name !== musician.name) {
-        const { login } = useAuth();
-        login({
-          token: localStorage.getItem('token'),
-          musician: { ...musician, name: response.data.name }
-        });
-      }
+      alert('Profile updated successfully!');
     } catch (error) {
       setProfileError(error.response?.data?.detail || 'Error updating profile');
     }
