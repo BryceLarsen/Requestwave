@@ -405,11 +405,11 @@ test_plan:
 
   - task: "Apple Music Playlist Integration"
     implemented: true
-    working: true
+    working: false
     file: "server.py, App.js"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
+    stuck_count: 1
+    priority: "critical"
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "user"
@@ -423,6 +423,9 @@ test_plan:
       - working: true
         agent: "main"
         comment: "BUG FIXED: Backend playlist import working perfectly (tested with curl - correctly extracts playlist ID 37i9dQZEVXbLRQDuF5jeBp). Issue was frontend session management - auth tokens not persisting properly. Improved localStorage handling and axios header management. Added debugging logs for authentication flow."
+      - working: false
+        agent: "user"
+        comment: "CRITICAL BUG: User reports 'it still doesnt seem to do anything when i paste a spotify or apple music link and click the import button. I'd like those songs to populate the song list, and be given appropriate genre, mood and year data for each song' - playlist import not actually fetching real song data, only showing 'coming soon' messages"
 
 agent_communication:
   - agent: "main"
