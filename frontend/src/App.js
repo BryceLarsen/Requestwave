@@ -1382,7 +1382,14 @@ const AudienceInterface = () => {
       
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
-      console.error('Error submitting request:', error);
+      if (error.response?.status === 402) {
+        // Request limit reached
+        const errorData = error.response.data;
+        alert(`Request limit reached! ${errorData.detail.message}\n\nThe musician has reached their monthly request limit. They need to upgrade to Pro for unlimited requests.`);
+      } else {
+        console.error('Error submitting request:', error);
+        alert('Error submitting request. Please try again.');
+      }
     }
   };
 
