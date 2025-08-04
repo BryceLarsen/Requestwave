@@ -475,7 +475,7 @@ const MusicianDashboard = () => {
 
   const fetchSongs = async () => {
     try {
-      const response = await axios.get(`${API}/songs`);
+      const response = await axios.get(`${API}/songs?sort_by=${sortBy}`);
       setSongs(response.data);
     } catch (error) {
       console.error('Error fetching songs:', error);
