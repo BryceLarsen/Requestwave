@@ -407,6 +407,13 @@ async def register_musician(musician_data: MusicianRegister):
         "website": "",
         "subscription_ends_at": None,
         "stripe_customer_id": None,
+        "design_settings": {
+            "color_scheme": "purple",
+            "layout_mode": "grid",
+            "artist_photo": None,
+            "show_year": True,
+            "show_notes": True
+        },
         "created_at": datetime.utcnow()
     }
     
