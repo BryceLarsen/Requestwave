@@ -27,3 +27,6 @@ typer>=0.9.0
 emergentintegrations>=0.1.0
 qrcode>=7.4.2
 pillow>=10.0.0
+httpx==0.24.1
+beautifulsoup4==4.12.2
+lxml==4.9.3
