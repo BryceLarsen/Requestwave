@@ -352,6 +352,30 @@ test_plan:
         agent: "main"
         comment: "IMPLEMENTED: Complete freemium system with 7-day unlimited trial, then 20 requests/month (resets on signup anniversary), request blocking with upgrade prompts, $5/month Stripe subscription for unlimited access, usage dashboard, and payment webhook handling"
 
+  - task: "Mobile Optimization & Pro Design Features"
+    implemented: false
+    working: "NA"
+    file: "App.js, server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "user"
+        comment: "User requested: 'optimize audience link page for mobile phone, design editing options for pro subscribers (list view, color scheme, artist photo), import songs from public spotify playlist'"
+
+  - task: "Spotify Playlist Integration"
+    implemented: false
+    working: "NA"
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "user"
+        comment: "User requested: 'include an option to import songs from a public spotify playlist' - need Spotify API integration for playlist parsing"
+
 agent_communication:
   - agent: "main"
     message: "Initial RequestWave core functionality implemented. Need to add CSV upload feature requested by user, then test all core functionality including auth, song management, real-time requests, and filtering."
