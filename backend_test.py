@@ -1805,12 +1805,12 @@ class RequestWaveAPITester:
 if __name__ == "__main__":
     tester = RequestWaveAPITester()
     
-    # Run ONLY the critical fixes tests as requested in the review
-    success = tester.run_critical_fixes_test()
+    # Run Phase 3 Analytics Dashboard tests as requested in the review
+    success = tester.run_phase3_analytics_tests()
     
     if success:
-        print("\n🎉 All critical fixes tests passed!")
+        print("\n🎉 All Phase 3 Analytics tests passed!")
         exit(0)
     else:
-        print(f"\n💥 {tester.results['failed']} critical fixes tests failed!")
+        print(f"\n💥 {tester.results['failed']} Phase 3 Analytics tests failed!")
         exit(1)
