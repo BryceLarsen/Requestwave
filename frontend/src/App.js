@@ -1683,6 +1683,10 @@ const MusicianDashboard = () => {
                                   {song.year}
                                 </span>
                               )}
+                              {/* NEW: Request Count Badge */}
+                              <span className="bg-orange-600 text-xs px-2 py-1 rounded-full font-semibold">
+                                🔥 {song.request_count || 0} requests
+                              </span>
                             </div>
                             {song.notes && (
                               <p className="text-gray-400 text-sm mt-1">{song.notes}</p>
