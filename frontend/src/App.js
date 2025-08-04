@@ -399,6 +399,13 @@ const MusicianDashboard = () => {
   // NEW: Phase 2 - Sorting and popularity state
   const [sortBy, setSortBy] = useState('created_at'); // 'created_at', 'popularity', 'title', 'artist', 'year'
 
+  // NEW: Phase 3 - Analytics state
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [analyticsTimeframe, setAnalyticsTimeframe] = useState('daily'); // 'daily', 'weekly', 'monthly'
+  const [analyticsDays, setAnalyticsDays] = useState(7);
+  const [requestersData, setRequestersData] = useState([]);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
   // Profile management state
   const [showProfile, setShowProfile] = useState(false);
   const [profile, setProfile] = useState({
