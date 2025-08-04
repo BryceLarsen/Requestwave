@@ -1498,6 +1498,20 @@ const MusicianDashboard = () => {
                     >
                       Export CSV
                     </button>
+                    
+                    {/* NEW: Sort By Dropdown */}
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-purple-500 focus:border-purple-500"
+                    >
+                      <option value="created_at">📅 Newest First</option>
+                      <option value="popularity">🔥 Most Popular</option>
+                      <option value="title">🎵 By Title A-Z</option>
+                      <option value="artist">👤 By Artist A-Z</option>
+                      <option value="year">📆 By Year (Latest)</option>
+                    </select>
+                    
                     {selectedSongs.size > 0 && (
                       <button
                         onClick={() => setShowBatchEdit(!showBatchEdit)}
