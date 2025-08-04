@@ -1477,48 +1477,237 @@ const MusicianDashboard = () => {
 
             {/* Songs List */}
             <div className="bg-gray-800 rounded-xl p-6">
-              <h2 className="text-xl font-bold mb-4">Your Songs ({songs.length})</h2>
-              <div className="space-y-4">
-                {songs.map((song) => (
-                  <div key={song.id} className="bg-gray-700 rounded-lg p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-lg">{song.title}</h3>
-                        <p className="text-gray-300">by {song.artist}</p>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {song.genres.map((genre, idx) => (
-                            <span key={idx} className="bg-blue-600 text-xs px-2 py-1 rounded">{genre}</span>
-                          ))}
-                          {song.moods.map((mood, idx) => (
-                            <span key={idx} className="bg-green-600 text-xs px-2 py-1 rounded">{mood}</span>
-                          ))}
-                          {song.year && <span className="bg-gray-600 text-xs px-2 py-1 rounded">{song.year}</span>}
-                        </div>
-                        {song.notes && (
-                          <p className="text-gray-400 text-sm mt-2 italic">"{song.notes}"</p>
-                        )}
+              {/* NEW: Filter and Batch Edit Controls */}
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold">Your Songs ({filteredSongs.length})</h2>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => exportSongsToCSV()}
+                      className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
+                    >
+                      Export CSV
+                    </button>
+                    {selectedSongs.size > 0 && (
+                      <button
+                        onClick={() => setShowBatchEdit(!showBatchEdit)}
+                        className="bg-purple-600 hover:bg-purple-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
+                      >
+                        Batch Edit ({selectedSongs.size})
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Search and Filter Bar */}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
+                  <input
+                    type="text"
+                    placeholder="Search songs..."
+                    value={songFilter}
+                    onChange={(e) => setSongFilter(e.target.value)}
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Filter by genre..."
+                    value={genreFilter}
+                    onChange={(e) => setGenreFilter(e.target.value)}
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Filter by artist..."
+                    value={artistFilter}
+                    onChange={(e) => setArtistFilter(e.target.value)}
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Filter by mood..."
+                    value={moodFilter}
+                    onChange={(e) => setMoodFilter(e.target.value)}
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Filter by year..."
+                    value={yearFilter}
+                    onChange={(e) => setYearFilter(e.target.value)}
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
+                  />
+                </div>
+
+                {/* Batch Operations Bar */}
+                {filteredSongs.length > 0 && (
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center space-x-3">
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedSongs.size === filteredSongs.length && filteredSongs.length > 0}
+                          onChange={handleSelectAll}
+                          className="rounded bg-gray-700 border-gray-600 text-purple-600 focus:ring-purple-500"
+                        />
+                        <span className="text-sm">Select All</span>
+                      </label>
+                      {selectedSongs.size > 0 && (
+                        <span className="text-sm text-gray-300">
+                          {selectedSongs.size} selected
+                        </span>
+                      )}
+                    </div>
+                    
+                    {selectedSongs.size > 0 && (
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={handleBatchDelete}
+                          className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm font-medium transition duration-300"
+                        >
+                          Delete Selected
+                        </button>
                       </div>
-                      <div className="flex space-x-2 ml-4">
-                        <button
-                          onClick={() => handleEditSong(song)}
-                          className="bg-blue-600 hover:bg-blue-700 text-xs px-3 py-1 rounded transition duration-300"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteSong(song.id)}
-                          className="bg-red-600 hover:bg-red-700 text-xs px-3 py-1 rounded transition duration-300"
-                        >
-                          Delete
-                        </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Batch Edit Form */}
+                {showBatchEdit && selectedSongs.size > 0 && (
+                  <div className="bg-gray-700 rounded-lg p-4 mb-4">
+                    <h3 className="font-bold mb-3">Batch Edit {selectedSongs.size} Songs</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+                      <input
+                        type="text"
+                        placeholder="New Artist"
+                        value={batchEditForm.artist}
+                        onChange={(e) => setBatchEditForm({...batchEditForm, artist: e.target.value})}
+                        className="bg-gray-600 border border-gray-500 rounded px-3 py-2 text-white placeholder-gray-400 text-sm"
+                      />
+                      <input
+                        type="text"
+                        placeholder="New Genres (comma separated)"
+                        value={batchEditForm.genres}
+                        onChange={(e) => setBatchEditForm({...batchEditForm, genres: e.target.value})}
+                        className="bg-gray-600 border border-gray-500 rounded px-3 py-2 text-white placeholder-gray-400 text-sm"
+                      />
+                      <input
+                        type="text"
+                        placeholder="New Moods (comma separated)"
+                        value={batchEditForm.moods}
+                        onChange={(e) => setBatchEditForm({...batchEditForm, moods: e.target.value})}
+                        className="bg-gray-600 border border-gray-500 rounded px-3 py-2 text-white placeholder-gray-400 text-sm"
+                      />
+                      <input
+                        type="number"
+                        placeholder="New Year"
+                        value={batchEditForm.year}
+                        onChange={(e) => setBatchEditForm({...batchEditForm, year: e.target.value})}
+                        className="bg-gray-600 border border-gray-500 rounded px-3 py-2 text-white placeholder-gray-400 text-sm"
+                      />
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={handleBatchEdit}
+                        className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-sm font-medium transition duration-300"
+                      >
+                        Apply Changes
+                      </button>
+                      <button
+                        onClick={() => setShowBatchEdit(false)}
+                        className="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded text-sm font-medium transition duration-300"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2">
+                      Only filled fields will be updated. This will completely replace existing values.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                {filteredSongs.map((song) => (
+                  <div key={song.id} className="bg-gray-700 rounded-lg p-4">
+                    <div className="flex items-center space-x-3">
+                      {/* Checkbox for selection */}
+                      <input
+                        type="checkbox"
+                        checked={selectedSongs.has(song.id)}
+                        onChange={() => handleSelectSong(song.id)}
+                        className="rounded bg-gray-600 border-gray-500 text-purple-600 focus:ring-purple-500"
+                      />
+                      
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h3 className="font-bold text-lg">{song.title}</h3>
+                            <p className="text-gray-300">by {song.artist}</p>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {song.genres.map((genre, index) => (
+                                <span key={index} className="bg-purple-600 text-xs px-2 py-1 rounded-full">
+                                  {genre}
+                                </span>
+                              ))}
+                              {song.moods.map((mood, index) => (
+                                <span key={index} className="bg-blue-600 text-xs px-2 py-1 rounded-full">
+                                  {mood}
+                                </span>
+                              ))}
+                              {song.year && (
+                                <span className="bg-green-600 text-xs px-2 py-1 rounded-full">
+                                  {song.year}
+                                </span>
+                              )}
+                            </div>
+                            {song.notes && (
+                              <p className="text-gray-400 text-sm mt-1">{song.notes}</p>
+                            )}
+                          </div>
+                          <div className="flex space-x-2 ml-4">
+                            <button
+                              onClick={() => handleEditSong(song)}
+                              className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm font-medium transition duration-300"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSong(song.id)}
+                              className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm font-medium transition duration-300"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 ))}
-                {songs.length === 0 && (
-                  <p className="text-gray-400 text-center py-8">No songs added yet. Add your first song above!</p>
-                )}
               </div>
+
+              {filteredSongs.length === 0 && songs.length > 0 && (
+                <div className="text-center py-8 text-gray-400">
+                  <p>No songs match your current filters.</p>
+                  <button 
+                    onClick={() => {
+                      setSongFilter('');
+                      setGenreFilter('');
+                      setArtistFilter('');
+                      setMoodFilter('');
+                      setYearFilter('');
+                    }}
+                    className="mt-2 text-purple-400 hover:text-purple-300 underline"
+                  >
+                    Clear all filters
+                  </button>
+                </div>
+              )}
+
+              {songs.length === 0 && (
+                <div className="text-center py-8 text-gray-400">
+                  <p>No songs yet. Add your first song above or upload a CSV file.</p>
+                </div>
+              )}
             </div>
           </div>
         )}
