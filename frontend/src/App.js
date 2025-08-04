@@ -1189,6 +1189,7 @@ const MusicianDashboard = () => {
                 <button
                   type="submit"
                   disabled={importingPlaylist}
+                  onClick={() => console.log('Import button clicked!')}
                   className="w-full bg-green-600 hover:bg-green-700 py-2 rounded-lg font-bold transition duration-300 disabled:opacity-50"
                 >
                   {importingPlaylist ? 'Importing...' : `Import from ${playlistPlatform === 'apple_music' ? 'Apple Music' : 'Spotify'}`}
