@@ -142,9 +142,6 @@ class DesignUpdate(BaseModel):
     show_year: Optional[bool] = None
     show_notes: Optional[bool] = None
 
-class SpotifyPlaylistImport(BaseModel):
-    playlist_url: str
-
 class PlaylistImport(BaseModel):
     playlist_url: str
     platform: str  # "spotify" or "apple_music"
