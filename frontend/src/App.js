@@ -255,6 +255,12 @@ const MusicianDashboard = () => {
     };
   }, [musician.id]);
 
+  useEffect(() => {
+    if (showProfile) {
+      fetchProfile();
+    }
+  }, [showProfile]);
+
   const fetchSongs = async () => {
     try {
       const response = await axios.get(`${API}/songs`);
