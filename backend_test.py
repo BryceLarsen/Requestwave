@@ -467,43 +467,75 @@ class RequestWaveAPITester:
             self.log_result("CSV Duplicate Detection", False, f"Exception: {str(e)}")
 
     def test_spotify_playlist_import(self):
-        """Test Spotify playlist import functionality"""
+        """Test Spotify playlist import functionality - CRITICAL FIX TEST"""
         try:
             if not self.auth_token:
                 self.log_result("Spotify Playlist Import", False, "No auth token available")
                 return
             
-            # Test with a valid Spotify playlist URL
+            # Test with the EXACT URL from the user report
             playlist_data = {
                 "playlist_url": "https://open.spotify.com/playlist/37i9dQZEVXbLRQDuF5jeBp",
                 "platform": "spotify"
             }
             
+            print(f"🔍 Testing Spotify playlist import with URL: {playlist_data['playlist_url']}")
             response = self.make_request("POST", "/songs/playlist/import", playlist_data)
             
             if response.status_code == 200:
                 data = response.json()
+                print(f"📊 Import response: {json.dumps(data, indent=2)}")
+                
                 if "success" in data and data["success"] and "songs_added" in data:
                     if data["songs_added"] > 0:
                         self.log_result("Spotify Playlist Import", True, f"Successfully imported {data['songs_added']} songs from Spotify playlist")
                         
-                        # Verify songs were actually added to database
+                        # CRITICAL: Verify songs were actually added to database with REAL song data
                         songs_response = self.make_request("GET", "/songs")
                         if songs_response.status_code == 200:
                             songs = songs_response.json()
-                            spotify_songs = [song for song in songs if "spotify" in song.get("notes", "").lower() or "demo" in song.get("notes", "").lower()]
-                            if len(spotify_songs) > 0:
-                                self.log_result("Spotify Playlist Import - Database Verification", True, f"Found {len(spotify_songs)} imported songs in database")
+                            
+                            # Find the most recently imported songs
+                            imported_songs = [song for song in songs if "spotify" in song.get("notes", "").lower() or "demo" in song.get("notes", "").lower()]
+                            
+                            if len(imported_songs) > 0:
+                                print(f"🎵 Found {len(imported_songs)} imported songs:")
+                                
+                                # CRITICAL TEST: Check if songs have REAL titles (not generic/placeholder data)
+                                real_song_count = 0
+                                placeholder_songs = []
+                                
+                                for song in imported_songs[:5]:  # Check first 5 songs
+                                    title = song.get("title", "")
+                                    artist = song.get("artist", "")
+                                    print(f"   • '{title}' by '{artist}' (genres: {song.get('genres', [])}, year: {song.get('year', 'N/A')})")
+                                    
+                                    # Check for placeholder/generic data patterns
+                                    if any(placeholder in title.lower() for placeholder in ["sample", "demo", "test", "unknown", "playlist"]):
+                                        placeholder_songs.append(f"'{title}' by '{artist}'")
+                                    elif any(placeholder in artist.lower() for placeholder in ["demo", "test", "unknown"]):
+                                        placeholder_songs.append(f"'{title}' by '{artist}'")
+                                    else:
+                                        real_song_count += 1
+                                
+                                if real_song_count > 0 and len(placeholder_songs) == 0:
+                                    self.log_result("Spotify Playlist Import - Real Song Data", True, f"✅ CRITICAL FIX VERIFIED: All {real_song_count} songs have real titles/artists (no placeholder data)")
+                                elif real_song_count > len(placeholder_songs):
+                                    self.log_result("Spotify Playlist Import - Real Song Data", True, f"✅ MOSTLY REAL DATA: {real_song_count} real songs, {len(placeholder_songs)} placeholder songs")
+                                else:
+                                    self.log_result("Spotify Playlist Import - Real Song Data", False, f"❌ CRITICAL BUG: Found placeholder songs: {placeholder_songs}")
+                                
+                                self.log_result("Spotify Playlist Import - Database Verification", True, f"Found {len(imported_songs)} imported songs in database")
                             else:
-                                self.log_result("Spotify Playlist Import - Database Verification", False, "No imported songs found in database")
+                                self.log_result("Spotify Playlist Import - Database Verification", False, "❌ CRITICAL BUG: No imported songs found in database")
                     else:
-                        self.log_result("Spotify Playlist Import", False, f"No songs were imported: {data}")
+                        self.log_result("Spotify Playlist Import", False, f"❌ CRITICAL BUG: No songs were imported: {data}")
                 else:
-                    self.log_result("Spotify Playlist Import", False, f"Unexpected response structure: {data}")
+                    self.log_result("Spotify Playlist Import", False, f"❌ CRITICAL BUG: Unexpected response structure: {data}")
             else:
-                self.log_result("Spotify Playlist Import", False, f"Status code: {response.status_code}, Response: {response.text}")
+                self.log_result("Spotify Playlist Import", False, f"❌ CRITICAL BUG: Status code: {response.status_code}, Response: {response.text}")
         except Exception as e:
-            self.log_result("Spotify Playlist Import", False, f"Exception: {str(e)}")
+            self.log_result("Spotify Playlist Import", False, f"❌ CRITICAL BUG: Exception: {str(e)}")
 
     def test_apple_music_playlist_import(self):
         """Test Apple Music playlist import functionality"""
