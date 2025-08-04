@@ -971,7 +971,7 @@ class RequestWaveAPITester:
         
         return self.results['failed'] == 0
     def run_all_tests(self):
-        print("🚀 Starting RequestWave Backend API Tests")
+        """Run all tests in order"""
         print("=" * 50)
         
         # Health check
