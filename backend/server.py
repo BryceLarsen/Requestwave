@@ -1662,6 +1662,13 @@ async def create_request(request_data: RequestCreate):
     })
     
     await db.requests.insert_one(request_dict)
+    
+    # NEW: Increment request count for the song
+    await db.songs.update_one(
+        {"id": request_data.song_id},
+        {"$inc": {"request_count": 1}}
+    )
+    
     return Request(**request_dict)
 
 @api_router.get("/requests/musician/{musician_id}", response_model=List[Request])
