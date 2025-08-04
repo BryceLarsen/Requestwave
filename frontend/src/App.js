@@ -426,6 +426,12 @@ const MusicianDashboard = () => {
     }
   }, [showProfile]);
 
+  useEffect(() => {
+    if (activeTab === 'design') {
+      fetchDesignSettings();
+    }
+  }, [activeTab]);
+
   const fetchSongs = async () => {
     try {
       const response = await axios.get(`${API}/songs`);
