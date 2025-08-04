@@ -382,6 +382,30 @@ test_plan:
         agent: "main"
         comment: "IMPLEMENTED: Spotify playlist import endpoint with URL parsing (playlist ID extraction). Ready for future Spotify API integration - currently shows 'coming soon' message with playlist ID validation."
 
+  - task: "QR Code Generation & Print Flyers"
+    implemented: false
+    working: "NA"
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "user"
+        comment: "User requested: 'add an option to download the qr code for the audience link, and an option to print a qr flyer that includes the artist name and simple directions for audience members'"
+
+  - task: "Apple Music Playlist Integration"
+    implemented: false
+    working: "NA"
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "user"
+        comment: "User requested: 'include the option to import from apple music playlist link' - need Apple Music playlist URL parsing and integration"
+
 agent_communication:
   - agent: "main"
     message: "Initial RequestWave core functionality implemented. Need to add CSV upload feature requested by user, then test all core functionality including auth, song management, real-time requests, and filtering."
