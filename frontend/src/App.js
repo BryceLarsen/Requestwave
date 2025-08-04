@@ -103,6 +103,12 @@ const AuthForm = ({ mode, onSwitch }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetCode, setResetCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [resetStep, setResetStep] = useState(1); // 1: email, 2: code+password
+  const [resetMessage, setResetMessage] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
