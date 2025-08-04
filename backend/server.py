@@ -124,6 +124,23 @@ class ProfileUpdate(BaseModel):
     bio: Optional[str] = None
     website: Optional[str] = None
 
+class DesignSettings(BaseModel):
+    color_scheme: str = "purple"  # purple, blue, green, red, orange
+    layout_mode: str = "grid"     # grid, list
+    artist_photo: Optional[str] = None  # base64 image data
+    show_year: bool = True
+    show_notes: bool = True
+
+class DesignUpdate(BaseModel):
+    color_scheme: Optional[str] = None
+    layout_mode: Optional[str] = None
+    artist_photo: Optional[str] = None
+    show_year: Optional[bool] = None
+    show_notes: Optional[bool] = None
+
+class SpotifyPlaylistImport(BaseModel):
+    playlist_url: str
+
 class PasswordReset(BaseModel):
     email: str
 
