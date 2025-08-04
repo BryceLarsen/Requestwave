@@ -118,15 +118,18 @@ backend:
 
   - task: "Song Management CRUD"
     implemented: true
-    working: "NA"
+    working: false
     file: "server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented create, read, update, delete operations for songs with genres/moods as arrays"
+      - working: false
+        agent: "user"
+        comment: "User reported: 'I am clicking add song and nothing is happening' - Add Song button not working, needs immediate debugging"
 
   - task: "Request Management System"
     implemented: true
