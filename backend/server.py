@@ -1707,6 +1707,173 @@ async def get_musician_requests(musician_id: str = Depends(get_current_musician)
     requests = await db.requests.find({"musician_id": musician_id}).sort("created_at", DESCENDING).to_list(1000)
     return [Request(**request) for request in requests]
 
+# NEW: Phase 3 - Analytics endpoints
+@api_router.get("/analytics/requesters")
+async def get_requester_analytics(musician_id: str = Depends(get_current_musician)):
+    """Get all unique requesters with their request counts and total tips"""
+    try:
+        # Aggregate requesters with counts and tips
+        pipeline = [
+            {"$match": {"musician_id": musician_id}},
+            {
+                "$group": {
+                    "_id": {
+                        "email": "$requester_email",
+                        "name": "$requester_name"
+                    },
+                    "request_count": {"$sum": 1},
+                    "total_tips": {"$sum": "$tip_amount"},
+                    "latest_request": {"$max": "$created_at"}
+                }
+            },
+            {"$sort": {"request_count": -1}}  # Most frequent first
+        ]
+        
+        requesters = await db.requests.aggregate(pipeline).to_list(1000)
+        
+        # Format response
+        formatted_requesters = []
+        for requester in requesters:
+            formatted_requesters.append({
+                "name": requester["_id"]["name"],
+                "email": requester["_id"]["email"],
+                "request_count": requester["request_count"],
+                "total_tips": requester["total_tips"],
+                "latest_request": requester["latest_request"]
+            })
+        
+        return {"requesters": formatted_requesters}
+        
+    except Exception as e:
+        logger.error(f"Error getting requester analytics: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error retrieving requester analytics")
+
+@api_router.get("/analytics/export-requesters")
+async def export_requesters_csv(musician_id: str = Depends(get_current_musician)):
+    """Export requester emails and names as CSV"""
+    try:
+        # Get unique requesters
+        pipeline = [
+            {"$match": {"musician_id": musician_id}},
+            {
+                "$group": {
+                    "_id": {
+                        "email": "$requester_email",
+                        "name": "$requester_name"
+                    },
+                    "request_count": {"$sum": 1},
+                    "total_tips": {"$sum": "$tip_amount"},
+                    "latest_request": {"$max": "$created_at"}
+                }
+            },
+            {"$sort": {"request_count": -1}}
+        ]
+        
+        requesters = await db.requests.aggregate(pipeline).to_list(1000)
+        
+        # Create CSV content
+        csv_rows = [["Name", "Email", "Request Count", "Total Tips", "Latest Request"]]
+        for requester in requesters:
+            csv_rows.append([
+                requester["_id"]["name"],
+                requester["_id"]["email"],
+                str(requester["request_count"]),
+                f"${requester['total_tips']:.2f}",
+                requester["latest_request"].strftime("%Y-%m-%d %H:%M")
+            ])
+        
+        csv_content = "\n".join([",".join([f'"{field}"' for field in row]) for row in csv_rows])
+        
+        return Response(
+            content=csv_content,
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=requesters-{datetime.now().strftime('%Y%m%d')}.csv"}
+        )
+        
+    except Exception as e:
+        logger.error(f"Error exporting requesters CSV: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error exporting requesters")
+
+@api_router.get("/analytics/daily")
+async def get_daily_analytics(
+    days: int = 7,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Get daily analytics for the specified number of days"""
+    try:
+        # Calculate date range
+        end_date = datetime.utcnow()
+        start_date = end_date - timedelta(days=days)
+        
+        # Get requests in date range
+        requests = await db.requests.find({
+            "musician_id": musician_id,
+            "created_at": {"$gte": start_date, "$lte": end_date}
+        }).to_list(10000)
+        
+        # Group by date
+        daily_stats = {}
+        song_requests = {}
+        requester_counts = {}
+        
+        for request in requests:
+            # Format date as YYYY-MM-DD
+            date_key = request["created_at"].strftime("%Y-%m-%d")
+            
+            # Initialize date if not exists
+            if date_key not in daily_stats:
+                daily_stats[date_key] = {
+                    "date": date_key,
+                    "request_count": 0,
+                    "tip_total": 0.0,
+                    "unique_requesters": set()
+                }
+            
+            # Update daily stats
+            daily_stats[date_key]["request_count"] += 1
+            daily_stats[date_key]["tip_total"] += request.get("tip_amount", 0.0)
+            daily_stats[date_key]["unique_requesters"].add(request["requester_email"])
+            
+            # Track song requests
+            song_key = f"{request['song_title']} - {request['song_artist']}"
+            song_requests[song_key] = song_requests.get(song_key, 0) + 1
+            
+            # Track requester frequency
+            requester_key = f"{request['requester_name']} ({request['requester_email']})"
+            requester_counts[requester_key] = requester_counts.get(requester_key, 0) + 1
+        
+        # Convert sets to counts and sort data
+        formatted_daily = []
+        for date_key in sorted(daily_stats.keys()):
+            stats = daily_stats[date_key]
+            formatted_daily.append({
+                "date": stats["date"],
+                "request_count": stats["request_count"],
+                "tip_total": stats["tip_total"],
+                "unique_requesters": len(stats["unique_requesters"])
+            })
+        
+        # Get top songs and requesters
+        top_songs = sorted(song_requests.items(), key=lambda x: x[1], reverse=True)[:10]
+        top_requesters = sorted(requester_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+        
+        return {
+            "period": f"Last {days} days",
+            "daily_stats": formatted_daily,
+            "top_songs": [{"song": song, "count": count} for song, count in top_songs],
+            "top_requesters": [{"requester": requester, "count": count} for requester, count in top_requesters],
+            "totals": {
+                "total_requests": sum(stats["request_count"] for stats in formatted_daily),
+                "total_tips": sum(stats["tip_total"] for stats in formatted_daily),
+                "unique_requesters": len(set(email for request in requests for email in [request["requester_email"]]))
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting daily analytics: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error retrieving daily analytics")
+    return [Request(**request) for request in requests]
+
 @api_router.put("/requests/{request_id}/status")
 async def update_request_status(
     request_id: str, 
