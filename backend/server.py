@@ -80,6 +80,7 @@ class Song(BaseModel):
     moods: List[str] = []
     year: Optional[int] = None
     notes: str = ""
+    request_count: int = 0  # NEW: Track number of requests for this song
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class SongCreate(BaseModel):
