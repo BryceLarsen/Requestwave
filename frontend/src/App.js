@@ -648,15 +648,176 @@ const MusicianDashboard = () => {
         alert('Subscription activated! You now have unlimited requests.');
         fetchSubscriptionStatus();
         // Remove session_id from URL
-        const url = new URL(window.location);
-        url.searchParams.delete('session_id');
-        url.searchParams.delete('payment');
-        window.history.replaceState({}, document.title, url.pathname + url.search);
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
     } catch (error) {
       console.error('Error checking payment status:', error);
     }
   };
+
+  // NEW: Batch editing and filtering functions
+  const filterSongs = () => {
+    let filtered = songs.filter(song => {
+      // Text search across title and artist
+      const searchMatch = songFilter === '' || 
+        song.title.toLowerCase().includes(songFilter.toLowerCase()) ||
+        song.artist.toLowerCase().includes(songFilter.toLowerCase());
+      
+      // Genre filter
+      const genreMatch = genreFilter === '' || 
+        song.genres.some(genre => genre.toLowerCase().includes(genreFilter.toLowerCase()));
+      
+      // Artist filter
+      const artistMatch = artistFilter === '' ||
+        song.artist.toLowerCase().includes(artistFilter.toLowerCase());
+      
+      // Mood filter
+      const moodMatch = moodFilter === '' ||
+        song.moods.some(mood => mood.toLowerCase().includes(moodFilter.toLowerCase()));
+      
+      // Year filter
+      const yearMatch = yearFilter === '' || 
+        (song.year && song.year.toString() === yearFilter);
+      
+      return searchMatch && genreMatch && artistMatch && moodMatch && yearMatch;
+    });
+    
+    setFilteredSongs(filtered);
+  };
+
+  const handleSelectSong = (songId) => {
+    const newSelected = new Set(selectedSongs);
+    if (newSelected.has(songId)) {
+      newSelected.delete(songId);
+    } else {
+      newSelected.add(songId);
+    }
+    setSelectedSongs(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedSongs.size === filteredSongs.length) {
+      setSelectedSongs(new Set());
+    } else {
+      setSelectedSongs(new Set(filteredSongs.map(song => song.id)));
+    }
+  };
+
+  const handleBatchEdit = async () => {
+    if (selectedSongs.size === 0) {
+      alert('Please select songs to edit');
+      return;
+    }
+
+    const updates = {};
+    if (batchEditForm.artist.trim()) updates.artist = batchEditForm.artist.trim();
+    if (batchEditForm.genres.trim()) updates.genres = batchEditForm.genres.split(',').map(g => g.trim());
+    if (batchEditForm.moods.trim()) updates.moods = batchEditForm.moods.split(',').map(m => m.trim());
+    if (batchEditForm.year.trim()) updates.year = parseInt(batchEditForm.year.trim());
+
+    if (Object.keys(updates).length === 0) {
+      alert('Please enter values to update');
+      return;
+    }
+
+    try {
+      // Update each selected song
+      const updatePromises = Array.from(selectedSongs).map(async (songId) => {
+        const song = songs.find(s => s.id === songId);
+        const updatedSong = { ...song, ...updates };
+        return axios.put(`${API}/songs/${songId}`, {
+          title: updatedSong.title,
+          artist: updatedSong.artist,
+          genres: updatedSong.genres,
+          moods: updatedSong.moods,
+          year: updatedSong.year,
+          notes: updatedSong.notes
+        }, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      });
+
+      await Promise.all(updatePromises);
+      
+      fetchSongs();
+      setSelectedSongs(new Set());
+      setShowBatchEdit(false);
+      setBatchEditForm({ artist: '', genres: '', moods: '', year: '' });
+      alert(`Successfully updated ${selectedSongs.size} songs`);
+    } catch (error) {
+      console.error('Error batch editing songs:', error);
+      alert('Error updating songs. Please try again.');
+    }
+  };
+
+  const exportSongsToCSV = (songsToExport = null) => {
+    const exportSongs = songsToExport || filteredSongs;
+    
+    const csvContent = [
+      ['Title', 'Artist', 'Genres', 'Moods', 'Year', 'Notes'],
+      ...exportSongs.map(song => [
+        song.title,
+        song.artist,
+        song.genres.join(', '),
+        song.moods.join(', '),
+        song.year || '',
+        song.notes || ''
+      ])
+    ].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `songs-export-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedSongs.size === 0) {
+      alert('Please select songs to delete');
+      return;
+    }
+
+    // Offer CSV export before deletion
+    const exportFirst = window.confirm(
+      `You are about to delete ${selectedSongs.size} songs. Would you like to export them to CSV first?`
+    );
+    
+    if (exportFirst) {
+      const songsToDelete = songs.filter(song => selectedSongs.has(song.id));
+      exportSongsToCSV(songsToDelete);
+    }
+
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete ${selectedSongs.size} selected songs? This cannot be undone.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const deletePromises = Array.from(selectedSongs).map(songId => 
+        axios.delete(`${API}/songs/${songId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      );
+
+      await Promise.all(deletePromises);
+      
+      fetchSongs();
+      setSelectedSongs(new Set());
+      alert(`Successfully deleted ${selectedSongs.size} songs`);
+    } catch (error) {
+      console.error('Error batch deleting songs:', error);
+      alert('Error deleting songs. Please try again.');
+    }
+  };
+
+  // Update filtered songs when songs or filters change
+  React.useEffect(() => {
+    filterSongs();
+  }, [songs, songFilter, genreFilter, artistFilter, moodFilter, yearFilter]);
 
   const fetchDesignSettings = async () => {
     try {
