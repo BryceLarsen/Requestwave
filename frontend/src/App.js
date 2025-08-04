@@ -1220,6 +1220,57 @@ const MusicianDashboard = () => {
             </form>
           </div>
         )}
+
+        {/* Upgrade Modal */}
+        {showUpgrade && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-gray-800 rounded-xl p-8 w-full max-w-md">
+              <h2 className="text-2xl font-bold text-center mb-6">Upgrade to RequestWave Pro</h2>
+              
+              <div className="text-center mb-6">
+                <div className="bg-green-600 text-white rounded-full px-6 py-3 text-3xl font-bold mb-4">
+                  $5/month
+                </div>
+                <p className="text-gray-300 mb-4">Get unlimited song requests from your audience</p>
+                
+                <div className="text-left bg-gray-700 rounded-lg p-4 mb-6">
+                  <h3 className="font-bold mb-3 text-green-400">✓ Pro Features:</h3>
+                  <ul className="space-y-2 text-sm">
+                    <li>• Unlimited song requests</li>
+                    <li>• No monthly limits</li>
+                    <li>• Priority support</li>
+                    <li>• All current and future features</li>
+                  </ul>
+                </div>
+                
+                {subscriptionStatus && subscriptionStatus.plan === 'free' && (
+                  <div className="bg-orange-900/50 rounded-lg p-3 mb-4 text-orange-200">
+                    <p className="font-bold">Request Limit Reached</p>
+                    <p className="text-sm">
+                      You've used {subscriptionStatus.requests_used}/{subscriptionStatus.requests_limit} requests this month
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => setShowUpgrade(false)}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 py-3 rounded-lg transition duration-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpgrade}
+                  disabled={upgrading}
+                  className="flex-1 bg-green-600 hover:bg-green-700 py-3 rounded-lg font-bold transition duration-300 disabled:opacity-50"
+                >
+                  {upgrading ? 'Processing...' : 'Upgrade Now'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
