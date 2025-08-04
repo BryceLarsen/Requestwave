@@ -379,6 +379,11 @@ const MusicianDashboard = () => {
   });
   const [profileError, setProfileError] = useState('');
 
+  // Subscription management state
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
+
   useEffect(() => {
     fetchSongs();
     fetchRequests();
