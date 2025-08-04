@@ -387,6 +387,16 @@ const MusicianDashboard = () => {
   useEffect(() => {
     fetchSongs();
     fetchRequests();
+    fetchSubscriptionStatus();
+    
+    // Check for successful payment
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+    const paymentStatus = urlParams.get('payment');
+    
+    if (sessionId && paymentStatus === 'success') {
+      checkPaymentStatus(sessionId);
+    }
     
     // Setup real-time updates
     const service = new RealtimeService(musician.id, (data) => {
