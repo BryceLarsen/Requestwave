@@ -106,15 +106,18 @@ user_problem_statement: "Build RequestWave - a live music request platform with 
 backend:
   - task: "Authentication System"
     implemented: true
-    working: "NA"
+    working: false
     file: "server.py"
-    stuck_count: 0
-    priority: "high"
+    stuck_count: 1
+    priority: "critical"
     needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented JWT-based auth with registration/login endpoints, bcrypt password hashing, and authentication middleware"
+      - working: false
+        agent: "user"
+        comment: "CRITICAL BUG: User reported 'I cant seem to log in. i tried forgot password and it still wont work' - complete authentication system failure, login and password reset both broken"
 
   - task: "Song Management CRUD"
     implemented: true
