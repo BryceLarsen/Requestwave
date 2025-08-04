@@ -2278,7 +2278,14 @@ const MusicianDashboard = () => {
 
               {/* Artist Photo */}
               <div>
-                <label className="block text-gray-300 text-sm font-bold mb-3">Artist Photo</label>
+                <div className="flex items-center space-x-2 mb-3">
+                  <label className="block text-gray-300 text-sm font-bold">Artist Photo</label>
+                  {subscriptionStatus?.plan_type !== 'pro' && (
+                    <span className="bg-yellow-600 text-yellow-100 text-xs px-2 py-1 rounded-full font-bold">
+                      PRO
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center space-x-4">
                   {designSettings.artist_photo ? (
                     <div className="relative">
