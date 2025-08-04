@@ -262,8 +262,14 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
-agent_communication:
-  - agent: "main"
-    message: "Initial RequestWave core functionality implemented. Need to add CSV upload feature requested by user, then test all core functionality including auth, song management, real-time requests, and filtering."
-  - agent: "main"
-    message: "CSV upload functionality fully implemented! Backend has preview and upload endpoints with validation, frontend has drag-drop interface with preview table. Ready to test all features including the new CSV upload capability."
+  - task: "Copy Button Functionality"
+    implemented: true
+    working: "NA"
+    file: "App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "user"
+        comment: "User reported: 'check the copy button on the audience link' - potential issue with copy functionality needs investigation"
