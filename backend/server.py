@@ -388,6 +388,8 @@ async def register_musician(musician_data: MusicianRegister):
         "venmo_link": "",
         "bio": "",
         "website": "",
+        "subscription_ends_at": None,
+        "stripe_customer_id": None,
         "created_at": datetime.utcnow()
     }
     
