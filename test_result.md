@@ -278,7 +278,7 @@ test_plan:
         comment: "IMPROVED: Enhanced copy button with visual feedback ('Copied!' text), error handling, fallback for older browsers, and better UX. Original implementation had no feedback or error handling."
 
   - task: "Forgot Password Feature"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "server.py, App.js"
     stuck_count: 0
@@ -288,9 +288,12 @@ test_plan:
       - working: "NA"
         agent: "user"
         comment: "User requested: 'add a forgot password option in login' - need to implement password reset functionality"
+      - working: "NA"
+        agent: "main"
+        comment: "IMPLEMENTED: Added forgot password with 2-step process (email -> reset code + new password), includes backend endpoints and frontend UI integration"
 
   - task: "Song Edit Functionality"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "App.js"
     stuck_count: 0
@@ -300,9 +303,12 @@ test_plan:
       - working: "NA"
         agent: "user"
         comment: "User requested: 'a way to edit data for songs in all fields after they've been added to the list' - need edit song UI and backend integration"
+      - working: "NA"
+        agent: "main"
+        comment: "IMPLEMENTED: Added edit/delete buttons to each song, edit mode in song form, backend duplicate checking during edits, proper error handling"
 
   - task: "Duplicate Song Detection"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "server.py"
     stuck_count: 0
@@ -312,9 +318,12 @@ test_plan:
       - working: "NA"
         agent: "user"
         comment: "User requested: 'check for doubles identical in song title and artist' - need to prevent duplicate entries"
+      - working: "NA"
+        agent: "main"
+        comment: "IMPLEMENTED: Added case-insensitive duplicate detection for title+artist combination in both create and update endpoints with proper error messages"
 
   - task: "Personal Data Edit (Profile Management)"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "server.py, App.js"
     stuck_count: 0
@@ -324,3 +333,6 @@ test_plan:
       - working: "NA"
         agent: "user"
         comment: "User requested: 'how can you edit personal data like venmo link?' - need profile management functionality"
+      - working: "NA"
+        agent: "main"
+        comment: "IMPLEMENTED: Added Profile tab with editable fields (stage name, venmo link, website, bio), backend profile endpoints, slug update on name change"
