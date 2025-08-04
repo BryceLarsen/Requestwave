@@ -257,10 +257,10 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Apple Music Playlist Integration"
     - "CSV Song Upload"
     - "CSV Upload Interface"
     - "Authentication System"
-    - "Song Management CRUD"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
