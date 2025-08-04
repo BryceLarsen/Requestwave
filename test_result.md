@@ -118,11 +118,11 @@ backend:
 
   - task: "Song Management CRUD"
     implemented: true
-    working: true
+    working: false
     file: "server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
+    stuck_count: 2
+    priority: "critical"
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
@@ -133,6 +133,9 @@ backend:
       - working: true
         agent: "main"
         comment: "BUG FIXED: JWT authentication error resolved by changing jwt.JWTError to jwt.InvalidTokenError. Add Song functionality now working perfectly - verified with test song creation."
+      - working: false
+        agent: "user"
+        comment: "User reported AGAIN: 'I've entered the info for the song sweet caroline, clicked add song, and nothing is happening.' - Authentication still broken despite previous fix"
 
   - task: "Request Management System"
     implemented: true
