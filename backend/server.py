@@ -151,7 +151,7 @@ async def get_current_musician(credentials: HTTPAuthorizationCredentials = Depen
         return musician_id
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.JWTError:
+    except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 def parse_csv_content(content: bytes) -> List[Dict[str, Any]]:
