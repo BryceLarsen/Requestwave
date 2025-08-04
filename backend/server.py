@@ -550,6 +550,144 @@ async def reset_password(reset_data: PasswordResetConfirm):
     
     return {"message": "Password reset successful"}
 
+# Subscription endpoints
+@api_router.get("/subscription/status", response_model=SubscriptionStatus)
+async def get_subscription_status_endpoint(musician_id: str = Depends(get_current_musician)):
+    """Get current subscription status"""
+    return await get_subscription_status(musician_id)
+
+@api_router.post("/subscription/upgrade", response_model=CheckoutSessionResponse)
+async def create_upgrade_checkout(request: Request, musician_id: str = Depends(get_current_musician)):
+    """Create Stripe checkout session for $5/month subscription"""
+    if not STRIPE_API_KEY:
+        raise HTTPException(status_code=500, detail="Stripe not configured")
+    
+    try:
+        # Initialize Stripe
+        host_url = str(request.base_url)
+        webhook_url = f"{host_url}api/webhook/stripe"
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+        
+        # Create checkout session
+        success_url = f"{host_url}dashboard?payment=success&session_id={{CHECKOUT_SESSION_ID}}"
+        cancel_url = f"{host_url}dashboard?payment=cancelled"
+        
+        checkout_request = CheckoutSessionRequest(
+            amount=MONTHLY_SUBSCRIPTION_PRICE,
+            currency="usd",
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={
+                "musician_id": musician_id,
+                "subscription_type": "monthly_unlimited",
+                "product": "RequestWave Pro - Monthly"
+            }
+        )
+        
+        session = await stripe_checkout.create_checkout_session(checkout_request)
+        
+        # Create payment transaction record
+        transaction = {
+            "id": str(uuid.uuid4()),
+            "musician_id": musician_id,
+            "amount": MONTHLY_SUBSCRIPTION_PRICE,
+            "currency": "usd",
+            "session_id": session.session_id,
+            "payment_status": "pending",
+            "subscription_type": "monthly_unlimited",
+            "created_at": datetime.utcnow()
+        }
+        await db.payment_transactions.insert_one(transaction)
+        
+        return session
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating checkout session: {str(e)}")
+
+@api_router.get("/subscription/payment-status/{session_id}")
+async def check_payment_status(session_id: str, musician_id: str = Depends(get_current_musician)):
+    """Check payment status and update subscription if successful"""
+    if not STRIPE_API_KEY:
+        raise HTTPException(status_code=500, detail="Stripe not configured")
+    
+    try:
+        # Initialize Stripe
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url="")
+        
+        # Get checkout status
+        status_response = await stripe_checkout.get_checkout_status(session_id)
+        
+        # Update payment transaction
+        await db.payment_transactions.update_one(
+            {"session_id": session_id, "musician_id": musician_id},
+            {"$set": {"payment_status": status_response.payment_status}}
+        )
+        
+        # If payment successful, activate subscription
+        if status_response.payment_status == "paid":
+            # Check if already processed to avoid double activation
+            existing_subscription = await db.musicians.find_one({
+                "id": musician_id,
+                "subscription_ends_at": {"$gte": datetime.utcnow()}
+            })
+            
+            if not existing_subscription:
+                # Activate 1-month subscription
+                subscription_end = datetime.utcnow() + timedelta(days=30)
+                await db.musicians.update_one(
+                    {"id": musician_id},
+                    {"$set": {"subscription_ends_at": subscription_end}}
+                )
+        
+        return {
+            "payment_status": status_response.payment_status,
+            "amount": status_response.amount_total / 100,  # Convert from cents
+            "currency": status_response.currency
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error checking payment status: {str(e)}")
+
+@api_router.post("/webhook/stripe")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhooks"""
+    if not STRIPE_API_KEY:
+        raise HTTPException(status_code=500, detail="Stripe not configured")
+    
+    try:
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url="")
+        body = await request.body()
+        
+        webhook_response = await stripe_checkout.handle_webhook(
+            body, 
+            request.headers.get("Stripe-Signature")
+        )
+        
+        # Handle successful payment
+        if webhook_response.payment_status == "paid" and webhook_response.session_id:
+            transaction = await db.payment_transactions.find_one({"session_id": webhook_response.session_id})
+            
+            if transaction and transaction.get("payment_status") != "paid":
+                # Update transaction status
+                await db.payment_transactions.update_one(
+                    {"session_id": webhook_response.session_id},
+                    {"$set": {"payment_status": "paid"}}
+                )
+                
+                # Activate subscription for the musician
+                musician_id = transaction.get("musician_id")
+                if musician_id:
+                    subscription_end = datetime.utcnow() + timedelta(days=30)
+                    await db.musicians.update_one(
+                        {"id": musician_id},
+                        {"$set": {"subscription_ends_at": subscription_end}}
+                    )
+        
+        return {"status": "success"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Webhook error: {str(e)}")
+
 # Song endpoints
 @api_router.get("/songs", response_model=List[Song])
 async def get_my_songs(musician_id: str = Depends(get_current_musician)):
