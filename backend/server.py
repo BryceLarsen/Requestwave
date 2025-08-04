@@ -298,6 +298,69 @@ def validate_csv_file(file: UploadFile) -> None:
     if file.size > 5 * 1024 * 1024:  # 5MB limit
         raise HTTPException(status_code=400, detail="File size must be less than 5MB")
 
+async def get_subscription_status(musician_id: str) -> SubscriptionStatus:
+    """Get current subscription status and request limits for a musician"""
+    musician = await db.musicians.find_one({"id": musician_id})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    now = datetime.utcnow()
+    signup_date = musician.get("created_at", now)
+    
+    # Check if still in trial period (7 days from signup)
+    trial_end = signup_date + timedelta(days=TRIAL_DAYS)
+    if now < trial_end:
+        return SubscriptionStatus(
+            plan="trial",
+            requests_used=0,  # Unlimited during trial
+            requests_limit=None,
+            trial_ends_at=trial_end,
+            can_make_request=True
+        )
+    
+    # Check if has active subscription
+    subscription_end = musician.get("subscription_ends_at")
+    if subscription_end and now < subscription_end:
+        return SubscriptionStatus(
+            plan="pro",
+            requests_used=0,  # Unlimited with subscription
+            requests_limit=None,
+            subscription_ends_at=subscription_end,
+            can_make_request=True
+        )
+    
+    # Free tier - calculate monthly usage based on signup anniversary
+    # Find the current month period based on signup date
+    current_period_start = signup_date
+    while current_period_start + timedelta(days=30) < now:
+        current_period_start = current_period_start + timedelta(days=30)
+    
+    next_reset = current_period_start + timedelta(days=30)
+    
+    # Count requests in current period
+    requests_in_period = await db.requests.count_documents({
+        "musician_id": musician_id,
+        "created_at": {
+            "$gte": current_period_start,
+            "$lt": next_reset
+        }
+    })
+    
+    can_make_request = requests_in_period < FREE_REQUESTS_LIMIT
+    
+    return SubscriptionStatus(
+        plan="free",
+        requests_used=requests_in_period,
+        requests_limit=FREE_REQUESTS_LIMIT,
+        next_reset_date=next_reset,
+        can_make_request=can_make_request
+    )
+
+async def check_request_allowed(musician_id: str) -> bool:
+    """Check if musician can make a request based on their subscription"""
+    status = await get_subscription_status(musician_id)
+    return status.can_make_request
+
 # Auth endpoints
 @api_router.post("/auth/register", response_model=AuthResponse)
 async def register_musician(musician_data: MusicianRegister):
