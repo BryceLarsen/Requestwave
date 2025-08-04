@@ -1949,6 +1949,231 @@ const MusicianDashboard = () => {
           </div>
         )}
 
+        {/* NEW: Phase 3 - Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-6">
+            {/* Analytics Header */}
+            <div className="bg-gray-800 rounded-xl p-6">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold">📊 Analytics Dashboard</h2>
+                  <p className="text-gray-300">Insights into your audience and performance</p>
+                </div>
+                
+                {/* Timeframe Selector */}
+                <div className="flex space-x-2">
+                  {['daily', 'weekly', 'monthly'].map((timeframe) => (
+                    <button
+                      key={timeframe}
+                      onClick={() => handleTimeframeChange(timeframe)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition duration-300 ${
+                        analyticsTimeframe === timeframe
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      {timeframe.charAt(0).toUpperCase() + timeframe.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Analytics Summary Cards */}
+              {analyticsData && (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-gray-700 rounded-lg p-4">
+                    <h3 className="text-sm font-medium text-gray-300">Total Requests</h3>
+                    <p className="text-2xl font-bold text-purple-400">{analyticsData.totals.total_requests}</p>
+                  </div>
+                  <div className="bg-gray-700 rounded-lg p-4">
+                    <h3 className="text-sm font-medium text-gray-300">Total Tips</h3>
+                    <p className="text-2xl font-bold text-green-400">${analyticsData.totals.total_tips.toFixed(2)}</p>
+                  </div>
+                  <div className="bg-gray-700 rounded-lg p-4">
+                    <h3 className="text-sm font-medium text-gray-300">Unique Requesters</h3>
+                    <p className="text-2xl font-bold text-blue-400">{analyticsData.totals.unique_requesters}</p>
+                  </div>
+                  <div className="bg-gray-700 rounded-lg p-4">
+                    <h3 className="text-sm font-medium text-gray-300">Period</h3>
+                    <p className="text-lg font-bold text-gray-300">{analyticsData.period}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Requesters Section */}
+            <div className="bg-gray-800 rounded-xl p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold">👥 Audience Requesters</h3>
+                <button
+                  onClick={exportRequestersCSV}
+                  className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-medium transition duration-300"
+                >
+                  📊 Export CSV
+                </button>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-700">
+                      <th className="text-left py-2 text-gray-300">Name</th>
+                      <th className="text-left py-2 text-gray-300">Email</th>
+                      <th className="text-left py-2 text-gray-300">Requests</th>
+                      <th className="text-left py-2 text-gray-300">Tips</th>
+                      <th className="text-left py-2 text-gray-300">Latest Request</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {requestersData.slice(0, 10).map((requester, index) => (
+                      <tr key={index} className="border-b border-gray-700 hover:bg-gray-700">
+                        <td className="py-2 font-medium">{requester.name}</td>
+                        <td className="py-2 text-gray-300">{requester.email}</td>
+                        <td className="py-2">
+                          <span className="bg-purple-600 px-2 py-1 rounded-full text-xs">
+                            {requester.request_count}
+                          </span>
+                        </td>
+                        <td className="py-2 text-green-400 font-medium">
+                          ${requester.total_tips.toFixed(2)}
+                        </td>
+                        <td className="py-2 text-gray-400 text-xs">
+                          {new Date(requester.latest_request).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                
+                {requestersData.length === 0 && (
+                  <div className="text-center py-8 text-gray-400">
+                    <p>No requesters yet. Share your QR code to start receiving requests!</p>
+                  </div>
+                )}
+                
+                {requestersData.length > 10 && (
+                  <div className="text-center py-4 text-gray-400">
+                    <p>Showing top 10 requesters. Export CSV for complete list.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Analytics Charts Section */}
+            {analyticsData && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Top Requested Songs */}
+                <div className="bg-gray-800 rounded-xl p-6">
+                  <h3 className="text-xl font-bold mb-4">🎵 Most Requested Songs</h3>
+                  <div className="space-y-3">
+                    {analyticsData.top_songs.slice(0, 5).map((item, index) => (
+                      <div key={index} className="flex justify-between items-center">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{item.song}</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-orange-400 font-bold">{item.count}</span>
+                          <div className="w-20 bg-gray-700 rounded-full h-2">
+                            <div 
+                              className="bg-orange-500 h-2 rounded-full"
+                              style={{
+                                width: `${(item.count / Math.max(...analyticsData.top_songs.map(s => s.count))) * 100}%`
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {analyticsData.top_songs.length === 0 && (
+                    <div className="text-center py-8 text-gray-400">
+                      <p>No song requests yet in this period.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Most Frequent Requesters */}
+                <div className="bg-gray-800 rounded-xl p-6">
+                  <h3 className="text-xl font-bold mb-4">⭐ Most Active Requesters</h3>
+                  <div className="space-y-3">
+                    {analyticsData.top_requesters.slice(0, 5).map((item, index) => (
+                      <div key={index} className="flex justify-between items-center">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{item.requester}</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-blue-400 font-bold">{item.count}</span>
+                          <div className="w-20 bg-gray-700 rounded-full h-2">
+                            <div 
+                              className="bg-blue-500 h-2 rounded-full"
+                              style={{
+                                width: `${(item.count / Math.max(...analyticsData.top_requesters.map(r => r.count))) * 100}%`
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {analyticsData.top_requesters.length === 0 && (
+                    <div className="text-center py-8 text-gray-400">
+                      <p>No frequent requesters yet in this period.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Daily Timeline */}
+            {analyticsData && analyticsData.daily_stats.length > 0 && (
+              <div className="bg-gray-800 rounded-xl p-6">
+                <h3 className="text-xl font-bold mb-4">📈 Daily Activity</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-700">
+                        <th className="text-left py-2 text-gray-300">Date</th>
+                        <th className="text-left py-2 text-gray-300">Requests</th>
+                        <th className="text-left py-2 text-gray-300">Tips</th>
+                        <th className="text-left py-2 text-gray-300">Unique Requesters</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {analyticsData.daily_stats.map((day, index) => (
+                        <tr key={index} className="border-b border-gray-700 hover:bg-gray-700">
+                          <td className="py-2 font-medium">{day.date}</td>
+                          <td className="py-2">
+                            <span className="bg-purple-600 px-2 py-1 rounded-full text-xs">
+                              {day.request_count}
+                            </span>
+                          </td>
+                          <td className="py-2 text-green-400 font-medium">
+                            ${day.tip_total.toFixed(2)}
+                          </td>
+                          <td className="py-2">
+                            <span className="bg-blue-600 px-2 py-1 rounded-full text-xs">
+                              {day.unique_requesters}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {analyticsLoading && (
+              <div className="text-center py-8">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                <p className="text-gray-400 mt-2">Loading analytics...</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Design Tab */}
         {activeTab === 'design' && (
           <div className="bg-gray-800 rounded-xl p-6">
