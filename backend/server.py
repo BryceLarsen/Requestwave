@@ -1525,9 +1525,39 @@ async def stripe_webhook(request: Request):
 
 # Song endpoints
 @api_router.get("/songs", response_model=List[Song])
-async def get_my_songs(musician_id: str = Depends(get_current_musician)):
-    songs = await db.songs.find({"musician_id": musician_id}).sort("created_at", DESCENDING).to_list(1000)
-    return [Song(**song) for song in songs]
+async def get_my_songs(
+    musician_id: str = Depends(get_current_musician),
+    sort_by: Optional[str] = "created_at"  # NEW: Support sorting by different fields
+):
+    """Get songs for authenticated musician with sorting support"""
+    # Determine sort field and direction
+    sort_field = "created_at"
+    sort_direction = DESCENDING
+    
+    if sort_by == "popularity":
+        sort_field = "request_count"
+        sort_direction = DESCENDING  # Most requested first
+    elif sort_by == "title":
+        sort_field = "title"
+        sort_direction = ASCENDING
+    elif sort_by == "artist":
+        sort_field = "artist"  
+        sort_direction = ASCENDING
+    elif sort_by == "year":
+        sort_field = "year"
+        sort_direction = DESCENDING
+    # Default: sort_by == "created_at" uses defaults above
+    
+    songs = await db.songs.find({"musician_id": musician_id}).sort(sort_field, sort_direction).to_list(1000)
+    
+    # Ensure request_count field exists for older songs
+    updated_songs = []
+    for song in songs:
+        if "request_count" not in song:
+            song["request_count"] = 0
+        updated_songs.append(Song(**song))
+    
+    return updated_songs
 
 @api_router.post("/songs", response_model=Song)
 async def create_song(song_data: SongCreate, musician_id: str = Depends(get_current_musician)):
