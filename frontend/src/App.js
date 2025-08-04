@@ -1285,6 +1285,184 @@ const MusicianDashboard = () => {
           </div>
         )}
 
+        {/* Design Tab */}
+        {activeTab === 'design' && (
+          <div className="bg-gray-800 rounded-xl p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-xl font-bold">Audience Page Design</h2>
+                <p className="text-gray-300 text-sm">Customize how your audience sees your song request page</p>
+              </div>
+              {subscriptionStatus && subscriptionStatus.plan !== 'pro' && subscriptionStatus.plan !== 'trial' && (
+                <div className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                  PRO FEATURE
+                </div>
+              )}
+            </div>
+            
+            {designError && (
+              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200">
+                {designError}
+              </div>
+            )}
+            
+            <form onSubmit={handleDesignUpdate} className="space-y-6">
+              {/* Color Scheme */}
+              <div>
+                <label className="block text-gray-300 text-sm font-bold mb-3">Color Theme</label>
+                <div className="grid grid-cols-5 gap-3">
+                  {[
+                    { name: 'purple', color: 'bg-purple-600', label: 'Purple' },
+                    { name: 'blue', color: 'bg-blue-600', label: 'Blue' },
+                    { name: 'green', color: 'bg-green-600', label: 'Green' },
+                    { name: 'red', color: 'bg-red-600', label: 'Red' },
+                    { name: 'orange', color: 'bg-orange-600', label: 'Orange' }
+                  ].map((theme) => (
+                    <button
+                      key={theme.name}
+                      type="button"
+                      onClick={() => setDesignSettings({...designSettings, color_scheme: theme.name})}
+                      className={`p-3 rounded-lg border-2 transition duration-300 ${
+                        designSettings.color_scheme === theme.name
+                          ? 'border-white shadow-lg'
+                          : 'border-gray-600 hover:border-gray-400'
+                      }`}
+                    >
+                      <div className={`w-full h-8 ${theme.color} rounded mb-2`}></div>
+                      <span className="text-xs text-gray-300">{theme.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Layout Mode */}
+              <div>
+                <label className="block text-gray-300 text-sm font-bold mb-3">Song Display Layout</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setDesignSettings({...designSettings, layout_mode: 'grid'})}
+                    className={`p-4 rounded-lg border-2 transition duration-300 ${
+                      designSettings.layout_mode === 'grid'
+                        ? 'border-purple-500 bg-purple-900/20'
+                        : 'border-gray-600 hover:border-gray-400'
+                    }`}
+                  >
+                    <div className="grid grid-cols-2 gap-1 mb-2">
+                      <div className="bg-gray-600 h-3 rounded"></div>
+                      <div className="bg-gray-600 h-3 rounded"></div>
+                      <div className="bg-gray-600 h-3 rounded"></div>
+                      <div className="bg-gray-600 h-3 rounded"></div>
+                    </div>
+                    <span className="text-sm">Grid View</span>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setDesignSettings({...designSettings, layout_mode: 'list'})}
+                    className={`p-4 rounded-lg border-2 transition duration-300 ${
+                      designSettings.layout_mode === 'list'
+                        ? 'border-purple-500 bg-purple-900/20'
+                        : 'border-gray-600 hover:border-gray-400'
+                    }`}
+                  >
+                    <div className="space-y-1 mb-2">
+                      <div className="bg-gray-600 h-2 rounded w-full"></div>
+                      <div className="bg-gray-600 h-2 rounded w-full"></div>
+                      <div className="bg-gray-600 h-2 rounded w-full"></div>
+                    </div>
+                    <span className="text-sm">List View</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Artist Photo */}
+              <div>
+                <label className="block text-gray-300 text-sm font-bold mb-3">Artist Photo</label>
+                <div className="flex items-center space-x-4">
+                  {designSettings.artist_photo ? (
+                    <div className="relative">
+                      <img
+                        src={designSettings.artist_photo}
+                        alt="Artist"
+                        className="w-20 h-20 rounded-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setDesignSettings({...designSettings, artist_photo: null})}
+                        className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-700"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-gray-700 flex items-center justify-center">
+                      <span className="text-gray-400 text-xs">No Photo</span>
+                    </div>
+                  )}
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleArtistPhotoUpload}
+                      className="hidden"
+                      id="artist-photo-upload"
+                    />
+                    <label
+                      htmlFor="artist-photo-upload"
+                      className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg cursor-pointer transition duration-300"
+                    >
+                      Upload Photo
+                    </label>
+                    <p className="text-xs text-gray-400 mt-1">Max 2MB, JPG/PNG</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Display Options */}
+              <div>
+                <label className="block text-gray-300 text-sm font-bold mb-3">Show on Audience Page</label>
+                <div className="space-y-3">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={designSettings.show_year}
+                      onChange={(e) => setDesignSettings({...designSettings, show_year: e.target.checked})}
+                      className="mr-3"
+                    />
+                    <span className="text-gray-300">Show song year</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={designSettings.show_notes}
+                      onChange={(e) => setDesignSettings({...designSettings, show_notes: e.target.checked})}
+                      className="mr-3"
+                    />
+                    <span className="text-gray-300">Show song notes</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex space-x-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 py-3 rounded-lg font-bold transition duration-300"
+                >
+                  Save Design Settings
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.open(`/musician/${musician.slug}`, '_blank')}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-bold transition duration-300"
+                >
+                  Preview Page
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
         {/* Upgrade Modal */}
         {showUpgrade && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
