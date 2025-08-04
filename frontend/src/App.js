@@ -853,7 +853,7 @@ const MusicianDashboard = () => {
 
         {/* Tabs */}
         <div className="flex space-x-1 bg-gray-800 rounded-lg p-1 mb-8">
-          {['songs', 'requests', 'profile'].map((tab) => (
+          {['songs', 'requests', 'profile', 'design'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -868,6 +868,9 @@ const MusicianDashboard = () => {
                 <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-xs">
                   {requests.filter(r => r.status === 'pending').length}
                 </span>
+              )}
+              {tab === 'design' && subscriptionStatus && subscriptionStatus.plan !== 'pro' && subscriptionStatus.plan !== 'trial' && (
+                <span className="ml-1 text-xs bg-green-600 rounded px-1">PRO</span>
               )}
             </button>
           ))}
