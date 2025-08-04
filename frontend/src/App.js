@@ -224,6 +224,21 @@ const MusicianDashboard = () => {
     notes: ''
   });
 
+  // Song editing state
+  const [editingSong, setEditingSong] = useState(null);
+  const [songError, setSongError] = useState('');
+
+  // Profile management state
+  const [showProfile, setShowProfile] = useState(false);
+  const [profile, setProfile] = useState({
+    name: '',
+    email: '',
+    venmo_link: '',
+    bio: '',
+    website: ''
+  });
+  const [profileError, setProfileError] = useState('');
+
   useEffect(() => {
     fetchSongs();
     fetchRequests();
