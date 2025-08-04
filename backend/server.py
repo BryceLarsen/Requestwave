@@ -102,6 +102,27 @@ class MusicianPublic(BaseModel):
     name: str
     slug: str
 
+class MusicianProfile(BaseModel):
+    name: str
+    email: str
+    venmo_link: Optional[str] = ""
+    bio: Optional[str] = ""
+    website: Optional[str] = ""
+
+class ProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    venmo_link: Optional[str] = None
+    bio: Optional[str] = None
+    website: Optional[str] = None
+
+class PasswordReset(BaseModel):
+    email: str
+
+class PasswordResetConfirm(BaseModel):
+    email: str
+    reset_code: str
+    new_password: str
+
 class CSVUploadResponse(BaseModel):
     success: bool
     message: str
