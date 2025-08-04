@@ -394,6 +394,16 @@ const MusicianDashboard = () => {
   });
   const [designError, setDesignError] = useState('');
 
+  // QR Code state
+  const [qrCode, setQrCode] = useState(null);
+  const [showQRModal, setShowQRModal] = useState(false);
+
+  // Playlist import state
+  const [playlistUrl, setPlaylistUrl] = useState('');
+  const [playlistPlatform, setPlaylistPlatform] = useState('spotify');
+  const [importingPlaylist, setImportingPlaylist] = useState(false);
+  const [playlistError, setPlaylistError] = useState('');
+
   useEffect(() => {
     fetchSongs();
     fetchRequests();
