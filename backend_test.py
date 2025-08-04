@@ -344,8 +344,8 @@ class RequestWaveAPITester:
                 self.log_result("Update Request Status", False, "No test request ID available")
                 return
             
-            # Test updating to accepted
-            response = self.make_request("PUT", f"/requests/{self.test_request_id}/status", {"status": "accepted"})
+            # Test updating to accepted - fix the request format
+            response = self.make_request("PUT", f"/requests/{self.test_request_id}/status?status=accepted")
             
             if response.status_code == 200:
                 self.log_result("Update Request Status", True, "Successfully updated request status")
