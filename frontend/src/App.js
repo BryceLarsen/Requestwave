@@ -541,6 +541,47 @@ const MusicianDashboard = () => {
     }
   };
 
+  const fetchSubscriptionStatus = async () => {
+    try {
+      const response = await axios.get(`${API}/subscription/status`);
+      setSubscriptionStatus(response.data);
+    } catch (error) {
+      console.error('Error fetching subscription status:', error);
+    }
+  };
+
+  const handleUpgrade = async () => {
+    setUpgrading(true);
+    try {
+      const response = await axios.post(`${API}/subscription/upgrade`);
+      if (response.data.url) {
+        window.location.href = response.data.url;
+      }
+    } catch (error) {
+      console.error('Error creating upgrade session:', error);
+      alert('Error processing upgrade. Please try again.');
+    } finally {
+      setUpgrading(false);
+    }
+  };
+
+  const checkPaymentStatus = async (sessionId) => {
+    try {
+      const response = await axios.get(`${API}/subscription/payment-status/${sessionId}`);
+      if (response.data.payment_status === 'paid') {
+        alert('Subscription activated! You now have unlimited requests.');
+        fetchSubscriptionStatus();
+        // Remove session_id from URL
+        const url = new URL(window.location);
+        url.searchParams.delete('session_id');
+        url.searchParams.delete('payment');
+        window.history.replaceState({}, document.title, url.pathname + url.search);
+      }
+    } catch (error) {
+      console.error('Error checking payment status:', error);
+    }
+  };
+
   const updateRequestStatus = async (requestId, status) => {
     try {
       await axios.put(`${API}/requests/${requestId}/status?status=${status}`);
