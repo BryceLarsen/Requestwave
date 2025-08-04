@@ -277,6 +277,8 @@ const MusicianDashboard = () => {
 
   const handleAddSong = async (e) => {
     e.preventDefault();
+    setSongError('');
+    
     try {
       const songData = {
         ...songForm,
@@ -296,7 +298,101 @@ const MusicianDashboard = () => {
       });
       fetchSongs();
     } catch (error) {
-      console.error('Error adding song:', error);
+      setSongError(error.response?.data?.detail || 'Error adding song');
+    }
+  };
+
+  const handleEditSong = (song) => {
+    setEditingSong(song);
+    setSongForm({
+      title: song.title,
+      artist: song.artist,
+      genres: song.genres,
+      moods: song.moods,
+      year: song.year ? song.year.toString() : '',
+      notes: song.notes
+    });
+    setSongError('');
+  };
+
+  const handleUpdateSong = async (e) => {
+    e.preventDefault();
+    setSongError('');
+    
+    try {
+      const songData = {
+        ...songForm,
+        genres: songForm.genres.filter(g => g.trim()),
+        moods: songForm.moods.filter(m => m.trim()),
+        year: songForm.year ? parseInt(songForm.year) : null
+      };
+      
+      await axios.put(`${API}/songs/${editingSong.id}`, songData);
+      setEditingSong(null);
+      setSongForm({
+        title: '',
+        artist: '',
+        genres: [],
+        moods: [],
+        year: '',
+        notes: ''
+      });
+      fetchSongs();
+    } catch (error) {
+      setSongError(error.response?.data?.detail || 'Error updating song');
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingSong(null);
+    setSongForm({
+      title: '',
+      artist: '',
+      genres: [],
+      moods: [],
+      year: '',
+      notes: ''
+    });
+    setSongError('');
+  };
+
+  const handleDeleteSong = async (songId) => {
+    if (window.confirm('Are you sure you want to delete this song?')) {
+      try {
+        await axios.delete(`${API}/songs/${songId}`);
+        fetchSongs();
+      } catch (error) {
+        console.error('Error deleting song:', error);
+      }
+    }
+  };
+
+  const fetchProfile = async () => {
+    try {
+      const response = await axios.get(`${API}/profile`);
+      setProfile(response.data);
+    } catch (error) {
+      setProfileError('Error loading profile');
+    }
+  };
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    setProfileError('');
+    
+    try {
+      const response = await axios.put(`${API}/profile`, profile);
+      setProfile(response.data);
+      setShowProfile(false);
+      // Update the musician name in auth context if it changed
+      if (response.data.name !== musician.name) {
+        login({
+          token: localStorage.getItem('token'),
+          musician: { ...musician, name: response.data.name }
+        });
+      }
+    } catch (error) {
+      setProfileError(error.response?.data?.detail || 'Error updating profile');
     }
   };
 
