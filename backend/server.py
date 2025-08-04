@@ -145,6 +145,14 @@ class DesignUpdate(BaseModel):
 class SpotifyPlaylistImport(BaseModel):
     playlist_url: str
 
+class PlaylistImport(BaseModel):
+    playlist_url: str
+    platform: str  # "spotify" or "apple_music"
+
+class QRCodeRequest(BaseModel):
+    format: str = "png"  # png, svg
+    size: int = 10  # QR code size multiplier
+
 class PasswordReset(BaseModel):
     email: str
 
