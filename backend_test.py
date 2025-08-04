@@ -800,24 +800,117 @@ class RequestWaveAPITester:
             self.log_result("Playlist Import Duplicate Detection", False, f"Exception: {str(e)}")
 
     def test_delete_song(self):
-        """Test song deletion (run last to clean up)"""
+        """Test song deletion - CRITICAL FIX TEST"""
         try:
             if not self.test_song_id:
                 self.log_result("Delete Song", False, "No test song ID available")
                 return
             
+            print(f"🔍 Testing song deletion for song ID: {self.test_song_id}")
+            
+            # First, verify the song exists
+            songs_before_response = self.make_request("GET", "/songs")
+            if songs_before_response.status_code == 200:
+                songs_before = songs_before_response.json()
+                song_exists_before = any(song["id"] == self.test_song_id for song in songs_before)
+                print(f"📊 Song exists before deletion: {song_exists_before}")
+                
+                if not song_exists_before:
+                    self.log_result("Delete Song - Pre-check", False, "Test song not found in database before deletion")
+                    return
+            else:
+                self.log_result("Delete Song - Pre-check", False, f"Could not retrieve songs before deletion: {songs_before_response.status_code}")
+                return
+            
+            # Test deletion
             response = self.make_request("DELETE", f"/songs/{self.test_song_id}")
             
             if response.status_code == 200:
                 data = response.json()
+                print(f"📊 Delete response: {json.dumps(data, indent=2)}")
+                
                 if "message" in data:
-                    self.log_result("Delete Song", True, "Successfully deleted song")
+                    self.log_result("Delete Song - API Response", True, f"✅ API returned success: {data['message']}")
+                    
+                    # CRITICAL TEST: Verify the song is actually deleted from the database
+                    songs_after_response = self.make_request("GET", "/songs")
+                    if songs_after_response.status_code == 200:
+                        songs_after = songs_after_response.json()
+                        song_exists_after = any(song["id"] == self.test_song_id for song in songs_after)
+                        
+                        print(f"📊 Song exists after deletion: {song_exists_after}")
+                        print(f"📊 Songs count before: {len(songs_before)}, after: {len(songs_after)}")
+                        
+                        if not song_exists_after:
+                            self.log_result("Delete Song - Database Verification", True, f"✅ CRITICAL FIX VERIFIED: Song successfully deleted from database")
+                            self.log_result("Delete Song", True, "✅ CRITICAL FIX VERIFIED: Song deletion working correctly")
+                        else:
+                            self.log_result("Delete Song - Database Verification", False, f"❌ CRITICAL BUG: Song still exists in database after deletion")
+                            self.log_result("Delete Song", False, f"❌ CRITICAL BUG: Song not actually deleted from database")
+                    else:
+                        self.log_result("Delete Song - Database Verification", False, f"Could not verify deletion: {songs_after_response.status_code}")
+                        self.log_result("Delete Song", False, f"Could not verify deletion from database")
                 else:
-                    self.log_result("Delete Song", False, f"Unexpected response: {data}")
+                    self.log_result("Delete Song", False, f"❌ CRITICAL BUG: Unexpected response format: {data}")
             else:
-                self.log_result("Delete Song", False, f"Status code: {response.status_code}, Response: {response.text}")
+                self.log_result("Delete Song", False, f"❌ CRITICAL BUG: Status code: {response.status_code}, Response: {response.text}")
         except Exception as e:
-            self.log_result("Delete Song", False, f"Exception: {str(e)}")
+            self.log_result("Delete Song", False, f"❌ CRITICAL BUG: Exception: {str(e)}")
+
+    def test_delete_song_authentication(self):
+        """Test that song deletion requires proper authentication - CRITICAL FIX TEST"""
+        try:
+            if not self.test_song_id:
+                # Create a temporary song for this test
+                temp_song_data = {
+                    "title": "Temp Song for Auth Test",
+                    "artist": "Test Artist",
+                    "genres": ["Test"],
+                    "moods": ["Test"],
+                    "year": 2023,
+                    "notes": "Temporary song for authentication test"
+                }
+                
+                create_response = self.make_request("POST", "/songs", temp_song_data)
+                if create_response.status_code == 200:
+                    temp_song_id = create_response.json()["id"]
+                else:
+                    self.log_result("Delete Song Authentication", False, "Could not create temporary song for auth test")
+                    return
+            else:
+                temp_song_id = self.test_song_id
+            
+            # Save current token
+            original_token = self.auth_token
+            
+            # Test without token
+            self.auth_token = None
+            print(f"🔍 Testing song deletion without authentication for song ID: {temp_song_id}")
+            
+            response = self.make_request("DELETE", f"/songs/{temp_song_id}")
+            
+            if response.status_code in [401, 403]:  # Accept both 401 and 403 as valid auth failures
+                self.log_result("Delete Song Authentication - No Token", True, f"✅ Correctly rejected deletion without auth token (status: {response.status_code})")
+            else:
+                self.log_result("Delete Song Authentication - No Token", False, f"❌ CRITICAL BUG: Should have returned 401/403, got: {response.status_code}")
+            
+            # Test with invalid token
+            self.auth_token = "invalid_token_12345"
+            response = self.make_request("DELETE", f"/songs/{temp_song_id}")
+            
+            if response.status_code == 401:
+                self.log_result("Delete Song Authentication - Invalid Token", True, "✅ Correctly rejected deletion with invalid token")
+            else:
+                self.log_result("Delete Song Authentication - Invalid Token", False, f"❌ CRITICAL BUG: Should have returned 401, got: {response.status_code}")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+        except Exception as e:
+            self.log_result("Delete Song Authentication", False, f"❌ CRITICAL BUG: Exception: {str(e)}")
+            # Restore token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
 
     def run_all_tests(self):
         """Run all tests in order"""
