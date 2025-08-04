@@ -806,7 +806,7 @@ const MusicianDashboard = () => {
                 {songs.map((song) => (
                   <div key={song.id} className="bg-gray-700 rounded-lg p-4">
                     <div className="flex justify-between items-start">
-                      <div>
+                      <div className="flex-1">
                         <h3 className="font-bold text-lg">{song.title}</h3>
                         <p className="text-gray-300">by {song.artist}</p>
                         <div className="flex flex-wrap gap-2 mt-2">
@@ -818,6 +818,23 @@ const MusicianDashboard = () => {
                           ))}
                           {song.year && <span className="bg-gray-600 text-xs px-2 py-1 rounded">{song.year}</span>}
                         </div>
+                        {song.notes && (
+                          <p className="text-gray-400 text-sm mt-2 italic">"{song.notes}"</p>
+                        )}
+                      </div>
+                      <div className="flex space-x-2 ml-4">
+                        <button
+                          onClick={() => handleEditSong(song)}
+                          className="bg-blue-600 hover:bg-blue-700 text-xs px-3 py-1 rounded transition duration-300"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSong(song.id)}
+                          className="bg-red-600 hover:bg-red-700 text-xs px-3 py-1 rounded transition duration-300"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                   </div>
