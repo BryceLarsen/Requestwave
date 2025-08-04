@@ -337,6 +337,18 @@ test_plan:
         agent: "main"
         comment: "IMPLEMENTED: Added Profile tab with editable fields (stage name, venmo link, website, bio), backend profile endpoints, slug update on name change"
 
+  - task: "Freemium Subscription Model"
+    implemented: false
+    working: "NA"
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "user"
+        comment: "User requested: 'free profile option that allows up to 20 requests per month, after that $5/month subscription for unlimited requests' - need Stripe subscription integration with request limiting"
+
 agent_communication:
   - agent: "main"
     message: "Initial RequestWave core functionality implemented. Need to add CSV upload feature requested by user, then test all core functionality including auth, song management, real-time requests, and filtering."
