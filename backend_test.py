@@ -912,7 +912,64 @@ class RequestWaveAPITester:
             if 'original_token' in locals():
                 self.auth_token = original_token
 
-    def run_all_tests(self):
+    def run_critical_fixes_test(self):
+        """Run ONLY the critical fixes tests requested in the review"""
+        print("🚨 CRITICAL FIXES TESTING - RequestWave Backend API")
+        print("=" * 60)
+        print("Testing TWO CRITICAL FIXES:")
+        print("1. Playlist Import Fix - Real Song Data Extraction")
+        print("2. Delete Button Fix - Song Deletion")
+        print("=" * 60)
+        
+        # Authentication setup
+        self.test_musician_registration()
+        self.test_jwt_token_validation()
+        
+        # Create a test song for deletion testing
+        self.test_create_song()
+        
+        print("\n🔥 CRITICAL FIX #1: PLAYLIST IMPORT - REAL SONG DATA")
+        print("-" * 50)
+        
+        # Test playlist import with the EXACT URLs from user report
+        self.test_spotify_playlist_import()
+        self.test_apple_music_playlist_import()
+        self.test_playlist_import_authentication()
+        
+        print("\n🔥 CRITICAL FIX #2: DELETE BUTTON - SONG DELETION")
+        print("-" * 50)
+        
+        # Test song deletion functionality
+        self.test_delete_song_authentication()
+        self.test_delete_song()  # This should be last as it deletes the test song
+        
+        # Print summary
+        print("\n" + "=" * 60)
+        print("🏁 CRITICAL FIXES TEST SUMMARY")
+        print("=" * 60)
+        print(f"✅ Passed: {self.results['passed']}")
+        print(f"❌ Failed: {self.results['failed']}")
+        
+        if self.results['errors']:
+            print("\n🔍 Failed Tests:")
+            for error in self.results['errors']:
+                print(f"   • {error}")
+        
+        # Specific summary for the two critical fixes
+        playlist_tests = [error for error in self.results['errors'] if 'playlist' in error.lower() or 'import' in error.lower()]
+        delete_tests = [error for error in self.results['errors'] if 'delete' in error.lower()]
+        
+        print(f"\n📊 CRITICAL FIX #1 (Playlist Import): {'✅ WORKING' if len(playlist_tests) == 0 else '❌ FAILING'}")
+        if playlist_tests:
+            for error in playlist_tests:
+                print(f"   • {error}")
+        
+        print(f"📊 CRITICAL FIX #2 (Song Deletion): {'✅ WORKING' if len(delete_tests) == 0 else '❌ FAILING'}")
+        if delete_tests:
+            for error in delete_tests:
+                print(f"   • {error}")
+        
+        return self.results['failed'] == 0
         """Run all tests in order"""
         print("🚀 Starting RequestWave Backend API Tests")
         print("=" * 50)
