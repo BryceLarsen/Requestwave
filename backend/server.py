@@ -82,6 +82,9 @@ class Musician(BaseModel):
     apple_music_artist_url: Optional[str] = None
     bio: Optional[str] = None
     website: Optional[str] = None
+    # NEW: Current active show tracking
+    current_show_id: Optional[str] = None
+    current_show_name: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Song(BaseModel):
