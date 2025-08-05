@@ -1761,7 +1761,7 @@ class RequestWaveAPITester:
             for test_case in test_cases:
                 print(f"🔍 Testing metadata search for '{test_case['title']}' by '{test_case['artist']}'")
                 
-                response = self.make_request("POST", "/songs/search-metadata", {
+                response = self.make_request("POST", "/songs/search-metadata", params={
                     "title": test_case["title"],
                     "artist": test_case["artist"]
                 })
