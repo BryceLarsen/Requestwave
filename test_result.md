@@ -230,6 +230,42 @@ backend:
         agent: "main"
         comment: "User provided new Spotify credentials: Client ID: 24f25c0b6f1048819102bd13ae768bde, Client Secret: 2be2e1f534b546869c9e7978623005bb. Credentials have been updated in backend/.env. Need to re-test the functionality with new credentials and verify everything still works as expected."
 
+  - task: "CSV Upload Auto-enrichment Enhancement"
+    implemented: false
+    working: "NA"
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "NEW FEATURE: Extend the existing CSV upload functionality to include optional automatic metadata enrichment using Spotify API for each uploaded song. Should work similarly to manual song entry auto-fill but process multiple songs at once."
+
+  - task: "Existing Playlist Songs Metadata Enrichment"
+    implemented: false
+    working: "NA"
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "NEW FEATURE: Implement batch metadata enrichment for songs that have already been imported from playlists but may be missing genre, mood, and year information. Should provide endpoint to update existing songs with Spotify metadata."
+
+  - task: "Audience-Side Tip Support (PayPal and Venmo)"
+    implemented: false
+    working: "NA"
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "NEW FEATURE: Research and implement audience-side tip support with PayPal integration and custom Venmo.me links. Need to research best approaches for payment integration for audience members to tip musicians."
+
 frontend:
   - task: "Musician Dashboard"
     implemented: true
