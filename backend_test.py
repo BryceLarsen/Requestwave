@@ -2735,6 +2735,275 @@ class RequestWaveAPITester:
         except Exception as e:
             self.log_result("Analytics Data Quality", False, f"❌ Exception: {str(e)}")
 
+    def test_comprehensive_social_media_integration(self):
+        """COMPREHENSIVE SOCIAL MEDIA INTEGRATION TEST - Execute all 4 steps as requested"""
+        print("\n🎯 EXECUTING COMPREHENSIVE SOCIAL MEDIA INTEGRATION TEST")
+        print("=" * 80)
+        print("Testing complete fix for post-request modal social media links")
+        print("Executing all 4 steps as requested:")
+        print("1. Setup Test Musician with Social Media")
+        print("2. Test Public Musician Endpoint")
+        print("3. Test Request Creation")
+        print("4. Test Click Tracking")
+        print("-" * 80)
+        
+        try:
+            # STEP 1: Setup Test Musician with Social Media
+            print("\n📋 STEP 1: Setup Test Musician with Social Media")
+            print("-" * 50)
+            
+            if not self.auth_token:
+                self.log_result("Step 1 - Authentication", False, "No auth token available")
+                return
+            
+            # Update profile with ALL social media fields as specified
+            social_media_profile = {
+                "instagram_username": "testmusician",
+                "facebook_username": "TestMusicianPage",
+                "tiktok_username": "@testmusician",
+                "spotify_artist_url": "https://open.spotify.com/artist/123456",
+                "apple_music_artist_url": "https://music.apple.com/artist/654321",
+                "paypal_username": "testmusician",
+                "venmo_username": "testmusician"
+            }
+            
+            print(f"🔧 Updating musician profile with social media data:")
+            for field, value in social_media_profile.items():
+                print(f"   • {field}: {value}")
+            
+            profile_response = self.make_request("PUT", "/profile", social_media_profile)
+            
+            if profile_response.status_code == 200:
+                self.log_result("Step 1 - Profile Update", True, "✅ Successfully updated profile with all 7 social media fields")
+                print("📊 Profile updated successfully")
+            else:
+                self.log_result("Step 1 - Profile Update", False, f"❌ Failed to update profile: {profile_response.status_code}")
+                return
+            
+            # STEP 2: Test Public Musician Endpoint
+            print("\n📋 STEP 2: Test Public Musician Endpoint")
+            print("-" * 50)
+            
+            if not self.musician_slug:
+                self.log_result("Step 2 - Public Endpoint", False, "No musician slug available")
+                return
+            
+            print(f"🔍 Testing GET /musicians/{self.musician_slug}")
+            public_response = self.make_request("GET", f"/musicians/{self.musician_slug}")
+            
+            if public_response.status_code == 200:
+                public_data = public_response.json()
+                print(f"📊 Public endpoint response received")
+                
+                # Verify ALL 7 social media fields are returned
+                required_fields = [
+                    "instagram_username", "facebook_username", "tiktok_username",
+                    "spotify_artist_url", "apple_music_artist_url", 
+                    "paypal_username", "venmo_username"
+                ]
+                
+                missing_fields = []
+                field_values = {}
+                
+                for field in required_fields:
+                    if field in public_data:
+                        field_values[field] = public_data[field]
+                        print(f"   ✅ {field}: {repr(public_data[field])}")
+                    else:
+                        missing_fields.append(field)
+                        print(f"   ❌ {field}: MISSING")
+                
+                if len(missing_fields) == 0:
+                    self.log_result("Step 2 - All Fields Present", True, "✅ All 7 social media fields returned by public endpoint")
+                    
+                    # Verify @ symbols are removed from usernames
+                    expected_values = {
+                        "instagram_username": "testmusician",  # @ removed
+                        "facebook_username": "TestMusicianPage",
+                        "tiktok_username": "testmusician",  # @ removed
+                        "spotify_artist_url": "https://open.spotify.com/artist/123456",
+                        "apple_music_artist_url": "https://music.apple.com/artist/654321",
+                        "paypal_username": "testmusician",
+                        "venmo_username": "testmusician"
+                    }
+                    
+                    value_errors = []
+                    for field, expected in expected_values.items():
+                        actual = field_values.get(field)
+                        if actual != expected:
+                            value_errors.append(f"{field}: expected '{expected}', got '{actual}'")
+                    
+                    if len(value_errors) == 0:
+                        self.log_result("Step 2 - Field Values", True, "✅ @ symbols removed from usernames, URLs preserved")
+                        self.log_result("Step 2 - Public Endpoint", True, "✅ STEP 2 COMPLETE: Public musician endpoint working perfectly")
+                    else:
+                        self.log_result("Step 2 - Field Values", False, f"❌ Field value errors: {value_errors}")
+                        self.log_result("Step 2 - Public Endpoint", False, f"❌ Field values incorrect")
+                else:
+                    self.log_result("Step 2 - Public Endpoint", False, f"❌ Missing fields: {missing_fields}")
+                    return
+            else:
+                self.log_result("Step 2 - Public Endpoint", False, f"❌ Status code: {public_response.status_code}")
+                return
+            
+            # STEP 3: Test Request Creation
+            print("\n📋 STEP 3: Test Request Creation")
+            print("-" * 50)
+            
+            # First create a test song if we don't have one
+            if not self.test_song_id:
+                print("🎵 Creating test song for request")
+                song_data = {
+                    "title": "Test Song for Social Media",
+                    "artist": "Test Artist",
+                    "genres": ["Pop"],
+                    "moods": ["Upbeat"],
+                    "year": 2023,
+                    "notes": "Test song for social media integration test"
+                }
+                
+                song_response = self.make_request("POST", "/songs", song_data)
+                if song_response.status_code == 200:
+                    self.test_song_id = song_response.json()["id"]
+                    print(f"📊 Created test song: {self.test_song_id}")
+                else:
+                    self.log_result("Step 3 - Song Creation", False, f"Failed to create test song: {song_response.status_code}")
+                    return
+            
+            # Create a test request
+            print(f"📝 Creating test request for song: {self.test_song_id}")
+            request_data = {
+                "song_id": self.test_song_id,
+                "requester_name": "Social Media Test User",
+                "requester_email": "test@socialmedia.com",
+                "dedication": "Testing social media integration!"
+            }
+            
+            request_response = self.make_request("POST", "/requests", request_data)
+            
+            if request_response.status_code == 200:
+                request_data_response = request_response.json()
+                self.test_request_id = request_data_response["id"]
+                self.log_result("Step 3 - Request Creation", True, f"✅ Successfully created test request: {self.test_request_id}")
+                print(f"📊 Request created with ID: {self.test_request_id}")
+            else:
+                self.log_result("Step 3 - Request Creation", False, f"❌ Failed to create request: {request_response.status_code}")
+                return
+            
+            # STEP 4: Test Click Tracking
+            print("\n📋 STEP 4: Test Click Tracking")
+            print("-" * 50)
+            
+            if not self.test_request_id:
+                self.log_result("Step 4 - Click Tracking", False, "No test request ID available")
+                return
+            
+            # Test click tracking for ALL social platforms
+            social_platforms = ["instagram", "facebook", "tiktok", "spotify", "apple_music"]
+            tip_platforms = ["venmo", "paypal"]
+            
+            print("🔗 Testing social media click tracking:")
+            social_click_errors = []
+            
+            for platform in social_platforms:
+                print(f"   Testing {platform} click tracking...")
+                click_data = {
+                    "type": "social",
+                    "platform": platform
+                }
+                
+                click_response = self.make_request("POST", f"/requests/{self.test_request_id}/track-click", click_data)
+                
+                if click_response.status_code == 200:
+                    print(f"   ✅ {platform}: Click tracked successfully")
+                else:
+                    social_click_errors.append(f"{platform}: {click_response.status_code}")
+                    print(f"   ❌ {platform}: Failed ({click_response.status_code})")
+            
+            print("\n💰 Testing tip platform click tracking:")
+            tip_click_errors = []
+            
+            for platform in tip_platforms:
+                print(f"   Testing {platform} click tracking...")
+                click_data = {
+                    "type": "tip",
+                    "platform": platform
+                }
+                
+                click_response = self.make_request("POST", f"/requests/{self.test_request_id}/track-click", click_data)
+                
+                if click_response.status_code == 200:
+                    print(f"   ✅ {platform}: Click tracked successfully")
+                else:
+                    tip_click_errors.append(f"{platform}: {click_response.status_code}")
+                    print(f"   ❌ {platform}: Failed ({click_response.status_code})")
+            
+            # Verify click tracking results
+            if len(social_click_errors) == 0:
+                self.log_result("Step 4 - Social Click Tracking", True, f"✅ All {len(social_platforms)} social platforms tracked successfully")
+            else:
+                self.log_result("Step 4 - Social Click Tracking", False, f"❌ Social click errors: {social_click_errors}")
+            
+            if len(tip_click_errors) == 0:
+                self.log_result("Step 4 - Tip Click Tracking", True, f"✅ All {len(tip_platforms)} tip platforms tracked successfully")
+            else:
+                self.log_result("Step 4 - Tip Click Tracking", False, f"❌ Tip click errors: {tip_click_errors}")
+            
+            # Final verification - check database for click tracking
+            print("\n🔍 Verifying click tracking in database:")
+            request_check_response = self.make_request("GET", f"/requests")
+            
+            if request_check_response.status_code == 200:
+                requests_data = request_check_response.json()
+                test_request = None
+                
+                for req in requests_data:
+                    if req["id"] == self.test_request_id:
+                        test_request = req
+                        break
+                
+                if test_request:
+                    social_clicks = test_request.get("social_clicks", [])
+                    tip_clicked = test_request.get("tip_clicked", False)
+                    
+                    print(f"   📊 Social clicks recorded: {social_clicks}")
+                    print(f"   📊 Tip clicked: {tip_clicked}")
+                    
+                    if len(social_clicks) == len(social_platforms) and tip_clicked:
+                        self.log_result("Step 4 - Database Verification", True, "✅ All clicks properly recorded in database")
+                    else:
+                        self.log_result("Step 4 - Database Verification", False, f"❌ Click tracking not properly recorded: social_clicks={social_clicks}, tip_clicked={tip_clicked}")
+                else:
+                    self.log_result("Step 4 - Database Verification", False, "❌ Test request not found in database")
+            else:
+                self.log_result("Step 4 - Database Verification", False, f"❌ Could not verify database: {request_check_response.status_code}")
+            
+            # FINAL RESULT
+            if (len(social_click_errors) == 0 and len(tip_click_errors) == 0 and 
+                len(missing_fields) == 0 and len(value_errors) == 0):
+                self.log_result("Step 4 - Click Tracking", True, "✅ STEP 4 COMPLETE: All click tracking working perfectly")
+                self.log_result("COMPREHENSIVE SOCIAL MEDIA INTEGRATION TEST", True, 
+                              "✅ ALL 4 STEPS COMPLETE: Social media integration fully working for post-request modal")
+                print("\n🎉 COMPREHENSIVE TEST RESULT: ✅ SUCCESS")
+                print("   • Audience interface can access social media data from public musician endpoint")
+                print("   • Post-request modal has all data needed to show social media links")
+                print("   • Click tracking works for complete user flow")
+            else:
+                error_summary = []
+                if missing_fields: error_summary.append(f"Missing fields: {len(missing_fields)}")
+                if value_errors: error_summary.append(f"Value errors: {len(value_errors)}")
+                if social_click_errors: error_summary.append(f"Social click errors: {len(social_click_errors)}")
+                if tip_click_errors: error_summary.append(f"Tip click errors: {len(tip_click_errors)}")
+                
+                self.log_result("COMPREHENSIVE SOCIAL MEDIA INTEGRATION TEST", False, 
+                              f"❌ INTEGRATION ISSUES: {', '.join(error_summary)}")
+                print("\n❌ COMPREHENSIVE TEST RESULT: FAILED")
+                print(f"   Issues found: {', '.join(error_summary)}")
+                
+        except Exception as e:
+            self.log_result("COMPREHENSIVE SOCIAL MEDIA INTEGRATION TEST", False, f"❌ CRITICAL EXCEPTION: {str(e)}")
+            print(f"\n❌ COMPREHENSIVE TEST RESULT: EXCEPTION - {str(e)}")
+
     def run_phase3_analytics_tests(self):
         """Run Phase 3 Analytics Dashboard tests"""
         print("🚨 PHASE 3 TESTING - Analytics Dashboard Backend")
