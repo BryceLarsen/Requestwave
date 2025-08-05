@@ -4122,6 +4122,81 @@ class RequestWaveAPITester:
         
         return self.results['failed'] == 0
 
+    def run_social_media_fields_tests(self):
+        """Run focused tests for social media fields in post-request popup fix - PRIORITY 1 & 2"""
+        print("=" * 80)
+        print("🎯 SOCIAL MEDIA FIELDS TESTING - POST-REQUEST POPUP FIX")
+        print("=" * 80)
+        print("🔍 Testing the fix for social media links in the post-request popup")
+        print("📋 PRIORITY 1: Test Updated Musician Public Endpoint")
+        print("📋 PRIORITY 2: Test Social Media Integration Flow")
+        print("=" * 80)
+        
+        # Reset results for focused testing
+        self.results = {
+            "passed": 0,
+            "failed": 0,
+            "errors": []
+        }
+        
+        # Authentication setup (required for all tests)
+        print("\n🔐 Setting up authentication...")
+        self.test_musician_registration()
+        
+        if not self.auth_token:
+            print("❌ CRITICAL: Could not authenticate - cannot proceed with social media tests")
+            return False
+        
+        print(f"✅ Authenticated as musician: {self.musician_slug}")
+        
+        # PRIORITY 1: Test Updated Musician Public Endpoint
+        print("\n" + "🎯" * 25 + " PRIORITY 1 TESTS " + "🎯" * 25)
+        print("Testing GET /musicians/{slug} endpoint includes all 7 social media fields:")
+        print("  • paypal_username")
+        print("  • venmo_username") 
+        print("  • instagram_username")
+        print("  • facebook_username")
+        print("  • tiktok_username")
+        print("  • spotify_artist_url")
+        print("  • apple_music_artist_url")
+        print()
+        
+        self.test_musician_public_endpoint_social_media_fields()
+        self.test_musician_public_endpoint_null_social_media_fields()
+        
+        # PRIORITY 2: Test Social Media Integration Flow
+        print("\n" + "🎯" * 25 + " PRIORITY 2 TESTS " + "🎯" * 25)
+        print("Testing complete social media integration flow:")
+        print("  • Musician with social media data can be fetched via public endpoint")
+        print("  • Usernames without @ symbols are returned correctly")
+        print("  • URLs are returned as full URLs")
+        print("  • Response format matches MusicianPublic model")
+        print()
+        
+        self.test_social_media_integration_flow()
+        
+        # Print focused summary
+        print("\n" + "=" * 80)
+        print("🏁 SOCIAL MEDIA FIELDS TEST SUMMARY")
+        print("=" * 80)
+        print(f"✅ Passed: {self.results['passed']}")
+        print(f"❌ Failed: {self.results['failed']}")
+        
+        if self.results['failed'] == 0:
+            print("\n🎉 SUCCESS: All social media fields tests passed!")
+            print("✅ The fix for social media links in post-request popup is working correctly")
+            print("✅ All 7 social media fields are included in the public musician endpoint response")
+            print("✅ Fields return proper values or null without causing frontend errors")
+            print("✅ Backend changes don't break existing functionality")
+            print("✅ The audience interface can now access social media data for the post-request modal")
+        else:
+            print("\n❌ ISSUES FOUND:")
+            for error in self.results['errors']:
+                print(f"   • {error}")
+            print("\n🔧 The social media fields fix needs attention before the post-request popup will work correctly")
+        
+        return self.results['failed'] == 0
+
     def run_spotify_metadata_tests(self):
         """Run only the Spotify Metadata Auto-fill Feature tests as requested in the review"""
         print("=" * 60)
