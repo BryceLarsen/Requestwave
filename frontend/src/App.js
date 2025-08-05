@@ -3384,16 +3384,6 @@ const AudienceInterface = () => {
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
                   rows="3"
                 />
-                
-                <input
-                  type="number"
-                  placeholder="Tip Amount ($)"
-                  value={requestForm.tip_amount}
-                  onChange={(e) => setRequestForm({...requestForm, tip_amount: e.target.value})}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
-                  min="0"
-                  step="0.01"
-                />
               </div>
               
               <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 mt-6">
