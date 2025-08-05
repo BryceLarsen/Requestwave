@@ -1411,12 +1411,31 @@ const MusicianDashboard = () => {
             {/* Song Management Header */}
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Song Management</h2>
-              <button
-                onClick={() => setShowCsvUpload(!showCsvUpload)}
-                className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold transition duration-300"
-              >
-                {showCsvUpload ? 'Hide CSV Upload' : 'Upload CSV'}
-              </button>
+              <div className="flex space-x-3">
+                <button
+                  onClick={handleBatchEnrich}
+                  disabled={batchEnrichLoading}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-bold transition duration-300 flex items-center space-x-2"
+                >
+                  {batchEnrichLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Enriching...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>🔍</span>
+                      <span>Auto-fill All</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowCsvUpload(!showCsvUpload)}
+                  className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold transition duration-300"
+                >
+                  {showCsvUpload ? 'Hide CSV Upload' : 'Upload CSV'}
+                </button>
+              </div>
             </div>
 
             {/* CSV Upload Section */}
