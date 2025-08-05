@@ -406,6 +406,9 @@ const MusicianDashboard = () => {
   const [requestersData, setRequestersData] = useState([]);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
+  // NEW: Auto-fill metadata state
+  const [autoFillLoading, setAutoFillLoading] = useState(false);
+
   // Profile management state
   const [showProfile, setShowProfile] = useState(false);
   const [profile, setProfile] = useState({
