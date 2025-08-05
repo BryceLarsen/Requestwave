@@ -2247,6 +2247,141 @@ async def upload_csv_songs(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
+# NEW: Batch metadata enrichment for existing songs
+@api_router.post("/songs/batch-enrich")
+async def batch_enrich_existing_songs(
+    song_ids: List[str] = None,  # Optional: specific song IDs to enrich, if None enrich all
+    musician_id: str = Depends(get_current_musician)
+):
+    """Batch enrich existing songs with metadata from Spotify"""
+    try:
+        # Build query based on whether specific song IDs are provided
+        if song_ids:
+            # Enrich specific songs
+            query = {
+                "musician_id": musician_id,
+                "id": {"$in": song_ids}
+            }
+            logger.info(f"Starting batch enrichment for {len(song_ids)} specific songs")
+        else:
+            # Enrich all songs for this musician that need enrichment
+            query = {
+                "musician_id": musician_id,
+                "$or": [
+                    {"genres": {"$size": 0}},  # Empty genres array
+                    {"genres": {"$exists": False}},  # Missing genres field
+                    {"moods": {"$size": 0}},   # Empty moods array
+                    {"moods": {"$exists": False}},   # Missing moods field
+                    {"year": {"$exists": False}},    # Missing year
+                    {"year": None}                   # Null year
+                ]
+            }
+            logger.info(f"Starting batch enrichment for all songs needing metadata")
+        
+        # Get songs that need enrichment
+        songs_cursor = db.songs.find(query)
+        songs_to_enrich = await songs_cursor.to_list(length=None)
+        
+        if not songs_to_enrich:
+            return {
+                "success": True,
+                "message": "No songs found that need enrichment",
+                "processed": 0,
+                "enriched": 0,
+                "errors": []
+            }
+        
+        processed_count = 0
+        enriched_count = 0
+        errors = []
+        
+        logger.info(f"Found {len(songs_to_enrich)} songs to process for enrichment")
+        
+        for song in songs_to_enrich:
+            processed_count += 1
+            
+            try:
+                # Check if this song actually needs enrichment
+                needs_enrichment = (
+                    not song.get('genres') or 
+                    not song.get('moods') or 
+                    not song.get('year')
+                )
+                
+                if not needs_enrichment:
+                    logger.info(f"Song '{song['title']}' by '{song['artist']}' already has complete metadata")
+                    continue
+                
+                logger.info(f"Enriching '{song['title']}' by '{song['artist']}' (ID: {song['id']})")
+                
+                # Search for metadata using Spotify
+                spotify_metadata = await search_spotify_metadata(
+                    song['title'], 
+                    song['artist']
+                )
+                
+                if spotify_metadata:
+                    # Prepare update fields - only update empty/missing data
+                    update_fields = {}
+                    updated_fields = []
+                    
+                    if not song.get('genres') and spotify_metadata.get('genres'):
+                        update_fields['genres'] = spotify_metadata['genres']
+                        updated_fields.append(f"genres: {spotify_metadata['genres']}")
+                    
+                    if not song.get('moods') and spotify_metadata.get('moods'):
+                        update_fields['moods'] = spotify_metadata['moods']
+                        updated_fields.append(f"moods: {spotify_metadata['moods']}")
+                    
+                    if not song.get('year') and spotify_metadata.get('year'):
+                        update_fields['year'] = spotify_metadata['year']
+                        updated_fields.append(f"year: {spotify_metadata['year']}")
+                    
+                    # Add enrichment note to existing notes
+                    current_notes = song.get('notes', '')
+                    enrichment_note = f" (Batch auto-enriched from {spotify_metadata.get('source', 'Spotify')})"
+                    if enrichment_note not in current_notes:
+                        update_fields['notes'] = current_notes + enrichment_note
+                    
+                    # Update the song in database if we have updates
+                    if update_fields:
+                        await db.songs.update_one(
+                            {"id": song['id']},
+                            {"$set": update_fields}
+                        )
+                        enriched_count += 1
+                        logger.info(f"Successfully enriched '{song['title']}' - updated: {', '.join(updated_fields)}")
+                    else:
+                        logger.info(f"No updates needed for '{song['title']}' - already complete")
+                        
+                else:
+                    error_msg = f"No metadata found for '{song['title']}' by '{song['artist']}'"
+                    errors.append(error_msg)
+                    logger.warning(error_msg)
+                
+            except Exception as e:
+                error_msg = f"Error enriching '{song['title']}' by '{song['artist']}': {str(e)}"
+                errors.append(error_msg)
+                logger.error(error_msg)
+        
+        success_message = f"Processed {processed_count} songs, successfully enriched {enriched_count} songs with metadata"
+        if errors:
+            success_message += f", {len(errors)} songs could not be enriched"
+        
+        logger.info(f"Batch enrichment completed: {success_message}")
+        
+        return {
+            "success": True,
+            "message": success_message,
+            "processed": processed_count,
+            "enriched": enriched_count,
+            "errors": errors[:10]  # Return only first 10 errors to avoid huge responses
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in batch enrichment: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error in batch enrichment: {str(e)}")
+
 # Health check
 @api_router.get("/health")
 async def health_check():
