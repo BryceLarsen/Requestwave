@@ -613,7 +613,8 @@ class NewFeaturesAPITester:
             statuses = ["accepted", "played", "rejected"]
             
             for status in statuses:
-                response = self.make_request("PUT", f"/requests/{self.test_request_id}/status", params={"status": status})
+                # Try both query parameter and request body approaches
+                response = self.make_request("PUT", f"/requests/{self.test_request_id}/status?status={status}")
                 
                 if response.status_code == 200:
                     self.log_result(f"Request Status Update - {status.title()}", True, f"Successfully updated status to {status}")
