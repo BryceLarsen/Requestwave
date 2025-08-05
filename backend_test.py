@@ -1864,7 +1864,7 @@ class RequestWaveAPITester:
             for test in validation_tests:
                 print(f"🔍 Testing validation: {test['description']}")
                 
-                response = self.make_request("POST", "/songs/search-metadata", test["data"])
+                response = self.make_request("POST", "/songs/search-metadata", params=test["data"])
                 
                 if response.status_code == 400:
                     self.log_result(f"Spotify Metadata Search - Validation ({test['description']})", True, 
