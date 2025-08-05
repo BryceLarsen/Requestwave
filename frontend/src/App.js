@@ -407,8 +407,46 @@ const MusicianDashboard = () => {
   const [requestersData, setRequestersData] = useState([]);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
-  // NEW: Auto-fill metadata state
-  const [autoFillLoading, setAutoFillLoading] = useState(false);
+  // NEW: Batch enrichment for existing songs
+  const [batchEnrichLoading, setBatchEnrichLoading] = useState(false);
+  
+  const handleBatchEnrich = async () => {
+    if (!confirm('Auto-fill missing metadata for all your existing songs using Spotify? This may take a few moments.')) {
+      return;
+    }
+    
+    setBatchEnrichLoading(true);
+    
+    try {
+      const response = await axios.post(`${API}/songs/batch-enrich`, null, {
+        headers: { 'Authorization': `Bearer ${auth.token}` }
+      });
+      
+      if (response.data.success) {
+        fetchSongs(); // Refresh songs list
+        
+        const { processed, enriched, errors } = response.data;
+        let message = `Batch enrichment completed!\n\n`;
+        message += `Processed: ${processed} songs\n`;
+        message += `Enriched: ${enriched} songs with new metadata\n`;
+        
+        if (errors && errors.length > 0) {
+          message += `\nSome songs could not be enriched:\n`;
+          message += errors.slice(0, 5).join('\n'); // Show first 5 errors
+          if (errors.length > 5) {
+            message += `\n...and ${errors.length - 5} more`;
+          }
+        }
+        
+        alert(message);
+      }
+    } catch (error) {
+      console.error('Error in batch enrichment:', error);
+      alert(error.response?.data?.detail || 'Error during batch enrichment. Please try again.');
+    } finally {
+      setBatchEnrichLoading(false);
+    }
+  };
 
   // Profile management state
   const [showProfile, setShowProfile] = useState(false);
