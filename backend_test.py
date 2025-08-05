@@ -1348,8 +1348,8 @@ class RequestWaveAPITester:
             
             print("🔍 Testing CSV upload with auto_enrich=false (default behavior)")
             
-            with open('/app/test_songs_auto_enrich_empty.csv', 'rb') as f:
-                files = {'file': ('test_songs_auto_enrich_empty.csv', f, 'text/csv')}
+            with open('/app/test_songs_auto_enrich_empty_unique.csv', 'rb') as f:
+                files = {'file': ('test_songs_auto_enrich_empty_unique.csv', f, 'text/csv')}
                 data = {'auto_enrich': 'false'}
                 response = self.make_request("POST", "/songs/csv/upload", data=data, files=files)
             
