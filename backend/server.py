@@ -25,6 +25,8 @@ import httpx
 from bs4 import BeautifulSoup
 import asyncio
 import json
+import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
