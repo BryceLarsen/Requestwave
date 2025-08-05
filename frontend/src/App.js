@@ -3602,7 +3602,8 @@ const AudienceInterface = () => {
       genre: '',
       artist: '',
       mood: '',
-      year: ''
+      year: '',
+      decade: ''  // NEW: Clear decade filter
     });
     // NEW: Also clear search query
     setSearchQuery('');
