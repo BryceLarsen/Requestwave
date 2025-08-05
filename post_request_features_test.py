@@ -131,7 +131,7 @@ class PostRequestFeaturesTester:
         # Create a test song
         try:
             song_data = {
-                "title": "Test Song for Post-Request Features",
+                "title": f"Test Song for Post-Request Features {int(time.time())}",
                 "artist": "Test Artist",
                 "genres": ["Pop"],
                 "moods": ["Upbeat"],
