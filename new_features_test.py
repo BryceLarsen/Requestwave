@@ -145,7 +145,7 @@ class NewFeaturesAPITester:
                 self.log_result("Setup Test Data - Create Song", True, f"Created test song: {data['title']}")
                 return True
             else:
-                self.log_result("Setup Test Data", False, f"Failed to create test song: {response.status_code}")
+                self.log_result("Setup Test Data", False, f"Failed to create test song: {response.status_code}, Response: {response.text}")
                 return False
         except Exception as e:
             self.log_result("Setup Test Data", False, f"Exception: {str(e)}")
