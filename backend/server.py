@@ -1217,7 +1217,10 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
         email=updated_musician["email"],
         venmo_link=updated_musician.get("venmo_link", ""),
         bio=updated_musician.get("bio", ""),
-        website=updated_musician.get("website", "")
+        website=updated_musician.get("website", ""),
+        # NEW: Include payment usernames
+        paypal_username=updated_musician.get("paypal_username", ""),
+        venmo_username=updated_musician.get("venmo_username", "")
     )
 
 # Password Reset endpoints
