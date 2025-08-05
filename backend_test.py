@@ -3024,6 +3024,24 @@ class RequestWaveAPITester:
         self.test_spotify_metadata_autofill_response_format()
         self.test_spotify_metadata_autofill_credentials_verification()
         
+        # CSV Auto-enrichment tests (NEW - HIGH PRIORITY)
+        print("\n🎵 CSV AUTO-ENRICHMENT FEATURE TESTING")
+        print("=" * 50)
+        self.test_csv_upload_auto_enrichment_empty_metadata()
+        self.test_csv_upload_auto_enrichment_partial_metadata()
+        self.test_csv_upload_auto_enrichment_complete_metadata()
+        self.test_csv_upload_auto_enrichment_disabled()
+        self.test_csv_upload_auto_enrichment_authentication()
+        
+        # Batch Enrichment tests (NEW - HIGH PRIORITY)
+        print("\n🔄 BATCH ENRICHMENT FEATURE TESTING")
+        print("=" * 50)
+        self.test_batch_enrichment_all_songs()
+        self.test_batch_enrichment_specific_songs()
+        self.test_batch_enrichment_no_songs_needed()
+        self.test_batch_enrichment_authentication()
+        self.test_batch_enrichment_response_format()
+        
         # Cleanup
         self.test_delete_song()
         
