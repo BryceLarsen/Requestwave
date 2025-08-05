@@ -3530,93 +3530,95 @@ const AudienceInterface = () => {
           </div>
         )}
         
-        {/* NEW: Post-Request Success Modal with Tip & Social Options */}
+        {/* NEW: Post-Request Success Modal - Linktree Style */}
         {showPostRequestModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 w-full max-w-sm border border-gray-700">
+              {/* Artist Info Header */}
               <div className="text-center mb-6">
-                <div className="text-4xl mb-3">🎵</div>
-                <h3 className="text-2xl font-bold text-white mb-2">Request Sent!</h3>
-                <p className="text-gray-300">Your song request has been sent to {musician.name}</p>
+                <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
+                  {musician.name?.charAt(0) || '🎵'}
+                </div>
+                <h3 className="text-xl font-bold text-white mb-1">{musician.name}</h3>
+                <p className="text-gray-300 text-sm">Request sent successfully! ✅</p>
               </div>
               
-              {/* Tip Section */}
+              {/* Linktree Style Header */}
+              <div className="text-center mb-6">
+                <h4 className="text-lg font-semibold text-white mb-1">
+                  Support the artist with a follow or a tip...
+                </h4>
+                <p className="text-purple-400 font-medium">or both! 🎉</p>
+              </div>
+              
+              {/* Big Green Tip Button */}
               {(musician.paypal_username || musician.venmo_username) && (
-                <div className="mb-6">
-                  <h4 className="text-lg font-semibold text-white mb-3 text-center">💰 Show Your Support</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    {musician.venmo_username && (
-                      <button
-                        onClick={() => handleTipClick('venmo')}
-                        className="bg-purple-600 hover:bg-purple-700 py-3 px-4 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2"
-                      >
-                        <span>📱</span>
-                        <span>Tip via Venmo</span>
-                      </button>
-                    )}
-                    {musician.paypal_username && (
-                      <button
-                        onClick={() => handleTipClick('paypal')}
-                        className="bg-blue-600 hover:bg-blue-700 py-3 px-4 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2"
-                      >
-                        <span>💳</span>
-                        <span>Tip via PayPal</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <button
+                  onClick={() => {
+                    setShowPostRequestModal(false);
+                    setShowTipModal(true);
+                    // Default to venmo as requested
+                    setTipPlatform(musician.venmo_username ? 'venmo' : 'paypal');
+                  }}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl mb-4 transition duration-300 flex items-center justify-center space-x-3 text-lg shadow-lg"
+                >
+                  <span className="text-2xl">💰</span>
+                  <span>Send a Tip</span>
+                  <span className="text-2xl">🎵</span>
+                </button>
               )}
               
-              {/* Follow Me Section */}
-              <div className="mb-6">
-                <h4 className="text-lg font-semibold text-white mb-3 text-center">🌟 Follow Me</h4>
-                <div className="grid grid-cols-2 gap-3">
-                  {musician.instagram_username && (
-                    <button
-                      onClick={() => handleSocialClick('instagram')}
-                      className="bg-pink-600 hover:bg-pink-700 py-2 px-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-sm"
-                    >
-                      <span>📷</span>
-                      <span>Instagram</span>
-                    </button>
-                  )}
-                  {musician.tiktok_username && (
-                    <button
-                      onClick={() => handleSocialClick('tiktok')}
-                      className="bg-gray-900 hover:bg-black py-2 px-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-sm"
-                    >
-                      <span>🎵</span>
-                      <span>TikTok</span>
-                    </button>
-                  )}
-                  {musician.facebook_username && (
-                    <button
-                      onClick={() => handleSocialClick('facebook')}
-                      className="bg-blue-700 hover:bg-blue-800 py-2 px-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-sm"
-                    >
-                      <span>👥</span>
-                      <span>Facebook</span>
-                    </button>
-                  )}
-                  {musician.spotify_artist_url && (
-                    <button
-                      onClick={() => handleSocialClick('spotify')}
-                      className="bg-green-600 hover:bg-green-700 py-2 px-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-sm"
-                    >
-                      <span>🎧</span>
-                      <span>Spotify</span>
-                    </button>
-                  )}
-                  {musician.apple_music_artist_url && (
-                    <button
-                      onClick={() => handleSocialClick('apple_music')}
-                      className="bg-red-600 hover:bg-red-700 py-2 px-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-sm"
-                    >
-                      <span>🍎</span>
-                      <span>Apple Music</span>
-                    </button>
-                  )}
-                </div>
+              {/* Social Media Links - Linktree Style */}
+              <div className="space-y-3">
+                {musician.instagram_username && (
+                  <button
+                    onClick={() => handleSocialClick('instagram')}
+                    className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-medium py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-3"
+                  >
+                    <span className="text-xl">📷</span>
+                    <span>Follow on Instagram</span>
+                  </button>
+                )}
+                
+                {musician.tiktok_username && (
+                  <button
+                    onClick={() => handleSocialClick('tiktok')}
+                    className="w-full bg-black hover:bg-gray-900 text-white font-medium py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-3"
+                  >
+                    <span className="text-xl">🎵</span>
+                    <span>Follow on TikTok</span>
+                  </button>
+                )}
+                
+                {musician.facebook_username && (
+                  <button
+                    onClick={() => handleSocialClick('facebook')}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-3"
+                  >
+                    <span className="text-xl">👥</span>
+                    <span>Follow on Facebook</span>
+                  </button>
+                )}
+                
+                {musician.spotify_artist_url && (
+                  <button
+                    onClick={() => handleSocialClick('spotify')}
+                    className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-3"
+                  >
+                    <span className="text-xl">🎧</span>
+                    <span>Listen on Spotify</span>
+                  </button>
+                )}
+                
+                {musician.apple_music_artist_url && (
+                  <button
+                    onClick={() => handleSocialClick('apple_music')}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-3"
+                  >
+                    <span className="text-xl">🍎</span>
+                    <span>Listen on Apple Music</span>
+                  </button>
+                )}
               </div>
               
               {/* Close Button */}
@@ -3625,9 +3627,9 @@ const AudienceInterface = () => {
                   setShowPostRequestModal(false);
                   setCurrentRequestId(null);
                 }}
-                className="w-full bg-gray-600 hover:bg-gray-700 py-3 rounded-lg font-medium transition duration-300"
+                className="w-full bg-gray-600 hover:bg-gray-700 text-gray-300 hover:text-white py-3 rounded-xl font-medium transition duration-300 mt-6"
               >
-                Done
+                Close
               </button>
             </div>
           </div>
