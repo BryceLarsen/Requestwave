@@ -2785,6 +2785,108 @@ async def bulk_request_action(
         logger.error(f"Error in bulk action: {str(e)}")
         raise HTTPException(status_code=500, detail="Error performing bulk action")
 
+# NEW: Show management endpoints for artists
+@api_router.post("/shows", response_model=Show)
+async def create_show(
+    show_data: ShowCreate,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Create a new show for organizing requests"""
+    try:
+        show_dict = show_data.dict()
+        show_dict.update({
+            "id": str(uuid.uuid4()),
+            "musician_id": musician_id,
+            "created_at": datetime.utcnow()
+        })
+        
+        await db.shows.insert_one(show_dict)
+        return Show(**show_dict)
+        
+    except Exception as e:
+        logger.error(f"Error creating show: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error creating show")
+
+@api_router.get("/shows")
+async def get_shows(
+    musician_id: str = Depends(get_current_musician)
+):
+    """Get all shows for the musician"""
+    try:
+        shows = await db.shows.find({"musician_id": musician_id}).sort("created_at", DESCENDING).to_list(None)
+        return [Show(**show) for show in shows]
+        
+    except Exception as e:
+        logger.error(f"Error getting shows: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error getting shows")
+
+@api_router.put("/requests/{request_id}/assign-show")
+async def assign_request_to_show(
+    request_id: str,
+    show_data: dict,  # {"show_name": "Show Name"}
+    musician_id: str = Depends(get_current_musician)
+):
+    """Assign a request to a show"""
+    try:
+        # Verify request belongs to musician
+        request = await db.requests.find_one({
+            "id": request_id,
+            "musician_id": musician_id
+        })
+        
+        if not request:
+            raise HTTPException(status_code=404, detail="Request not found")
+        
+        show_name = show_data.get("show_name")
+        
+        await db.requests.update_one(
+            {"id": request_id},
+            {"$set": {"show_name": show_name}}
+        )
+        
+        return {"success": True, "message": f"Request assigned to show: {show_name}"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error assigning request to show: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error assigning request to show")
+
+@api_router.get("/requests/grouped")
+async def get_requests_grouped_by_show(
+    musician_id: str = Depends(get_current_musician)
+):
+    """Get requests grouped by show"""
+    try:
+        # Get all requests for the musician
+        requests = await db.requests.find({"musician_id": musician_id}).sort("created_at", DESCENDING).to_list(None)
+        
+        # Group requests by show_name and date
+        grouped = {
+            "unassigned": [],
+            "shows": {}
+        }
+        
+        for request in requests:
+            if request.get("show_name"):
+                show_name = request["show_name"]
+                if show_name not in grouped["shows"]:
+                    grouped["shows"][show_name] = []
+                grouped["shows"][show_name].append(Request(**request))
+            else:
+                # Group by date for unassigned requests
+                date_str = request["created_at"].strftime("%Y-%m-%d")
+                grouped["unassigned"].append({
+                    "date": date_str,
+                    "request": Request(**request)
+                })
+        
+        return grouped
+        
+    except Exception as e:
+        logger.error(f"Error getting grouped requests: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error getting grouped requests")
+
 # Health check
 @api_router.get("/health")
 async def health_check():
