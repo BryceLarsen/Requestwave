@@ -3547,15 +3547,16 @@ class RequestWaveAPITester:
 if __name__ == "__main__":
     tester = RequestWaveAPITester()
     
-    # Run NEW CSV Auto-enrichment and Batch Enrichment Feature tests as requested in the review
-    success = tester.run_new_features_tests()
+    # Run Tip Support System tests as requested in the review
+    success = tester.run_tip_support_tests()
     
     if success:
-        print("\n🎉 All new feature tests passed!")
-        print("✅ CSV Auto-enrichment feature working correctly")
-        print("✅ Batch Enrichment feature working correctly")
-        print("✅ Spotify integration working with new credentials")
+        print("\n🎉 All tip support system tests passed!")
+        print("✅ Profile payment fields working correctly")
+        print("✅ Tip links generation working correctly")
+        print("✅ Tip recording working correctly")
+        print("✅ PayPal and Venmo integration working")
         exit(0)
     else:
-        print(f"\n💥 {tester.results['failed']} new feature tests failed!")
+        print(f"\n💥 {tester.results['failed']} tip support system tests failed!")
         exit(1)
