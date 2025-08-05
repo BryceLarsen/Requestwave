@@ -498,7 +498,7 @@ class NewFeaturesAPITester:
                     
                     # Test tip click tracking for paypal
                     click_data = {
-                        "click_type": "tip",
+                        "type": "tip",
                         "platform": "paypal"
                     }
                     
