@@ -2871,7 +2871,7 @@ const AudienceInterface = () => {
 
   useEffect(() => {
     applyFilters();
-  }, [songs, selectedFilters]);
+  }, [songs, selectedFilters, searchQuery]); // Added searchQuery to dependencies
 
   const fetchMusician = async () => {
     try {
