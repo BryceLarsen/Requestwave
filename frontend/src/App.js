@@ -2243,62 +2243,267 @@ const MusicianDashboard = () => {
         {/* Requests Tab */}
         {activeTab === 'requests' && (
           <div className="bg-gray-800 rounded-xl p-6">
-            <h2 className="text-xl font-bold mb-4">Song Requests ({requests.length})</h2>
-            <div className="space-y-4">
-              {requests.map((request) => (
-                <div key={request.id} className="bg-gray-700 rounded-lg p-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg">{request.song_title}</h3>
-                      <p className="text-gray-300">by {request.song_artist}</p>
-                      <p className="text-purple-300 mt-2">Requested by: {request.requester_name}</p>
-                      {request.dedication && (
-                        <p className="text-gray-400 italic mt-1">"{request.dedication}"</p>
-                      )}
-                      {request.tip_amount > 0 && (
-                        <p className="text-green-400 font-bold mt-1">Tip: ${request.tip_amount}</p>
-                      )}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold">Song Requests</h2>
+              
+              {/* Show Management Controls */}
+              <div className="flex items-center space-x-3">
+                {currentShow ? (
+                  <div className="flex items-center space-x-3">
+                    <div className="bg-green-600 px-3 py-2 rounded-lg">
+                      <span className="text-sm font-medium">🎤 Live: {currentShow.name}</span>
                     </div>
-                    <div className="flex flex-col space-y-2 ml-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        request.status === 'pending' ? 'bg-yellow-600' :
-                        request.status === 'accepted' ? 'bg-blue-600' :
-                        request.status === 'played' ? 'bg-green-600' :
-                        'bg-red-600'
-                      }`}>
-                        {request.status.toUpperCase()}
-                      </span>
-                      {request.status === 'pending' && (
-                        <div className="flex space-x-1">
-                          <button
-                            onClick={() => updateRequestStatus(request.id, 'accepted')}
-                            className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
-                          >
-                            Accept
-                          </button>
-                          <button
-                            onClick={() => updateRequestStatus(request.id, 'rejected')}
-                            className="bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      )}
-                      {request.status === 'accepted' && (
-                        <button
-                          onClick={() => updateRequestStatus(request.id, 'played')}
-                          className="bg-purple-600 hover:bg-purple-700 text-xs px-2 py-1 rounded"
-                        >
-                          Mark Played
-                        </button>
-                      )}
-                    </div>
+                    <button
+                      onClick={handleStopShow}
+                      className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
+                    >
+                      Stop Show
+                    </button>
                   </div>
+                ) : (
+                  <button
+                    onClick={() => setShowStartModal(true)}
+                    className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-2"
+                  >
+                    <span>🎭</span>
+                    <span>Start a Show</span>
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            {/* Main Requests List (no show active) */}
+            {!currentShow && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">📥 All Requests ({requests.length})</h3>
+                <div className="space-y-3">
+                  {requests.slice(0, 50).map((request) => (
+                    <div key={request.id} className="bg-gray-700 p-4 rounded-lg">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <span className="font-medium text-blue-400">{request.song_title}</span>
+                            <span className="text-gray-400">by {request.song_artist}</span>
+                            {request.tip_clicked && <span className="text-green-400 text-sm">💰</span>}
+                            {request.social_clicks?.length > 0 && (
+                              <span className="text-purple-400 text-sm">📱 {request.social_clicks.length}</span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-300">
+                            From: <span className="text-white">{request.requester_name}</span>
+                            {request.dedication && (
+                              <span className="italic ml-2">"{request.dedication}"</span>
+                            )}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {new Date(request.created_at).toLocaleDateString()} at {new Date(request.created_at).toLocaleTimeString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            request.status === 'pending' ? 'bg-yellow-600/20 text-yellow-400' :
+                            request.status === 'accepted' ? 'bg-green-600/20 text-green-400' :
+                            request.status === 'played' ? 'bg-blue-600/20 text-blue-400' :
+                            'bg-red-600/20 text-red-400'
+                          }`}>
+                            {request.status}
+                          </span>
+                          {request.status === 'pending' && (
+                            <div className="flex space-x-1">
+                              <button
+                                onClick={() => updateRequestStatus(request.id, 'accepted')}
+                                className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
+                              >
+                                Accept
+                              </button>
+                              <button
+                                onClick={() => updateRequestStatus(request.id, 'rejected')}
+                                className="bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          )}
+                          {request.status === 'accepted' && (
+                            <button
+                              onClick={() => updateRequestStatus(request.id, 'played')}
+                              className="bg-purple-600 hover:bg-purple-700 text-xs px-2 py-1 rounded"
+                            >
+                              Mark Played
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {requests.length === 0 && (
+                    <p className="text-gray-400 text-center py-8">No requests yet. Share your audience link to start receiving requests!</p>
+                  )}
+                  {requests.length > 50 && (
+                    <p className="text-gray-400 text-center text-sm">Showing 50 of {requests.length} requests</p>
+                  )}
                 </div>
-              ))}
-              {requests.length === 0 && (
-                <p className="text-gray-400 text-center py-8">No requests yet. Share your audience link to start receiving requests!</p>
-              )}
+              </div>
+            )}
+            
+            {/* Show-Based Requests (when show is active) */}
+            {currentShow && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">🎤 Current Show: {currentShow.name}</h3>
+                <div className="space-y-3">
+                  {requests.filter(r => r.show_name === currentShow.name).slice(0, 50).map((request) => (
+                    <div key={request.id} className="bg-gray-700 p-4 rounded-lg border-l-4 border-green-500">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <span className="font-medium text-blue-400">{request.song_title}</span>
+                            <span className="text-gray-400">by {request.song_artist}</span>
+                            {request.tip_clicked && <span className="text-green-400 text-sm">💰</span>}
+                            {request.social_clicks?.length > 0 && (
+                              <span className="text-purple-400 text-sm">📱 {request.social_clicks.length}</span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-300">
+                            From: <span className="text-white">{request.requester_name}</span>
+                            {request.dedication && (
+                              <span className="italic ml-2">"{request.dedication}"</span>
+                            )}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {new Date(request.created_at).toLocaleDateString()} at {new Date(request.created_at).toLocaleTimeString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            request.status === 'pending' ? 'bg-yellow-600/20 text-yellow-400' :
+                            request.status === 'accepted' ? 'bg-green-600/20 text-green-400' :
+                            request.status === 'played' ? 'bg-blue-600/20 text-blue-400' :
+                            'bg-red-600/20 text-red-400'
+                          }`}>
+                            {request.status}
+                          </span>
+                          {request.status === 'pending' && (
+                            <div className="flex space-x-1">
+                              <button
+                                onClick={() => updateRequestStatus(request.id, 'accepted')}
+                                className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
+                              >
+                                Accept
+                              </button>
+                              <button
+                                onClick={() => updateRequestStatus(request.id, 'rejected')}
+                                className="bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          )}
+                          {request.status === 'accepted' && (
+                            <button
+                              onClick={() => updateRequestStatus(request.id, 'played')}
+                              className="bg-purple-600 hover:bg-purple-700 text-xs px-2 py-1 rounded"
+                            >
+                              Mark Played
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Shows Dropdown */}
+            {shows.length > 0 && (
+              <div className="border-t border-gray-600 pt-6">
+                <h3 className="text-lg font-semibold mb-4">🎭 Shows</h3>
+                <div className="space-y-3">
+                  {shows.map((show) => (
+                    <details key={show.id} className="bg-gray-700 rounded-lg">
+                      <summary className="cursor-pointer p-4 font-medium hover:bg-gray-600 rounded-lg transition duration-300">
+                        📁 {show.name} ({show.date || 'No date'})
+                        <span className="text-gray-400 text-sm ml-2">
+                          ({requests.filter(r => r.show_name === show.name).length} requests)
+                        </span>
+                      </summary>
+                      <div className="px-4 pb-4 space-y-2">
+                        {requests.filter(r => r.show_name === show.name).map((request) => (
+                          <div key={request.id} className="bg-gray-600 p-3 rounded">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="flex items-center space-x-2 mb-1">
+                                  <span className="font-medium text-blue-400 text-sm">{request.song_title}</span>
+                                  <span className="text-gray-400 text-sm">by {request.song_artist}</span>
+                                  {request.tip_clicked && <span className="text-green-400 text-xs">💰</span>}
+                                  {request.social_clicks?.length > 0 && (
+                                    <span className="text-purple-400 text-xs">📱 {request.social_clicks.length}</span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-300">
+                                  From: {request.requester_name}
+                                  {request.dedication && <span className="italic ml-1">"{request.dedication}"</span>}
+                                </p>
+                              </div>
+                              <span className={`px-2 py-1 rounded text-xs ${
+                                request.status === 'pending' ? 'bg-yellow-600/20 text-yellow-400' :
+                                request.status === 'accepted' ? 'bg-green-600/20 text-green-400' :
+                                request.status === 'played' ? 'bg-blue-600/20 text-blue-400' :
+                                'bg-red-600/20 text-red-400'
+                              }`}>
+                                {request.status}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Start Show Modal */}
+        {showStartModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+              <h3 className="text-xl font-bold text-white mb-4">🎭 Start a New Show</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-gray-300 text-sm font-bold mb-2">Show Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Friday Night Live, Coffee House Set"
+                    value={newShowName}
+                    onChange={(e) => setNewShowName(e.target.value)}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
+                    onKeyPress={(e) => e.key === 'Enter' && handleStartShow()}
+                  />
+                </div>
+                <p className="text-gray-400 text-sm">
+                  All new song requests will be organized under this show until you stop it.
+                </p>
+                <div className="flex space-x-3 mt-6">
+                  <button
+                    onClick={() => {
+                      setShowStartModal(false);
+                      setNewShowName('');
+                    }}
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 py-2 rounded-lg font-medium transition duration-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleStartShow}
+                    disabled={!newShowName.trim()}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 py-2 rounded-lg font-medium transition duration-300 disabled:cursor-not-allowed"
+                  >
+                    Start Show
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
