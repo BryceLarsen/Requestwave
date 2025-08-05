@@ -1851,10 +1851,14 @@ async def create_song(song_data: SongCreate, musician_id: str = Depends(get_curr
             detail=f"Song '{song_data.title}' by '{song_data.artist}' already exists in your library"
         )
     
+    # Calculate decade from year
+    decade = calculate_decade(song_data.year)
+    
     song_dict = song_data.dict()
     song_dict.update({
         "id": str(uuid.uuid4()),
         "musician_id": musician_id,
+        "decade": decade,  # NEW: Auto-calculated decade
         "request_count": 0,  # Initialize request count
         "hidden": False,  # NEW: Default to visible
         "created_at": datetime.utcnow()
