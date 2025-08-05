@@ -1694,6 +1694,12 @@ const MusicianDashboard = () => {
                   )}
                 </button>
                 <button
+                  onClick={() => setShowPlaylistImport(!showPlaylistImport)}
+                  className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-bold transition duration-300"
+                >
+                  {showPlaylistImport ? 'Hide Playlist Import' : 'Import Playlist'}
+                </button>
+                <button
                   onClick={() => setShowCsvUpload(!showCsvUpload)}
                   className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold transition duration-300"
                 >
