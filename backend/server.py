@@ -1764,7 +1764,7 @@ async def check_payment_status(session_id: str, musician_id: str = Depends(get_c
 
 @api_router.post("/webhook/stripe")
 async def stripe_webhook(http_request: Request):
-    """Handle Stripe webhooks"""
+    """Handle Stripe webhooks - Accepts any request body from Stripe"""
     if not STRIPE_API_KEY:
         raise HTTPException(status_code=500, detail="Stripe not configured")
     
