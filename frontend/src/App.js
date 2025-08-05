@@ -2998,6 +2998,8 @@ const AudienceInterface = () => {
       mood: '',
       year: ''
     });
+    // NEW: Also clear search query
+    setSearchQuery('');
   };
 
   // NEW: Tip functionality functions
