@@ -1763,18 +1763,18 @@ async def check_payment_status(session_id: str, musician_id: str = Depends(get_c
         raise HTTPException(status_code=500, detail=f"Error checking payment status: {str(e)}")
 
 @api_router.post("/webhook/stripe")
-async def stripe_webhook(request: Request):
+async def stripe_webhook(http_request: Request):
     """Handle Stripe webhooks"""
     if not STRIPE_API_KEY:
         raise HTTPException(status_code=500, detail="Stripe not configured")
     
     try:
         stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url="")
-        body = await request.body()
+        body = await http_request.body()
         
         webhook_response = await stripe_checkout.handle_webhook(
             body, 
-            request.headers.get("Stripe-Signature")
+            http_request.headers.get("Stripe-Signature")
         )
         
         # Handle successful payment
@@ -1785,22 +1785,26 @@ async def stripe_webhook(request: Request):
                 # Update transaction status
                 await db.payment_transactions.update_one(
                     {"session_id": webhook_response.session_id},
-                    {"$set": {"payment_status": "paid"}}
+                    {"$set": {"payment_status": "paid", "updated_at": datetime.utcnow()}}
                 )
                 
-                # Activate subscription for the musician
+                # Update musician subscription
                 musician_id = transaction.get("musician_id")
                 if musician_id:
+                    # Set subscription end date to 1 month from now
                     subscription_end = datetime.utcnow() + timedelta(days=30)
                     await db.musicians.update_one(
                         {"id": musician_id},
                         {"$set": {"subscription_ends_at": subscription_end}}
                     )
+                    
+                    logger.info(f"Updated subscription for musician {musician_id} until {subscription_end}")
         
         return {"status": "success"}
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Webhook error: {str(e)}")
+        logger.error(f"Error processing webhook: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing webhook: {str(e)}")
 
 # Song endpoints
 @api_router.get("/songs", response_model=List[Song])
