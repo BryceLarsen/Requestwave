@@ -127,10 +127,12 @@ class NewFeaturesAPITester:
     def setup_test_data(self):
         """Create test song and initial data"""
         try:
-            # Create a test song
+            # Create a test song with unique name
+            import time
+            timestamp = str(int(time.time()))
             song_data = {
-                "title": "Show Test Song",
-                "artist": "Test Artist",
+                "title": f"Show Test Song {timestamp}",
+                "artist": f"Test Artist {timestamp}",
                 "genres": ["Pop"],
                 "moods": ["Upbeat"],
                 "year": 2023,
