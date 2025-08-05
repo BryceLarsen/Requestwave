@@ -531,7 +531,7 @@ class NewFeaturesAPITester:
             
             for platform in social_platforms:
                 click_data = {
-                    "click_type": "social",
+                    "type": "social",
                     "platform": platform
                 }
                 
