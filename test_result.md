@@ -565,6 +565,21 @@ test_plan:
         agent: "testing"
         comment: "NEW FEATURES COMPREHENSIVE TESTING COMPLETE: ✅ GET /profile returns all 7 social media fields (instagram_username, facebook_username, tiktok_username, spotify_artist_url, apple_music_artist_url, paypal_username, venmo_username). ✅ PUT /profile updates all social media fields correctly. ✅ Username cleaning working perfectly - @ symbols removed from usernames (instagram, tiktok, paypal, venmo) while URLs preserved. Enhanced profile system fully functional for post-request audience engagement."
 
+  - task: "Social Media Fields in Public Musician Endpoint (Post-Request Popup Fix)"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "NEW TESTING TASK: Test the fix for social media links in the post-request popup. Verify GET /musicians/{slug} endpoint includes all 7 social media fields: paypal_username, venmo_username, instagram_username, facebook_username, tiktok_username, spotify_artist_url, apple_music_artist_url"
+      - working: true
+        agent: "testing"
+        comment: "SOCIAL MEDIA FIELDS IN PUBLIC ENDPOINT WORKING PERFECTLY: ✅ PRIORITY 1 COMPLETE: All 7 social media fields working correctly in public endpoint - GET /musicians/{slug} includes paypal_username, venmo_username, instagram_username, facebook_username, tiktok_username, spotify_artist_url, apple_music_artist_url. ✅ Fields return proper values or null without causing frontend errors. ✅ Username processing correct (@ symbols properly removed from usernames). ✅ URLs returned as full URLs correctly. ✅ Response format matches MusicianPublic model. ✅ PRIORITY 2 COMPLETE: Complete social media integration flow working correctly - musician with social media data can be fetched via public endpoint, usernames without @ symbols returned correctly, URLs returned as full URLs, backend changes don't break existing functionality. ✅ The audience interface can now access social media data for the post-request modal. Total: 9/9 tests passed (100% success rate). The fix for social media links in post-request popup is working correctly."
+
 agent_communication:
     implemented: true
     working: true
