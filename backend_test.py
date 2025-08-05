@@ -4910,12 +4910,12 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
                     data = response.json()
                     print(f"📊 Upgrade response: {json.dumps(data, indent=2)}")
                     
-                    # Check for CheckoutSessionResponse fields
-                    required_fields = ["checkout_url", "session_id"]
+                    # Check for CheckoutSessionResponse fields (correct field names)
+                    required_fields = ["url", "session_id"]
                     missing_fields = [field for field in required_fields if field not in data]
                     
                     if len(missing_fields) == 0:
-                        checkout_url = data.get("checkout_url")
+                        checkout_url = data.get("url")  # Correct field name is "url"
                         session_id = data.get("session_id")
                         
                         # Verify checkout URL is a valid Stripe URL
