@@ -1398,8 +1398,17 @@ const MusicianDashboard = () => {
       });
       
       console.log('Import response:', response.data);
-      alert(response.data.message);
+      
+      // Close the import panel and reset form after successful import
+      setShowPlaylistImport(false);
       setPlaylistUrl('');
+      setPlaylistPlatform('spotify'); // Reset to default
+      
+      // Refresh songs list to show imported songs
+      fetchSongs();
+      
+      alert(response.data.message);
+      
     } catch (error) {
       console.error('Import error:', error);
       console.error('Error response:', error.response);
