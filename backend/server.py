@@ -1888,8 +1888,12 @@ async def update_song(song_id: str, song_data: SongCreate, musician_id: str = De
             detail=f"Another song '{song_data.title}' by '{song_data.artist}' already exists in your library"
         )
     
+    # Calculate decade from year
+    decade = calculate_decade(song_data.year)
+    
     # Update song
     update_data = song_data.dict()
+    update_data["decade"] = decade  # NEW: Update decade when year changes
     await db.songs.update_one(
         {"id": song_id},
         {"$set": update_data}
