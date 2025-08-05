@@ -1987,7 +1987,8 @@ async def get_musician_songs(
     genre: Optional[str] = None,
     artist: Optional[str] = None,
     mood: Optional[str] = None,
-    year: Optional[int] = None
+    year: Optional[int] = None,
+    decade: Optional[str] = None  # NEW: Add decade filter parameter
 ):
     """Get songs for a musician with filtering and search support"""
     # Get musician
@@ -2036,9 +2037,28 @@ async def get_musician_songs(
     if year:
         query["year"] = year
     
-    # Get filtered songs
-    songs = await db.songs.find(query).sort("title", ASCENDING).to_list(None)  # Removed 1000 limit
-    return [Song(**song) for song in songs]
+    # NEW: Add decade filter
+    if decade:
+        query["decade"] = decade
+    
+    # Execute query and return all songs (removed 1000 limit for unlimited retrieval)
+    songs_cursor = db.songs.find(query).sort("created_at", DESCENDING)
+    songs = await songs_cursor.to_list(length=None)
+    
+    # Update song counts for request tracking
+    updated_songs = []
+    for song in songs:
+        if "request_count" not in song:
+            song["request_count"] = 0
+        if "hidden" not in song:
+            song["hidden"] = False  # Default to visible for older songs
+        # Ensure decade is present for backward compatibility
+        if "decade" not in song and song.get("year"):
+            decade_calc = calculate_decade(song["year"])
+            song["decade"] = decade_calc
+        updated_songs.append(Song(**song))
+    
+    return updated_songs
 
 # Request endpoints
 @api_router.post("/requests", response_model=Request)
