@@ -314,7 +314,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Song Metadata Auto-fill Feature (Spotify Integration) - NEW feature testing complete, working correctly"
+    - "Song Metadata Auto-fill Feature (Spotify Integration) - Re-testing with user-provided credentials"
+    - "CSV Upload Auto-enrichment - Extend auto-fill to CSV upload process"
+    - "Existing Playlist Songs Metadata - Batch metadata enrichment for already imported songs"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
