@@ -2892,6 +2892,64 @@ const AudienceInterface = () => {
   const [tipMessage, setTipMessage] = useState('');
   const [tipPlatform, setTipPlatform] = useState('paypal'); // 'paypal' or 'venmo'
 
+  // NEW: Post-request click tracking
+  const trackClick = async (type, platform) => {
+    if (!currentRequestId) return;
+    
+    try {
+      await axios.post(`${API}/requests/${currentRequestId}/track-click`, {
+        type: type, // "tip" or "social"
+        platform: platform // "venmo", "paypal", "instagram", etc.
+      });
+    } catch (error) {
+      console.error('Error tracking click:', error);
+    }
+  };
+
+  const generateSocialLink = (platform, username, url) => {
+    switch (platform) {
+      case 'instagram':
+        return username ? `https://instagram.com/${username}` : null;
+      case 'facebook':
+        return username ? `https://facebook.com/${username}` : null;
+      case 'tiktok':
+        return username ? `https://tiktok.com/@${username}` : null;
+      case 'spotify':
+        return url || null;
+      case 'apple_music':
+        return url || null;
+      default:
+        return null;
+    }
+  };
+
+  const handleSocialClick = (platform) => {
+    const link = generateSocialLink(
+      platform, 
+      musician[`${platform}_username`] || musician[`${platform}_artist_url`],
+      musician[`${platform}_artist_url`]
+    );
+    
+    if (link) {
+      trackClick('social', platform);
+      window.open(link, '_blank');
+    }
+  };
+
+  const handleTipClick = (platform) => {
+    trackClick('tip', platform);
+    
+    // Use existing tip functionality but with tracking
+    if (platform === 'venmo') {
+      setTipPlatform('venmo');
+    } else {
+      setTipPlatform('paypal');
+    }
+    
+    setShowPostRequestModal(false);
+    setShowTipModal(true);
+  };
+
   // Color scheme mappings
   const colorSchemes = {
     purple: {
