@@ -785,6 +785,28 @@ const MusicianDashboard = () => {
     }
   }, [showProfile]);
 
+  // NEW: Initialize profile state with musician data on login/auth restoration
+  useEffect(() => {
+    if (musician && musician.id) {
+      setProfile({
+        name: musician.name || '',
+        email: musician.email || '',
+        venmo_link: musician.venmo_link || '', // Keep for backward compatibility
+        bio: musician.bio || '',
+        website: musician.website || '',
+        // Payment fields
+        paypal_username: musician.paypal_username || '',
+        venmo_username: musician.venmo_username || '',
+        // Social media fields
+        instagram_username: musician.instagram_username || '',
+        facebook_username: musician.facebook_username || '',
+        tiktok_username: musician.tiktok_username || '',
+        spotify_artist_url: musician.spotify_artist_url || '',
+        apple_music_artist_url: musician.apple_music_artist_url || ''
+      });
+    }
+  }, [musician]); // Trigger when musician object changes
+
   useEffect(() => {
     if (activeTab === 'design') {
       fetchDesignSettings();
