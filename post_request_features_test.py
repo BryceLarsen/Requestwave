@@ -621,8 +621,8 @@ class PostRequestFeaturesTester:
             
             status_request_id = create_response.json()["id"]
             
-            # Test different status updates
-            statuses = ["accepted", "played", "rejected", "archived"]
+            # Test different status updates (excluding archived which has its own endpoint)
+            statuses = ["accepted", "played", "rejected"]
             
             for status in statuses:
                 print(f"🔍 Testing status update to: {status}")
