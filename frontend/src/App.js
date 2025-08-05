@@ -745,6 +745,7 @@ const MusicianDashboard = () => {
   const [playlistPlatform, setPlaylistPlatform] = useState('spotify');
   const [importingPlaylist, setImportingPlaylist] = useState(false);
   const [playlistError, setPlaylistError] = useState('');
+  const [showPlaylistImport, setShowPlaylistImport] = useState(false); // NEW: Control visibility
 
   useEffect(() => {
     fetchSongs();
