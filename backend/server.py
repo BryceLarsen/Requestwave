@@ -1794,6 +1794,7 @@ async def delete_song(song_id: str, musician_id: str = Depends(get_current_music
 @api_router.get("/musicians/{slug}/songs", response_model=List[Song])
 async def get_musician_songs(
     slug: str,
+    search: Optional[str] = None,
     genre: Optional[str] = None,
     artist: Optional[str] = None,
     mood: Optional[str] = None,
