@@ -1831,6 +1831,8 @@ async def create_song(song_data: SongCreate, musician_id: str = Depends(get_curr
     song_dict.update({
         "id": str(uuid.uuid4()),
         "musician_id": musician_id,
+        "request_count": 0,  # Initialize request count
+        "hidden": False,  # NEW: Default to visible
         "created_at": datetime.utcnow()
     })
     
