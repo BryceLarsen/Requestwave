@@ -2133,12 +2133,12 @@ class RequestWaveAPITester:
 if __name__ == "__main__":
     tester = RequestWaveAPITester()
     
-    # Run Phase 3 Analytics Dashboard tests as requested in the review
-    success = tester.run_phase3_analytics_tests()
+    # Run NEW Spotify Metadata Auto-fill Feature tests as requested in the review
+    success = tester.run_spotify_metadata_tests()
     
     if success:
-        print("\n🎉 All Phase 3 Analytics tests passed!")
+        print("\n🎉 All Spotify Metadata Auto-fill tests passed!")
         exit(0)
     else:
-        print(f"\n💥 {tester.results['failed']} Phase 3 Analytics tests failed!")
+        print(f"\n💥 {tester.results['failed']} Spotify Metadata Auto-fill tests failed!")
         exit(1)
