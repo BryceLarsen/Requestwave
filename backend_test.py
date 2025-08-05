@@ -3704,6 +3704,18 @@ class RequestWaveAPITester:
         self.test_musician_registration()
         self.test_jwt_token_validation()
         
+        # PRIORITY 1: Social Media Profile Tests
+        print("\n" + "🎯" * 20 + " PRIORITY 1: SOCIAL MEDIA PROFILE TESTS " + "🎯" * 20)
+        self.test_social_media_profile_get()
+        self.test_social_media_profile_update()
+        self.test_social_media_profile_empty_fields()
+        
+        # PRIORITY 2: Social Media Integration Tests
+        print("\n" + "🎯" * 20 + " PRIORITY 2: SOCIAL MEDIA INTEGRATION TESTS " + "🎯" * 20)
+        self.test_social_media_click_tracking()
+        self.test_social_media_integration_post_request()
+        self.test_social_media_link_generation()
+        
         # Song management tests
         self.test_create_song()
         self.test_get_songs()
