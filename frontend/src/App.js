@@ -2093,15 +2093,57 @@ const MusicianDashboard = () => {
                 </div>
               </div>
               
-              <div>
-                <label className="block text-gray-300 text-sm font-bold mb-2">Venmo Link (for tips)</label>
-                <input
-                  type="text"
-                  placeholder="@yourusername or venmo.com/yourusername"
-                  value={profile.venmo_link}
-                  onChange={(e) => setProfile({...profile, venmo_link: e.target.value})}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
-                />
+              {/* NEW: Enhanced Tip Payment Settings */}
+              <div className="border-t border-gray-600 pt-6">
+                <h3 className="text-lg font-semibold text-white mb-4">💰 Tip Payment Settings</h3>
+                <p className="text-gray-300 text-sm mb-4">Set up payment methods so your audience can tip you directly</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-gray-300 text-sm font-bold mb-2">
+                      PayPal Username
+                      <span className="text-green-400 ml-1">💳</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="paypalusername (without @)"
+                      value={profile.paypal_username || ''}
+                      onChange={(e) => setProfile({...profile, paypal_username: e.target.value})}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                    />
+                    <p className="text-gray-400 text-xs mt-1">Used for PayPal.me/yourusername tip links</p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-gray-300 text-sm font-bold mb-2">
+                      Venmo Username
+                      <span className="text-blue-400 ml-1">📱</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="venmousername (without @)"
+                      value={profile.venmo_username || ''}
+                      onChange={(e) => setProfile({...profile, venmo_username: e.target.value})}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                    />
+                    <p className="text-gray-400 text-xs mt-1">Used for Venmo.com/yourusername tip links</p>
+                  </div>
+                </div>
+                
+                {/* Legacy Venmo Link Field for backward compatibility */}
+                <div className="mt-4">
+                  <label className="block text-gray-300 text-sm font-bold mb-2">
+                    Legacy Venmo Link 
+                    <span className="text-gray-500 text-xs">(deprecated - use username above)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="@yourusername or venmo.com/yourusername"
+                    value={profile.venmo_link}
+                    onChange={(e) => setProfile({...profile, venmo_link: e.target.value})}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                  />
+                </div>
               </div>
               
               <div>
