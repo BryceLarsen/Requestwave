@@ -1979,6 +1979,48 @@ async def get_daily_analytics(
         logger.error(f"Error getting daily analytics: {str(e)}")
         raise HTTPException(status_code=500, detail="Error retrieving daily analytics")
 
+# NEW: Song Metadata Auto-fill endpoint
+@api_router.post("/songs/search-metadata")
+async def search_song_metadata(
+    title: str,
+    artist: str,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Search for song metadata using Spotify API"""
+    try:
+        if not title.strip() or not artist.strip():
+            raise HTTPException(status_code=400, detail="Both title and artist are required")
+        
+        # Search Spotify for metadata
+        metadata = await search_spotify_metadata(title.strip(), artist.strip())
+        
+        if not metadata:
+            # Fallback to heuristic-based assignment
+            fallback_data = assign_genre_and_mood(title, artist)
+            metadata = {
+                "title": title,
+                "artist": artist,
+                "year": None,
+                "genres": [fallback_data['genre']],
+                "moods": [fallback_data['mood']],
+                "confidence": "low",
+                "source": "heuristic"
+            }
+        else:
+            metadata["source"] = "spotify"
+        
+        return {
+            "success": True,
+            "metadata": metadata,
+            "message": f"Found metadata with {metadata['confidence']} confidence"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error searching song metadata: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error searching for song metadata")
+
 @api_router.put("/requests/{request_id}/status")
 async def update_request_status(
     request_id: str, 
