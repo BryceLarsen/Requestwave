@@ -2914,6 +2914,30 @@ const AudienceInterface = () => {
   const applyFilters = () => {
     let filtered = [...songs];
 
+    // NEW: Apply search query first (searches across all fields)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(song => {
+        // Search in title
+        const titleMatch = song.title.toLowerCase().includes(query);
+        // Search in artist
+        const artistMatch = song.artist.toLowerCase().includes(query);
+        // Search in genres
+        const genreMatch = song.genres.some(genre => 
+          genre.toLowerCase().includes(query)
+        );
+        // Search in moods
+        const moodMatch = song.moods.some(mood => 
+          mood.toLowerCase().includes(query)
+        );
+        // Search in year (convert to string for search)
+        const yearMatch = song.year && song.year.toString().includes(query);
+        
+        return titleMatch || artistMatch || genreMatch || moodMatch || yearMatch;
+      });
+    }
+
+    // Apply specific filters on top of search results
     if (selectedFilters.genre) {
       filtered = filtered.filter(song => song.genres.includes(selectedFilters.genre));
     }
