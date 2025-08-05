@@ -1822,7 +1822,7 @@ async def get_musician_songs(
         query["year"] = year
     
     # Get filtered songs
-    songs = await db.songs.find(query).sort("title", ASCENDING).to_list(1000)
+    songs = await db.songs.find(query).sort("title", ASCENDING).to_list(None)  # Removed 1000 limit
     return [Song(**song) for song in songs]
 
 # Request endpoints
