@@ -2974,6 +2974,74 @@ const AudienceInterface = () => {
     });
   };
 
+  // NEW: Tip functionality functions
+  const getTipPresetAmounts = () => [1, 5, 10, 20];
+
+  const handleTipSubmit = async (musicianSlug, requesterName = '') => {
+    if (!tipAmount || parseFloat(tipAmount) <= 0) {
+      alert('Please enter a valid tip amount');
+      return;
+    }
+
+    const amount = parseFloat(tipAmount);
+    if (amount > 500) {
+      alert('Tip amount cannot exceed $500');
+      return;
+    }
+
+    try {
+      // Get payment links from backend
+      const response = await axios.get(`${API}/musicians/${musicianSlug}/tip-links`, {
+        params: {
+          amount: amount,
+          message: tipMessage || `Thanks for the music!`
+        }
+      });
+
+      if (response.data) {
+        // Open appropriate payment link
+        let paymentUrl = null;
+        if (tipPlatform === 'paypal' && response.data.paypal_link) {
+          paymentUrl = response.data.paypal_link;
+        } else if (tipPlatform === 'venmo' && response.data.venmo_link) {
+          paymentUrl = response.data.venmo_link;
+        }
+
+        if (paymentUrl) {
+          // Record the tip attempt for analytics
+          try {
+            await axios.post(`${API}/musicians/${musicianSlug}/tips`, {
+              amount: amount,
+              platform: tipPlatform,
+              tipper_name: requesterName || 'Anonymous',
+              message: tipMessage
+            });
+          } catch (error) {
+            console.log('Tip tracking failed:', error); // Non-critical
+          }
+
+          // Open payment link
+          window.open(paymentUrl, '_blank');
+          
+          // Close modal
+          setShowTipModal(false);
+          
+          // Show success message
+          alert(`Opening ${tipPlatform === 'paypal' ? 'PayPal' : 'Venmo'} to send your $${amount} tip!`);
+        } else {
+          alert(`${tipPlatform === 'paypal' ? 'PayPal' : 'Venmo'} is not set up for this musician`);
+        }
+      }
+    } catch (error) {
+      console.error('Tip error:', error);
+      if (error.response?.status === 400) {
+        alert(error.response.data.detail || 'This musician hasn\'t set up payment methods for tips yet');
+      } else {
+        alert('Error processing tip. Please try again.');
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
