@@ -479,14 +479,14 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Decade Functionality - FULLY TESTED: Frontend and backend decade functionality confirmed working perfectly"
-    - "Musician Dashboard Decade Filter - TESTED: 6th filter input 'Filter by decade...' present and functional"
-    - "Audience Interface Decade Dropdown - TESTED: 'All Decades' dropdown present in 5-column filter grid"
-    - "Decade UI Implementation - TESTED: Both musician and audience interfaces properly implement decade filtering"
-    - "All decade functionality confirmed working and production-ready in both frontend and backend"
-  stuck_tasks: []
+    - "Stripe Subscription System - CRITICAL ROUTING ISSUE: POST /api/subscription/upgrade endpoint has routing conflicts preventing payment flow"
+    - "Webhook Integration - CRITICAL: POST /api/webhook/stripe endpoint not accepting webhook requests properly"
+    - "Payment Flow Testing - BLOCKED: Cannot test live Stripe integration due to endpoint routing issues"
+    - "Subscription Upgrade Functionality - BROKEN: Users cannot upgrade to paid subscriptions"
+  stuck_tasks:
+    - "Stripe Subscription System - Endpoint routing conflicts preventing core payment functionality"
   test_all: false
-  test_priority: "high_first"
+  test_priority: "critical_first"
 
   - task: "Post-Request Features - Updated Request Model & Creation"
     implemented: true
