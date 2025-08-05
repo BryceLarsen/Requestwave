@@ -2139,9 +2139,10 @@ async def preview_csv_upload(
 @api_router.post("/songs/csv/upload", response_model=CSVUploadResponse)
 async def upload_csv_songs(
     file: UploadFile = File(...),
+    auto_enrich: bool = False,  # NEW: Optional parameter for automatic metadata enrichment
     musician_id: str = Depends(get_current_musician)
 ):
-    """Upload and save songs from CSV file"""
+    """Upload and save songs from CSV file with optional automatic metadata enrichment"""
     validate_csv_file(file)
     
     try:
@@ -2149,6 +2150,8 @@ async def upload_csv_songs(
         result = parse_csv_content(content)
         
         songs_added = 0
+        enriched_count = 0
+        enrichment_errors = []
         
         # Insert valid songs into database
         for song_data in result['songs']:
@@ -2161,8 +2164,51 @@ async def upload_csv_songs(
                 "moods": song_data['moods'],
                 "year": song_data['year'],
                 "notes": song_data['notes'],
+                "request_count": 0,
                 "created_at": datetime.utcnow()
             }
+            
+            # NEW: Optional automatic metadata enrichment
+            if auto_enrich:
+                try:
+                    # Search for metadata if fields are missing or empty
+                    needs_enrichment = (
+                        not song_dict['genres'] or 
+                        not song_dict['moods'] or 
+                        not song_dict['year']
+                    )
+                    
+                    if needs_enrichment:
+                        logger.info(f"Auto-enriching metadata for '{song_dict['title']}' by '{song_dict['artist']}'")
+                        
+                        spotify_metadata = await search_spotify_metadata(
+                            song_dict['title'], 
+                            song_dict['artist']
+                        )
+                        
+                        if spotify_metadata:
+                            # Only update empty/missing fields, preserve existing CSV data
+                            if not song_dict['genres'] and spotify_metadata.get('genres'):
+                                song_dict['genres'] = spotify_metadata['genres']
+                            if not song_dict['moods'] and spotify_metadata.get('moods'):
+                                song_dict['moods'] = spotify_metadata['moods']
+                            if not song_dict['year'] and spotify_metadata.get('year'):
+                                song_dict['year'] = spotify_metadata['year']
+                            
+                            # Add enrichment note
+                            enrichment_note = f" (Auto-enriched from {spotify_metadata.get('source', 'Spotify')})"
+                            if enrichment_note not in song_dict['notes']:
+                                song_dict['notes'] += enrichment_note
+                            
+                            enriched_count += 1
+                            logger.info(f"Successfully enriched '{song_dict['title']}' - genres: {song_dict['genres']}, moods: {song_dict['moods']}, year: {song_dict['year']}")
+                        else:
+                            enrichment_errors.append(f"Row {song_data['row_number']}: Could not find metadata for '{song_data['title']}' by '{song_data['artist']}'")
+                            logger.warning(f"No metadata found for '{song_dict['title']}' by '{song_dict['artist']}'")
+                    
+                except Exception as e:
+                    enrichment_errors.append(f"Row {song_data['row_number']}: Error enriching '{song_data['title']}' by '{song_data['artist']}': {str(e)}")
+                    logger.error(f"Error enriching metadata for '{song_dict['title']}': {str(e)}")
             
             # Check for duplicates (same title and artist for this musician)
             existing = await db.songs.find_one({
@@ -2177,11 +2223,23 @@ async def upload_csv_songs(
             else:
                 result['errors'].append(f"Row {song_data['row_number']}: Duplicate song '{song_data['title']}' by '{song_data['artist']}' already exists")
         
+        # Combine all errors
+        all_errors = result['errors'] + enrichment_errors
+        
+        # Create enrichment summary message
+        enrichment_message = ""
+        if auto_enrich:
+            enrichment_message = f", {enriched_count} songs auto-enriched with metadata"
+            if enrichment_errors:
+                enrichment_message += f" ({len(enrichment_errors)} enrichment warnings)"
+        
+        success_message = f"Successfully imported {songs_added} songs{enrichment_message}"
+        
         return CSVUploadResponse(
             success=True,
-            message=f"Successfully imported {songs_added} songs",
+            message=success_message,
             songs_added=songs_added,
-            errors=result['errors']
+            errors=all_errors
         )
         
     except ValueError as e:
