@@ -2807,7 +2807,6 @@ const MusicianDashboard = () => {
                       <tr className="border-b border-gray-700">
                         <th className="text-left py-2 text-gray-300">Date</th>
                         <th className="text-left py-2 text-gray-300">Requests</th>
-                        <th className="text-left py-2 text-gray-300">Tips</th>
                         <th className="text-left py-2 text-gray-300">Unique Requesters</th>
                       </tr>
                     </thead>
