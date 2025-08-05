@@ -109,8 +109,6 @@ class RequestCreate(BaseModel):
     requester_name: str
     requester_email: str
     dedication: str = ""
-    # NEW: Show grouping
-    show_name: Optional[str] = None
 
 class Request(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -121,11 +119,28 @@ class Request(BaseModel):
     requester_name: str
     requester_email: str
     dedication: str = ""
-    # NEW: Show grouping and tracking
-    show_name: Optional[str] = None
+    # Artist-controlled show grouping (not provided by audience)
+    show_name: Optional[str] = None  # Artist can assign later
+    # Tracking fields
     tip_clicked: bool = False
     social_clicks: List[str] = []  # Track which social links were clicked
     status: str = "pending"  # pending, accepted, played, rejected, archived
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+# NEW: Show management for artists
+class ShowCreate(BaseModel):
+    name: str
+    date: Optional[str] = None  # YYYY-MM-DD format
+    venue: Optional[str] = None
+    notes: Optional[str] = None
+
+class Show(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    musician_id: str
+    name: str
+    date: Optional[str] = None
+    venue: Optional[str] = None
+    notes: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 # NEW: Tip tracking model
