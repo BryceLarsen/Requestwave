@@ -3140,6 +3140,15 @@ async def health_check():
 async def test_subscription_endpoint():
     return {"message": "Test subscription endpoint working", "timestamp": datetime.utcnow().isoformat()}
 
+@api_router.post("/test/upgrade")
+async def test_upgrade_endpoint(http_request: Request, musician_id: str = Depends(get_current_musician)):
+    """Test upgrade endpoint with same signature as subscription/upgrade"""
+    return {
+        "message": "Test upgrade endpoint working",
+        "musician_id": musician_id,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
 # Include the router
 app.include_router(api_router)
 
