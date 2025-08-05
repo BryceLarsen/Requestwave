@@ -1670,6 +1670,26 @@ const MusicianDashboard = () => {
               )}
             </div>
           </div>
+          
+          {/* NEW: Trial Upgrade Notice */}
+          {subscriptionStatus && subscriptionStatus.plan === 'trial' && (
+            <div className="mt-4 bg-blue-900/50 border border-blue-500/50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-blue-200 font-bold text-sm">🚀 Enjoying your trial?</h3>
+                  <p className="text-blue-300 text-xs mt-1">
+                    Lock in unlimited requests for just $5/month
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowUpgrade(true)}
+                  className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg text-sm font-bold transition duration-300"
+                >
+                  Upgrade Now
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Tabs */}
