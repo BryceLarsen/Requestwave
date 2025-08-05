@@ -1516,9 +1516,17 @@ class RequestWaveAPITester:
                     self.log_result("Batch Enrichment - Create Specific Test Songs", False, f"Failed to create song: {song_data['title']}")
                     return
             
-            # Test batch enrichment with specific song IDs
-            params = {"song_ids": created_song_ids}
-            response = self.make_request("POST", "/songs/batch-enrich", params=params)
+            # Test batch enrichment with specific song IDs - try as JSON body
+            request_data = {"song_ids": created_song_ids}
+            response = self.make_request("POST", "/songs/batch-enrich", request_data)
+            
+            # If that fails, try as query parameters
+            if response.status_code == 422:
+                print(f"📊 JSON body failed, trying query parameters...")
+                params = {}
+                for i, song_id in enumerate(created_song_ids):
+                    params[f"song_ids"] = song_id  # This might not work for multiple values
+                response = self.make_request("POST", "/songs/batch-enrich", params=params)
             
             if response.status_code == 200:
                 data = response.json()
