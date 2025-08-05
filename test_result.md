@@ -614,19 +614,34 @@ test_plan:
         comment: "SOCIAL MEDIA FIELDS IN PUBLIC ENDPOINT WORKING PERFECTLY: ✅ PRIORITY 1 COMPLETE: All 7 social media fields working correctly in public endpoint - GET /musicians/{slug} includes paypal_username, venmo_username, instagram_username, facebook_username, tiktok_username, spotify_artist_url, apple_music_artist_url. ✅ Fields return proper values or null without causing frontend errors. ✅ Username processing correct (@ symbols properly removed from usernames). ✅ URLs returned as full URLs correctly. ✅ Response format matches MusicianPublic model. ✅ PRIORITY 2 COMPLETE: Complete social media integration flow working correctly - musician with social media data can be fetched via public endpoint, usernames without @ symbols returned correctly, URLs returned as full URLs, backend changes don't break existing functionality. ✅ The audience interface can now access social media data for the post-request modal. Total: 9/9 tests passed (100% success rate). The fix for social media links in post-request popup is working correctly."
 
 agent_communication:
-    implemented: true
-    working: true
-    file: "App.js"
-    stuck_count: 0
-    priority: "medium"
-    needs_retesting: false
-    status_history:
-      - working: "NA"
-        agent: "user"
-        comment: "User reported: 'check the copy button on the audience link' - potential issue with copy functionality needs investigation"
-      - working: true
-        agent: "main"
-        comment: "IMPROVED: Enhanced copy button with visual feedback ('Copied!' text), error handling, fallback for older browsers, and better UX. Original implementation had no feedback or error handling."
+    - agent: "main"
+      message: "Implemented JWT-based authentication system with registration/login endpoints"
+    - agent: "testing"
+      message: "Authentication system tested and working correctly with JWT tokens"
+    - agent: "user"
+      message: "User reported login issues - 'I cant seem to log in. i tried forgot password and it still wont work'"
+    - agent: "testing"
+      message: "Comprehensive authentication testing confirms system is working - user issues likely frontend/browser related"
+    - agent: "main"
+      message: "Fixed JWT authentication error by changing jwt.JWTError to jwt.InvalidTokenError"
+    - agent: "user"
+      message: "User reported song management issues - 'I am clicking add song and nothing is happening'"
+    - agent: "main"
+      message: "Fixed song management authentication issues, add song functionality now working"
+    - agent: "user"
+      message: "User requested CSV upload functionality and reported authentication issues"
+    - agent: "testing"
+      message: "CSV upload system tested and working correctly with proper authentication"
+    - agent: "user"
+      message: "User requested comprehensive testing of Stripe subscription system"
+    - agent: "testing"
+      message: "CRITICAL: Found major routing conflicts in Stripe subscription endpoints preventing payment functionality"
+    - agent: "testing"
+      message: "CRITICAL: Routing conflicts still not resolved after main agent attempts"
+    - agent: "main"
+      message: "Fixed critical Stripe subscription routing conflicts by resolving endpoint path conflicts"
+    - agent: "testing"
+      message: "STRIPE SUBSCRIPTION SYSTEM FULLY WORKING: All critical routing conflicts resolved, live Stripe integration working perfectly, users can now successfully upgrade to $5/month Pro subscriptions. Both POST /api/subscription/upgrade and POST /api/webhook/stripe endpoints working correctly without validation errors. Payment transaction creation, authentication, and complete subscription flow all verified working."
 
   - task: "Phase 1 Song List Enhancements"
     implemented: true
