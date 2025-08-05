@@ -3307,7 +3307,8 @@ const AudienceInterface = () => {
     genre: '',
     artist: '',
     mood: '',
-    year: ''
+    year: '',
+    decade: ''  // NEW: Add decade filter
   });
   const [requestForm, setRequestForm] = useState({
     requester_name: '',
