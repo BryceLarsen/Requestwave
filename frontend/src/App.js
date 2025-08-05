@@ -1172,7 +1172,8 @@ const MusicianDashboard = () => {
       const formData = new FormData();
       formData.append('file', csvFile);
       
-      const response = await axios.post(`${API}/songs/csv/upload`, formData, {
+      // NEW: Add auto_enrich parameter
+      const response = await axios.post(`${API}/songs/csv/upload?auto_enrich=${csvAutoEnrich}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
@@ -1180,9 +1181,23 @@ const MusicianDashboard = () => {
       setCsvFile(null);
       setCsvPreview(null);
       setShowCsvUpload(false);
+      setCsvAutoEnrich(false);  // Reset auto-enrich option
       fetchSongs();
       
-      alert(`Success! ${response.data.songs_added} songs imported${response.data.errors.length > 0 ? ' with some warnings' : ''}`);
+      // Enhanced success message with enrichment info
+      let message = `Success! ${response.data.songs_added} songs imported`;
+      if (csvAutoEnrich && response.data.message.includes('auto-enriched')) {
+        // Extract enrichment count from message
+        const enrichedMatch = response.data.message.match(/(\d+) songs auto-enriched/);
+        if (enrichedMatch) {
+          message += `, ${enrichedMatch[1]} songs auto-enriched with metadata`;
+        }
+      }
+      if (response.data.errors.length > 0) {
+        message += ` with ${response.data.errors.length} warnings`;
+      }
+      
+      alert(message);
       
     } catch (error) {
       setCsvError(error.response?.data?.detail || 'Error uploading CSV file');
