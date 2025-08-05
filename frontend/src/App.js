@@ -429,7 +429,7 @@ const MusicianDashboard = () => {
     setTipPlatform('paypal');
   };
 
-  const handleTipSubmit = async () => {
+  const handleTipSubmit = async (musicianSlug) => {
     if (!tipAmount || parseFloat(tipAmount) <= 0) {
       alert('Please enter a valid tip amount');
       return;
@@ -443,7 +443,7 @@ const MusicianDashboard = () => {
 
     try {
       // Get payment links from backend
-      const response = await axios.get(`${API}/musicians/${musicianData.slug}/tip-links`, {
+      const response = await axios.get(`${API}/musicians/${musicianSlug}/tip-links`, {
         params: {
           amount: amount,
           message: tipMessage || `Thanks for the music!${tipSongId ? ' (with song request)' : ''}`
@@ -462,7 +462,7 @@ const MusicianDashboard = () => {
         if (paymentUrl) {
           // Record the tip attempt for analytics
           try {
-            await axios.post(`${API}/musicians/${musicianData.slug}/tips`, {
+            await axios.post(`${API}/musicians/${musicianSlug}/tips`, {
               amount: amount,
               platform: tipPlatform,
               tipper_name: requestForm.requester_name || 'Anonymous',
