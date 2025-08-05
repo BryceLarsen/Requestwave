@@ -3251,6 +3251,119 @@ const AudienceInterface = () => {
             </div>
           </div>
         )}
+        
+        {/* NEW: Tip Modal */}
+        {showTipModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-white">💰 Send a Tip</h3>
+                <button
+                  onClick={() => setShowTipModal(false)}
+                  className="text-gray-400 hover:text-white text-xl"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                {/* Preset amounts */}
+                <div>
+                  <label className="block text-gray-300 text-sm font-bold mb-2">Quick amounts</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {getTipPresetAmounts().map(amount => (
+                      <button
+                        key={amount}
+                        type="button"
+                        onClick={() => setTipAmount(amount.toString())}
+                        className={`py-2 px-3 rounded-lg font-medium transition duration-300 ${
+                          tipAmount === amount.toString()
+                            ? 'bg-green-600 text-white'
+                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                      >
+                        ${amount}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Custom amount */}
+                <div>
+                  <label className="block text-gray-300 text-sm font-bold mb-2">Custom amount</label>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    value={tipAmount}
+                    onChange={(e) => setTipAmount(e.target.value)}
+                    min="0.01"
+                    max="500"
+                    step="0.01"
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  />
+                </div>
+                
+                {/* Payment platform */}
+                <div>
+                  <label className="block text-gray-300 text-sm font-bold mb-2">Payment method</label>
+                  <div className="flex space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setTipPlatform('paypal')}
+                      className={`flex-1 py-2 px-4 rounded-lg font-medium transition duration-300 ${
+                        tipPlatform === 'paypal'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      💳 PayPal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTipPlatform('venmo')}
+                      className={`flex-1 py-2 px-4 rounded-lg font-medium transition duration-300 ${
+                        tipPlatform === 'venmo'
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      📱 Venmo
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Optional message */}
+                <div>
+                  <label className="block text-gray-300 text-sm font-bold mb-2">Message (optional)</label>
+                  <input
+                    type="text"
+                    placeholder="Thanks for the great music!"
+                    value={tipMessage}
+                    onChange={(e) => setTipMessage(e.target.value)}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  />
+                </div>
+                
+                {/* Action buttons */}
+                <div className="flex space-x-3 mt-6">
+                  <button
+                    onClick={() => setShowTipModal(false)}
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 py-2 rounded-lg font-medium transition duration-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleTipSubmit(musician.slug, '')}
+                    disabled={!tipAmount || parseFloat(tipAmount) <= 0}
+                    className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 py-2 rounded-lg font-medium transition duration-300 disabled:cursor-not-allowed"
+                  >
+                    Send Tip
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
