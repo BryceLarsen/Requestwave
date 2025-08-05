@@ -179,11 +179,12 @@ class NewFeaturesAPITester:
     def test_start_show(self):
         """Test POST /shows/start to start a new show"""
         try:
-            if not self.test_show_id:
-                self.log_result("Start Show", False, "No test show ID available")
-                return
-            
-            start_data = {"show_id": self.test_show_id}
+            # Start show with name (not show_id)
+            start_data = {
+                "name": "Friday Night Live",
+                "venue": "The Blue Note",
+                "notes": "Live performance"
+            }
             response = self.make_request("POST", "/shows/start", start_data)
             
             if response.status_code == 200:
