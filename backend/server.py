@@ -1671,14 +1671,14 @@ async def get_subscription_status_endpoint(musician_id: str = Depends(get_curren
     return await get_subscription_status(musician_id)
 
 @api_router.post("/subscription/upgrade", response_model=CheckoutSessionResponse)
-async def create_upgrade_checkout(request: Request, musician_id: str = Depends(get_current_musician)):
+async def create_upgrade_checkout(http_request: Request, musician_id: str = Depends(get_current_musician)):
     """Create Stripe checkout session for $5/month subscription"""
     if not STRIPE_API_KEY:
         raise HTTPException(status_code=500, detail="Stripe not configured")
     
     try:
         # Initialize Stripe
-        host_url = str(request.base_url)
+        host_url = str(http_request.base_url)
         webhook_url = f"{host_url}api/webhook/stripe"
         stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
         
