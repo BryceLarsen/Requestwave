@@ -394,6 +394,7 @@ const MusicianDashboard = () => {
   const [artistFilter, setArtistFilter] = useState('');
   const [moodFilter, setMoodFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
+  const [decadeFilter, setDecadeFilter] = useState('');  // NEW: Add decade filter
   const [filteredSongs, setFilteredSongs] = useState([]);
   const [songError, setSongError] = useState('');
 
