@@ -2596,6 +2596,146 @@ async def record_tip(
         logger.error(f"Error recording tip: {str(e)}")
         raise HTTPException(status_code=500, detail="Error recording tip")
 
+# NEW: Click tracking for tips and social links
+@api_router.post("/requests/{request_id}/track-click")
+async def track_request_click(
+    request_id: str,
+    click_data: dict  # {"type": "tip" | "social", "platform": "venmo" | "instagram" etc}
+):
+    """Track when audience clicks tip or social links from request confirmation"""
+    try:
+        # Find the request
+        request = await db.requests.find_one({"id": request_id})
+        if not request:
+            raise HTTPException(status_code=404, detail="Request not found")
+        
+        click_type = click_data.get("type")
+        platform = click_data.get("platform")
+        
+        update_data = {}
+        
+        if click_type == "tip":
+            update_data["tip_clicked"] = True
+            logger.info(f"Request {request_id}: Tip clicked via {platform}")
+        elif click_type == "social":
+            # Add to social_clicks array if not already present
+            social_clicks = request.get("social_clicks", [])
+            if platform not in social_clicks:
+                social_clicks.append(platform)
+                update_data["social_clicks"] = social_clicks
+            logger.info(f"Request {request_id}: Social link clicked - {platform}")
+        
+        if update_data:
+            await db.requests.update_one(
+                {"id": request_id},
+                {"$set": update_data}
+            )
+        
+        return {"success": True, "message": f"Click tracked: {click_type} - {platform}"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error tracking click: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error tracking click")
+
+# NEW: Request management endpoints
+@api_router.put("/requests/{request_id}/archive")
+async def archive_request(
+    request_id: str,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Archive a request"""
+    try:
+        # Verify request belongs to musician
+        request = await db.requests.find_one({
+            "id": request_id,
+            "musician_id": musician_id
+        })
+        
+        if not request:
+            raise HTTPException(status_code=404, detail="Request not found")
+        
+        # Update status to archived
+        await db.requests.update_one(
+            {"id": request_id},
+            {"$set": {"status": "archived"}}
+        )
+        
+        return {"success": True, "message": "Request archived"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error archiving request: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error archiving request")
+
+@api_router.delete("/requests/{request_id}")
+async def delete_request(
+    request_id: str,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Delete a request permanently"""
+    try:
+        # Verify request belongs to musician
+        request = await db.requests.find_one({
+            "id": request_id,
+            "musician_id": musician_id
+        })
+        
+        if not request:
+            raise HTTPException(status_code=404, detail="Request not found")
+        
+        # Delete the request
+        await db.requests.delete_one({"id": request_id})
+        
+        return {"success": True, "message": "Request deleted"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting request: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error deleting request")
+
+@api_router.post("/requests/bulk-action")
+async def bulk_request_action(
+    action_data: dict,  # {"action": "archive" | "delete", "request_ids": [...], "show_name": "optional"}
+    musician_id: str = Depends(get_current_musician)
+):
+    """Bulk action on requests (archive/delete by IDs or by show)"""
+    try:
+        action = action_data.get("action")
+        request_ids = action_data.get("request_ids", [])
+        show_name = action_data.get("show_name")
+        
+        if action not in ["archive", "delete"]:
+            raise HTTPException(status_code=400, detail="Action must be 'archive' or 'delete'")
+        
+        # Build query
+        query = {"musician_id": musician_id}
+        
+        if request_ids:
+            query["id"] = {"$in": request_ids}
+        elif show_name:
+            query["show_name"] = show_name
+        else:
+            raise HTTPException(status_code=400, detail="Must provide either request_ids or show_name")
+        
+        if action == "archive":
+            result = await db.requests.update_many(query, {"$set": {"status": "archived"}})
+            message = f"Archived {result.modified_count} requests"
+        else:  # delete
+            result = await db.requests.delete_many(query)
+            message = f"Deleted {result.deleted_count} requests"
+        
+        return {"success": True, "message": message}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in bulk action: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error performing bulk action")
+
 # Health check
 @api_router.get("/health")
 async def health_check():
