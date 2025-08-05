@@ -1164,12 +1164,12 @@ class RequestWaveAPITester:
             print("🔍 Testing Spotify metadata auto-fill with 'As It Was' by 'Harry Styles'")
             
             # Test with the specific song mentioned in the review request
-            metadata_request = {
+            params = {
                 "title": "As It Was",
                 "artist": "Harry Styles"
             }
             
-            response = self.make_request("POST", "/songs/search-metadata", metadata_request)
+            response = self.make_request("POST", "/songs/search-metadata", params=params)
             
             if response.status_code == 200:
                 data = response.json()
@@ -1228,12 +1228,12 @@ class RequestWaveAPITester:
             print("🔍 Testing Spotify metadata auto-fill with 'Heat Waves' by 'Glass Animals'")
             
             # Test with the second song mentioned in the review request
-            metadata_request = {
+            params = {
                 "title": "Heat Waves",
                 "artist": "Glass Animals"
             }
             
-            response = self.make_request("POST", "/songs/search-metadata", metadata_request)
+            response = self.make_request("POST", "/songs/search-metadata", params=params)
             
             if response.status_code == 200:
                 data = response.json()
@@ -1271,13 +1271,13 @@ class RequestWaveAPITester:
             
             # Test without token
             self.auth_token = None
-            metadata_request = {
+            params = {
                 "title": "As It Was",
                 "artist": "Harry Styles"
             }
             
             print("🔍 Testing Spotify metadata auto-fill without authentication")
-            response = self.make_request("POST", "/songs/search-metadata", metadata_request)
+            response = self.make_request("POST", "/songs/search-metadata", params=params)
             
             if response.status_code in [401, 403]:  # Accept both as valid auth failures
                 self.log_result("Spotify Metadata Auto-fill - No Auth", True, f"✅ Correctly rejected request without auth token (status: {response.status_code})")
@@ -1286,7 +1286,7 @@ class RequestWaveAPITester:
             
             # Test with invalid token
             self.auth_token = "invalid_token_12345"
-            response = self.make_request("POST", "/songs/search-metadata", metadata_request)
+            response = self.make_request("POST", "/songs/search-metadata", params=params)
             
             if response.status_code == 401:
                 self.log_result("Spotify Metadata Auto-fill - Invalid Auth", True, "✅ Correctly rejected request with invalid token")
@@ -1322,7 +1322,7 @@ class RequestWaveAPITester:
             for i, case in enumerate(edge_cases):
                 print(f"🔍 Testing edge case {i+1}: title='{case['title']}', artist='{case['artist']}'")
                 
-                response = self.make_request("POST", "/songs/search-metadata", {
+                response = self.make_request("POST", "/songs/search-metadata", params={
                     "title": case["title"],
                     "artist": case["artist"]
                 })
@@ -1343,7 +1343,7 @@ class RequestWaveAPITester:
             for i, case in enumerate(special_cases):
                 print(f"🔍 Testing special character case {i+1}: '{case['title']}' by '{case['artist']}'")
                 
-                response = self.make_request("POST", "/songs/search-metadata", case)
+                response = self.make_request("POST", "/songs/search-metadata", params=case)
                 
                 if response.status_code == 200:
                     data = response.json()
@@ -1361,7 +1361,7 @@ class RequestWaveAPITester:
                 "artist": "Fake Artist That Does Not Exist 67890"
             }
             
-            response = self.make_request("POST", "/songs/search-metadata", fake_song)
+            response = self.make_request("POST", "/songs/search-metadata", params=fake_song)
             
             if response.status_code == 200:
                 data = response.json()
@@ -1391,12 +1391,12 @@ class RequestWaveAPITester:
             
             print("🔍 Testing Spotify metadata auto-fill response format")
             
-            metadata_request = {
+            params = {
                 "title": "As It Was",
                 "artist": "Harry Styles"
             }
             
-            response = self.make_request("POST", "/songs/search-metadata", metadata_request)
+            response = self.make_request("POST", "/songs/search-metadata", params=params)
             
             if response.status_code == 200:
                 data = response.json()
@@ -1492,7 +1492,7 @@ class RequestWaveAPITester:
             for i, song in enumerate(test_songs):
                 print(f"🔍 Testing song {i+1}: '{song['title']}' by '{song['artist']}'")
                 
-                response = self.make_request("POST", "/songs/search-metadata", song)
+                response = self.make_request("POST", "/songs/search-metadata", params=song)
                 
                 if response.status_code == 200:
                     successful_requests += 1
