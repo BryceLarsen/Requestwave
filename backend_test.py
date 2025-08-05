@@ -1517,8 +1517,8 @@ class RequestWaveAPITester:
                     return
             
             # Test batch enrichment with specific song IDs
-            request_data = {"song_ids": created_song_ids}
-            response = self.make_request("POST", "/songs/batch-enrich", request_data)
+            params = {"song_ids": created_song_ids}
+            response = self.make_request("POST", "/songs/batch-enrich", params=params)
             
             if response.status_code == 200:
                 data = response.json()
