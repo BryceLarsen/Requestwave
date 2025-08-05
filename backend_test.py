@@ -2981,6 +2981,311 @@ class RequestWaveAPITester:
         
         return self.results['failed'] == 0
 
+    def test_profile_payment_fields_get(self):
+        """Test GET /api/profile includes payment fields"""
+        try:
+            if not self.auth_token:
+                self.log_result("Profile Payment Fields - GET", False, "No auth token available")
+                return
+            
+            response = self.make_request("GET", "/profile")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check if payment fields are present
+                required_fields = ["paypal_username", "venmo_username"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if not missing_fields:
+                    self.log_result("Profile Payment Fields - GET", True, f"Profile includes payment fields: {required_fields}")
+                else:
+                    self.log_result("Profile Payment Fields - GET", False, f"Missing payment fields: {missing_fields}")
+            else:
+                self.log_result("Profile Payment Fields - GET", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Profile Payment Fields - GET", False, f"Exception: {str(e)}")
+
+    def test_profile_payment_fields_update(self):
+        """Test PUT /api/profile updates payment fields"""
+        try:
+            if not self.auth_token:
+                self.log_result("Profile Payment Fields - UPDATE", False, "No auth token available")
+                return
+            
+            # Test data with payment usernames
+            update_data = {
+                "paypal_username": "testmusician",
+                "venmo_username": "@testmusician123"  # Test @ symbol removal
+            }
+            
+            response = self.make_request("PUT", "/profile", update_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check if payment fields were updated correctly
+                if (data.get("paypal_username") == "testmusician" and 
+                    data.get("venmo_username") == "testmusician123"):  # @ should be removed
+                    self.log_result("Profile Payment Fields - UPDATE", True, "Payment fields updated correctly, @ symbol removed from Venmo username")
+                else:
+                    self.log_result("Profile Payment Fields - UPDATE", False, f"Payment fields not updated correctly: {data}")
+            else:
+                self.log_result("Profile Payment Fields - UPDATE", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Profile Payment Fields - UPDATE", False, f"Exception: {str(e)}")
+
+    def test_tip_links_generation_basic(self):
+        """Test GET /api/musicians/{slug}/tip-links basic functionality"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Tip Links Generation - Basic", False, "No musician slug available")
+                return
+            
+            # First ensure musician has payment methods set up
+            self.test_profile_payment_fields_update()
+            
+            # Test basic tip link generation
+            params = {
+                "amount": 5.00,
+                "message": "Thanks for the music!"
+            }
+            
+            response = self.make_request("GET", f"/musicians/{self.musician_slug}/tip-links", params)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check response structure
+                expected_fields = ["paypal_link", "venmo_link", "amount", "message"]
+                missing_fields = [field for field in expected_fields if field not in data]
+                
+                if not missing_fields:
+                    # Verify link formats
+                    paypal_link = data.get("paypal_link")
+                    venmo_link = data.get("venmo_link")
+                    
+                    paypal_valid = paypal_link and "paypal.me/testmusician/5.0" in paypal_link and "note=Thanks%20for%20the%20music!" in paypal_link
+                    venmo_valid = venmo_link and "venmo.com/testmusician123" in venmo_link and "amount=5.0" in venmo_link and "note=Thanks%20for%20the%20music!" in venmo_link
+                    
+                    if paypal_valid and venmo_valid:
+                        self.log_result("Tip Links Generation - Basic", True, f"Generated valid payment links: PayPal and Venmo")
+                    else:
+                        self.log_result("Tip Links Generation - Basic", False, f"Invalid link formats - PayPal: {paypal_link}, Venmo: {venmo_link}")
+                else:
+                    self.log_result("Tip Links Generation - Basic", False, f"Missing response fields: {missing_fields}")
+            else:
+                self.log_result("Tip Links Generation - Basic", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Tip Links Generation - Basic", False, f"Exception: {str(e)}")
+
+    def test_tip_links_generation_different_amounts(self):
+        """Test tip links with different amounts"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Tip Links Generation - Different Amounts", False, "No musician slug available")
+                return
+            
+            test_amounts = [1.00, 5.50, 20.00]
+            
+            for amount in test_amounts:
+                params = {"amount": amount}
+                response = self.make_request("GET", f"/musicians/{self.musician_slug}/tip-links", params)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get("amount") == amount:
+                        self.log_result(f"Tip Links Generation - Amount ${amount}", True, f"Generated links for ${amount}")
+                    else:
+                        self.log_result(f"Tip Links Generation - Amount ${amount}", False, f"Amount mismatch: expected ${amount}, got ${data.get('amount')}")
+                else:
+                    self.log_result(f"Tip Links Generation - Amount ${amount}", False, f"Status code: {response.status_code}")
+        except Exception as e:
+            self.log_result("Tip Links Generation - Different Amounts", False, f"Exception: {str(e)}")
+
+    def test_tip_links_generation_without_message(self):
+        """Test tip links without custom message"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Tip Links Generation - No Message", False, "No musician slug available")
+                return
+            
+            params = {"amount": 10.00}
+            response = self.make_request("GET", f"/musicians/{self.musician_slug}/tip-links", params)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Links should not contain note parameter when no message provided
+                paypal_link = data.get("paypal_link", "")
+                venmo_link = data.get("venmo_link", "")
+                
+                paypal_no_note = "note=" not in paypal_link
+                venmo_no_note = "note=" not in venmo_link
+                
+                if paypal_no_note and venmo_no_note:
+                    self.log_result("Tip Links Generation - No Message", True, "Links generated without note parameter when no message provided")
+                else:
+                    self.log_result("Tip Links Generation - No Message", False, f"Links contain note parameter when none expected - PayPal: {paypal_link}, Venmo: {venmo_link}")
+            else:
+                self.log_result("Tip Links Generation - No Message", False, f"Status code: {response.status_code}")
+        except Exception as e:
+            self.log_result("Tip Links Generation - No Message", False, f"Exception: {str(e)}")
+
+    def test_tip_links_generation_error_cases(self):
+        """Test tip links error cases"""
+        try:
+            # Test musician not found
+            response = self.make_request("GET", "/musicians/nonexistent-musician/tip-links", {"amount": 5.00})
+            if response.status_code == 404:
+                self.log_result("Tip Links Generation - Musician Not Found", True, "Correctly returned 404 for nonexistent musician")
+            else:
+                self.log_result("Tip Links Generation - Musician Not Found", False, f"Expected 404, got {response.status_code}")
+            
+            if not self.musician_slug:
+                return
+            
+            # Test invalid amounts
+            invalid_amounts = [0, -5.00, 501.00]
+            for amount in invalid_amounts:
+                response = self.make_request("GET", f"/musicians/{self.musician_slug}/tip-links", {"amount": amount})
+                if response.status_code == 400:
+                    self.log_result(f"Tip Links Generation - Invalid Amount ${amount}", True, f"Correctly rejected invalid amount ${amount}")
+                else:
+                    self.log_result(f"Tip Links Generation - Invalid Amount ${amount}", False, f"Expected 400, got {response.status_code}")
+            
+            # Test musician without payment methods (create temporary musician)
+            temp_musician_data = {
+                "name": "No Payment Musician",
+                "email": "nopayment@test.com",
+                "password": "TestPassword123!"
+            }
+            
+            register_response = self.make_request("POST", "/auth/register", temp_musician_data)
+            if register_response.status_code == 200:
+                temp_slug = register_response.json()["musician"]["slug"]
+                
+                response = self.make_request("GET", f"/musicians/{temp_slug}/tip-links", {"amount": 5.00})
+                if response.status_code == 400:
+                    self.log_result("Tip Links Generation - No Payment Methods", True, "Correctly rejected musician without payment methods")
+                else:
+                    self.log_result("Tip Links Generation - No Payment Methods", False, f"Expected 400, got {response.status_code}")
+            
+        except Exception as e:
+            self.log_result("Tip Links Generation - Error Cases", False, f"Exception: {str(e)}")
+
+    def test_tip_recording_basic(self):
+        """Test POST /api/musicians/{slug}/tips basic functionality"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Tip Recording - Basic", False, "No musician slug available")
+                return
+            
+            tip_data = {
+                "amount": 5.00,
+                "platform": "paypal",
+                "tipper_name": "Generous Fan",
+                "message": "Love your music!"
+            }
+            
+            response = self.make_request("POST", f"/musicians/{self.musician_slug}/tips", tip_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                expected_fields = ["success", "message", "tip_id"]
+                missing_fields = [field for field in expected_fields if field not in data]
+                
+                if not missing_fields and data.get("success") is True:
+                    self.log_result("Tip Recording - Basic", True, f"Successfully recorded tip: {data['message']}")
+                else:
+                    self.log_result("Tip Recording - Basic", False, f"Unexpected response structure: {data}")
+            else:
+                self.log_result("Tip Recording - Basic", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Tip Recording - Basic", False, f"Exception: {str(e)}")
+
+    def test_tip_recording_different_platforms(self):
+        """Test tip recording with different platforms"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Tip Recording - Different Platforms", False, "No musician slug available")
+                return
+            
+            platforms = ["paypal", "venmo"]
+            
+            for platform in platforms:
+                tip_data = {
+                    "amount": 3.00,
+                    "platform": platform,
+                    "tipper_name": f"{platform.title()} User",
+                    "message": f"Tip via {platform}"
+                }
+                
+                response = self.make_request("POST", f"/musicians/{self.musician_slug}/tips", tip_data)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get("success") is True:
+                        self.log_result(f"Tip Recording - {platform.title()}", True, f"Successfully recorded {platform} tip")
+                    else:
+                        self.log_result(f"Tip Recording - {platform.title()}", False, f"Tip recording failed: {data}")
+                else:
+                    self.log_result(f"Tip Recording - {platform.title()}", False, f"Status code: {response.status_code}")
+        except Exception as e:
+            self.log_result("Tip Recording - Different Platforms", False, f"Exception: {str(e)}")
+
+    def test_tip_recording_validation(self):
+        """Test tip recording validation"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Tip Recording - Validation", False, "No musician slug available")
+                return
+            
+            # Test invalid amounts
+            invalid_amounts = [0, -1.00, 501.00]
+            for amount in invalid_amounts:
+                tip_data = {
+                    "amount": amount,
+                    "platform": "paypal",
+                    "tipper_name": "Test User"
+                }
+                
+                response = self.make_request("POST", f"/musicians/{self.musician_slug}/tips", tip_data)
+                if response.status_code == 400:
+                    self.log_result(f"Tip Recording - Invalid Amount ${amount}", True, f"Correctly rejected invalid amount ${amount}")
+                else:
+                    self.log_result(f"Tip Recording - Invalid Amount ${amount}", False, f"Expected 400, got {response.status_code}")
+            
+            # Test invalid platform
+            tip_data = {
+                "amount": 5.00,
+                "platform": "bitcoin",
+                "tipper_name": "Test User"
+            }
+            
+            response = self.make_request("POST", f"/musicians/{self.musician_slug}/tips", tip_data)
+            if response.status_code == 400:
+                self.log_result("Tip Recording - Invalid Platform", True, "Correctly rejected invalid platform")
+            else:
+                self.log_result("Tip Recording - Invalid Platform", False, f"Expected 400, got {response.status_code}")
+            
+            # Test musician not found
+            tip_data = {
+                "amount": 5.00,
+                "platform": "paypal",
+                "tipper_name": "Test User"
+            }
+            
+            response = self.make_request("POST", "/musicians/nonexistent-musician/tips", tip_data)
+            if response.status_code == 404:
+                self.log_result("Tip Recording - Musician Not Found", True, "Correctly returned 404 for nonexistent musician")
+            else:
+                self.log_result("Tip Recording - Musician Not Found", False, f"Expected 404, got {response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Tip Recording - Validation", False, f"Exception: {str(e)}")
+
     def run_all_tests(self):
         """Run all tests in order"""
         print("=" * 50)
