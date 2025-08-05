@@ -3082,12 +3082,20 @@ const AudienceInterface = () => {
                 <p className="text-gray-300 text-sm md:text-base truncate">{designSettings.bio}</p>
               )}
             </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`md:hidden ${colors.primary} px-4 py-2 rounded-lg font-medium transition duration-300`}
-            >
-              Filters
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setShowTipModal(true)}
+                className="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg font-medium transition duration-300 text-sm"
+              >
+                💰 Tip
+              </button>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`md:hidden ${colors.primary} px-4 py-2 rounded-lg font-medium transition duration-300`}
+              >
+                Filters
+              </button>
+            </div>
           </div>
         </div>
       </header>
