@@ -2708,9 +2708,6 @@ const MusicianDashboard = () => {
                             {requester.request_count}
                           </span>
                         </td>
-                        <td className="py-2 text-green-400 font-medium">
-                          ${requester.total_tips.toFixed(2)}
-                        </td>
                         <td className="py-2 text-gray-400 text-xs">
                           {new Date(requester.latest_request).toLocaleDateString()}
                         </td>
