@@ -4785,18 +4785,18 @@ class RequestWaveAPITester:
 if __name__ == "__main__":
     tester = RequestWaveAPITester()
     
-    # Run Song Deletion Investigation as requested in the review
-    success = tester.run_song_deletion_investigation()
+    # Run Social Media Fields Tests as requested in the review
+    success = tester.run_social_media_fields_tests()
     
     if success:
-        print("\n🎉 Song deletion investigation completed successfully!")
-        print("✅ No critical bugs found in song deletion functionality")
-        print("✅ Individual and batch deletion working correctly")
-        print("✅ Database operations completing successfully")
-        print("✅ Authentication working properly for deletions")
+        print("\n🎉 Social media fields testing completed successfully!")
+        print("✅ All 7 social media fields are working correctly in the public musician endpoint")
+        print("✅ The fix for social media links in post-request popup is working")
+        print("✅ Fields return proper values or null without causing frontend errors")
+        print("✅ Backend changes don't break existing functionality")
+        print("✅ The audience interface can now access social media data for the post-request modal")
         exit(0)
     else:
-        print(f"\n💥 CRITICAL BUGS FOUND: {tester.results['failed']} issues detected!")
-        print("❌ Song deletion functionality has critical problems")
-        print("❌ Immediate investigation and fixes required")
+        print(f"\n💥 SOCIAL MEDIA FIELDS ISSUES FOUND: {tester.results['failed']} problems detected!")
+        print("❌ The social media fields fix needs attention before the post-request popup will work correctly")
         exit(1)
