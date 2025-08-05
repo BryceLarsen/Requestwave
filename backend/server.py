@@ -2624,6 +2624,13 @@ async def batch_enrich_existing_songs(
                         update_fields['year'] = spotify_metadata['year']
                         updated_fields.append(f"year: {spotify_metadata['year']}")
                     
+                    # Calculate and update decade if year was updated or missing
+                    if 'year' in update_fields or not song.get('decade'):
+                        decade = calculate_decade(update_fields.get('year', song.get('year')))
+                        if decade:
+                            update_fields['decade'] = decade
+                            updated_fields.append(f"decade: {decade}")
+                    
                     # Add enrichment note to existing notes
                     current_notes = song.get('notes', '')
                     enrichment_note = f" (Batch auto-enriched from {spotify_metadata.get('source', 'Spotify')})"
