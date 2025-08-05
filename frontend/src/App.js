@@ -999,7 +999,11 @@ const MusicianDashboard = () => {
       const yearMatch = yearFilter === '' || 
         (song.year && song.year.toString() === yearFilter);
       
-      return searchMatch && genreMatch && artistMatch && moodMatch && yearMatch;
+      // NEW: Decade filter
+      const decadeMatch = decadeFilter === '' || 
+        (song.decade && song.decade === decadeFilter);
+      
+      return searchMatch && genreMatch && artistMatch && moodMatch && yearMatch && decadeMatch;
     });
     
     setFilteredSongs(filtered);
