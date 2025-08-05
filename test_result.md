@@ -377,6 +377,21 @@ backend:
         agent: "testing"
         comment: "SOCIAL MEDIA PROFILE WORKING: ✅ GET /profile includes all new social media fields: instagram_username, facebook_username, tiktok_username, spotify_artist_url, apple_music_artist_url. ✅ PUT /profile updates social media fields properly with validation. ✅ Username cleaning removes @ symbols correctly from usernames while preserving URLs. ✅ All social media profile features support the enhanced musician profiles for post-request audience engagement."
 
+  - task: "Stripe Subscription System"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 1
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "user"
+        comment: "User requested comprehensive testing of the complete Stripe subscription system including trial status, upgrade endpoint, webhook handling, and live API integration"
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL STRIPE SUBSCRIPTION ISSUES FOUND: Comprehensive testing reveals major routing problems preventing subscription functionality. ❌ CRITICAL ROUTING ISSUE: POST /api/subscription/upgrade endpoint returns 422 validation errors expecting request creation fields (musician_id, song_id, requester_name, etc.) instead of subscription upgrade parameters - indicates serious routing conflict between subscription and request endpoints. ✅ SUBSCRIPTION STATUS WORKING: GET /api/subscription/status correctly returns trial status with 7-day trial period, can_make_request=true, and proper trial end dates. ✅ AUTHENTICATION WORKING: All subscription endpoints properly require JWT authentication (403/401 for unauthorized). ❌ WEBHOOK ENDPOINT ISSUES: POST /api/webhook/stripe returns 422 validation errors instead of handling webhook requests. ❌ PAYMENT INTEGRATION BLOCKED: Cannot test live Stripe integration due to upgrade endpoint routing issues. The subscription status tracking works correctly, but the core payment flow is completely broken due to endpoint routing conflicts. This prevents users from upgrading to paid subscriptions and blocks revenue generation."
+
 frontend:
   - task: "Musician Dashboard"
     implemented: true
