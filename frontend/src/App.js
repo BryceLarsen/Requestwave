@@ -2812,6 +2812,8 @@ const AudienceInterface = () => {
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  // NEW: Prominent search functionality
+  const [searchQuery, setSearchQuery] = useState('');
 
   // NEW: Tip functionality state
   const [showTipModal, setShowTipModal] = useState(false);
