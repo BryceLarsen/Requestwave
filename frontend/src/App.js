@@ -3236,7 +3236,19 @@ const AudienceInterface = () => {
         {/* Songs Display */}
         <div className="mb-4">
           <p className="text-gray-400 text-sm md:text-base">
-            {filteredSongs.length} song{filteredSongs.length !== 1 ? 's' : ''} found
+            {searchQuery ? (
+              <>
+                <span className="text-white font-medium">{filteredSongs.length}</span> song{filteredSongs.length !== 1 ? 's' : ''} found for "<span className="text-white font-medium">{searchQuery}</span>"
+                {(selectedFilters.genre || selectedFilters.artist || selectedFilters.mood || selectedFilters.year) && (
+                  <span> with additional filters applied</span>
+                )}
+              </>
+            ) : (
+              <>
+                <span className="text-white font-medium">{filteredSongs.length}</span> song{filteredSongs.length !== 1 ? 's' : ''} 
+                {(selectedFilters.genre || selectedFilters.artist || selectedFilters.mood || selectedFilters.year) ? ' found with filters applied' : ' available'}
+              </>
+            )}
           </p>
         </div>
 
