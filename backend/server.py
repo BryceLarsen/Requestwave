@@ -1978,7 +1978,6 @@ async def get_daily_analytics(
     except Exception as e:
         logger.error(f"Error getting daily analytics: {str(e)}")
         raise HTTPException(status_code=500, detail="Error retrieving daily analytics")
-    return [Request(**request) for request in requests]
 
 @api_router.put("/requests/{request_id}/status")
 async def update_request_status(
