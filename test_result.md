@@ -218,7 +218,7 @@ backend:
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
@@ -226,6 +226,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "SPOTIFY METADATA AUTO-FILL FEATURE WORKING: Comprehensive testing confirms the new Spotify metadata search functionality is working correctly. ✅ Basic Metadata Search: Successfully returns accurate metadata for popular songs ('As It Was' by Harry Styles, 'Heat Waves' by Glass Animals) with high confidence and real Spotify data. ✅ Spotify API Integration: Working with real Spotify Client Credentials authentication, returns spotify_id, album, year, genres, and moods. ✅ Audio Features Mapping: Moods are correctly assigned based on Spotify audio features analysis. ✅ Genre Extraction: Successfully extracts genres from Spotify artist information. ✅ Input Validation: Properly rejects empty/whitespace inputs with appropriate error codes (422 is acceptable FastAPI validation). ✅ Authentication: Requires JWT tokens and properly rejects unauthorized requests (403/401 both acceptable). ✅ Edge Cases: Handles special characters, unicode, long names, and complex formatting successfully. ✅ Integration Quality: High-quality integration with spotify_id, year, confidence levels, and source tracking. Minor: Fallback functionality works so well that it finds real songs instead of using heuristics (this is actually better performance). The Spotify metadata auto-fill feature is production-ready and significantly enhances the user experience for song data entry."
+      - working: "NA"
+        agent: "main"
+        comment: "User provided new Spotify credentials: Client ID: 24f25c0b6f1048819102bd13ae768bde, Client Secret: 2be2e1f534b546869c9e7978623005bb. Credentials have been updated in backend/.env. Need to re-test the functionality with new credentials and verify everything still works as expected."
 
 frontend:
   - task: "Musician Dashboard"
