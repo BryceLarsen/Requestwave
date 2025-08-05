@@ -111,11 +111,14 @@ class Request(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     musician_id: str
     song_id: str
+    song_title: str
+    song_artist: str
     requester_name: str
     requester_email: str
     dedication: str = ""
+    # NEW: Enhanced tip information
     tip_amount: Optional[float] = None
-    tip_platform: Optional[str] = None
+    tip_platform: Optional[str] = None  # "paypal" or "venmo"
     status: str = "pending"  # pending, accepted, played, rejected
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -142,19 +145,6 @@ class PaymentLinkResponse(BaseModel):
     amount: float
     message: Optional[str] = None
     tip_amount: float = 0.0
-
-class Request(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    musician_id: str
-    song_id: str
-    song_title: str
-    song_artist: str
-    requester_name: str
-    requester_email: str
-    dedication: str = ""
-    tip_amount: float = 0.0
-    status: str = "pending"  # pending, accepted, played, rejected
-    created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class AuthResponse(BaseModel):
     token: str
