@@ -1714,7 +1714,7 @@ async def get_my_songs(
         sort_direction = DESCENDING
     # Default: sort_by == "created_at" uses defaults above
     
-    songs = await db.songs.find({"musician_id": musician_id}).sort(sort_field, sort_direction).to_list(1000)
+    songs = await db.songs.find({"musician_id": musician_id}).sort(sort_field, sort_direction).to_list(None)  # Removed 1000 limit
     
     # Ensure request_count field exists for older songs
     updated_songs = []
