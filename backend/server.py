@@ -1941,12 +1941,20 @@ async def create_request(request_data: RequestCreate):
     
     # Create request
     request_dict = request_data.dict()
+    
+    # NEW: Get musician's current active show and assign to request
+    musician = await db.musicians.find_one({"id": musician_id})
+    current_show_name = musician.get("current_show_name") if musician else None
+    
     request_dict.update({
         "id": str(uuid.uuid4()),
         "musician_id": musician_id,
         "song_title": song["title"],
         "song_artist": song["artist"],
         "status": "pending",
+        "show_name": current_show_name,  # Auto-assign to current active show
+        "tip_clicked": False,
+        "social_clicks": [],
         "created_at": datetime.utcnow()
     })
     
