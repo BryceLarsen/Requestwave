@@ -158,15 +158,21 @@ class MusicianPublic(BaseModel):
 class MusicianProfile(BaseModel):
     name: str
     email: str
-    venmo_link: Optional[str] = ""
+    venmo_link: Optional[str] = ""  # Keep for backward compatibility
     bio: Optional[str] = ""
     website: Optional[str] = ""
+    # NEW: Enhanced payment fields
+    paypal_username: Optional[str] = ""
+    venmo_username: Optional[str] = ""
 
 class ProfileUpdate(BaseModel):
     name: Optional[str] = None
-    venmo_link: Optional[str] = None
+    venmo_link: Optional[str] = None  # Keep for backward compatibility
     bio: Optional[str] = None
     website: Optional[str] = None
+    # NEW: Enhanced payment fields
+    paypal_username: Optional[str] = None
+    venmo_username: Optional[str] = None
 
 class DesignSettings(BaseModel):
     color_scheme: str = "purple"  # purple, blue, green, red, orange
