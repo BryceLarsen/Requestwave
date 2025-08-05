@@ -2519,6 +2519,61 @@ class RequestWaveAPITester:
         
         return self.results['failed'] == 0
 
+    def run_spotify_metadata_tests(self):
+        """Run only the Spotify Metadata Auto-fill Feature tests as requested in the review"""
+        print("=" * 60)
+        print("🎵 SPOTIFY METADATA AUTO-FILL FEATURE TESTING")
+        print("=" * 60)
+        print("🔑 Testing with new Spotify credentials:")
+        print("   Client ID: 24f25c0b6f1048819102bd13ae768bde")
+        print("   Testing real Spotify API integration (not fallback data)")
+        print("=" * 60)
+        
+        # Reset results for focused testing
+        self.results = {
+            "passed": 0,
+            "failed": 0,
+            "errors": []
+        }
+        
+        # Authentication setup (required for all tests)
+        self.test_musician_registration()
+        
+        if not self.auth_token:
+            print("❌ CRITICAL: Could not authenticate - cannot proceed with Spotify tests")
+            return False
+        
+        # Run all Spotify metadata auto-fill tests
+        print("\n🔍 Running Spotify Metadata Auto-fill Feature Tests...")
+        
+        self.test_spotify_metadata_autofill_credentials_verification()
+        self.test_spotify_metadata_autofill_basic()
+        self.test_spotify_metadata_autofill_second_song()
+        self.test_spotify_metadata_autofill_authentication()
+        self.test_spotify_metadata_autofill_edge_cases()
+        self.test_spotify_metadata_autofill_response_format()
+        
+        # Print focused summary
+        print("\n" + "=" * 60)
+        print("🏁 SPOTIFY METADATA AUTO-FILL TEST SUMMARY")
+        print("=" * 60)
+        print(f"✅ Passed: {self.results['passed']}")
+        print(f"❌ Failed: {self.results['failed']}")
+        
+        if self.results['errors']:
+            print("\n🔍 Failed Tests:")
+            for error in self.results['errors']:
+                print(f"   • {error}")
+        else:
+            print("\n🎉 All Spotify Metadata Auto-fill tests passed!")
+            print("✅ New Spotify credentials are working correctly")
+            print("✅ Real Spotify API data is being returned (not fallback)")
+            print("✅ Authentication and authorization working properly")
+            print("✅ Response format matches expected structure")
+            print("✅ Edge cases handled appropriately")
+        
+        return self.results['failed'] == 0
+
 if __name__ == "__main__":
     tester = RequestWaveAPITester()
     
