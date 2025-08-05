@@ -206,7 +206,27 @@ class StripeSubscriptionTester:
                 return
             
             print(f"🔍 Testing subscription upgrade endpoint")
-            response = self.make_request("POST", "/subscription/upgrade", {})
+            
+            # Try different request formats to handle potential FastAPI routing issues
+            response = None
+            
+            # First try with no body
+            response = self.make_request("POST", "/subscription/upgrade")
+            
+            if response.status_code == 422:
+                # If 422, try with empty JSON body
+                response = self.make_request("POST", "/subscription/upgrade", {})
+            
+            if response.status_code == 422:
+                # If still 422, the endpoint might have a different signature than expected
+                # This could indicate a routing issue or the endpoint expects different parameters
+                error_detail = response.json().get("detail", [])
+                if any("musician_id" in str(detail) for detail in error_detail):
+                    self.log_result("Upgrade Endpoint", False, f"❌ CRITICAL: Endpoint routing issue - getting request creation validation instead of subscription upgrade. Status: {response.status_code}")
+                    return
+                else:
+                    self.log_result("Upgrade Endpoint", False, f"❌ Endpoint expects different request format. Status: {response.status_code}, Details: {error_detail}")
+                    return
             
             if response.status_code == 200:
                 data = response.json()
@@ -240,9 +260,15 @@ class StripeSubscriptionTester:
                     self.log_result("Upgrade Endpoint", True, "✅ Stripe checkout session created successfully")
                 else:
                     self.log_result("Upgrade Endpoint", False, "Failed to create valid checkout session")
-                    
+            elif response.status_code == 500:
+                # Check if error indicates Stripe configuration issue
+                error_text = response.text
+                if "Stripe not configured" in error_text:
+                    self.log_result("Upgrade Endpoint", False, "❌ Stripe not configured - API key missing")
+                else:
+                    self.log_result("Upgrade Endpoint", False, f"❌ Server error: {error_text}")
             else:
-                self.log_result("Upgrade Endpoint", False, f"Status code: {response.status_code}, Response: {response.text}")
+                self.log_result("Upgrade Endpoint", False, f"❌ Unexpected status code: {response.status_code}, Response: {response.text}")
         except Exception as e:
             self.log_result("Upgrade Endpoint", False, f"Exception: {str(e)}")
 
