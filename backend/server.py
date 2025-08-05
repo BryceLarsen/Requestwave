@@ -1153,7 +1153,10 @@ async def get_profile(musician_id: str = Depends(get_current_musician)):
         email=musician["email"],
         venmo_link=musician.get("venmo_link", ""),
         bio=musician.get("bio", ""),
-        website=musician.get("website", "")
+        website=musician.get("website", ""),
+        # NEW: Include payment usernames
+        paypal_username=musician.get("paypal_username", ""),
+        venmo_username=musician.get("venmo_username", "")
     )
 
 @api_router.put("/profile", response_model=MusicianProfile)
