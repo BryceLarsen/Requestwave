@@ -883,6 +883,7 @@ const MusicianDashboard = () => {
 
   const cancelEdit = () => {
     setEditingSong(null);
+    setShowEditModal(false); // NEW: Close modal when canceling
     setSongForm({
       title: '',
       artist: '',
