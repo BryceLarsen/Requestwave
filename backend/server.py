@@ -1826,13 +1826,31 @@ async def get_my_songs(
     songs = await db.songs.find({"musician_id": musician_id}).sort(sort_field, sort_direction).to_list(None)  # Removed 1000 limit
     
     # Ensure request_count and hidden fields exist for older songs
+    # Update all existing songs to populate decade field for songs with years
+    songs_updated = 0
     updated_songs = []
+    
     for song in songs:
+        # Ensure decade is calculated for songs that have a year but no decade
+        if song.get("year") and song.get("decade") is None:
+            decade = calculate_decade(song["year"])
+            await db.songs.update_one(
+                {"id": song["id"]},
+                {"$set": {"decade": decade}}
+            )
+            song["decade"] = decade
+            songs_updated += 1
+        
+        # Ensure all required fields exist
         if "request_count" not in song:
             song["request_count"] = 0
         if "hidden" not in song:
             song["hidden"] = False  # Default to visible for older songs
         updated_songs.append(Song(**song))
+    
+    # Log migration if songs were updated
+    if songs_updated > 0:
+        logger.info(f"Migrated {songs_updated} songs to include decade field")
     
     return updated_songs
 
