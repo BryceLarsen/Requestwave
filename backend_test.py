@@ -1289,8 +1289,8 @@ class RequestWaveAPITester:
             
             print("🔍 Testing CSV upload with auto_enrich=true for songs with complete metadata")
             
-            with open('/app/test_songs_auto_enrich_complete.csv', 'rb') as f:
-                files = {'file': ('test_songs_auto_enrich_complete.csv', f, 'text/csv')}
+            with open('/app/test_songs_auto_enrich_complete_unique.csv', 'rb') as f:
+                files = {'file': ('test_songs_auto_enrich_complete_unique.csv', f, 'text/csv')}
                 data = {'auto_enrich': 'true'}
                 response = self.make_request("POST", "/songs/csv/upload", data=data, files=files)
             
