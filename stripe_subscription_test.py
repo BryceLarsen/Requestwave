@@ -309,7 +309,7 @@ class StripeSubscriptionTester:
                 self.log_result("Webhook Endpoint", False, f"Unexpected status code: {response.status_code}")
                 
             # Test webhook signature validation readiness
-            headers = {"Stripe-Signature": "t=1234567890,v1=test_signature"}
+            headers = {"Stripe-Signature": "t=1234567890,v1=test_signature", "Content-Type": "application/json"}
             response_with_sig = self.make_request("POST", "/webhook/stripe", test_payload, headers=headers)
             
             if response_with_sig.status_code in [400, 401, 403, 500]:
