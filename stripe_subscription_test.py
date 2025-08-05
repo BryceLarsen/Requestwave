@@ -352,7 +352,11 @@ class StripeSubscriptionTester:
             print(f"🔍 Testing live Stripe API integration")
             
             # Test creating another checkout session to verify live API key works
-            response = self.make_request("POST", "/subscription/upgrade", {})
+            response = self.make_request("POST", "/subscription/upgrade")
+            
+            if response.status_code == 422:
+                # Try with empty body if 422
+                response = self.make_request("POST", "/subscription/upgrade", {})
             
             if response.status_code == 200:
                 data = response.json()
@@ -380,6 +384,9 @@ class StripeSubscriptionTester:
                     self.log_result("Live Stripe Integration", False, "❌ Stripe not configured - API key missing")
                 else:
                     self.log_result("Live Stripe Integration", False, f"Stripe API error: {error_text}")
+            elif response.status_code == 422:
+                # If still 422 after trying both formats, there's a routing issue
+                self.log_result("Live Stripe Integration", False, f"❌ CRITICAL: Endpoint routing issue - cannot test live integration. Status: {response.status_code}")
             else:
                 self.log_result("Live Stripe Integration", False, f"Status code: {response.status_code}, Response: {response.text}")
                 
