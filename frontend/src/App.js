@@ -3462,8 +3462,38 @@ const AudienceInterface = () => {
 
   const fetchSongs = async () => {
     try {
-      const response = await axios.get(`${API}/musicians/${slug}/songs`);
+      // Build query parameters for API call
+      const params = new URLSearchParams();
+      
+      // Add search query
+      if (searchQuery.trim()) {
+        params.append('search', searchQuery.trim());
+      }
+      
+      // Add filter parameters
+      if (selectedFilters.genre) {
+        params.append('genre', selectedFilters.genre);
+      }
+      if (selectedFilters.artist) {
+        params.append('artist', selectedFilters.artist);
+      }
+      if (selectedFilters.mood) {
+        params.append('mood', selectedFilters.mood);
+      }
+      if (selectedFilters.year) {
+        params.append('year', selectedFilters.year);
+      }
+      // NEW: Add decade filter
+      if (selectedFilters.decade) {
+        params.append('decade', selectedFilters.decade);
+      }
+      
+      const queryString = params.toString();
+      const url = `${API}/musicians/${slug}/songs${queryString ? `?${queryString}` : ''}`;
+      
+      const response = await axios.get(url);
       setSongs(response.data);
+      setFilteredSongs(response.data); // Update filtered songs as well
     } catch (error) {
       console.error('Error fetching songs:', error);
     } finally {
