@@ -4219,6 +4219,644 @@ class RequestWaveAPITester:
         except Exception as e:
             self.log_result("Search Performance", False, f"Exception: {str(e)}")
 
+    def test_decade_calculation_edge_cases(self):
+        """Test decade calculation function with various years - DECADE FUNCTIONALITY"""
+        try:
+            print("🔍 Testing decade calculation edge cases")
+            
+            # Test cases for decade calculation
+            decade_test_cases = [
+                (1950, "50's"),
+                (1959, "50's"),
+                (1960, "60's"),
+                (1969, "60's"),
+                (1970, "70's"),
+                (1979, "70's"),
+                (1980, "80's"),
+                (1989, "80's"),
+                (1990, "90's"),
+                (1999, "90's"),
+                (2000, "00's"),
+                (2009, "00's"),
+                (2010, "10's"),
+                (2019, "10's"),
+                (2020, "20's"),
+                (2029, "20's"),
+                (1975, "70's"),  # User example
+                (2003, "00's"),  # User example
+                (2015, "10's"),  # User example
+                (None, None)     # Songs without year
+            ]
+            
+            passed_tests = 0
+            failed_tests = 0
+            
+            for year, expected_decade in decade_test_cases:
+                # Create a song with the test year
+                song_data = {
+                    "title": f"Decade Test Song {year if year else 'No Year'}",
+                    "artist": "Decade Test Artist",
+                    "genres": ["Test"],
+                    "moods": ["Test"],
+                    "notes": f"Testing decade calculation for year {year}"
+                }
+                
+                if year is not None:
+                    song_data["year"] = year
+                
+                response = self.make_request("POST", "/songs", song_data)
+                
+                if response.status_code == 200:
+                    song = response.json()
+                    actual_decade = song.get("decade")
+                    
+                    if actual_decade == expected_decade:
+                        print(f"   ✅ Year {year} → Decade '{expected_decade}' (correct)")
+                        passed_tests += 1
+                    else:
+                        print(f"   ❌ Year {year} → Expected '{expected_decade}', got '{actual_decade}'")
+                        failed_tests += 1
+                else:
+                    print(f"   ❌ Failed to create song for year {year}: {response.status_code}")
+                    failed_tests += 1
+            
+            if failed_tests == 0:
+                self.log_result("Decade Calculation Edge Cases", True, 
+                    f"✅ All {passed_tests} decade calculations correct")
+            else:
+                self.log_result("Decade Calculation Edge Cases", False, 
+                    f"❌ {failed_tests}/{passed_tests + failed_tests} decade calculations failed")
+                    
+        except Exception as e:
+            self.log_result("Decade Calculation Edge Cases", False, f"Exception: {str(e)}")
+
+    def test_song_creation_with_decade_calculation(self):
+        """Test POST /api/songs endpoint with decade calculation - DECADE FUNCTIONALITY"""
+        try:
+            print("🔍 Testing song creation with automatic decade calculation")
+            
+            test_songs = [
+                {"title": "Bohemian Rhapsody", "artist": "Queen", "year": 1975, "expected_decade": "70's"},
+                {"title": "Hey Ya!", "artist": "OutKast", "year": 2003, "expected_decade": "00's"},
+                {"title": "Uptown Funk", "artist": "Mark Ronson ft. Bruno Mars", "year": 2015, "expected_decade": "10's"},
+                {"title": "Blinding Lights", "artist": "The Weeknd", "year": 2020, "expected_decade": "20's"},
+                {"title": "Song Without Year", "artist": "Unknown Artist", "year": None, "expected_decade": None}
+            ]
+            
+            created_songs = []
+            
+            for song_data in test_songs:
+                song_request = {
+                    "title": song_data["title"],
+                    "artist": song_data["artist"],
+                    "genres": ["Pop"],
+                    "moods": ["Upbeat"],
+                    "notes": "Testing decade calculation"
+                }
+                
+                if song_data["year"] is not None:
+                    song_request["year"] = song_data["year"]
+                
+                response = self.make_request("POST", "/songs", song_request)
+                
+                if response.status_code == 200:
+                    song = response.json()
+                    actual_decade = song.get("decade")
+                    expected_decade = song_data["expected_decade"]
+                    
+                    created_songs.append(song["id"])
+                    
+                    if actual_decade == expected_decade:
+                        self.log_result(f"Song Creation Decade - {song_data['title']}", True, 
+                            f"✅ Year {song_data['year']} → Decade '{expected_decade}'")
+                    else:
+                        self.log_result(f"Song Creation Decade - {song_data['title']}", False, 
+                            f"❌ Year {song_data['year']} → Expected '{expected_decade}', got '{actual_decade}'")
+                else:
+                    self.log_result(f"Song Creation Decade - {song_data['title']}", False, 
+                        f"❌ Failed to create song: {response.status_code}")
+            
+            # Store created song IDs for cleanup
+            self.decade_test_song_ids = created_songs
+            
+        except Exception as e:
+            self.log_result("Song Creation with Decade Calculation", False, f"Exception: {str(e)}")
+
+    def test_song_update_with_decade_recalculation(self):
+        """Test PUT /api/songs/{song_id} endpoint with decade recalculation - DECADE FUNCTIONALITY"""
+        try:
+            print("🔍 Testing song update with decade recalculation")
+            
+            if not hasattr(self, 'decade_test_song_ids') or not self.decade_test_song_ids:
+                self.log_result("Song Update Decade Recalculation", False, "No test songs available")
+                return
+            
+            # Use the first created song for update testing
+            song_id = self.decade_test_song_ids[0]
+            
+            # Test updating year and verifying decade recalculation
+            year_updates = [
+                (1985, "80's"),
+                (1995, "90's"),
+                (2005, "00's"),
+                (2018, "10's"),
+                (2023, "20's")
+            ]
+            
+            for new_year, expected_decade in year_updates:
+                update_data = {
+                    "title": "Updated Decade Test Song",
+                    "artist": "Updated Artist",
+                    "genres": ["Updated"],
+                    "moods": ["Updated"],
+                    "year": new_year,
+                    "notes": f"Updated to test decade recalculation for {new_year}"
+                }
+                
+                response = self.make_request("PUT", f"/songs/{song_id}", update_data)
+                
+                if response.status_code == 200:
+                    song = response.json()
+                    actual_decade = song.get("decade")
+                    
+                    if actual_decade == expected_decade:
+                        self.log_result(f"Song Update Decade - Year {new_year}", True, 
+                            f"✅ Updated year {new_year} → Decade '{expected_decade}'")
+                    else:
+                        self.log_result(f"Song Update Decade - Year {new_year}", False, 
+                            f"❌ Updated year {new_year} → Expected '{expected_decade}', got '{actual_decade}'")
+                else:
+                    self.log_result(f"Song Update Decade - Year {new_year}", False, 
+                        f"❌ Failed to update song: {response.status_code}")
+                        
+        except Exception as e:
+            self.log_result("Song Update with Decade Recalculation", False, f"Exception: {str(e)}")
+
+    def test_filter_options_with_decades(self):
+        """Test GET /api/musicians/{slug}/filters endpoint includes decades - DECADE FUNCTIONALITY"""
+        try:
+            print("🔍 Testing filter options endpoint includes decades")
+            
+            if not self.musician_slug:
+                self.log_result("Filter Options with Decades", False, "No musician slug available")
+                return
+            
+            response = self.make_request("GET", f"/musicians/{self.musician_slug}/filters")
+            
+            if response.status_code == 200:
+                filters = response.json()
+                
+                # Check if decades array is present
+                if "decades" in filters:
+                    decades = filters["decades"]
+                    
+                    if isinstance(decades, list):
+                        self.log_result("Filter Options - Decades Array", True, 
+                            f"✅ Decades filter available with {len(decades)} options: {decades}")
+                        
+                        # Verify decades are in expected format
+                        valid_decade_formats = []
+                        invalid_decade_formats = []
+                        
+                        for decade in decades:
+                            if isinstance(decade, str) and decade.endswith("'s"):
+                                valid_decade_formats.append(decade)
+                            else:
+                                invalid_decade_formats.append(decade)
+                        
+                        if len(invalid_decade_formats) == 0:
+                            self.log_result("Filter Options - Decades Format", True, 
+                                f"✅ All decades in correct format: {valid_decade_formats}")
+                        else:
+                            self.log_result("Filter Options - Decades Format", False, 
+                                f"❌ Invalid decade formats: {invalid_decade_formats}")
+                    else:
+                        self.log_result("Filter Options - Decades Array", False, 
+                            f"❌ Decades should be array, got: {type(decades)}")
+                else:
+                    self.log_result("Filter Options - Decades Array", False, 
+                        "❌ Decades array missing from filters response")
+                        
+                # Also check other expected filter arrays
+                expected_filters = ["genres", "moods", "years", "decades"]
+                missing_filters = [f for f in expected_filters if f not in filters]
+                
+                if len(missing_filters) == 0:
+                    self.log_result("Filter Options - Complete", True, 
+                        f"✅ All expected filters present: {expected_filters}")
+                else:
+                    self.log_result("Filter Options - Complete", False, 
+                        f"❌ Missing filters: {missing_filters}")
+            else:
+                self.log_result("Filter Options with Decades", False, 
+                    f"❌ Status code: {response.status_code}")
+                    
+        except Exception as e:
+            self.log_result("Filter Options with Decades", False, f"Exception: {str(e)}")
+
+    def test_song_filtering_by_decade(self):
+        """Test GET /api/musicians/{slug}/songs with decade parameter - DECADE FUNCTIONALITY"""
+        try:
+            print("🔍 Testing song filtering by decade parameter")
+            
+            if not self.musician_slug:
+                self.log_result("Song Filtering by Decade", False, "No musician slug available")
+                return
+            
+            # Test filtering by different decades
+            decade_filters = ["70's", "80's", "90's", "00's", "10's", "20's"]
+            
+            for decade in decade_filters:
+                params = {"decade": decade}
+                response = self.make_request("GET", f"/musicians/{self.musician_slug}/songs", params)
+                
+                if response.status_code == 200:
+                    songs = response.json()
+                    
+                    if isinstance(songs, list):
+                        # Verify all returned songs have the correct decade
+                        correct_decade_songs = []
+                        incorrect_decade_songs = []
+                        
+                        for song in songs:
+                            song_decade = song.get("decade")
+                            if song_decade == decade:
+                                correct_decade_songs.append(song["title"])
+                            else:
+                                incorrect_decade_songs.append(f"{song['title']} (decade: {song_decade})")
+                        
+                        if len(incorrect_decade_songs) == 0:
+                            self.log_result(f"Song Filtering - Decade {decade}", True, 
+                                f"✅ Found {len(songs)} songs from {decade}: {correct_decade_songs[:3]}")
+                        else:
+                            self.log_result(f"Song Filtering - Decade {decade}", False, 
+                                f"❌ Incorrect decade songs: {incorrect_decade_songs}")
+                    else:
+                        self.log_result(f"Song Filtering - Decade {decade}", False, 
+                            f"❌ Expected array, got: {type(songs)}")
+                else:
+                    self.log_result(f"Song Filtering - Decade {decade}", False, 
+                        f"❌ Status code: {response.status_code}")
+            
+            # Test combining decade filter with other filters
+            combined_params = {"decade": "80's", "genre": "Pop"}
+            response = self.make_request("GET", f"/musicians/{self.musician_slug}/songs", combined_params)
+            
+            if response.status_code == 200:
+                songs = response.json()
+                self.log_result("Song Filtering - Combined Decade + Genre", True, 
+                    f"✅ Combined filtering works: {len(songs)} songs from 80's Pop")
+            else:
+                self.log_result("Song Filtering - Combined Decade + Genre", False, 
+                    f"❌ Combined filtering failed: {response.status_code}")
+                    
+        except Exception as e:
+            self.log_result("Song Filtering by Decade", False, f"Exception: {str(e)}")
+
+    def test_csv_upload_with_decade(self):
+        """Test POST /api/songs/csv/upload with decade calculation - DECADE FUNCTIONALITY"""
+        try:
+            print("🔍 Testing CSV upload with automatic decade calculation")
+            
+            # Create a test CSV with songs from different decades
+            csv_content = """Title,Artist,Genre,Mood,Year,Notes
+Hotel California,Eagles,Rock,Mellow,1976,Classic rock from 70s
+Sweet Child O' Mine,Guns N' Roses,Rock,Energetic,1987,80s rock anthem
+Smells Like Teen Spirit,Nirvana,Grunge,Aggressive,1991,90s grunge classic
+Hey Ya!,OutKast,Hip-Hop,Upbeat,2003,00s hip-hop hit
+Uptown Funk,Mark Ronson ft. Bruno Mars,Pop,Energetic,2014,10s pop hit
+Blinding Lights,The Weeknd,Pop,Upbeat,2020,20s pop hit
+Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
+            
+            # Write CSV to temporary file
+            with open('/app/test_decade_songs.csv', 'w') as f:
+                f.write(csv_content)
+            
+            # Upload the CSV
+            with open('/app/test_decade_songs.csv', 'rb') as f:
+                files = {'file': ('test_decade_songs.csv', f, 'text/csv')}
+                response = self.make_request("POST", "/songs/csv/upload", files=files)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if data.get("success") and data.get("songs_added", 0) > 0:
+                    self.log_result("CSV Upload with Decade - Upload Success", True, 
+                        f"✅ Uploaded {data['songs_added']} songs via CSV")
+                    
+                    # Verify the uploaded songs have correct decades
+                    songs_response = self.make_request("GET", "/songs")
+                    if songs_response.status_code == 200:
+                        all_songs = songs_response.json()
+                        
+                        # Find the uploaded songs
+                        uploaded_songs = [song for song in all_songs if "Classic rock from 70s" in song.get("notes", "") or 
+                                        "80s rock anthem" in song.get("notes", "") or
+                                        "90s grunge classic" in song.get("notes", "") or
+                                        "00s hip-hop hit" in song.get("notes", "") or
+                                        "10s pop hit" in song.get("notes", "") or
+                                        "20s pop hit" in song.get("notes", "") or
+                                        "No year provided" in song.get("notes", "")]
+                        
+                        decade_verifications = [
+                            ("Hotel California", 1976, "70's"),
+                            ("Sweet Child O' Mine", 1987, "80's"),
+                            ("Smells Like Teen Spirit", 1991, "90's"),
+                            ("Hey Ya!", 2003, "00's"),
+                            ("Uptown Funk", 2014, "10's"),
+                            ("Blinding Lights", 2020, "20's"),
+                            ("Song Without Year", None, None)
+                        ]
+                        
+                        correct_decades = 0
+                        incorrect_decades = 0
+                        
+                        for title, expected_year, expected_decade in decade_verifications:
+                            matching_song = next((song for song in uploaded_songs if title in song.get("title", "")), None)
+                            
+                            if matching_song:
+                                actual_decade = matching_song.get("decade")
+                                actual_year = matching_song.get("year")
+                                
+                                if actual_decade == expected_decade and actual_year == expected_year:
+                                    print(f"   ✅ {title}: Year {expected_year} → Decade '{expected_decade}'")
+                                    correct_decades += 1
+                                else:
+                                    print(f"   ❌ {title}: Expected decade '{expected_decade}', got '{actual_decade}'")
+                                    incorrect_decades += 1
+                            else:
+                                print(f"   ❌ {title}: Song not found in uploaded songs")
+                                incorrect_decades += 1
+                        
+                        if incorrect_decades == 0:
+                            self.log_result("CSV Upload with Decade - Decade Calculation", True, 
+                                f"✅ All {correct_decades} CSV songs have correct decades")
+                        else:
+                            self.log_result("CSV Upload with Decade - Decade Calculation", False, 
+                                f"❌ {incorrect_decades}/{correct_decades + incorrect_decades} songs have incorrect decades")
+                    else:
+                        self.log_result("CSV Upload with Decade - Verification", False, 
+                            "❌ Could not verify uploaded songs")
+                else:
+                    self.log_result("CSV Upload with Decade", False, 
+                        f"❌ CSV upload failed: {data}")
+            else:
+                self.log_result("CSV Upload with Decade", False, 
+                    f"❌ Status code: {response.status_code}")
+                    
+        except Exception as e:
+            self.log_result("CSV Upload with Decade", False, f"Exception: {str(e)}")
+
+    def test_playlist_import_with_decade(self):
+        """Test POST /api/songs/playlist/import with decade calculation - DECADE FUNCTIONALITY"""
+        try:
+            print("🔍 Testing playlist import with automatic decade calculation")
+            
+            # Test Spotify playlist import
+            playlist_data = {
+                "playlist_url": "https://open.spotify.com/playlist/37i9dQZEVXbLRQDuF5jeBp",
+                "platform": "spotify"
+            }
+            
+            response = self.make_request("POST", "/songs/playlist/import", playlist_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if data.get("success") and data.get("songs_added", 0) > 0:
+                    self.log_result("Playlist Import with Decade - Import Success", True, 
+                        f"✅ Imported {data['songs_added']} songs from Spotify playlist")
+                    
+                    # Verify imported songs have decades calculated
+                    songs_response = self.make_request("GET", "/songs")
+                    if songs_response.status_code == 200:
+                        all_songs = songs_response.json()
+                        
+                        # Find recently imported songs
+                        imported_songs = [song for song in all_songs if "spotify" in song.get("notes", "").lower()]
+                        
+                        songs_with_decades = 0
+                        songs_without_decades = 0
+                        decade_examples = []
+                        
+                        for song in imported_songs[:10]:  # Check first 10 imported songs
+                            title = song.get("title", "")
+                            year = song.get("year")
+                            decade = song.get("decade")
+                            
+                            if year and decade:
+                                songs_with_decades += 1
+                                decade_examples.append(f"{title} ({year} → {decade})")
+                            elif year and not decade:
+                                songs_without_decades += 1
+                                print(f"   ❌ {title}: Has year {year} but no decade")
+                            # Songs without year are expected to have no decade
+                        
+                        if songs_without_decades == 0 and songs_with_decades > 0:
+                            self.log_result("Playlist Import with Decade - Decade Calculation", True, 
+                                f"✅ All {songs_with_decades} songs with years have decades: {decade_examples[:3]}")
+                        elif songs_with_decades > 0:
+                            self.log_result("Playlist Import with Decade - Decade Calculation", False, 
+                                f"❌ {songs_without_decades} songs missing decades despite having years")
+                        else:
+                            self.log_result("Playlist Import with Decade - Decade Calculation", True, 
+                                "✅ No songs with years to test decade calculation")
+                    else:
+                        self.log_result("Playlist Import with Decade - Verification", False, 
+                            "❌ Could not verify imported songs")
+                else:
+                    self.log_result("Playlist Import with Decade", False, 
+                        f"❌ Playlist import failed: {data}")
+            else:
+                self.log_result("Playlist Import with Decade", False, 
+                    f"❌ Status code: {response.status_code}")
+                    
+        except Exception as e:
+            self.log_result("Playlist Import with Decade", False, f"Exception: {str(e)}")
+
+    def test_batch_enrichment_with_decade(self):
+        """Test POST /api/songs/batch-enrich with decade calculation - DECADE FUNCTIONALITY"""
+        try:
+            print("🔍 Testing batch enrichment with decade calculation")
+            
+            # First create some songs without complete metadata
+            songs_to_enrich = [
+                {"title": "Enrichment Test Song 1", "artist": "Test Artist 1", "genres": [], "moods": [], "year": None},
+                {"title": "Enrichment Test Song 2", "artist": "Test Artist 2", "genres": [], "moods": [], "year": None}
+            ]
+            
+            created_song_ids = []
+            
+            for song_data in songs_to_enrich:
+                response = self.make_request("POST", "/songs", song_data)
+                if response.status_code == 200:
+                    created_song_ids.append(response.json()["id"])
+                else:
+                    self.log_result("Batch Enrichment with Decade - Setup", False, 
+                        f"Failed to create test song: {response.status_code}")
+                    return
+            
+            # Test batch enrichment
+            response = self.make_request("POST", "/songs/batch-enrich")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if data.get("success"):
+                    enriched_count = data.get("songs_enriched", 0)
+                    self.log_result("Batch Enrichment with Decade - Enrichment Success", True, 
+                        f"✅ Batch enrichment processed {enriched_count} songs")
+                    
+                    # Verify that enriched songs now have decades when years are added
+                    for song_id in created_song_ids:
+                        songs_response = self.make_request("GET", "/songs")
+                        if songs_response.status_code == 200:
+                            all_songs = songs_response.json()
+                            enriched_song = next((song for song in all_songs if song["id"] == song_id), None)
+                            
+                            if enriched_song:
+                                year = enriched_song.get("year")
+                                decade = enriched_song.get("decade")
+                                
+                                if year and decade:
+                                    # Calculate expected decade
+                                    expected_decade = f"{str((year // 10) * 10)[-2:] if year >= 2000 else str((year // 10) * 10)[-2:]}'s"
+                                    if year >= 2000 and year < 2010:
+                                        expected_decade = "00's"
+                                    elif year >= 2010 and year < 2020:
+                                        expected_decade = "10's"
+                                    elif year >= 2020 and year < 2030:
+                                        expected_decade = "20's"
+                                    
+                                    if decade == expected_decade:
+                                        self.log_result(f"Batch Enrichment Decade - Song {song_id}", True, 
+                                            f"✅ Enriched song has correct decade: {year} → {decade}")
+                                    else:
+                                        self.log_result(f"Batch Enrichment Decade - Song {song_id}", False, 
+                                            f"❌ Incorrect decade: {year} → Expected {expected_decade}, got {decade}")
+                                elif year and not decade:
+                                    self.log_result(f"Batch Enrichment Decade - Song {song_id}", False, 
+                                        f"❌ Song has year {year} but no decade after enrichment")
+                                else:
+                                    self.log_result(f"Batch Enrichment Decade - Song {song_id}", True, 
+                                        "✅ Song without year correctly has no decade")
+                            else:
+                                self.log_result(f"Batch Enrichment Decade - Song {song_id}", False, 
+                                    "❌ Enriched song not found")
+                        else:
+                            self.log_result("Batch Enrichment with Decade - Verification", False, 
+                                "❌ Could not verify enriched songs")
+                            break
+                else:
+                    self.log_result("Batch Enrichment with Decade", False, 
+                        f"❌ Batch enrichment failed: {data}")
+            else:
+                self.log_result("Batch Enrichment with Decade", False, 
+                    f"❌ Status code: {response.status_code}")
+                    
+        except Exception as e:
+            self.log_result("Batch Enrichment with Decade", False, f"Exception: {str(e)}")
+
+    def run_decade_functionality_tests(self):
+        """Run comprehensive decade functionality tests as requested in the review"""
+        print("🎯 DECADE FUNCTIONALITY TESTING - NEW FEATURE")
+        print("=" * 70)
+        print("Testing the new decade functionality implementation:")
+        print("1. Song Creation with Decade Calculation")
+        print("2. Song Update with Decade Recalculation")
+        print("3. Filter Options with Decades")
+        print("4. Song Filtering by Decade")
+        print("5. CSV Upload with Decade")
+        print("6. Playlist Import with Decade")
+        print("7. Batch Enrichment with Decade")
+        print("8. Edge Cases for Decade Calculation")
+        print("=" * 70)
+        
+        # Reset results for focused testing
+        self.results = {
+            "passed": 0,
+            "failed": 0,
+            "errors": []
+        }
+        
+        # Authentication setup
+        self.test_musician_registration()
+        if not self.auth_token:
+            print("❌ CRITICAL: Could not authenticate - cannot proceed with decade tests")
+            return False
+        
+        print("\n🎯 PRIORITY 1: DECADE CALCULATION EDGE CASES")
+        print("-" * 50)
+        self.test_decade_calculation_edge_cases()
+        
+        print("\n🎯 PRIORITY 2: SONG CREATION WITH DECADE CALCULATION")
+        print("-" * 50)
+        self.test_song_creation_with_decade_calculation()
+        
+        print("\n🎯 PRIORITY 3: SONG UPDATE WITH DECADE RECALCULATION")
+        print("-" * 50)
+        self.test_song_update_with_decade_recalculation()
+        
+        print("\n🎯 PRIORITY 4: FILTER OPTIONS WITH DECADES")
+        print("-" * 50)
+        self.test_filter_options_with_decades()
+        
+        print("\n🎯 PRIORITY 5: SONG FILTERING BY DECADE")
+        print("-" * 50)
+        self.test_song_filtering_by_decade()
+        
+        print("\n🎯 PRIORITY 6: CSV UPLOAD WITH DECADE")
+        print("-" * 50)
+        self.test_csv_upload_with_decade()
+        
+        print("\n🎯 PRIORITY 7: PLAYLIST IMPORT WITH DECADE")
+        print("-" * 50)
+        self.test_playlist_import_with_decade()
+        
+        print("\n🎯 PRIORITY 8: BATCH ENRICHMENT WITH DECADE")
+        print("-" * 50)
+        self.test_batch_enrichment_with_decade()
+        
+        # Print comprehensive summary
+        print("\n" + "=" * 70)
+        print("🏁 DECADE FUNCTIONALITY TEST SUMMARY")
+        print("=" * 70)
+        print(f"✅ Passed: {self.results['passed']}")
+        print(f"❌ Failed: {self.results['failed']}")
+        
+        if self.results['errors']:
+            print("\n🔍 DECADE FUNCTIONALITY ISSUES FOUND:")
+            for error in self.results['errors']:
+                print(f"   • {error}")
+        else:
+            print("\n🎉 ALL DECADE FUNCTIONALITY TESTS PASSED!")
+            print("✅ Song creation automatically calculates decades")
+            print("✅ Song updates recalculate decades when year changes")
+            print("✅ Filter options include decades array")
+            print("✅ Songs can be filtered by decade")
+            print("✅ CSV uploads calculate decades automatically")
+            print("✅ Playlist imports calculate decades automatically")
+            print("✅ Batch enrichment updates decades when years are added")
+            print("✅ All decade calculation edge cases work correctly")
+        
+        # Specific analysis for decade functionality
+        decade_calculation_tests = [error for error in self.results['errors'] if 'decade' in error.lower()]
+        filtering_tests = [error for error in self.results['errors'] if 'filter' in error.lower()]
+        
+        print(f"\n📊 DECADE CALCULATION: {'✅ WORKING' if len(decade_calculation_tests) == 0 else '❌ FAILING'}")
+        if decade_calculation_tests:
+            print("   DECADE CALCULATION ISSUES:")
+            for error in decade_calculation_tests:
+                print(f"   • {error}")
+        
+        print(f"📊 DECADE FILTERING: {'✅ WORKING' if len(filtering_tests) == 0 else '❌ FAILING'}")
+        if filtering_tests:
+            print("   FILTERING ISSUES:")
+            for error in filtering_tests:
+                print(f"   • {error}")
+        
+        return self.results['failed'] == 0
+
     def run_all_tests(self):
         """Run all tests in order"""
         print("=" * 50)
