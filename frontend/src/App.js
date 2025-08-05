@@ -419,7 +419,7 @@ const MusicianDashboard = () => {
     
     try {
       const response = await axios.post(`${API}/songs/batch-enrich`, null, {
-        headers: { 'Authorization': `Bearer ${auth.token}` }
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       
       if (response.data.success) {
