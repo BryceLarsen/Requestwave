@@ -1432,6 +1432,24 @@ const MusicianDashboard = () => {
                       </div>
                     </div>
 
+                    {/* NEW: Auto-enrichment Option */}
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <label className="flex items-center space-x-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={csvAutoEnrich}
+                          onChange={(e) => setCsvAutoEnrich(e.target.checked)}
+                          className="w-4 h-4 text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500"
+                        />
+                        <div>
+                          <span className="font-medium text-white">🔍 Auto-fill missing metadata from Spotify</span>
+                          <p className="text-sm text-gray-300 mt-1">
+                            Automatically fills in missing genres, moods, and years using Spotify data. Only updates empty fields.
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+
                     {/* Action Buttons */}
                     <div className="flex space-x-4">
                       <button
