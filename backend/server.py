@@ -3174,6 +3174,11 @@ async def get_current_show(
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
 
+# Test endpoint to debug routing
+@api_router.post("/test/subscription")
+async def test_subscription_endpoint():
+    return {"message": "Test subscription endpoint working", "timestamp": datetime.utcnow().isoformat()}
+
 # Include the router
 app.include_router(api_router)
 
