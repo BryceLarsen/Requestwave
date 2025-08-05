@@ -407,6 +407,9 @@ const MusicianDashboard = () => {
   const [requestersData, setRequestersData] = useState([]);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
+  // NEW: Auto-fill metadata state
+  const [autoFillLoading, setAutoFillLoading] = useState(false);
+  
   // NEW: Batch enrichment for existing songs
   const [batchEnrichLoading, setBatchEnrichLoading] = useState(false);
   
