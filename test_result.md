@@ -381,7 +381,7 @@ backend:
     implemented: true
     working: false
     file: "server.py"
-    stuck_count: 1
+    stuck_count: 2
     priority: "critical"
     needs_retesting: false
     status_history:
@@ -391,6 +391,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "CRITICAL STRIPE SUBSCRIPTION ISSUES FOUND: Comprehensive testing reveals major routing problems preventing subscription functionality. ❌ CRITICAL ROUTING ISSUE: POST /api/subscription/upgrade endpoint returns 422 validation errors expecting request creation fields (musician_id, song_id, requester_name, etc.) instead of subscription upgrade parameters - indicates serious routing conflict between subscription and request endpoints. ✅ SUBSCRIPTION STATUS WORKING: GET /api/subscription/status correctly returns trial status with 7-day trial period, can_make_request=true, and proper trial end dates. ✅ AUTHENTICATION WORKING: All subscription endpoints properly require JWT authentication (403/401 for unauthorized). ❌ WEBHOOK ENDPOINT ISSUES: POST /api/webhook/stripe returns 422 validation errors instead of handling webhook requests. ❌ PAYMENT INTEGRATION BLOCKED: Cannot test live Stripe integration due to upgrade endpoint routing issues. The subscription status tracking works correctly, but the core payment flow is completely broken due to endpoint routing conflicts. This prevents users from upgrading to paid subscriptions and blocks revenue generation."
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL ROUTING CONFLICTS CONFIRMED - NOT FIXED: Comprehensive testing confirms the critical routing issues reported in previous tests have NOT been resolved. ❌ POST /api/subscription/upgrade: Returns 422 validation error expecting body field - routing conflict with request creation endpoint still exists. Error: {'detail':[{'type':'missing','loc':['body'],'msg':'Field required'}]}. ❌ POST /api/webhook/stripe: Returns 422 validation errors expecting request creation fields (musician_id, song_id, song_title, song_artist, requester_name, requester_email) instead of webhook data - routing conflict with request creation endpoint still exists. ✅ SUBSCRIPTION STATUS: Working correctly (plan=trial, can_make_request=true, trial_ends_at properly set). ✅ AUTHENTICATION: Properly enforced (403/401 for unauthorized requests). ✅ STRIPE API KEY: Properly configured and accessible. The core issue is that both subscription endpoints are being routed to request creation validation instead of their intended handlers. This completely blocks the subscription upgrade flow and webhook processing, preventing any paid subscriptions from working."
 
 frontend:
   - task: "Musician Dashboard"
