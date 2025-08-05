@@ -410,6 +410,13 @@ const MusicianDashboard = () => {
   // NEW: Auto-fill metadata state
   const [autoFillLoading, setAutoFillLoading] = useState(false);
   
+  // NEW: Tip functionality state
+  const [showTipModal, setShowTipModal] = useState(false);
+  const [tipAmount, setTipAmount] = useState('');
+  const [tipMessage, setTipMessage] = useState('');
+  const [tipPlatform, setTipPlatform] = useState('paypal'); // 'paypal' or 'venmo'
+  const [tipSongId, setTipSongId] = useState(null); // For integrated tips with requests
+  
   // NEW: Batch enrichment for existing songs
   const [batchEnrichLoading, setBatchEnrichLoading] = useState(false);
   
