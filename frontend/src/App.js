@@ -2811,8 +2811,7 @@ const AudienceInterface = () => {
   const [requestForm, setRequestForm] = useState({
     requester_name: '',
     requester_email: '',
-    dedication: '',
-    show_name: '' // NEW: Show grouping field
+    dedication: ''
   });
   const [selectedSong, setSelectedSong] = useState(null);
   const [loading, setLoading] = useState(true);
