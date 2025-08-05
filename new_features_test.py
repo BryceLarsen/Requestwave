@@ -206,8 +206,8 @@ class NewFeaturesAPITester:
             
             if response.status_code == 200:
                 data = response.json()
-                if "current_show" in data and data["current_show"] is not None:
-                    current_show = data["current_show"]
+                if "active" in data and data["active"] == True and "show" in data:
+                    current_show = data["show"]
                     if current_show["id"] == self.current_show_id:
                         self.log_result("Get Current Show", True, f"Current show: {current_show['name']}")
                     else:
