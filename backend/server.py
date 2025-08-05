@@ -1941,8 +1941,11 @@ async def get_musician_songs(
     if not musician:
         raise HTTPException(status_code=404, detail="Musician not found")
     
-    # Build filter query
-    query = {"musician_id": musician["id"]}
+    # Base query for musician's songs - exclude hidden songs from audience view
+    query = {
+        "musician_id": musician["id"],
+        "hidden": {"$ne": True}  # NEW: Filter out hidden songs for audience
+    }
     
     # Apply search across all fields (title, artist, genres, moods, year)
     if search:
