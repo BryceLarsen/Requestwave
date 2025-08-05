@@ -1572,6 +1572,32 @@ const MusicianDashboard = () => {
                   className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
                   required
                 />
+                
+                {/* NEW: Auto-fill Metadata Button */}
+                <div className="md:col-span-2 mb-4">
+                  <button
+                    type="button"
+                    onClick={handleAutoFillMetadata}
+                    disabled={autoFillLoading || !songForm.title.trim() || !songForm.artist.trim()}
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-medium transition duration-300 disabled:cursor-not-allowed flex items-center space-x-2"
+                  >
+                    {autoFillLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Searching...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🔍</span>
+                        <span>Auto-fill Info from Spotify</span>
+                      </>
+                    )}
+                  </button>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Fill in Title and Artist above, then click to automatically find Genre, Mood, and Year
+                  </p>
+                </div>
+                
                 <input
                   type="text"
                   placeholder="Genres (comma separated)"
