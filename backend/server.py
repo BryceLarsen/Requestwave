@@ -71,9 +71,15 @@ class Musician(BaseModel):
     name: str
     email: str
     slug: str  # URL-friendly unique identifier
-    # NEW: Payment information for tips
+    # Payment information for tips
     paypal_username: Optional[str] = None  # PayPal.me username (without @)
     venmo_username: Optional[str] = None   # Venmo username (without @)
+    # NEW: Social media links for "follow me" section
+    instagram_username: Optional[str] = None
+    facebook_username: Optional[str] = None  
+    tiktok_username: Optional[str] = None
+    spotify_artist_url: Optional[str] = None
+    apple_music_artist_url: Optional[str] = None
     bio: Optional[str] = None
     website: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
