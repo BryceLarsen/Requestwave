@@ -3926,6 +3926,10 @@ const AudienceInterface = () => {
                   {designSettings.show_year && song.year && (
                     <span className="bg-gray-600 text-xs px-2 py-1 rounded">{song.year}</span>
                   )}
+                  {/* NEW: Show decade if available */}
+                  {song.decade && (
+                    <span className="bg-orange-600 text-xs px-2 py-1 rounded">{song.decade}</span>
+                  )}
                 </div>
                 
                 {designSettings.show_notes && song.notes && (
