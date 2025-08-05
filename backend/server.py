@@ -2415,6 +2415,119 @@ async def batch_enrich_existing_songs(
         logger.error(f"Error in batch enrichment: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error in batch enrichment: {str(e)}")
 
+# NEW: Tip Support Functions
+def generate_payment_links(musician: dict, amount: float, message: str = None) -> PaymentLinkResponse:
+    """Generate PayPal.me and Venmo.me links for tipping"""
+    paypal_link = None
+    venmo_link = None
+    
+    # Generate PayPal.me link if musician has PayPal username
+    if musician.get('paypal_username'):
+        paypal_link = f"https://paypal.me/{musician['paypal_username']}/{amount}"
+        if message:
+            # PayPal supports note parameter
+            paypal_link += f"?note={message.replace(' ', '%20')}"
+    
+    # Generate Venmo.me link if musician has Venmo username  
+    if musician.get('venmo_username'):
+        venmo_link = f"https://venmo.com/{musician['venmo_username']}"
+        # Venmo links with amount and note (mobile app will handle)
+        params = []
+        if amount:
+            params.append(f"amount={amount}")
+        if message:
+            params.append(f"note={message.replace(' ', '%20')}")
+        if params:
+            venmo_link += "?" + "&".join(params)
+    
+    return PaymentLinkResponse(
+        paypal_link=paypal_link,
+        venmo_link=venmo_link,
+        amount=amount,
+        message=message
+    )
+
+# NEW: Tip endpoints
+@api_router.get("/musicians/{musician_slug}/tip-links")
+async def get_tip_links(
+    musician_slug: str,
+    amount: float,
+    message: Optional[str] = None
+):
+    """Generate tip payment links for a musician"""
+    try:
+        # Find musician by slug
+        musician = await db.musicians.find_one({"slug": musician_slug})
+        if not musician:
+            raise HTTPException(status_code=404, detail="Musician not found")
+        
+        # Check if musician has any payment methods set up
+        if not musician.get('paypal_username') and not musician.get('venmo_username'):
+            raise HTTPException(
+                status_code=400, 
+                detail="This musician hasn't set up payment methods for tips yet"
+            )
+        
+        # Validate amount
+        if amount <= 0 or amount > 500:  # Reasonable limits
+            raise HTTPException(status_code=400, detail="Tip amount must be between $0.01 and $500")
+        
+        # Generate payment links
+        payment_links = generate_payment_links(musician, amount, message)
+        
+        return payment_links
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating tip links: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error generating tip links")
+
+@api_router.post("/musicians/{musician_slug}/tips")
+async def record_tip(
+    musician_slug: str,
+    tip_data: TipCreate
+):
+    """Record a tip (for analytics/tracking)"""
+    try:
+        # Find musician by slug
+        musician = await db.musicians.find_one({"slug": musician_slug})
+        if not musician:
+            raise HTTPException(status_code=404, detail="Musician not found")
+        
+        # Validate tip data
+        if tip_data.amount <= 0 or tip_data.amount > 500:
+            raise HTTPException(status_code=400, detail="Tip amount must be between $0.01 and $500")
+        
+        if tip_data.platform not in ["paypal", "venmo"]:
+            raise HTTPException(status_code=400, detail="Platform must be 'paypal' or 'venmo'")
+        
+        # Create tip record
+        tip_dict = {
+            "id": str(uuid.uuid4()),
+            "musician_id": musician['id'],
+            "amount": tip_data.amount,
+            "platform": tip_data.platform,
+            "tipper_name": tip_data.tipper_name,
+            "message": tip_data.message,
+            "created_at": datetime.utcnow()
+        }
+        
+        # Insert tip record
+        await db.tips.insert_one(tip_dict)
+        
+        return {
+            "success": True,
+            "message": f"Thank you for your ${tip_data.amount} tip!",
+            "tip_id": tip_dict["id"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error recording tip: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error recording tip")
+
 # Health check
 @api_router.get("/health")
 async def health_check():
