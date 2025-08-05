@@ -407,6 +407,13 @@ const MusicianDashboard = () => {
   const [requestersData, setRequestersData] = useState([]);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
+  // NEW: Show management state
+  const [currentShow, setCurrentShow] = useState(null);
+  const [showStartModal, setShowStartModal] = useState(false);
+  const [newShowName, setNewShowName] = useState('');
+  const [shows, setShows] = useState([]);
+  const [groupedRequests, setGroupedRequests] = useState({ unassigned: [], shows: {} });
+
   // NEW: Auto-fill metadata state
   const [autoFillLoading, setAutoFillLoading] = useState(false);
   
