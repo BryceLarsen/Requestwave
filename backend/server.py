@@ -1670,14 +1670,53 @@ async def get_subscription_status_endpoint(musician_id: str = Depends(get_curren
     """Get current subscription status"""
     return await get_subscription_status(musician_id)
 
-@api_router.post("/subscription/upgrade")
-async def create_upgrade_checkout(http_request: Request, musician_id: str = Depends(get_current_musician)):
+@api_router.post("/subscription/upgrade", response_model=CheckoutSessionResponse)
+async def create_upgrade_checkout(musician_id: str = Depends(get_current_musician)):
     """Create Stripe checkout session for $5/month subscription - No request body required"""
-    return {
-        "message": "Subscription upgrade endpoint working",
-        "musician_id": musician_id,
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    if not STRIPE_API_KEY:
+        raise HTTPException(status_code=500, detail="Stripe not configured")
+    
+    try:
+        # Initialize Stripe - use environment variable for base URL
+        base_url = os.environ.get('FRONTEND_URL', 'https://0601336b-88bf-46ac-b637-628cb0460f2a.preview.emergentagent.com')
+        webhook_url = f"{base_url}/api/webhook/stripe"
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+        
+        # Create checkout session
+        success_url = f"{base_url}/dashboard?payment=success&session_id={{CHECKOUT_SESSION_ID}}"
+        cancel_url = f"{base_url}/dashboard?payment=cancelled"
+        
+        checkout_request = CheckoutSessionRequest(
+            amount=MONTHLY_SUBSCRIPTION_PRICE,
+            currency="usd",
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={
+                "musician_id": musician_id,
+                "subscription_type": "monthly_unlimited",
+                "product": "RequestWave Pro - Monthly"
+            }
+        )
+        
+        session = await stripe_checkout.create_checkout_session(checkout_request)
+        
+        # Create payment transaction record
+        transaction = {
+            "id": str(uuid.uuid4()),
+            "musician_id": musician_id,
+            "amount": MONTHLY_SUBSCRIPTION_PRICE,
+            "currency": "usd",
+            "session_id": session.session_id,
+            "payment_status": "pending",
+            "subscription_type": "monthly_unlimited",
+            "created_at": datetime.utcnow()
+        }
+        await db.payment_transactions.insert_one(transaction)
+        
+        return session
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating checkout session: {str(e)}")
 
 @api_router.get("/subscription/payment-status/{session_id}")
 async def check_payment_status(session_id: str, musician_id: str = Depends(get_current_musician)):
