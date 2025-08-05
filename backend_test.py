@@ -3355,6 +3355,19 @@ class RequestWaveAPITester:
         self.test_batch_enrichment_authentication()
         self.test_batch_enrichment_response_format()
         
+        # NEW: Tip Support System tests (PRIORITY TESTING)
+        print("\n💰 TIP SUPPORT SYSTEM TESTING")
+        print("=" * 50)
+        self.test_profile_payment_fields_get()
+        self.test_profile_payment_fields_update()
+        self.test_tip_links_generation_basic()
+        self.test_tip_links_generation_different_amounts()
+        self.test_tip_links_generation_without_message()
+        self.test_tip_links_generation_error_cases()
+        self.test_tip_recording_basic()
+        self.test_tip_recording_different_platforms()
+        self.test_tip_recording_validation()
+        
         # Cleanup
         self.test_delete_song()
         
