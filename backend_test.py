@@ -1886,7 +1886,7 @@ class RequestWaveAPITester:
             self.auth_token = None
             test_data = {"title": "Test Song", "artist": "Test Artist"}
             
-            response = self.make_request("POST", "/songs/search-metadata", test_data)
+            response = self.make_request("POST", "/songs/search-metadata", params=test_data)
             
             if response.status_code == 401:
                 self.log_result("Spotify Metadata Search - Authentication (No Token)", True, 
@@ -1897,7 +1897,7 @@ class RequestWaveAPITester:
             
             # Test with invalid token
             self.auth_token = "invalid_token_12345"
-            response = self.make_request("POST", "/songs/search-metadata", test_data)
+            response = self.make_request("POST", "/songs/search-metadata", params=test_data)
             
             if response.status_code == 401:
                 self.log_result("Spotify Metadata Search - Authentication (Invalid Token)", True, 
