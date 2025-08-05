@@ -206,7 +206,7 @@ class StripeSubscriptionTester:
                 return
             
             print(f"🔍 Testing subscription upgrade endpoint")
-            response = self.make_request("POST", "/subscription/upgrade")
+            response = self.make_request("POST", "/subscription/upgrade", {})
             
             if response.status_code == 200:
                 data = response.json()
