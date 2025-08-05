@@ -1937,17 +1937,15 @@ const MusicianDashboard = () => {
 
             {/* Add Song Form */}
             <div className="bg-gray-800 rounded-xl p-6 mb-8">
-              <h2 className="text-xl font-bold mb-4">
-                {editingSong ? 'Edit Song' : 'Add New Song'}
-              </h2>
+              <h2 className="text-xl font-bold mb-4">Add New Song</h2>
               
-              {songError && (
+              {songError && !editingSong && (
                 <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200">
                   {songError}
                 </div>
               )}
               
-              <form onSubmit={editingSong ? handleUpdateSong : handleAddSong} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <form onSubmit={handleAddSong} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
                   type="text"
                   placeholder="Song Title"
