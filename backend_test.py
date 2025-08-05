@@ -1814,7 +1814,7 @@ class RequestWaveAPITester:
             
             print(f"🔍 Testing fallback with fake song: '{fake_song['title']}' by '{fake_song['artist']}'")
             
-            response = self.make_request("POST", "/songs/search-metadata", fake_song)
+            response = self.make_request("POST", "/songs/search-metadata", params=fake_song)
             
             if response.status_code == 200:
                 data = response.json()
