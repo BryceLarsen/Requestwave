@@ -645,6 +645,24 @@ const MusicianDashboard = () => {
     }
   };
 
+  // NEW: Toggle song visibility function
+  const handleToggleSongVisibility = async (songId) => {
+    try {
+      const response = await axios.put(`${API}/songs/${songId}/toggle-visibility`, {}, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      
+      if (response.data.success) {
+        // Refresh songs to show updated visibility
+        fetchSongs();
+        alert(response.data.message);
+      }
+    } catch (error) {
+      console.error('Error toggling song visibility:', error);
+      alert('Error updating song visibility. Please try again.');
+    }
+  };
+
   const handleBatchEnrich = async () => {
     if (!confirm('Auto-fill missing metadata for all your existing songs using Spotify? This may take a few moments.')) {
       return;
