@@ -2695,7 +2695,6 @@ const MusicianDashboard = () => {
                       <th className="text-left py-2 text-gray-300">Name</th>
                       <th className="text-left py-2 text-gray-300">Email</th>
                       <th className="text-left py-2 text-gray-300">Requests</th>
-                      <th className="text-left py-2 text-gray-300">Tips</th>
                       <th className="text-left py-2 text-gray-300">Latest Request</th>
                     </tr>
                   </thead>
