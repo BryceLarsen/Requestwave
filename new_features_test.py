@@ -681,7 +681,7 @@ class NewFeaturesAPITester:
         print("\n🎯 PRIORITY 4: Request Management")
         print("-" * 40)
         self.test_request_status_updates()
-        self.test_no_delete_functionality()
+        self.test_delete_functionality_exists()
         
         # Summary
         print("\n" + "=" * 60)
