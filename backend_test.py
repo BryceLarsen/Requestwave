@@ -3286,6 +3286,62 @@ class RequestWaveAPITester:
         except Exception as e:
             self.log_result("Tip Recording - Validation", False, f"Exception: {str(e)}")
 
+    def run_tip_support_tests(self):
+        """Run ONLY the Tip Support System tests as requested in the review"""
+        print("🚨 TIP SUPPORT SYSTEM TESTING - RequestWave Backend API")
+        print("=" * 60)
+        print("Testing Tip Support System Features:")
+        print("1. Profile Payment Fields (GET/PUT /api/profile)")
+        print("2. Tip Links Generation (GET /api/musicians/{slug}/tip-links)")
+        print("3. Tip Recording (POST /api/musicians/{slug}/tips)")
+        print("=" * 60)
+        
+        # Authentication setup
+        self.test_musician_registration()
+        if not self.auth_token:
+            print("❌ Cannot proceed without authentication")
+            return False
+        
+        print("\n🔥 PRIORITY 1: TIP LINKS GENERATION")
+        print("-" * 50)
+        self.test_tip_links_generation_basic()
+        self.test_tip_links_generation_different_amounts()
+        self.test_tip_links_generation_without_message()
+        self.test_tip_links_generation_error_cases()
+        
+        print("\n🔥 PRIORITY 2: TIP RECORDING")
+        print("-" * 50)
+        self.test_tip_recording_basic()
+        self.test_tip_recording_different_platforms()
+        self.test_tip_recording_validation()
+        
+        print("\n🔥 PRIORITY 3: PROFILE PAYMENT FIELDS")
+        print("-" * 50)
+        self.test_profile_payment_fields_get()
+        self.test_profile_payment_fields_update()
+        
+        # Print summary
+        print("\n" + "=" * 60)
+        print("🏁 TIP SUPPORT SYSTEM TEST SUMMARY")
+        print("=" * 60)
+        print(f"✅ Passed: {self.results['passed']}")
+        print(f"❌ Failed: {self.results['failed']}")
+        
+        if self.results['errors']:
+            print("\n🔍 Failed Tests:")
+            for error in self.results['errors']:
+                print(f"   • {error}")
+        
+        # Specific summary for tip support features
+        tip_tests = [error for error in self.results['errors'] if any(keyword in error.lower() for keyword in ['tip', 'payment', 'paypal', 'venmo'])]
+        
+        print(f"\n💰 TIP SUPPORT SYSTEM: {'✅ WORKING' if len(tip_tests) == 0 else '❌ FAILING'}")
+        if tip_tests:
+            for error in tip_tests:
+                print(f"   • {error}")
+        
+        return self.results['failed'] == 0
+
     def run_all_tests(self):
         """Run all tests in order"""
         print("=" * 50)
