@@ -482,12 +482,12 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Stripe Subscription System - CRITICAL ROUTING ISSUE: POST /api/subscription/upgrade endpoint has routing conflicts preventing payment flow"
-    - "Webhook Integration - CRITICAL: POST /api/webhook/stripe endpoint not accepting webhook requests properly"
-    - "Payment Flow Testing - BLOCKED: Cannot test live Stripe integration due to endpoint routing issues"
-    - "Subscription Upgrade Functionality - BROKEN: Users cannot upgrade to paid subscriptions"
+    - "Stripe Subscription System - CRITICAL ROUTING CONFLICTS NOT FIXED: Both POST /api/subscription/upgrade and POST /api/webhook/stripe endpoints are being routed to request creation validation instead of their intended handlers"
+    - "Subscription Upgrade Endpoint - CRITICAL BUG: Returns 422 validation error expecting body field when no body should be required"
+    - "Webhook Integration - CRITICAL BUG: Returns 422 validation errors expecting request creation fields instead of processing webhook data"
+    - "Payment Flow - COMPLETELY BLOCKED: Cannot process any paid subscriptions due to routing conflicts"
   stuck_tasks:
-    - "Stripe Subscription System - Endpoint routing conflicts preventing core payment functionality"
+    - "Stripe Subscription System - Endpoint routing conflicts preventing core payment functionality - MAIN AGENT NEEDS TO USE WEBSEARCH TOOL TO RESEARCH FASTAPI ROUTING SOLUTIONS"
   test_all: false
   test_priority: "critical_first"
 
