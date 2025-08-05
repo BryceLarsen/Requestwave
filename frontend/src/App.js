@@ -2976,22 +2976,25 @@ const AudienceInterface = () => {
     }
 
     try {
-      await axios.post(`${API}/requests`, {
+      const response = await axios.post(`${API}/requests`, {
         song_id: song.id,
-        ...requestForm,
-        tip_amount: parseFloat(requestForm.tip_amount) || 0
+        ...requestForm
       });
       
-      setSuccess('Request sent successfully!');
+      // Store request ID for post-request modal
+      setCurrentRequestId(response.data.id);
+      
+      // Close request modal and show post-request options
       setSelectedSong(null);
+      setShowPostRequestModal(true);
+      
+      // Reset form
       setRequestForm({
         requester_name: '',
         requester_email: '',
-        dedication: '',
-        tip_amount: 0
+        dedication: ''
       });
       
-      setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       if (error.response?.status === 402) {
         // Request limit reached
