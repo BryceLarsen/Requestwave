@@ -609,11 +609,11 @@ class NewFeaturesAPITester:
                 self.log_result("Request Status Updates", False, "Missing test request ID")
                 return
             
-            # Test different status updates - the API expects status as a path parameter
+            # Test different status updates - the API expects status as a query parameter
             statuses = ["accepted", "played", "rejected"]
             
             for status in statuses:
-                response = self.make_request("PUT", f"/requests/{self.test_request_id}/status/{status}")
+                response = self.make_request("PUT", f"/requests/{self.test_request_id}/status", params={"status": status})
                 
                 if response.status_code == 200:
                     self.log_result(f"Request Status Update - {status.title()}", True, f"Successfully updated status to {status}")
