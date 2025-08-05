@@ -178,6 +178,14 @@ class MusicianPublic(BaseModel):
     id: str
     name: str
     slug: str
+    # NEW: Include social media fields for post-request modal
+    paypal_username: Optional[str] = None
+    venmo_username: Optional[str] = None
+    instagram_username: Optional[str] = None
+    facebook_username: Optional[str] = None
+    tiktok_username: Optional[str] = None
+    spotify_artist_url: Optional[str] = None
+    apple_music_artist_url: Optional[str] = None
 
 class MusicianProfile(BaseModel):
     name: str
