@@ -4868,6 +4868,18 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
         self.test_musician_registration()
         self.test_jwt_token_validation()
         
+        # CRITICAL: Stripe Subscription System Testing - HIGHEST PRIORITY
+        print("\n" + "🔥" * 15 + " CRITICAL: STRIPE SUBSCRIPTION SYSTEM - FIXED ROUTING TESTS " + "🔥" * 15)
+        print("Testing the FIXED Stripe subscription endpoints after resolving critical routing conflicts")
+        print("=" * 100)
+        self.test_stripe_api_key_configuration()
+        self.test_subscription_status()
+        self.test_subscription_upgrade_endpoint()
+        self.test_stripe_webhook_endpoint()
+        self.test_subscription_upgrade_authentication()
+        self.test_subscription_pricing_verification()
+        self.test_complete_subscription_flow()
+        
         # PRIORITY 1: Social Media Profile Tests
         print("\n" + "🎯" * 20 + " PRIORITY 1: SOCIAL MEDIA PROFILE TESTS " + "🎯" * 20)
         self.test_social_media_profile_get()
