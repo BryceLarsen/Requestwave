@@ -3172,13 +3172,13 @@ const AudienceInterface = () => {
         {/* Mobile/Desktop Filters */}
         <div className={`${colors.secondary} rounded-xl p-4 md:p-6 mb-4 md:mb-8 ${showFilters ? 'block' : 'hidden md:block'}`}>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-            <h2 className="text-lg md:text-xl font-bold mb-2 md:mb-0">Find a Song</h2>
+            <h2 className="text-lg md:text-xl font-bold mb-2 md:mb-0">Advanced Filters</h2>
             <div className="flex items-center space-x-2">
               <button
                 onClick={clearFilters}
                 className="text-gray-300 hover:text-white text-sm transition duration-300"
               >
-                Clear Filters
+                Clear All
               </button>
               <button
                 onClick={() => setShowFilters(false)}
