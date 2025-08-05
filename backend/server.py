@@ -1264,9 +1264,15 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
         venmo_link=updated_musician.get("venmo_link", ""),
         bio=updated_musician.get("bio", ""),
         website=updated_musician.get("website", ""),
-        # NEW: Include payment usernames
+        # Payment usernames
         paypal_username=updated_musician.get("paypal_username", ""),
-        venmo_username=updated_musician.get("venmo_username", "")
+        venmo_username=updated_musician.get("venmo_username", ""),
+        # NEW: Social media fields
+        instagram_username=updated_musician.get("instagram_username", ""),
+        facebook_username=updated_musician.get("facebook_username", ""),
+        tiktok_username=updated_musician.get("tiktok_username", ""),
+        spotify_artist_url=updated_musician.get("spotify_artist_url", ""),
+        apple_music_artist_url=updated_musician.get("apple_music_artist_url", "")
     )
 
 # Password Reset endpoints
