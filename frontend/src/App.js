@@ -2824,6 +2824,10 @@ const AudienceInterface = () => {
   // NEW: Prominent search functionality
   const [searchQuery, setSearchQuery] = useState('');
 
+  // NEW: Post-request state for tip/social modal
+  const [showPostRequestModal, setShowPostRequestModal] = useState(false);
+  const [currentRequestId, setCurrentRequestId] = useState(null);
+
   // NEW: Tip functionality state
   const [showTipModal, setShowTipModal] = useState(false);
   const [tipAmount, setTipAmount] = useState('');
