@@ -3798,7 +3798,7 @@ const AudienceInterface = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-4">
             <select
               value={selectedFilters.genre}
               onChange={(e) => setSelectedFilters({...selectedFilters, genre: e.target.value})}
@@ -3837,6 +3837,18 @@ const AudienceInterface = () => {
               <option value="">All Years</option>
               {filters.years?.map((year) => (
                 <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+            
+            {/* NEW: Decade filter */}
+            <select
+              value={selectedFilters.decade}
+              onChange={(e) => setSelectedFilters({...selectedFilters, decade: e.target.value})}
+              className="bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
+            >
+              <option value="">All Decades</option>
+              {filters.decades?.map((decade) => (
+                <option key={decade} value={decade}>{decade}</option>
               ))}
             </select>
           </div>
