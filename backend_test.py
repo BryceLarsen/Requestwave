@@ -1742,6 +1742,334 @@ class RequestWaveAPITester:
                 print(f"   • {error}")
         
         return self.results['failed'] == 0
+
+    def test_spotify_metadata_search_basic(self):
+        """Test basic Spotify metadata search functionality"""
+        try:
+            if not self.auth_token:
+                self.log_result("Spotify Metadata Search - Basic", False, "No auth token available")
+                return
+            
+            # Test with popular songs as specified in the review request
+            test_cases = [
+                {"title": "As It Was", "artist": "Harry Styles"},
+                {"title": "Heat Waves", "artist": "Glass Animals"}
+            ]
+            
+            for test_case in test_cases:
+                print(f"🔍 Testing metadata search for '{test_case['title']}' by '{test_case['artist']}'")
+                
+                response = self.make_request("POST", "/songs/search-metadata", {
+                    "title": test_case["title"],
+                    "artist": test_case["artist"]
+                })
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    print(f"📊 Metadata response: {json.dumps(data, indent=2)}")
+                    
+                    if "success" in data and data["success"] and "metadata" in data:
+                        metadata = data["metadata"]
+                        
+                        # Verify required fields
+                        required_fields = ["title", "artist", "genres", "moods", "confidence"]
+                        missing_fields = [field for field in required_fields if field not in metadata]
+                        
+                        if not missing_fields:
+                            # Check data quality
+                            has_genres = metadata.get("genres") and len(metadata["genres"]) > 0
+                            has_moods = metadata.get("moods") and len(metadata["moods"]) > 0
+                            has_confidence = metadata.get("confidence") in ["high", "medium", "low"]
+                            
+                            if has_genres and has_moods and has_confidence:
+                                self.log_result(f"Spotify Metadata Search - {test_case['title']}", True, 
+                                    f"✅ Found metadata: genres={metadata['genres']}, moods={metadata['moods']}, confidence={metadata['confidence']}")
+                            else:
+                                self.log_result(f"Spotify Metadata Search - {test_case['title']}", False, 
+                                    f"❌ Poor data quality: genres={metadata.get('genres')}, moods={metadata.get('moods')}, confidence={metadata.get('confidence')}")
+                        else:
+                            self.log_result(f"Spotify Metadata Search - {test_case['title']}", False, 
+                                f"❌ Missing required fields: {missing_fields}")
+                    else:
+                        self.log_result(f"Spotify Metadata Search - {test_case['title']}", False, 
+                            f"❌ Unexpected response structure: {data}")
+                else:
+                    self.log_result(f"Spotify Metadata Search - {test_case['title']}", False, 
+                        f"❌ Status code: {response.status_code}, Response: {response.text}")
+                        
+        except Exception as e:
+            self.log_result("Spotify Metadata Search - Basic", False, f"❌ Exception: {str(e)}")
+
+    def test_spotify_metadata_search_fallback(self):
+        """Test fallback functionality with non-existent songs"""
+        try:
+            if not self.auth_token:
+                self.log_result("Spotify Metadata Search - Fallback", False, "No auth token available")
+                return
+            
+            # Test with fake song as specified in review request
+            fake_song = {"title": "Fake Song", "artist": "Fake Artist"}
+            
+            print(f"🔍 Testing fallback with fake song: '{fake_song['title']}' by '{fake_song['artist']}'")
+            
+            response = self.make_request("POST", "/songs/search-metadata", fake_song)
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"📊 Fallback response: {json.dumps(data, indent=2)}")
+                
+                if "success" in data and data["success"] and "metadata" in data:
+                    metadata = data["metadata"]
+                    
+                    # Verify fallback characteristics
+                    is_low_confidence = metadata.get("confidence") == "low"
+                    is_heuristic_source = metadata.get("source") == "heuristic"
+                    has_fallback_data = metadata.get("genres") and metadata.get("moods")
+                    
+                    if is_low_confidence and is_heuristic_source and has_fallback_data:
+                        self.log_result("Spotify Metadata Search - Fallback", True, 
+                            f"✅ Fallback working: confidence=low, source=heuristic, genres={metadata['genres']}, moods={metadata['moods']}")
+                    else:
+                        self.log_result("Spotify Metadata Search - Fallback", False, 
+                            f"❌ Fallback not working correctly: confidence={metadata.get('confidence')}, source={metadata.get('source')}")
+                else:
+                    self.log_result("Spotify Metadata Search - Fallback", False, 
+                        f"❌ Unexpected fallback response: {data}")
+            else:
+                self.log_result("Spotify Metadata Search - Fallback", False, 
+                    f"❌ Fallback failed with status: {response.status_code}")
+                    
+        except Exception as e:
+            self.log_result("Spotify Metadata Search - Fallback", False, f"❌ Exception: {str(e)}")
+
+    def test_spotify_metadata_search_validation(self):
+        """Test input validation for metadata search"""
+        try:
+            if not self.auth_token:
+                self.log_result("Spotify Metadata Search - Validation", False, "No auth token available")
+                return
+            
+            # Test cases for validation
+            validation_tests = [
+                {"data": {"title": "", "artist": "Artist"}, "description": "Empty title"},
+                {"data": {"title": "Title", "artist": ""}, "description": "Empty artist"},
+                {"data": {"title": "   ", "artist": "Artist"}, "description": "Whitespace-only title"},
+                {"data": {"title": "Title", "artist": "   "}, "description": "Whitespace-only artist"},
+                {"data": {"artist": "Artist"}, "description": "Missing title"},
+                {"data": {"title": "Title"}, "description": "Missing artist"}
+            ]
+            
+            for test in validation_tests:
+                print(f"🔍 Testing validation: {test['description']}")
+                
+                response = self.make_request("POST", "/songs/search-metadata", test["data"])
+                
+                if response.status_code == 400:
+                    self.log_result(f"Spotify Metadata Search - Validation ({test['description']})", True, 
+                        "✅ Correctly rejected invalid input")
+                else:
+                    self.log_result(f"Spotify Metadata Search - Validation ({test['description']})", False, 
+                        f"❌ Should have returned 400, got: {response.status_code}")
+                        
+        except Exception as e:
+            self.log_result("Spotify Metadata Search - Validation", False, f"❌ Exception: {str(e)}")
+
+    def test_spotify_metadata_search_authentication(self):
+        """Test authentication requirements for metadata search"""
+        try:
+            # Save current token
+            original_token = self.auth_token
+            
+            # Test without token
+            self.auth_token = None
+            test_data = {"title": "Test Song", "artist": "Test Artist"}
+            
+            response = self.make_request("POST", "/songs/search-metadata", test_data)
+            
+            if response.status_code == 401:
+                self.log_result("Spotify Metadata Search - Authentication (No Token)", True, 
+                    "✅ Correctly rejected request without auth token")
+            else:
+                self.log_result("Spotify Metadata Search - Authentication (No Token)", False, 
+                    f"❌ Should have returned 401, got: {response.status_code}")
+            
+            # Test with invalid token
+            self.auth_token = "invalid_token_12345"
+            response = self.make_request("POST", "/songs/search-metadata", test_data)
+            
+            if response.status_code == 401:
+                self.log_result("Spotify Metadata Search - Authentication (Invalid Token)", True, 
+                    "✅ Correctly rejected request with invalid token")
+            else:
+                self.log_result("Spotify Metadata Search - Authentication (Invalid Token)", False, 
+                    f"❌ Should have returned 401, got: {response.status_code}")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+        except Exception as e:
+            self.log_result("Spotify Metadata Search - Authentication", False, f"❌ Exception: {str(e)}")
+            # Restore token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_spotify_metadata_search_edge_cases(self):
+        """Test edge cases for metadata search"""
+        try:
+            if not self.auth_token:
+                self.log_result("Spotify Metadata Search - Edge Cases", False, "No auth token available")
+                return
+            
+            # Test cases for edge cases
+            edge_cases = [
+                {"title": "Song with Special Characters!@#$%", "artist": "Artist & Co.", "description": "Special characters"},
+                {"title": "A" * 200, "artist": "Very Long Artist Name" * 10, "description": "Very long names"},
+                {"title": "Ñoño", "artist": "Björk", "description": "Unicode characters"},
+                {"title": "Song (Remix) [feat. Artist]", "artist": "Main Artist", "description": "Complex formatting"}
+            ]
+            
+            for test_case in edge_cases:
+                print(f"🔍 Testing edge case: {test_case['description']}")
+                
+                response = self.make_request("POST", "/songs/search-metadata", {
+                    "title": test_case["title"],
+                    "artist": test_case["artist"]
+                })
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if "success" in data and data["success"] and "metadata" in data:
+                        metadata = data["metadata"]
+                        if metadata.get("genres") and metadata.get("moods") and metadata.get("confidence"):
+                            self.log_result(f"Spotify Metadata Search - Edge Case ({test_case['description']})", True, 
+                                f"✅ Handled edge case successfully: confidence={metadata['confidence']}")
+                        else:
+                            self.log_result(f"Spotify Metadata Search - Edge Case ({test_case['description']})", False, 
+                                f"❌ Poor response quality for edge case")
+                    else:
+                        self.log_result(f"Spotify Metadata Search - Edge Case ({test_case['description']})", False, 
+                            f"❌ Unexpected response structure for edge case")
+                else:
+                    self.log_result(f"Spotify Metadata Search - Edge Case ({test_case['description']})", False, 
+                        f"❌ Edge case failed with status: {response.status_code}")
+                        
+        except Exception as e:
+            self.log_result("Spotify Metadata Search - Edge Cases", False, f"❌ Exception: {str(e)}")
+
+    def test_spotify_metadata_search_integration_quality(self):
+        """Test Spotify API integration quality and audio features mapping"""
+        try:
+            if not self.auth_token:
+                self.log_result("Spotify Metadata Search - Integration Quality", False, "No auth token available")
+                return
+            
+            # Test with well-known songs to verify integration quality
+            quality_tests = [
+                {"title": "Blinding Lights", "artist": "The Weeknd", "expected_genre": "Pop", "expected_mood": "Energetic"},
+                {"title": "Bohemian Rhapsody", "artist": "Queen", "expected_genre": "Rock", "expected_mood": "Energetic"}
+            ]
+            
+            for test_case in quality_tests:
+                print(f"🔍 Testing integration quality for '{test_case['title']}' by '{test_case['artist']}'")
+                
+                response = self.make_request("POST", "/songs/search-metadata", {
+                    "title": test_case["title"],
+                    "artist": test_case["artist"]
+                })
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    if "success" in data and data["success"] and "metadata" in data:
+                        metadata = data["metadata"]
+                        
+                        # Check integration quality indicators
+                        has_spotify_id = "spotify_id" in metadata
+                        has_year = metadata.get("year") is not None
+                        has_high_confidence = metadata.get("confidence") in ["high", "medium"]
+                        has_spotify_source = metadata.get("source") == "spotify"
+                        
+                        quality_score = sum([has_spotify_id, has_year, has_high_confidence, has_spotify_source])
+                        
+                        if quality_score >= 3:
+                            self.log_result(f"Spotify Integration Quality - {test_case['title']}", True, 
+                                f"✅ High quality integration: spotify_id={has_spotify_id}, year={metadata.get('year')}, confidence={metadata.get('confidence')}, source={metadata.get('source')}")
+                        else:
+                            self.log_result(f"Spotify Integration Quality - {test_case['title']}", False, 
+                                f"❌ Poor integration quality: spotify_id={has_spotify_id}, year={metadata.get('year')}, confidence={metadata.get('confidence')}")
+                    else:
+                        self.log_result(f"Spotify Integration Quality - {test_case['title']}", False, 
+                            f"❌ Unexpected response structure")
+                else:
+                    self.log_result(f"Spotify Integration Quality - {test_case['title']}", False, 
+                        f"❌ Integration test failed with status: {response.status_code}")
+                        
+        except Exception as e:
+            self.log_result("Spotify Metadata Search - Integration Quality", False, f"❌ Exception: {str(e)}")
+
+    def run_spotify_metadata_tests(self):
+        """Run NEW Spotify Metadata Auto-fill Feature tests"""
+        print("🚨 NEW FEATURE TESTING - Spotify Metadata Auto-fill")
+        print("=" * 70)
+        print("Testing NEW Spotify Metadata Search Functionality:")
+        print("1. Basic Metadata Search with Popular Songs")
+        print("2. Fallback Functionality with Non-existent Songs")
+        print("3. Input Validation")
+        print("4. Authentication Requirements")
+        print("5. Edge Cases")
+        print("6. Spotify API Integration Quality")
+        print("=" * 70)
+        
+        # Authentication setup
+        self.test_musician_registration()
+        self.test_jwt_token_validation()
+        
+        print("\n🎵 NEW FEATURE TEST #1: BASIC METADATA SEARCH")
+        print("-" * 50)
+        self.test_spotify_metadata_search_basic()
+        
+        print("\n🎵 NEW FEATURE TEST #2: FALLBACK FUNCTIONALITY")
+        print("-" * 50)
+        self.test_spotify_metadata_search_fallback()
+        
+        print("\n🎵 NEW FEATURE TEST #3: INPUT VALIDATION")
+        print("-" * 50)
+        self.test_spotify_metadata_search_validation()
+        
+        print("\n🎵 NEW FEATURE TEST #4: AUTHENTICATION REQUIREMENTS")
+        print("-" * 50)
+        self.test_spotify_metadata_search_authentication()
+        
+        print("\n🎵 NEW FEATURE TEST #5: EDGE CASES")
+        print("-" * 50)
+        self.test_spotify_metadata_search_edge_cases()
+        
+        print("\n🎵 NEW FEATURE TEST #6: SPOTIFY API INTEGRATION QUALITY")
+        print("-" * 50)
+        self.test_spotify_metadata_search_integration_quality()
+        
+        # Print summary
+        print("\n" + "=" * 70)
+        print("🏁 SPOTIFY METADATA AUTO-FILL TEST SUMMARY")
+        print("=" * 70)
+        print(f"✅ Passed: {self.results['passed']}")
+        print(f"❌ Failed: {self.results['failed']}")
+        
+        if self.results['errors']:
+            print("\n🔍 Failed Tests:")
+            for error in self.results['errors']:
+                print(f"   • {error}")
+        
+        # Specific summary for Spotify metadata features
+        metadata_tests = [error for error in self.results['errors'] if 'metadata' in error.lower() or 'spotify' in error.lower()]
+        
+        print(f"\n🎵 SPOTIFY METADATA AUTO-FILL FEATURE: {'✅ WORKING' if len(metadata_tests) == 0 else '❌ FAILING'}")
+        if metadata_tests:
+            for error in metadata_tests:
+                print(f"   • {error}")
+        
+        return self.results['failed'] == 0
+
     def run_all_tests(self):
         """Run all tests in order"""
         print("=" * 50)
