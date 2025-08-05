@@ -45,7 +45,7 @@ class RequestWaveAPITester:
             self.results["failed"] += 1
             self.results["errors"].append(f"{test_name}: {message}")
 
-    def make_request(self, method: str, endpoint: str, data: Any = None, files: Any = None, headers: Dict = None) -> requests.Response:
+    def make_request(self, method: str, endpoint: str, data: Any = None, files: Any = None, headers: Dict = None, params: Dict = None) -> requests.Response:
         """Make HTTP request with proper headers"""
         url = f"{self.base_url}{endpoint}"
         
@@ -64,10 +64,12 @@ class RequestWaveAPITester:
         
         try:
             if method.upper() == "GET":
-                response = requests.get(url, headers=request_headers, params=data)
+                response = requests.get(url, headers=request_headers, params=data or params)
             elif method.upper() == "POST":
                 if files:
                     response = requests.post(url, headers={k: v for k, v in request_headers.items() if k != "Content-Type"}, files=files, data=data)
+                elif params:
+                    response = requests.post(url, headers=request_headers, params=params)
                 else:
                     response = requests.post(url, headers=request_headers, json=data)
             elif method.upper() == "PUT":
