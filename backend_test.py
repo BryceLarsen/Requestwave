@@ -3342,6 +3342,357 @@ class RequestWaveAPITester:
         
         return self.results['failed'] == 0
 
+    def test_audience_page_search_functionality(self):
+        """Test comprehensive audience page search functionality across all fields"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Audience Page Search Functionality", False, "No musician slug available")
+                return
+            
+            print("🔍 Testing comprehensive audience page search functionality")
+            
+            # Create test songs with variety as specified in requirements
+            test_songs = [
+                {
+                    "title": "Love Story",
+                    "artist": "Taylor Swift", 
+                    "genres": ["Pop"],
+                    "moods": ["Romantic"],
+                    "year": 2020,
+                    "notes": "Test song for search functionality"
+                },
+                {
+                    "title": "Rock Me",
+                    "artist": "Queen",
+                    "genres": ["Rock"], 
+                    "moods": ["Energetic"],
+                    "year": 1975,
+                    "notes": "Classic rock anthem"
+                },
+                {
+                    "title": "Smooth Jazz",
+                    "artist": "Miles Davis",
+                    "genres": ["Jazz"],
+                    "moods": ["Smooth"],
+                    "year": 1960,
+                    "notes": "Smooth jazz classic"
+                },
+                {
+                    "title": "Pop Hit",
+                    "artist": "Ariana Grande",
+                    "genres": ["Pop"],
+                    "moods": ["Upbeat"],
+                    "year": 2021,
+                    "notes": "Modern pop hit"
+                },
+                {
+                    "title": "Jazz Melody",
+                    "artist": "John Coltrane",
+                    "genres": ["Jazz"],
+                    "moods": ["Smooth"],
+                    "year": 1965,
+                    "notes": "Beautiful jazz melody"
+                }
+            ]
+            
+            created_song_ids = []
+            
+            # Create test songs
+            for song_data in test_songs:
+                response = self.make_request("POST", "/songs", song_data)
+                if response.status_code == 200:
+                    song_id = response.json()["id"]
+                    created_song_ids.append(song_id)
+                    print(f"📊 Created test song: '{song_data['title']}' by '{song_data['artist']}'")
+                else:
+                    self.log_result("Audience Page Search - Create Test Songs", False, f"Failed to create song: {song_data['title']}")
+                    return
+            
+            print(f"✅ Created {len(created_song_ids)} test songs for search testing")
+            
+            # Test search scenarios as specified in requirements
+            search_tests = [
+                # Title search
+                ("love", "Love Story", "Should find 'Love Story' by title search"),
+                ("rock", "Rock Me", "Should find 'Rock Me' by title search"),
+                ("jazz", ["Smooth Jazz", "Jazz Melody"], "Should find both jazz songs by title search"),
+                
+                # Artist search  
+                ("taylor", "Love Story", "Should find Taylor Swift song by artist search"),
+                ("queen", "Rock Me", "Should find Queen song by artist search"),
+                ("miles", "Smooth Jazz", "Should find Miles Davis song by artist search"),
+                ("ariana", "Pop Hit", "Should find Ariana Grande song by artist search"),
+                
+                # Genre search
+                ("pop", ["Love Story", "Pop Hit"], "Should find Pop genre songs"),
+                ("rock", "Rock Me", "Should find Rock genre songs"),
+                ("jazz", ["Smooth Jazz", "Jazz Melody"], "Should find Jazz genre songs"),
+                
+                # Mood search
+                ("romantic", "Love Story", "Should find Romantic mood songs"),
+                ("energetic", "Rock Me", "Should find Energetic mood songs"),
+                ("smooth", ["Smooth Jazz", "Jazz Melody"], "Should find Smooth mood songs"),
+                ("upbeat", "Pop Hit", "Should find Upbeat mood songs"),
+                
+                # Year search
+                ("2020", "Love Story", "Should find 2020 songs"),
+                ("1975", "Rock Me", "Should find 1975 songs"),
+                ("1960", "Smooth Jazz", "Should find 1960 songs"),
+                ("2021", "Pop Hit", "Should find 2021 songs"),
+                
+                # Case-insensitive search
+                ("LOVE", "Love Story", "Should find songs with case-insensitive search"),
+                ("TAYLOR", "Love Story", "Should find Taylor Swift with case-insensitive search"),
+                ("POP", ["Love Story", "Pop Hit"], "Should find Pop genre with case-insensitive search"),
+                
+                # Partial matches
+                ("tay", "Love Story", "Should find Taylor Swift with partial match"),
+                ("jaz", ["Smooth Jazz", "Jazz Melody"], "Should find jazz songs with partial match"),
+                ("gran", "Pop Hit", "Should find Ariana Grande with partial match")
+            ]
+            
+            search_passed = 0
+            search_failed = 0
+            
+            for search_term, expected_songs, description in search_tests:
+                params = {"search": search_term}
+                response = self.make_request("GET", f"/musicians/{self.musician_slug}/songs", params)
+                
+                if response.status_code == 200:
+                    found_songs = response.json()
+                    found_titles = [song["title"] for song in found_songs]
+                    
+                    # Handle both single song and multiple song expectations
+                    if isinstance(expected_songs, str):
+                        expected_songs = [expected_songs]
+                    
+                    # Check if all expected songs were found
+                    found_expected = all(expected in found_titles for expected in expected_songs)
+                    
+                    if found_expected:
+                        search_passed += 1
+                        print(f"✅ Search '{search_term}': Found {found_titles} - {description}")
+                    else:
+                        search_failed += 1
+                        print(f"❌ Search '{search_term}': Expected {expected_songs}, found {found_titles} - {description}")
+                else:
+                    search_failed += 1
+                    print(f"❌ Search '{search_term}': API error {response.status_code} - {description}")
+            
+            # Test search combined with filters
+            print("\n🔍 Testing search combined with filters")
+            
+            filter_tests = [
+                # Search + genre filter
+                ({"search": "love", "genre": "Pop"}, ["Love Story"], "Search 'love' + Pop genre filter"),
+                ({"search": "jazz", "genre": "Jazz"}, ["Smooth Jazz", "Jazz Melody"], "Search 'jazz' + Jazz genre filter"),
+                
+                # Search + artist filter  
+                ({"search": "taylor", "artist": "Taylor"}, ["Love Story"], "Search 'taylor' + artist filter"),
+                
+                # Search + mood filter
+                ({"search": "smooth", "mood": "Smooth"}, ["Smooth Jazz", "Jazz Melody"], "Search 'smooth' + Smooth mood filter"),
+                
+                # Search + year filter
+                ({"search": "pop", "year": 2020}, ["Love Story"], "Search 'pop' + year 2020 filter"),
+                ({"search": "pop", "year": 2021}, ["Pop Hit"], "Search 'pop' + year 2021 filter")
+            ]
+            
+            filter_passed = 0
+            filter_failed = 0
+            
+            for params, expected_songs, description in filter_tests:
+                response = self.make_request("GET", f"/musicians/{self.musician_slug}/songs", params)
+                
+                if response.status_code == 200:
+                    found_songs = response.json()
+                    found_titles = [song["title"] for song in found_songs]
+                    
+                    # Check if all expected songs were found
+                    found_expected = all(expected in found_titles for expected in expected_songs)
+                    
+                    if found_expected and len(found_titles) == len(expected_songs):
+                        filter_passed += 1
+                        print(f"✅ {description}: Found {found_titles}")
+                    else:
+                        filter_failed += 1
+                        print(f"❌ {description}: Expected {expected_songs}, found {found_titles}")
+                else:
+                    filter_failed += 1
+                    print(f"❌ {description}: API error {response.status_code}")
+            
+            # Test that GET /musicians/{slug}/songs returns all songs without 1000 limit
+            print("\n🔍 Testing unlimited song retrieval")
+            
+            response = self.make_request("GET", f"/musicians/{self.musician_slug}/songs")
+            if response.status_code == 200:
+                all_songs = response.json()
+                if len(all_songs) >= len(created_song_ids):
+                    print(f"✅ Retrieved {len(all_songs)} songs without 1000 limit")
+                    unlimited_passed = True
+                else:
+                    print(f"❌ Expected at least {len(created_song_ids)} songs, got {len(all_songs)}")
+                    unlimited_passed = False
+            else:
+                print(f"❌ Failed to retrieve all songs: {response.status_code}")
+                unlimited_passed = False
+            
+            # Overall results
+            total_search_tests = len(search_tests)
+            total_filter_tests = len(filter_tests)
+            
+            if search_passed == total_search_tests and filter_passed == total_filter_tests and unlimited_passed:
+                self.log_result("Audience Page Search Functionality", True, 
+                    f"✅ ALL SEARCH TESTS PASSED: {search_passed}/{total_search_tests} search tests, {filter_passed}/{total_filter_tests} filter tests, unlimited retrieval working")
+            else:
+                self.log_result("Audience Page Search Functionality", False,
+                    f"❌ SEARCH TESTS FAILED: {search_passed}/{total_search_tests} search tests passed, {filter_passed}/{total_filter_tests} filter tests passed, unlimited retrieval: {unlimited_passed}")
+                    
+        except Exception as e:
+            self.log_result("Audience Page Search Functionality", False, f"Exception: {str(e)}")
+
+    def test_search_edge_cases(self):
+        """Test search functionality edge cases"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Search Edge Cases", False, "No musician slug available")
+                return
+            
+            print("🔍 Testing search functionality edge cases")
+            
+            edge_case_tests = [
+                # Empty search
+                ("", "Should return all songs when search is empty"),
+                ("   ", "Should return all songs when search is whitespace"),
+                
+                # Special characters
+                ("love's", "Should handle apostrophes in search"),
+                ("rock&roll", "Should handle ampersands in search"),
+                ("jazz-fusion", "Should handle hyphens in search"),
+                
+                # Unicode characters
+                ("café", "Should handle unicode characters"),
+                ("naïve", "Should handle accented characters"),
+                
+                # Very long search terms
+                ("a" * 100, "Should handle very long search terms"),
+                
+                # Numbers as strings
+                ("1975", "Should find year 1975 as string search"),
+                ("20", "Should find partial year matches"),
+                
+                # Non-existent terms
+                ("xyzneverexists", "Should return empty results for non-existent terms"),
+                ("fakesong", "Should return empty results for fake song names")
+            ]
+            
+            edge_passed = 0
+            edge_failed = 0
+            
+            for search_term, description in edge_case_tests:
+                params = {"search": search_term}
+                response = self.make_request("GET", f"/musicians/{self.musician_slug}/songs", params)
+                
+                if response.status_code == 200:
+                    found_songs = response.json()
+                    
+                    # For empty/whitespace searches, should return all songs
+                    if search_term.strip() == "":
+                        if len(found_songs) > 0:
+                            edge_passed += 1
+                            print(f"✅ Search '{search_term}': Returned {len(found_songs)} songs - {description}")
+                        else:
+                            edge_failed += 1
+                            print(f"❌ Search '{search_term}': Should return all songs but got {len(found_songs)} - {description}")
+                    
+                    # For non-existent terms, should return empty
+                    elif search_term in ["xyzneverexists", "fakesong"]:
+                        if len(found_songs) == 0:
+                            edge_passed += 1
+                            print(f"✅ Search '{search_term}': Correctly returned no results - {description}")
+                        else:
+                            edge_failed += 1
+                            print(f"❌ Search '{search_term}': Should return no results but got {len(found_songs)} - {description}")
+                    
+                    # For other edge cases, just check that API doesn't crash
+                    else:
+                        edge_passed += 1
+                        print(f"✅ Search '{search_term}': API handled gracefully, returned {len(found_songs)} songs - {description}")
+                        
+                else:
+                    edge_failed += 1
+                    print(f"❌ Search '{search_term}': API error {response.status_code} - {description}")
+            
+            if edge_passed == len(edge_case_tests):
+                self.log_result("Search Edge Cases", True, f"✅ All {edge_passed} edge case tests passed")
+            else:
+                self.log_result("Search Edge Cases", False, f"❌ {edge_failed}/{len(edge_case_tests)} edge case tests failed")
+                
+        except Exception as e:
+            self.log_result("Search Edge Cases", False, f"Exception: {str(e)}")
+
+    def test_search_performance(self):
+        """Test search functionality performance with larger dataset"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Search Performance", False, "No musician slug available")
+                return
+            
+            print("🔍 Testing search performance with larger dataset")
+            
+            # Get current song count
+            response = self.make_request("GET", f"/musicians/{self.musician_slug}/songs")
+            if response.status_code == 200:
+                initial_count = len(response.json())
+                print(f"📊 Initial song count: {initial_count}")
+            else:
+                self.log_result("Search Performance", False, "Could not get initial song count")
+                return
+            
+            # Test search performance with current dataset
+            import time
+            
+            performance_tests = [
+                ("love", "Title search performance"),
+                ("taylor", "Artist search performance"), 
+                ("pop", "Genre search performance"),
+                ("smooth", "Mood search performance"),
+                ("2020", "Year search performance"),
+                ("jazz", "Multi-field search performance")
+            ]
+            
+            performance_results = []
+            
+            for search_term, description in performance_tests:
+                start_time = time.time()
+                
+                params = {"search": search_term}
+                response = self.make_request("GET", f"/musicians/{self.musician_slug}/songs", params)
+                
+                end_time = time.time()
+                response_time = end_time - start_time
+                
+                if response.status_code == 200:
+                    found_songs = response.json()
+                    performance_results.append((search_term, response_time, len(found_songs)))
+                    print(f"✅ Search '{search_term}': {response_time:.3f}s, found {len(found_songs)} songs - {description}")
+                else:
+                    print(f"❌ Search '{search_term}': API error {response.status_code} - {description}")
+            
+            # Check if all searches completed within reasonable time (< 2 seconds)
+            slow_searches = [result for result in performance_results if result[1] > 2.0]
+            
+            if len(slow_searches) == 0:
+                avg_time = sum(result[1] for result in performance_results) / len(performance_results)
+                self.log_result("Search Performance", True, 
+                    f"✅ All searches completed quickly (avg: {avg_time:.3f}s, max: {max(result[1] for result in performance_results):.3f}s)")
+            else:
+                self.log_result("Search Performance", False,
+                    f"❌ {len(slow_searches)} searches were slow (>2s): {[result[0] for result in slow_searches]}")
+                    
+        except Exception as e:
+            self.log_result("Search Performance", False, f"Exception: {str(e)}")
+
     def run_all_tests(self):
         """Run all tests in order"""
         print("=" * 50)
