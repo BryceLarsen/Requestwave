@@ -189,9 +189,9 @@ class NewFeaturesAPITester:
             
             if response.status_code == 200:
                 data = response.json()
-                if "message" in data and "current_show" in data:
-                    self.current_show_id = data["current_show"]["id"]
-                    self.log_result("Start Show", True, f"Started show: {data['current_show']['name']}")
+                if "message" in data and "show" in data:
+                    self.current_show_id = data["show"]["id"]
+                    self.log_result("Start Show", True, f"Started show: {data['show']['name']}")
                 else:
                     self.log_result("Start Show", False, f"Unexpected response structure: {data}")
             else:
