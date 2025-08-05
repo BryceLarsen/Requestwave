@@ -1213,7 +1213,7 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
     if profile_data.website is not None:
         update_data["website"] = profile_data.website
     
-    # NEW: Update payment usernames
+    # Update payment usernames
     if profile_data.paypal_username is not None:
         # Clean PayPal username (remove @ if present)
         paypal_username = profile_data.paypal_username.strip()
@@ -1227,6 +1227,28 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
         if venmo_username.startswith('@'):
             venmo_username = venmo_username[1:]
         update_data["venmo_username"] = venmo_username
+    
+    # NEW: Update social media fields
+    if profile_data.instagram_username is not None:
+        instagram_username = profile_data.instagram_username.strip()
+        if instagram_username.startswith('@'):
+            instagram_username = instagram_username[1:]
+        update_data["instagram_username"] = instagram_username
+    
+    if profile_data.facebook_username is not None:
+        update_data["facebook_username"] = profile_data.facebook_username.strip()
+    
+    if profile_data.tiktok_username is not None:
+        tiktok_username = profile_data.tiktok_username.strip()
+        if tiktok_username.startswith('@'):
+            tiktok_username = tiktok_username[1:]
+        update_data["tiktok_username"] = tiktok_username
+    
+    if profile_data.spotify_artist_url is not None:
+        update_data["spotify_artist_url"] = profile_data.spotify_artist_url.strip()
+    
+    if profile_data.apple_music_artist_url is not None:
+        update_data["apple_music_artist_url"] = profile_data.apple_music_artist_url.strip()
     
     if update_data:
         await db.musicians.update_one(
