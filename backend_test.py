@@ -5692,18 +5692,21 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
 if __name__ == "__main__":
     tester = RequestWaveAPITester()
     
-    # Run Social Media Fields Tests as requested in the review
-    success = tester.run_social_media_fields_tests()
+    # Run Decade Functionality Tests as requested in the review
+    success = tester.run_decade_functionality_tests()
     
     if success:
-        print("\n🎉 Social media fields testing completed successfully!")
-        print("✅ All 7 social media fields are working correctly in the public musician endpoint")
-        print("✅ The fix for social media links in post-request popup is working")
-        print("✅ Fields return proper values or null without causing frontend errors")
-        print("✅ Backend changes don't break existing functionality")
-        print("✅ The audience interface can now access social media data for the post-request modal")
+        print("\n🎉 Decade functionality testing completed successfully!")
+        print("✅ Song creation automatically calculates decades from years")
+        print("✅ Song updates recalculate decades when year changes")
+        print("✅ Filter options include decades array with available decades")
+        print("✅ Songs can be filtered by decade parameter")
+        print("✅ CSV uploads automatically calculate decades")
+        print("✅ Playlist imports automatically calculate decades")
+        print("✅ Batch enrichment updates decades when years are added")
+        print("✅ All decade calculation edge cases work correctly")
         exit(0)
     else:
-        print(f"\n💥 SOCIAL MEDIA FIELDS ISSUES FOUND: {tester.results['failed']} problems detected!")
-        print("❌ The social media fields fix needs attention before the post-request popup will work correctly")
+        print(f"\n💥 DECADE FUNCTIONALITY ISSUES FOUND: {tester.results['failed']} problems detected!")
+        print("❌ The decade functionality needs attention before it can be considered fully working")
         exit(1)
