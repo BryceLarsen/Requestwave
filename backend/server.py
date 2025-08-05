@@ -1871,12 +1871,18 @@ async def update_song(song_id: str, song_data: SongCreate, musician_id: str = De
 
 @api_router.delete("/songs/{song_id}")
 async def delete_song(song_id: str, musician_id: str = Depends(get_current_musician)):
-    # Verify song belongs to musician
-    result = await db.songs.delete_one({"id": song_id, "musician_id": musician_id})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Song not found")
-    
-    return {"message": "Song deleted successfully"}
+    try:
+        # Verify song belongs to musician
+        result = await db.songs.delete_one({"id": song_id, "musician_id": musician_id})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Song not found")
+        
+        return {"message": "Song deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting song: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting song: {str(e)}")
 
 @api_router.get("/musicians/{slug}/songs", response_model=List[Song])
 async def get_musician_songs(
