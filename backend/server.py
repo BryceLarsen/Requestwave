@@ -1189,6 +1189,21 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
     if profile_data.website is not None:
         update_data["website"] = profile_data.website
     
+    # NEW: Update payment usernames
+    if profile_data.paypal_username is not None:
+        # Clean PayPal username (remove @ if present)
+        paypal_username = profile_data.paypal_username.strip()
+        if paypal_username.startswith('@'):
+            paypal_username = paypal_username[1:]
+        update_data["paypal_username"] = paypal_username
+    
+    if profile_data.venmo_username is not None:
+        # Clean Venmo username (remove @ if present)
+        venmo_username = profile_data.venmo_username.strip()
+        if venmo_username.startswith('@'):
+            venmo_username = venmo_username[1:]
+        update_data["venmo_username"] = venmo_username
+    
     if update_data:
         await db.musicians.update_one(
             {"id": musician_id},
