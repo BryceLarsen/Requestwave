@@ -1884,6 +1884,46 @@ async def delete_song(song_id: str, musician_id: str = Depends(get_current_music
         logger.error(f"Error deleting song: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error deleting song: {str(e)}")
 
+# NEW: Hide/Show song endpoint
+@api_router.put("/songs/{song_id}/toggle-visibility")
+async def toggle_song_visibility(
+    song_id: str,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Toggle song visibility (hide/show from audience)"""
+    try:
+        # Verify song belongs to musician
+        song = await db.songs.find_one({
+            "id": song_id,
+            "musician_id": musician_id
+        })
+        
+        if not song:
+            raise HTTPException(status_code=404, detail="Song not found")
+        
+        # Toggle hidden status
+        new_hidden_status = not song.get("hidden", False)
+        
+        await db.songs.update_one(
+            {"id": song_id},
+            {"$set": {"hidden": new_hidden_status}}
+        )
+        
+        action = "hidden" if new_hidden_status else "shown"
+        logger.info(f"Song {song_id} {action} by musician {musician_id}")
+        
+        return {
+            "success": True,
+            "message": f"Song {action} successfully",
+            "hidden": new_hidden_status
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error toggling song visibility: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error toggling song visibility: {str(e)}")
+
 @api_router.get("/musicians/{slug}/songs", response_model=List[Song])
 async def get_musician_songs(
     slug: str,
