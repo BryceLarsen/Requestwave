@@ -3981,6 +3981,12 @@ class RequestWaveAPITester:
         # Musician profile tests
         self.test_get_musician_by_slug()
         
+        # PRIORITY 1 & 2: Social Media Fields Tests for Post-Request Modal Fix
+        print("\n" + "🎯" * 20 + " SOCIAL MEDIA FIELDS TESTING (POST-REQUEST FIX) " + "🎯" * 20)
+        self.test_musician_public_endpoint_social_media_fields()
+        self.test_musician_public_endpoint_null_social_media_fields()
+        self.test_social_media_integration_flow()
+        
         # Advanced filtering tests
         self.test_advanced_filtering()
         
