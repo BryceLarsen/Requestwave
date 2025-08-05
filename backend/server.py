@@ -2898,6 +2898,108 @@ async def get_requests_grouped_by_show(
         logger.error(f"Error getting grouped requests: {str(e)}")
         raise HTTPException(status_code=500, detail="Error getting grouped requests")
 
+# NEW: Enhanced show management with active show tracking
+@api_router.post("/shows/start")
+async def start_show(
+    show_data: dict,  # {"name": "Show Name"}
+    musician_id: str = Depends(get_current_musician)
+):
+    """Start a new show - all subsequent requests will be assigned to this show"""
+    try:
+        show_name = show_data.get("name", "").strip()
+        if not show_name:
+            raise HTTPException(status_code=400, detail="Show name is required")
+        
+        # Create show record
+        show_dict = {
+            "id": str(uuid.uuid4()),
+            "musician_id": musician_id,
+            "name": show_name,
+            "date": datetime.utcnow().strftime("%Y-%m-%d"),
+            "venue": show_data.get("venue", ""),
+            "notes": show_data.get("notes", ""),
+            "created_at": datetime.utcnow()
+        }
+        
+        await db.shows.insert_one(show_dict)
+        
+        # Update musician's current active show
+        await db.musicians.update_one(
+            {"id": musician_id},
+            {"$set": {
+                "current_show_id": show_dict["id"],
+                "current_show_name": show_name
+            }}
+        )
+        
+        logger.info(f"Started show '{show_name}' for musician {musician_id}")
+        return {
+            "success": True,
+            "message": f"Started show: {show_name}",
+            "show": Show(**show_dict)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error starting show: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error starting show")
+
+@api_router.post("/shows/stop")
+async def stop_show(
+    musician_id: str = Depends(get_current_musician)
+):
+    """Stop the current active show"""
+    try:
+        # Clear musician's current active show
+        await db.musicians.update_one(
+            {"id": musician_id},
+            {"$set": {
+                "current_show_id": None,
+                "current_show_name": None
+            }}
+        )
+        
+        logger.info(f"Stopped active show for musician {musician_id}")
+        return {
+            "success": True,
+            "message": "Show stopped. New requests will go to main requests list."
+        }
+        
+    except Exception as e:
+        logger.error(f"Error stopping show: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error stopping show")
+
+@api_router.get("/shows/current")
+async def get_current_show(
+    musician_id: str = Depends(get_current_musician)
+):
+    """Get the currently active show"""
+    try:
+        musician = await db.musicians.find_one({"id": musician_id})
+        
+        if not musician:
+            raise HTTPException(status_code=404, detail="Musician not found")
+        
+        current_show_name = musician.get("current_show_name")
+        current_show_id = musician.get("current_show_id")
+        
+        if current_show_id:
+            show = await db.shows.find_one({"id": current_show_id})
+            if show:
+                return {
+                    "active": True,
+                    "show": Show(**show)
+                }
+        
+        return {"active": False, "show": None}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting current show: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error getting current show")
+
 # Health check
 @api_router.get("/health")
 async def health_check():
