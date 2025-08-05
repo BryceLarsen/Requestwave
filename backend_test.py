@@ -1154,6 +1154,528 @@ class RequestWaveAPITester:
         except Exception as e:
             self.log_result("Phase 2 Request Count Field", False, f"Exception: {str(e)}")
 
+    def test_csv_upload_auto_enrichment_empty_metadata(self):
+        """Test CSV Upload Auto-enrichment with completely empty metadata"""
+        try:
+            if not self.auth_token:
+                self.log_result("CSV Auto-enrichment - Empty Metadata", False, "No auth token available")
+                return
+            
+            print("🔍 Testing CSV upload with auto_enrich=true for songs with empty metadata")
+            
+            with open('/app/test_songs_auto_enrich_empty.csv', 'rb') as f:
+                files = {'file': ('test_songs_auto_enrich_empty.csv', f, 'text/csv')}
+                data = {'auto_enrich': 'true'}
+                response = self.make_request("POST", "/songs/csv/upload", data=data, files=files)
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"📊 Auto-enrichment response: {json.dumps(data, indent=2)}")
+                
+                if "success" in data and data["success"] and "songs_added" in data:
+                    if data["songs_added"] > 0:
+                        # Check if enrichment message is present
+                        message = data.get("message", "")
+                        if "auto-enriched" in message.lower():
+                            self.log_result("CSV Auto-enrichment - Empty Metadata", True, f"Successfully uploaded and auto-enriched {data['songs_added']} songs: {message}")
+                            
+                            # Verify songs were enriched in database
+                            songs_response = self.make_request("GET", "/songs")
+                            if songs_response.status_code == 200:
+                                songs = songs_response.json()
+                                enriched_songs = [song for song in songs if "auto-enriched" in song.get("notes", "").lower()]
+                                
+                                if enriched_songs:
+                                    print(f"🎵 Found {len(enriched_songs)} auto-enriched songs:")
+                                    for song in enriched_songs[:3]:
+                                        print(f"   • '{song['title']}' by '{song['artist']}' - genres: {song.get('genres', [])}, moods: {song.get('moods', [])}, year: {song.get('year', 'N/A')}")
+                                    
+                                    # Check if metadata was actually filled
+                                    fully_enriched = [song for song in enriched_songs if song.get('genres') and song.get('moods') and song.get('year')]
+                                    if fully_enriched:
+                                        self.log_result("CSV Auto-enrichment - Database Verification", True, f"✅ {len(fully_enriched)} songs have complete metadata after enrichment")
+                                    else:
+                                        self.log_result("CSV Auto-enrichment - Database Verification", False, "❌ Songs were not fully enriched with metadata")
+                                else:
+                                    self.log_result("CSV Auto-enrichment - Database Verification", False, "❌ No auto-enriched songs found in database")
+                        else:
+                            self.log_result("CSV Auto-enrichment - Empty Metadata", False, f"❌ No enrichment message in response: {message}")
+                    else:
+                        self.log_result("CSV Auto-enrichment - Empty Metadata", False, f"❌ No songs were uploaded: {data}")
+                else:
+                    self.log_result("CSV Auto-enrichment - Empty Metadata", False, f"❌ Unexpected response structure: {data}")
+            else:
+                self.log_result("CSV Auto-enrichment - Empty Metadata", False, f"❌ Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("CSV Auto-enrichment - Empty Metadata", False, f"❌ Exception: {str(e)}")
+
+    def test_csv_upload_auto_enrichment_partial_metadata(self):
+        """Test CSV Upload Auto-enrichment with partial metadata (preserve existing data)"""
+        try:
+            if not self.auth_token:
+                self.log_result("CSV Auto-enrichment - Partial Metadata", False, "No auth token available")
+                return
+            
+            print("🔍 Testing CSV upload with auto_enrich=true for songs with partial metadata")
+            
+            with open('/app/test_songs_auto_enrich_partial.csv', 'rb') as f:
+                files = {'file': ('test_songs_auto_enrich_partial.csv', f, 'text/csv')}
+                data = {'auto_enrich': 'true'}
+                response = self.make_request("POST", "/songs/csv/upload", data=data, files=files)
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"📊 Partial enrichment response: {json.dumps(data, indent=2)}")
+                
+                if "success" in data and data["success"] and "songs_added" in data:
+                    if data["songs_added"] > 0:
+                        # Verify songs in database preserve existing data
+                        songs_response = self.make_request("GET", "/songs")
+                        if songs_response.status_code == 200:
+                            songs = songs_response.json()
+                            partial_songs = [song for song in songs if song.get('title') in ['Good 4 U', 'Levitating', 'Stay']]
+                            
+                            if partial_songs:
+                                preservation_check = True
+                                preservation_details = []
+                                
+                                for song in partial_songs:
+                                    title = song.get('title')
+                                    if title == 'Good 4 U':
+                                        # Should preserve Pop genre and 2021 year, fill missing mood
+                                        if 'Pop' in song.get('genres', []) and song.get('year') == 2021 and song.get('moods'):
+                                            preservation_details.append(f"✅ '{title}': preserved Pop genre and 2021 year, filled moods")
+                                        else:
+                                            preservation_check = False
+                                            preservation_details.append(f"❌ '{title}': failed to preserve existing data or fill missing")
+                                    elif title == 'Levitating':
+                                        # Should preserve Upbeat mood, fill missing genre and year
+                                        if 'Upbeat' in song.get('moods', []) and song.get('genres') and song.get('year'):
+                                            preservation_details.append(f"✅ '{title}': preserved Upbeat mood, filled genre and year")
+                                        else:
+                                            preservation_check = False
+                                            preservation_details.append(f"❌ '{title}': failed to preserve existing mood or fill missing")
+                                    elif title == 'Stay':
+                                        # Should preserve 2021 year, fill missing genre and mood
+                                        if song.get('year') == 2021 and song.get('genres') and song.get('moods'):
+                                            preservation_details.append(f"✅ '{title}': preserved 2021 year, filled genre and moods")
+                                        else:
+                                            preservation_check = False
+                                            preservation_details.append(f"❌ '{title}': failed to preserve existing year or fill missing")
+                                
+                                if preservation_check:
+                                    self.log_result("CSV Auto-enrichment - Partial Metadata", True, f"✅ Successfully preserved existing data and filled missing fields: {'; '.join(preservation_details)}")
+                                else:
+                                    self.log_result("CSV Auto-enrichment - Partial Metadata", False, f"❌ Data preservation failed: {'; '.join(preservation_details)}")
+                            else:
+                                self.log_result("CSV Auto-enrichment - Partial Metadata", False, "❌ Partial metadata test songs not found in database")
+                        else:
+                            self.log_result("CSV Auto-enrichment - Partial Metadata", False, f"Could not verify songs in database: {songs_response.status_code}")
+                    else:
+                        self.log_result("CSV Auto-enrichment - Partial Metadata", False, f"❌ No songs were uploaded: {data}")
+                else:
+                    self.log_result("CSV Auto-enrichment - Partial Metadata", False, f"❌ Unexpected response structure: {data}")
+            else:
+                self.log_result("CSV Auto-enrichment - Partial Metadata", False, f"❌ Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("CSV Auto-enrichment - Partial Metadata", False, f"❌ Exception: {str(e)}")
+
+    def test_csv_upload_auto_enrichment_complete_metadata(self):
+        """Test CSV Upload Auto-enrichment with complete metadata (no enrichment needed)"""
+        try:
+            if not self.auth_token:
+                self.log_result("CSV Auto-enrichment - Complete Metadata", False, "No auth token available")
+                return
+            
+            print("🔍 Testing CSV upload with auto_enrich=true for songs with complete metadata")
+            
+            with open('/app/test_songs_auto_enrich_complete.csv', 'rb') as f:
+                files = {'file': ('test_songs_auto_enrich_complete.csv', f, 'text/csv')}
+                data = {'auto_enrich': 'true'}
+                response = self.make_request("POST", "/songs/csv/upload", data=data, files=files)
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"📊 Complete metadata response: {json.dumps(data, indent=2)}")
+                
+                if "success" in data and data["success"] and "songs_added" in data:
+                    if data["songs_added"] > 0:
+                        message = data.get("message", "")
+                        # Should show 0 songs auto-enriched since all have complete metadata
+                        if "0 songs auto-enriched" in message or "auto-enriched" not in message:
+                            self.log_result("CSV Auto-enrichment - Complete Metadata", True, f"✅ Correctly skipped enrichment for complete songs: {message}")
+                            
+                            # Verify original data is preserved
+                            songs_response = self.make_request("GET", "/songs")
+                            if songs_response.status_code == 200:
+                                songs = songs_response.json()
+                                complete_songs = [song for song in songs if song.get('title') in ['Watermelon Sugar', 'Drivers License']]
+                                
+                                if complete_songs:
+                                    preservation_check = True
+                                    for song in complete_songs:
+                                        title = song.get('title')
+                                        if title == 'Watermelon Sugar':
+                                            if not ('Pop' in song.get('genres', []) and 'Upbeat' in song.get('moods', []) and song.get('year') == 2020):
+                                                preservation_check = False
+                                        elif title == 'Drivers License':
+                                            if not ('Pop' in song.get('genres', []) and 'Melancholy' in song.get('moods', []) and song.get('year') == 2021):
+                                                preservation_check = False
+                                    
+                                    if preservation_check:
+                                        self.log_result("CSV Auto-enrichment - Complete Metadata Preservation", True, "✅ All original metadata preserved correctly")
+                                    else:
+                                        self.log_result("CSV Auto-enrichment - Complete Metadata Preservation", False, "❌ Original metadata was modified unexpectedly")
+                                else:
+                                    self.log_result("CSV Auto-enrichment - Complete Metadata Preservation", False, "❌ Complete metadata test songs not found")
+                        else:
+                            self.log_result("CSV Auto-enrichment - Complete Metadata", False, f"❌ Should not have enriched complete songs: {message}")
+                    else:
+                        self.log_result("CSV Auto-enrichment - Complete Metadata", False, f"❌ No songs were uploaded: {data}")
+                else:
+                    self.log_result("CSV Auto-enrichment - Complete Metadata", False, f"❌ Unexpected response structure: {data}")
+            else:
+                self.log_result("CSV Auto-enrichment - Complete Metadata", False, f"❌ Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("CSV Auto-enrichment - Complete Metadata", False, f"❌ Exception: {str(e)}")
+
+    def test_csv_upload_auto_enrichment_disabled(self):
+        """Test CSV Upload with auto_enrich=false (should work like before)"""
+        try:
+            if not self.auth_token:
+                self.log_result("CSV Auto-enrichment - Disabled", False, "No auth token available")
+                return
+            
+            print("🔍 Testing CSV upload with auto_enrich=false (default behavior)")
+            
+            with open('/app/test_songs_auto_enrich_empty.csv', 'rb') as f:
+                files = {'file': ('test_songs_auto_enrich_empty.csv', f, 'text/csv')}
+                data = {'auto_enrich': 'false'}
+                response = self.make_request("POST", "/songs/csv/upload", data=data, files=files)
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"📊 Disabled enrichment response: {json.dumps(data, indent=2)}")
+                
+                if "success" in data and data["success"] and "songs_added" in data:
+                    message = data.get("message", "")
+                    # Should NOT mention auto-enrichment
+                    if "auto-enriched" not in message.lower():
+                        self.log_result("CSV Auto-enrichment - Disabled", True, f"✅ No enrichment performed as expected: {message}")
+                        
+                        # Verify songs have empty metadata (not enriched)
+                        songs_response = self.make_request("GET", "/songs")
+                        if songs_response.status_code == 200:
+                            songs = songs_response.json()
+                            recent_songs = [song for song in songs if song.get('title') in ['As It Was', 'Heat Waves', 'Blinding Lights'] and "auto-enriched" not in song.get('notes', '')]
+                            
+                            if recent_songs:
+                                empty_metadata_count = 0
+                                for song in recent_songs:
+                                    if not song.get('genres') and not song.get('moods') and not song.get('year'):
+                                        empty_metadata_count += 1
+                                
+                                if empty_metadata_count > 0:
+                                    self.log_result("CSV Auto-enrichment - Disabled Verification", True, f"✅ {empty_metadata_count} songs have empty metadata as expected (no enrichment)")
+                                else:
+                                    self.log_result("CSV Auto-enrichment - Disabled Verification", False, "❌ Songs appear to have been enriched despite auto_enrich=false")
+                            else:
+                                self.log_result("CSV Auto-enrichment - Disabled Verification", False, "❌ Test songs not found in database")
+                    else:
+                        self.log_result("CSV Auto-enrichment - Disabled", False, f"❌ Enrichment was performed despite auto_enrich=false: {message}")
+                else:
+                    self.log_result("CSV Auto-enrichment - Disabled", False, f"❌ Unexpected response structure: {data}")
+            else:
+                self.log_result("CSV Auto-enrichment - Disabled", False, f"❌ Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("CSV Auto-enrichment - Disabled", False, f"❌ Exception: {str(e)}")
+
+    def test_csv_upload_auto_enrichment_authentication(self):
+        """Test CSV Upload Auto-enrichment requires authentication"""
+        try:
+            # Save current token
+            original_token = self.auth_token
+            
+            # Test without token
+            self.auth_token = None
+            
+            with open('/app/test_songs_auto_enrich_empty.csv', 'rb') as f:
+                files = {'file': ('test_songs_auto_enrich_empty.csv', f, 'text/csv')}
+                data = {'auto_enrich': 'true'}
+                response = self.make_request("POST", "/songs/csv/upload", data=data, files=files)
+            
+            if response.status_code in [401, 403]:
+                self.log_result("CSV Auto-enrichment Authentication", True, f"✅ Correctly rejected request without auth token (status: {response.status_code})")
+            else:
+                self.log_result("CSV Auto-enrichment Authentication", False, f"❌ Should have returned 401/403, got: {response.status_code}")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+        except Exception as e:
+            self.log_result("CSV Auto-enrichment Authentication", False, f"❌ Exception: {str(e)}")
+            # Restore token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_batch_enrichment_all_songs(self):
+        """Test Batch Enrichment for all songs needing metadata"""
+        try:
+            if not self.auth_token:
+                self.log_result("Batch Enrichment - All Songs", False, "No auth token available")
+                return
+            
+            print("🔍 Testing batch enrichment for all songs needing metadata")
+            
+            # First, create some songs with missing metadata
+            test_songs = [
+                {"title": "Batch Test Song 1", "artist": "Test Artist 1", "genres": [], "moods": [], "year": None, "notes": "Missing all metadata"},
+                {"title": "Batch Test Song 2", "artist": "Test Artist 2", "genres": ["Pop"], "moods": [], "year": None, "notes": "Missing moods and year"},
+                {"title": "Batch Test Song 3", "artist": "Test Artist 3", "genres": ["Rock"], "moods": ["Energetic"], "year": 2020, "notes": "Complete metadata"}
+            ]
+            
+            created_song_ids = []
+            for song_data in test_songs:
+                response = self.make_request("POST", "/songs", song_data)
+                if response.status_code == 200:
+                    created_song_ids.append(response.json()["id"])
+                    print(f"📊 Created test song: {song_data['title']}")
+                else:
+                    self.log_result("Batch Enrichment - Create Test Songs", False, f"Failed to create song: {song_data['title']}")
+                    return
+            
+            # Test batch enrichment without specifying song IDs (enrich all)
+            response = self.make_request("POST", "/songs/batch-enrich")
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"📊 Batch enrichment response: {json.dumps(data, indent=2)}")
+                
+                if "success" in data and data["success"]:
+                    processed = data.get("processed", 0)
+                    enriched = data.get("enriched", 0)
+                    errors = data.get("errors", [])
+                    message = data.get("message", "")
+                    
+                    if processed > 0:
+                        self.log_result("Batch Enrichment - All Songs", True, f"✅ Successfully processed {processed} songs, enriched {enriched} songs: {message}")
+                        
+                        # Verify enrichment in database
+                        songs_response = self.make_request("GET", "/songs")
+                        if songs_response.status_code == 200:
+                            songs = songs_response.json()
+                            batch_enriched_songs = [song for song in songs if "batch auto-enriched" in song.get("notes", "").lower()]
+                            
+                            if batch_enriched_songs:
+                                print(f"🎵 Found {len(batch_enriched_songs)} batch-enriched songs:")
+                                for song in batch_enriched_songs[:3]:
+                                    print(f"   • '{song['title']}' by '{song['artist']}' - genres: {song.get('genres', [])}, moods: {song.get('moods', [])}, year: {song.get('year', 'N/A')}")
+                                
+                                self.log_result("Batch Enrichment - Database Verification", True, f"✅ {len(batch_enriched_songs)} songs were batch-enriched in database")
+                            else:
+                                self.log_result("Batch Enrichment - Database Verification", False, "❌ No batch-enriched songs found in database")
+                        
+                        if errors:
+                            self.log_result("Batch Enrichment - Error Handling", True, f"✅ Properly reported {len(errors)} enrichment errors: {errors[:2]}")
+                    else:
+                        # Check if no songs needed enrichment
+                        if "no songs found" in message.lower():
+                            self.log_result("Batch Enrichment - All Songs", True, f"✅ Correctly reported no songs need enrichment: {message}")
+                        else:
+                            self.log_result("Batch Enrichment - All Songs", False, f"❌ No songs processed but unclear why: {message}")
+                else:
+                    self.log_result("Batch Enrichment - All Songs", False, f"❌ Unexpected response structure: {data}")
+            else:
+                self.log_result("Batch Enrichment - All Songs", False, f"❌ Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Batch Enrichment - All Songs", False, f"❌ Exception: {str(e)}")
+
+    def test_batch_enrichment_specific_songs(self):
+        """Test Batch Enrichment for specific song IDs"""
+        try:
+            if not self.auth_token:
+                self.log_result("Batch Enrichment - Specific Songs", False, "No auth token available")
+                return
+            
+            print("🔍 Testing batch enrichment for specific song IDs")
+            
+            # Create test songs with missing metadata
+            test_songs = [
+                {"title": "Specific Song 1", "artist": "Specific Artist 1", "genres": [], "moods": [], "year": None, "notes": "For specific enrichment"},
+                {"title": "Specific Song 2", "artist": "Specific Artist 2", "genres": [], "moods": [], "year": None, "notes": "For specific enrichment"}
+            ]
+            
+            created_song_ids = []
+            for song_data in test_songs:
+                response = self.make_request("POST", "/songs", song_data)
+                if response.status_code == 200:
+                    song_id = response.json()["id"]
+                    created_song_ids.append(song_id)
+                    print(f"📊 Created specific test song: {song_data['title']} (ID: {song_id})")
+                else:
+                    self.log_result("Batch Enrichment - Create Specific Test Songs", False, f"Failed to create song: {song_data['title']}")
+                    return
+            
+            # Test batch enrichment with specific song IDs
+            request_data = {"song_ids": created_song_ids}
+            response = self.make_request("POST", "/songs/batch-enrich", request_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"📊 Specific batch enrichment response: {json.dumps(data, indent=2)}")
+                
+                if "success" in data and data["success"]:
+                    processed = data.get("processed", 0)
+                    enriched = data.get("enriched", 0)
+                    message = data.get("message", "")
+                    
+                    if processed == len(created_song_ids):
+                        self.log_result("Batch Enrichment - Specific Songs", True, f"✅ Successfully processed {processed} specific songs, enriched {enriched}: {message}")
+                        
+                        # Verify only the specified songs were enriched
+                        songs_response = self.make_request("GET", "/songs")
+                        if songs_response.status_code == 200:
+                            songs = songs_response.json()
+                            enriched_specific_songs = [song for song in songs if song["id"] in created_song_ids and "batch auto-enriched" in song.get("notes", "").lower()]
+                            
+                            if len(enriched_specific_songs) == enriched:
+                                self.log_result("Batch Enrichment - Specific Songs Verification", True, f"✅ Exactly {enriched} specified songs were enriched")
+                            else:
+                                self.log_result("Batch Enrichment - Specific Songs Verification", False, f"❌ Expected {enriched} enriched songs, found {len(enriched_specific_songs)}")
+                    else:
+                        self.log_result("Batch Enrichment - Specific Songs", False, f"❌ Expected to process {len(created_song_ids)} songs, processed {processed}")
+                else:
+                    self.log_result("Batch Enrichment - Specific Songs", False, f"❌ Unexpected response structure: {data}")
+            else:
+                self.log_result("Batch Enrichment - Specific Songs", False, f"❌ Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Batch Enrichment - Specific Songs", False, f"❌ Exception: {str(e)}")
+
+    def test_batch_enrichment_no_songs_needed(self):
+        """Test Batch Enrichment when no songs need enrichment"""
+        try:
+            if not self.auth_token:
+                self.log_result("Batch Enrichment - No Songs Needed", False, "No auth token available")
+                return
+            
+            print("🔍 Testing batch enrichment when no songs need enrichment")
+            
+            # Create a song with complete metadata
+            complete_song = {
+                "title": "Complete Song",
+                "artist": "Complete Artist",
+                "genres": ["Pop"],
+                "moods": ["Upbeat"],
+                "year": 2023,
+                "notes": "Already complete"
+            }
+            
+            response = self.make_request("POST", "/songs", complete_song)
+            if response.status_code == 200:
+                print(f"📊 Created complete song: {complete_song['title']}")
+            else:
+                self.log_result("Batch Enrichment - Create Complete Song", False, "Failed to create complete song")
+                return
+            
+            # Test batch enrichment (should find no songs needing enrichment)
+            response = self.make_request("POST", "/songs/batch-enrich")
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"📊 No songs needed response: {json.dumps(data, indent=2)}")
+                
+                if "success" in data and data["success"]:
+                    message = data.get("message", "")
+                    processed = data.get("processed", 0)
+                    enriched = data.get("enriched", 0)
+                    
+                    if "no songs found" in message.lower() or (processed == 0 and enriched == 0):
+                        self.log_result("Batch Enrichment - No Songs Needed", True, f"✅ Correctly reported no songs need enrichment: {message}")
+                    else:
+                        self.log_result("Batch Enrichment - No Songs Needed", False, f"❌ Should have reported no songs needed: {message}")
+                else:
+                    self.log_result("Batch Enrichment - No Songs Needed", False, f"❌ Unexpected response structure: {data}")
+            else:
+                self.log_result("Batch Enrichment - No Songs Needed", False, f"❌ Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Batch Enrichment - No Songs Needed", False, f"❌ Exception: {str(e)}")
+
+    def test_batch_enrichment_authentication(self):
+        """Test Batch Enrichment requires authentication"""
+        try:
+            # Save current token
+            original_token = self.auth_token
+            
+            # Test without token
+            self.auth_token = None
+            response = self.make_request("POST", "/songs/batch-enrich")
+            
+            if response.status_code in [401, 403]:
+                self.log_result("Batch Enrichment Authentication - No Token", True, f"✅ Correctly rejected request without auth token (status: {response.status_code})")
+            else:
+                self.log_result("Batch Enrichment Authentication - No Token", False, f"❌ Should have returned 401/403, got: {response.status_code}")
+            
+            # Test with invalid token
+            self.auth_token = "invalid_token_12345"
+            response = self.make_request("POST", "/songs/batch-enrich")
+            
+            if response.status_code == 401:
+                self.log_result("Batch Enrichment Authentication - Invalid Token", True, "✅ Correctly rejected request with invalid token")
+            else:
+                self.log_result("Batch Enrichment Authentication - Invalid Token", False, f"❌ Should have returned 401, got: {response.status_code}")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+        except Exception as e:
+            self.log_result("Batch Enrichment Authentication", False, f"❌ Exception: {str(e)}")
+            # Restore token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_batch_enrichment_response_format(self):
+        """Test Batch Enrichment response format matches specification"""
+        try:
+            if not self.auth_token:
+                self.log_result("Batch Enrichment Response Format", False, "No auth token available")
+                return
+            
+            print("🔍 Testing batch enrichment response format")
+            
+            # Test batch enrichment and check response format
+            response = self.make_request("POST", "/songs/batch-enrich")
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"📊 Response format check: {json.dumps(data, indent=2)}")
+                
+                # Check required fields according to specification
+                required_fields = ["success", "message", "processed", "enriched", "errors"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if not missing_fields:
+                    # Check field types
+                    type_checks = [
+                        (isinstance(data["success"], bool), "success should be boolean"),
+                        (isinstance(data["message"], str), "message should be string"),
+                        (isinstance(data["processed"], int), "processed should be integer"),
+                        (isinstance(data["enriched"], int), "enriched should be integer"),
+                        (isinstance(data["errors"], list), "errors should be list")
+                    ]
+                    
+                    failed_type_checks = [msg for check, msg in type_checks if not check]
+                    
+                    if not failed_type_checks:
+                        self.log_result("Batch Enrichment Response Format", True, f"✅ Response format matches specification: {list(data.keys())}")
+                    else:
+                        self.log_result("Batch Enrichment Response Format", False, f"❌ Type check failures: {failed_type_checks}")
+                else:
+                    self.log_result("Batch Enrichment Response Format", False, f"❌ Missing required fields: {missing_fields}")
+            else:
+                self.log_result("Batch Enrichment Response Format", False, f"❌ Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Batch Enrichment Response Format", False, f"❌ Exception: {str(e)}")
+
     def test_spotify_metadata_autofill_basic(self):
         """Test Spotify Metadata Auto-fill Feature - Basic Functionality"""
         try:
