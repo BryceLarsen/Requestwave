@@ -2489,6 +2489,10 @@ async def upload_csv_songs(
                     enrichment_errors.append(f"Row {song_data['row_number']}: Error enriching '{song_data['title']}' by '{song_data['artist']}': {str(e)}")
                     logger.error(f"Error enriching metadata for '{song_dict['title']}': {str(e)}")
             
+            # Calculate decade from year
+            decade = calculate_decade(song_dict['year'])
+            song_dict['decade'] = decade
+            
             # Check for duplicates (same title and artist for this musician)
             existing = await db.songs.find_one({
                 "musician_id": musician_id,
