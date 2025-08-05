@@ -3165,12 +3165,15 @@ class RequestWaveAPITester:
 if __name__ == "__main__":
     tester = RequestWaveAPITester()
     
-    # Run NEW Spotify Metadata Auto-fill Feature tests as requested in the review
-    success = tester.run_spotify_metadata_tests()
+    # Run NEW CSV Auto-enrichment and Batch Enrichment Feature tests as requested in the review
+    success = tester.run_new_features_tests()
     
     if success:
-        print("\n🎉 All Spotify Metadata Auto-fill tests passed!")
+        print("\n🎉 All new feature tests passed!")
+        print("✅ CSV Auto-enrichment feature working correctly")
+        print("✅ Batch Enrichment feature working correctly")
+        print("✅ Spotify integration working with new credentials")
         exit(0)
     else:
-        print(f"\n💥 {tester.results['failed']} Spotify Metadata Auto-fill tests failed!")
+        print(f"\n💥 {tester.results['failed']} new feature tests failed!")
         exit(1)
