@@ -2351,13 +2351,14 @@ async def get_filter_options(slug: str):
             "genres": {"$addToSet": "$genres"},
             "artists": {"$addToSet": "$artist"},
             "moods": {"$addToSet": "$moods"},
-            "years": {"$addToSet": "$year"}
+            "years": {"$addToSet": "$year"},
+            "decades": {"$addToSet": "$decade"}  # NEW: Add decades
         }}
     ]
     
     result = await db.songs.aggregate(pipeline).to_list(1)
     if not result:
-        return {"genres": [], "artists": [], "moods": [], "years": []}
+        return {"genres": [], "artists": [], "moods": [], "years": [], "decades": []}
     
     data = result[0]
     
@@ -2372,11 +2373,15 @@ async def get_filter_options(slug: str):
         if mood_list:
             moods.extend(mood_list)
     
+    # Get decades (filter out None values)
+    decades = [d for d in data.get("decades", []) if d is not None]
+    
     return {
         "genres": sorted(list(set(genres))),
         "artists": sorted([a for a in data.get("artists", []) if a]),
         "moods": sorted(list(set(moods))),
-        "years": sorted([y for y in data.get("years", []) if y], reverse=True)
+        "years": sorted([y for y in data.get("years", []) if y], reverse=True),
+        "decades": sorted(list(set(decades)))  # NEW: Return available decades
     }
 
 # CSV Upload endpoints
