@@ -2016,22 +2016,13 @@ const MusicianDashboard = () => {
                   onChange={(e) => setSongForm({...songForm, notes: e.target.value})}
                   className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
                 />
-                <div className="md:col-span-2 flex space-x-4">
+                <div className="md:col-span-2">
                   <button
                     type="submit"
-                    className="flex-1 bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300"
+                    className="w-full bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300"
                   >
-                    {editingSong ? 'Update Song' : 'Add Song'}
+                    Add Song
                   </button>
-                  {editingSong && (
-                    <button
-                      type="button"
-                      onClick={cancelEdit}
-                      className="flex-1 bg-gray-600 hover:bg-gray-700 py-2 rounded-lg font-bold transition duration-300"
-                    >
-                      Cancel
-                    </button>
-                  )}
                 </div>
               </form>
             </div>
