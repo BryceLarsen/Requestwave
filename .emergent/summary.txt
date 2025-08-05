@@ -1,22 +1,19 @@
 <analysis>
-The AI engineer effectively followed an iterative development process, starting with an MVP and progressively adding complex features and addressing bugs. Initial focus was on core real-time request functionality and song management. Critical bugs, particularly related to JWT authentication and frontend session management, were identified and meticulously debugged through a combination of backend log analysis, direct API testing, and frontend browser inspection. The engineer ensured all explicit user requests, from CSV import and advanced filtering to subscription models and QR code generation, were integrated. The approach involved rapid iteration, direct application of playbooks (like Stripe), and continuous self-correction based on observed issues, demonstrating a robust problem-solving methodology in a complex full-stack environment. The engineer consistently logged thoughts and verified progress with screenshots and backend checks.
+The AI engineer effectively navigated a complex full-stack development trajectory, commencing with critical bug fixes related to frontend authentication and then transitioning into a phased feature development approach. Initial authentication issues and persistent playlist import bugs required iterative troubleshooting, including direct API testing, frontend state analysis, and extensive use of a  to pinpoint root causes (e.g., missing JWT headers, placeholder data returns). The engineer demonstrated adaptability by switching from full Spotify SDK integration to simpler web scraping, and then back to Client Credentials flow based on user feedback and technical feasibility for metadata extraction. Subsequently, the development shifted to implementing major enhancements for the artist dashboard, structured into three distinct phases: Song List Enhancements (filtering, batch editing, CSV export), Request Tracking & Popularity, and Analytics Dashboard. The process involved continuous backend and frontend testing, ensuring features were production-ready before moving to the next phase. The final task initiated was the automatic song metadata enrichment using Spotify API, which is currently in development.
 </analysis>
 
 <product_requirements>
-The RequestWave application connects live musicians with audiences. Musicians upload CSV song lists, edit/delete songs, and manage a real-time request queue with dedications and tips (Stripe integration). They receive notifications and subscribe for /month for a starter playlist. Audiences access via QR code, browse/filter songs, make requests with dedications and tips (Stripe). Core features include a responsive web app, authentication, real-time sync (polling initially, WebSocket planned), Stripe for payments, a song database (MongoDB), and QR code generation. The app was built incrementally, first focusing on core request flow, then adding CSV upload, comprehensive filtering (Genre, Artist, Mood, Year with AND logic, supporting multi-tag songs), forgot password, song editing, duplicate detection, profile management (including Venmo link), a freemium model (7-day unlimited trial, then 20 requests/month resetting on signup, /month for unlimited), mobile optimization, Pro design options (list view, color scheme, artist photo), and QR code download/print flyer options, along with Apple Music playlist import support.
+The RequestWave application facilitates real-time interaction between live musicians and their audience. Musicians manage song lists (CSV upload, manual add/edit/delete), handle real-time requests with dedications/tips (Stripe), and gain insights into popularity. Audiences can browse/filter songs via QR code, make requests, and tip. Key features include a responsive web app, JWT authentication, polling for real-time updates (future WebSocket), MongoDB for data, and QR code generation. The app supports comprehensive filtering (Genre, Artist, Mood, Year with AND logic), a freemium model (7-day trial, then 20 requests/month; /month for unlimited), mobile optimization, Pro design options (color, layout, artist photo), and playlist import (Spotify/Apple Music). Recent enhancements include advanced song list filtering, batch editing/deletion with CSV export for musicians, song popularity tracking, and an analytics dashboard displaying audience emails, top songs, and tip summaries. The current development focuses on auto-populating song metadata (genre, year, mood) using Spotify API for manual song entry and CSV uploads.
 </product_requirements>
 
 <key_technical_concepts>
-- **Full-stack Architecture:** React frontend, FastAPI backend, MongoDB database.
+- **Full-stack Architecture:** React frontend, FastAPI backend, MongoDB.
 - **Authentication:** JWT for musicians.
-- **Real-time Updates:** Polling mechanism, designed for future WebSocket upgrade.
-- **Database:** MongoDB for data storage, UUIDs for IDs.
-- **Payments:** Stripe integration for tips and subscriptions, using  library.
-- **File Processing:** CSV parsing for song imports using Pandas.
-- **Image Handling:** Base64 encoding for artist photos.
-- **QR Code Generation:** Using  library.
-- **Filtering:** Multi-tier filtering with AND logic and multi-tag support.
-- **Frontend State Management:** React Context for authentication.
+- **API Integration:** Stripe (), Spotify API (Client Credentials flow, ).
+- **Data Processing:** Pandas for CSV, , ,  for web scraping.
+- **Frontend:** React Context for auth, Tailwind CSS.
+- **Backend:** Pydantic models, FastAPI routing.
+- **Service Management:** Supervisor for process control.
 </key_technical_concepts>
 
 <code_architecture>
@@ -26,70 +23,71 @@ The application follows a standard full-stack structure:
 **Detailed Directory Structure:**
 
 
--   **/app/backend/server.py**: This is the core FastAPI backend application.
-    -   **Importance:** Handles all API endpoints for authentication, song management (CRUD, CSV import, playlist import), request queue, profile management, and Stripe integration. It manages data interaction with MongoDB.
+-   **/app/backend/server.py**: Core FastAPI backend.
+    -   **Importance:** Centralizes API endpoints for user authentication, song management (CRUD, CSV/playlist import, metadata enrichment), request queue, profile updates, and Stripe integration. Interacts with MongoDB.
     -   **Changes Made:**
-        -   Initial setup for user authentication (registration, login) and song management.
-        -   Added JWT authentication middleware with  fix.
-        -   Implemented endpoints for CSV song upload, including  for parsing.
-        -   Added  models and endpoints for musician profile management (stage name, Venmo, website, bio).
-        -   Implemented song editing and deletion endpoints with duplicate detection logic (title + artist).
-        -   Integrated Stripe payment processing (subscription creation, webhook handling, checkout status).
-        -   Added subscription-related models and logic for trial periods, request limits, and anniversary-based resets.
-        -   Modified request creation endpoint to enforce subscription limits.
-        -   Introduced design customization settings for Pro subscribers (color scheme, layout, artist photo) and corresponding endpoints.
-        -   Added QR code generation endpoints, converting URL to base64 image data.
-        -   Implemented playlist import endpoints for Spotify and Apple Music, including URL parsing and ID extraction.
+        -   Fixed JWT authentication handling.
+        -   Implemented  and  functions for web scraping song data.
+        -   Updated  to use scraping functions and handle song data extraction, including  return safety checks.
+        -   Added  to  model (Pydantic).
+        -   Modified  endpoint to increment  on song request.
+        -   Enhanced  endpoint to support  parameter for popularity.
+        -   Integrated Spotify Web API with Client Credentials flow for metadata search.
+        -   Added  endpoint to fetch genre, year, mood from Spotify for given title/artist.
 
--   **/app/backend/requirements.txt**: Lists Python dependencies for the backend.
-    -   **Importance:** Ensures all necessary libraries are installed for the FastAPI application.
-    -   **Changes Made:** Added , , , and updated  version.
+-   **/app/backend/requirements.txt**: Python dependencies.
+    -   **Importance:** Manages required libraries for backend operation.
+    -   **Changes Made:** Added , , , , , , .
 
--   **/app/backend/.env**: Contains backend environment variables.
-    -   **Importance:** Stores sensitive information like , , and .
-    -   **Changes Made:** Added  and  (from system env) and .
+-   **/app/backend/.env**: Backend environment variables.
+    -   **Importance:** Stores sensitive keys and configurations.
+    -   **Changes Made:** Added , , , , .
 
--   **/app/frontend/src/App.js**: The main React component for the frontend.
-    -   **Importance:** Contains the application's routing, global state (AuthContext), main UI components for musician and audience dashboards, and all frontend logic for interacting with the backend.
+-   **/app/frontend/src/App.js**: Main React component.
+    -   **Importance:** Manages routing, global state, UI for musician/audience dashboards, and all frontend logic for backend interaction.
     -   **Changes Made:**
-        -   Implemented Musician and Audience interfaces.
-        -   Added AuthContext for JWT-based authentication, handling login/logout, and token persistence.
-        -   Developed MusicianDashboard with tabs for Songs, Requests, and Profile.
-        -   Integrated CSV upload functionality with drag-and-drop.
-        -   Added forms and logic for manual song addition, editing, and deletion.
-        -   Implemented UI for real-time request queue.
-        -   Added profile editing forms (stage name, Venmo, website, bio).
-        -   Created the Forgot Password UI and handlers.
-        -   Integrated subscription status display, upgrade prompts, and Stripe checkout initiation.
-        -   Added Design tab for Pro subscribers with color scheme, layout, and artist photo upload options.
-        -   Implemented logic for toggling list/grid view and displaying artist photos based on settings.
-        -   Updated AudienceInterface for mobile optimization, responsive design, and applying dynamic design settings.
-        -   Added QR code download and print flyer buttons with a modal.
-        -   Implemented playlist import forms for Spotify and Apple Music, including URL input and platform selection.
-        -   Refined error handling and user feedback mechanisms across various features.
+        -   Implemented robust  for JWT.
+        -   Fixed  to correctly send JWT authentication headers.
+        -   Added state variables (, , , ) for song list enhancements.
+        -   Implemented , , , , ,  functions.
+        -   Integrated filtering UI (search bar, filter dropdowns), batch selection checkboxes, and batch editing/deletion controls into 's Songs tab.
+        -   Updated  to support sorting by popularity and other criteria.
+        -   Added  to re-fetch songs on  change.
+        -   Implemented display of  as an orange badge on song cards.
+        -   Added Analytics tab, state variables (, ), and fetch functions (, ).
+        -   Integrated  with subscription checks, visual Pro indicators (badge, button styling), and improved feedback messaging.
+        -   Added state () and function () for Spotify metadata auto-fill.
+        -   Introduced Auto-fill Info button to manual song entry form, after the Artist field.
 
--   **/app/frontend/src/App.css**: Contains global and component-specific styles.
-    -   **Importance:** Defines the visual theme and layout of the application, including Tailwind CSS integration.
-    -   **Changes Made:** Added styles for new UI elements like CSV upload, modals, subscription badges, design customization forms, and mobile responsiveness. Included visual effects like glass morphism and gradients.
-
--   **/app/frontend/.env**: Contains frontend environment variables.
-    -   **Importance:** Stores  for API calls.
-    -   **Changes Made:** Confirmed existing variables, no explicit modifications recorded in trajectory.
+-   **/app/frontend/src/App.css**: Global and component styles.
+    -   **Importance:** Defines the visual theme.
+    -   **Changes Made:** Includes styles for new UI elements (batch editing, filtering, analytics, Pro feature indicators, request count badges).
 </code_architecture>
 
 <pending_tasks>
-- Full integration of Spotify and Apple Music APIs to import actual song data (currently, it only parses the URL and extracts playlist ID, returning a coming soon message).
-- Resolution of the persistent frontend login/authentication state issue.
+- Full metadata extraction (genre, mood, year) from playlist imports for already imported songs.
+- Implementation of Audience-Side Tip Support (PayPal and custom Venmo.me links).
+- Frontend testing for the Phase 3 Analytics Dashboard.
+- CSV upload enhancement with optional auto-enrichment using Spotify API.
 </pending_tasks>
 
 <current_work>
-The AI engineer is currently debugging a critical and recurring issue where users are unable to log in or register, and the Forgot password functionality is also failing from the frontend. This issue persists despite backend APIs for login, registration, and password reset being confirmed as fully functional when tested directly via .
+The AI engineer is currently implementing the automatic song metadata enrichment feature. This involves integrating with the Spotify Web API (using Client Credentials flow) to fetch genre, year, and mood data based on song title and artist.
 
-The analysis indicates the root cause is likely in the **frontend's authentication state management or browser caching**, leading to sessions not being maintained, tokens not being properly stored/retrieved, or JavaScript errors preventing form execution. The engineer has previously attempted fixes related to  token persistence, enhanced authentication restoration on page refresh, and axios header management, which temporarily resolved a playlist import issue that was similarly authentication-related. However, the core login/registration problem has resurfaced and is a complete blocker for user interaction.
+The backend has been updated in  to:
+1.  Add  and  to .
+2.  Install  (added to ).
+3.  Implement Spotify client setup and metadata search functions.
+4.  Expose a new API endpoint  for fetching song metadata.
 
-The   is set to 24 hours, so token expiration itself is not the immediate cause. The engineer has performed various manual tests (screenshotting login page, attempting login/registration via  scripts, checking console errors, examining network requests) but the problem persists in the frontend. The last action was to confirm that backend APIs are indeed working and to re-examine the frontend login form code to identify the exact JavaScript or React state issue.
+On the frontend, in :
+1.  New state variables () have been added to manage the auto-fill process.
+2.  The  function has been created to call the new backend metadata search endpoint.
+3.  An Auto-fill Info button has been added to the manual song entry form, specifically positioned after the 'Artist' input field and before the 'Genres' field.
+
+The backend services have been restarted, and the frontend has been updated and restarted. The immediate next step is to test this newly implemented auto-fill functionality.
 </current_work>
 
 <optional_next_step>
-Investigate the frontend login form code and React context for JavaScript errors or state management issues preventing successful login/registration.
+Test the newly implemented auto-fill song metadata functionality for manual song entry.
 </optional_next_step>
