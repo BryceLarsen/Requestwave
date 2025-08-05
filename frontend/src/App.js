@@ -456,9 +456,12 @@ const MusicianDashboard = () => {
   const [profile, setProfile] = useState({
     name: '',
     email: '',
-    venmo_link: '',
+    venmo_link: '', // Keep for backward compatibility
     bio: '',
-    website: ''
+    website: '',
+    // NEW: Payment fields
+    paypal_username: '',
+    venmo_username: ''
   });
   const [profileError, setProfileError] = useState('');
 
