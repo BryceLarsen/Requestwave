@@ -326,7 +326,7 @@ class StripeSubscriptionTester:
             print(f"🔍 Testing live Stripe API integration")
             
             # Test creating another checkout session to verify live API key works
-            response = self.make_request("POST", "/subscription/upgrade")
+            response = self.make_request("POST", "/subscription/upgrade", {})
             
             if response.status_code == 200:
                 data = response.json()
