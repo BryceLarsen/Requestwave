@@ -542,9 +542,15 @@ const MusicianDashboard = () => {
     venmo_link: '', // Keep for backward compatibility
     bio: '',
     website: '',
-    // NEW: Payment fields
+    // Payment fields
     paypal_username: '',
-    venmo_username: ''
+    venmo_username: '',
+    // NEW: Social media fields
+    instagram_username: '',
+    facebook_username: '',
+    tiktok_username: '',
+    spotify_artist_url: '',
+    apple_music_artist_url: ''
   });
   const [profileError, setProfileError] = useState('');
 
