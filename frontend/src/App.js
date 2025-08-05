@@ -2665,10 +2665,6 @@ const MusicianDashboard = () => {
                     <p className="text-2xl font-bold text-purple-400">{analyticsData.totals.total_requests}</p>
                   </div>
                   <div className="bg-gray-700 rounded-lg p-4">
-                    <h3 className="text-sm font-medium text-gray-300">Total Tips</h3>
-                    <p className="text-2xl font-bold text-green-400">${analyticsData.totals.total_tips.toFixed(2)}</p>
-                  </div>
-                  <div className="bg-gray-700 rounded-lg p-4">
                     <h3 className="text-sm font-medium text-gray-300">Unique Requesters</h3>
                     <p className="text-2xl font-bold text-blue-400">{analyticsData.totals.unique_requesters}</p>
                   </div>
