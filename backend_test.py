@@ -5075,7 +5075,7 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
                 self.log_result("Stripe API Configuration", False, f"❌ CRITICAL: Stripe API key not configured")
             elif response.status_code == 200:
                 data = response.json()
-                if "checkout_url" in data and "stripe.com" in data["checkout_url"]:
+                if "url" in data and "stripe.com" in data["url"]:  # Correct field name is "url"
                     self.log_result("Stripe API Configuration", True, f"✅ Stripe API key properly configured and working with live API")
                 else:
                     self.log_result("Stripe API Configuration", False, f"❌ Stripe configured but not returning valid checkout URL")
