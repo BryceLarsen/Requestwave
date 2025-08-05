@@ -109,9 +109,8 @@ class RequestCreate(BaseModel):
     requester_name: str
     requester_email: str
     dedication: str = ""
-    # NEW: Optional tip information
-    tip_amount: Optional[float] = None
-    tip_platform: Optional[str] = None  # "paypal" or "venmo"
+    # NEW: Show grouping
+    show_name: Optional[str] = None
 
 class Request(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -122,10 +121,11 @@ class Request(BaseModel):
     requester_name: str
     requester_email: str
     dedication: str = ""
-    # NEW: Enhanced tip information
-    tip_amount: Optional[float] = None
-    tip_platform: Optional[str] = None  # "paypal" or "venmo"
-    status: str = "pending"  # pending, accepted, played, rejected
+    # NEW: Show grouping and tracking
+    show_name: Optional[str] = None
+    tip_clicked: bool = False
+    social_clicks: List[str] = []  # Track which social links were clicked
+    status: str = "pending"  # pending, accepted, played, rejected, archived
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 # NEW: Tip tracking model
