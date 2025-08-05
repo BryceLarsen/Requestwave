@@ -167,18 +167,30 @@ class MusicianProfile(BaseModel):
     venmo_link: Optional[str] = ""  # Keep for backward compatibility
     bio: Optional[str] = ""
     website: Optional[str] = ""
-    # NEW: Enhanced payment fields
+    # Payment fields
     paypal_username: Optional[str] = ""
     venmo_username: Optional[str] = ""
+    # NEW: Social media fields
+    instagram_username: Optional[str] = ""
+    facebook_username: Optional[str] = ""
+    tiktok_username: Optional[str] = ""
+    spotify_artist_url: Optional[str] = ""
+    apple_music_artist_url: Optional[str] = ""
 
 class ProfileUpdate(BaseModel):
     name: Optional[str] = None
     venmo_link: Optional[str] = None  # Keep for backward compatibility
     bio: Optional[str] = None
     website: Optional[str] = None
-    # NEW: Enhanced payment fields
+    # Payment fields
     paypal_username: Optional[str] = None
     venmo_username: Optional[str] = None
+    # NEW: Social media fields
+    instagram_username: Optional[str] = None
+    facebook_username: Optional[str] = None
+    tiktok_username: Optional[str] = None
+    spotify_artist_url: Optional[str] = None
+    apple_music_artist_url: Optional[str] = None
 
 class DesignSettings(BaseModel):
     color_scheme: str = "purple"  # purple, blue, green, red, orange
