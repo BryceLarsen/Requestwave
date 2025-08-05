@@ -103,6 +103,44 @@ class RequestCreate(BaseModel):
     requester_name: str
     requester_email: str
     dedication: str = ""
+    # NEW: Optional tip information
+    tip_amount: Optional[float] = None
+    tip_platform: Optional[str] = None  # "paypal" or "venmo"
+
+class Request(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    musician_id: str
+    song_id: str
+    requester_name: str
+    requester_email: str
+    dedication: str = ""
+    tip_amount: Optional[float] = None
+    tip_platform: Optional[str] = None
+    status: str = "pending"  # pending, accepted, played, rejected
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+# NEW: Tip tracking model
+class TipCreate(BaseModel):
+    amount: float
+    platform: str  # "paypal" or "venmo"
+    tipper_name: Optional[str] = None
+    message: Optional[str] = None
+
+class Tip(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    musician_id: str
+    amount: float
+    platform: str  # "paypal" or "venmo"
+    tipper_name: Optional[str] = None
+    message: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+# NEW: Payment link generation model
+class PaymentLinkResponse(BaseModel):
+    paypal_link: Optional[str] = None
+    venmo_link: Optional[str] = None
+    amount: float
+    message: Optional[str] = None
     tip_amount: float = 0.0
 
 class Request(BaseModel):
