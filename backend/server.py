@@ -954,6 +954,27 @@ async def scrape_apple_music_playlist(playlist_url: str) -> List[Dict[str, Any]]
             }
         ]
 
+def calculate_decade(year: Optional[int]) -> Optional[str]:
+    """Calculate decade string from year (e.g., 1975 -> "70's", 2003 -> "00's")"""
+    if year is None:
+        return None
+    
+    decade_year = (year // 10) * 10
+    if decade_year >= 2000:
+        decade_suffix = str(decade_year)[-2:]
+        if decade_suffix == "00":
+            return "00's"
+        elif decade_suffix == "10":
+            return "10's"
+        elif decade_suffix == "20":
+            return "20's"
+        else:
+            return f"{decade_suffix}'s"
+    else:
+        # For years before 2000
+        decade_suffix = str(decade_year)[-2:]
+        return f"{decade_suffix}'s"
+
 def assign_genre_and_mood(song_title: str, artist: str) -> Dict[str, Any]:
     """Assign genre and mood based on song title and artist using simple heuristics"""
     title_lower = song_title.lower()
