@@ -585,11 +585,11 @@ class PostRequestFeaturesTester:
                     updated_requests = [req for req in requests_data if req["id"] in bulk_request_ids]
                     
                     if len(updated_requests) == len(bulk_request_ids):
-                        all_accepted = all(req.get("status") == "accepted" for req in updated_requests)
-                        if all_accepted:
-                            self.log_result("Bulk Request Actions", True, f"✅ Bulk status update successful for {len(bulk_request_ids)} requests")
+                        all_archived = all(req.get("status") == "archived" for req in updated_requests)
+                        if all_archived:
+                            self.log_result("Bulk Request Actions", True, f"✅ Bulk archive successful for {len(bulk_request_ids)} requests")
                         else:
-                            self.log_result("Bulk Request Actions", False, "❌ Not all requests updated to accepted status")
+                            self.log_result("Bulk Request Actions", False, "❌ Not all requests updated to archived status")
                     else:
                         self.log_result("Bulk Request Actions", False, f"❌ Could not find all updated requests: {len(updated_requests)}/{len(bulk_request_ids)}")
                 else:
