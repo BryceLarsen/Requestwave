@@ -464,7 +464,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Decade Functionality - TESTED: All core decade functionality working perfectly (24/28 tests passed)"
+    - "Decade Functionality - TESTED: Automatic decade calculation and filtering working perfectly (24/28 tests passed)"
     - "Song Creation with Decade Calculation - TESTED: Automatically calculates decade from year"
     - "Song Update with Decade Recalculation - TESTED: Recalculates decade when year changes"
     - "Filter Options with Decades - TESTED: Returns decades array with available decades"
