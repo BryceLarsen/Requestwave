@@ -2819,9 +2819,6 @@ const MusicianDashboard = () => {
                               {day.request_count}
                             </span>
                           </td>
-                          <td className="py-2 text-green-400 font-medium">
-                            ${day.tip_total.toFixed(2)}
-                          </td>
                           <td className="py-2">
                             <span className="bg-blue-600 px-2 py-1 rounded-full text-xs">
                               {day.unique_requesters}
