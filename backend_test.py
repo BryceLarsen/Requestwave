@@ -3544,19 +3544,551 @@ class RequestWaveAPITester:
         
         return self.results['failed'] == 0
 
+    def test_song_deletion_individual(self):
+        """Test individual song deletion - CRITICAL BUG INVESTIGATION"""
+        try:
+            print("🔍 CRITICAL BUG INVESTIGATION: Testing individual song deletion")
+            
+            # Create multiple test songs for deletion testing
+            test_songs = [
+                {"title": "Delete Test Song 1", "artist": "Test Artist 1", "genres": ["Pop"], "moods": ["Upbeat"], "year": 2023},
+                {"title": "Delete Test Song 2", "artist": "Test Artist 2", "genres": ["Rock"], "moods": ["Energetic"], "year": 2022},
+                {"title": "Delete Test Song 3", "artist": "Test Artist 3", "genres": ["Jazz"], "moods": ["Smooth"], "year": 2021}
+            ]
+            
+            created_song_ids = []
+            
+            # Create test songs
+            for i, song_data in enumerate(test_songs):
+                response = self.make_request("POST", "/songs", song_data)
+                if response.status_code == 200:
+                    song_id = response.json()["id"]
+                    created_song_ids.append(song_id)
+                    print(f"📊 Created test song {i+1}: {song_data['title']} (ID: {song_id})")
+                else:
+                    self.log_result("Song Deletion Individual - Setup", False, f"Failed to create test song {i+1}")
+                    return
+            
+            # Get initial song count
+            songs_before_response = self.make_request("GET", "/songs")
+            if songs_before_response.status_code == 200:
+                songs_before = songs_before_response.json()
+                initial_count = len(songs_before)
+                print(f"📊 Initial song count: {initial_count}")
+            else:
+                self.log_result("Song Deletion Individual - Initial Count", False, "Could not get initial song count")
+                return
+            
+            # Test deleting each song individually
+            for i, song_id in enumerate(created_song_ids):
+                print(f"🔍 Testing deletion of song {i+1}: {song_id}")
+                
+                # Delete the song
+                response = self.make_request("DELETE", f"/songs/{song_id}")
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    print(f"📊 Delete response: {json.dumps(data, indent=2)}")
+                    
+                    # Verify song is actually deleted from database
+                    songs_after_response = self.make_request("GET", "/songs")
+                    if songs_after_response.status_code == 200:
+                        songs_after = songs_after_response.json()
+                        song_exists = any(song["id"] == song_id for song in songs_after)
+                        
+                        if not song_exists:
+                            expected_count = initial_count - (i + 1)
+                            actual_count = len(songs_after)
+                            
+                            if actual_count == expected_count:
+                                self.log_result(f"Song Deletion Individual - Song {i+1}", True, 
+                                    f"✅ Song {i+1} successfully deleted. Count: {initial_count} → {actual_count}")
+                            else:
+                                self.log_result(f"Song Deletion Individual - Song {i+1}", False, 
+                                    f"❌ Song count mismatch. Expected: {expected_count}, Actual: {actual_count}")
+                        else:
+                            self.log_result(f"Song Deletion Individual - Song {i+1}", False, 
+                                f"❌ CRITICAL BUG: Song {i+1} still exists in database after deletion")
+                    else:
+                        self.log_result(f"Song Deletion Individual - Song {i+1}", False, 
+                            f"Could not verify deletion: {songs_after_response.status_code}")
+                else:
+                    self.log_result(f"Song Deletion Individual - Song {i+1}", False, 
+                        f"❌ CRITICAL BUG: Delete failed with status {response.status_code}: {response.text}")
+                    
+        except Exception as e:
+            self.log_result("Song Deletion Individual", False, f"❌ CRITICAL BUG: Exception: {str(e)}")
+
+    def test_song_deletion_batch_patterns(self):
+        """Test batch deletion patterns - CRITICAL BUG INVESTIGATION"""
+        try:
+            print("🔍 CRITICAL BUG INVESTIGATION: Testing batch deletion patterns")
+            
+            # Create 10 test songs for batch deletion testing
+            batch_songs = []
+            for i in range(10):
+                song_data = {
+                    "title": f"Batch Delete Song {i+1}",
+                    "artist": f"Batch Artist {i+1}",
+                    "genres": ["Test"],
+                    "moods": ["Test"],
+                    "year": 2020 + i,
+                    "notes": f"Song for batch deletion testing #{i+1}"
+                }
+                
+                response = self.make_request("POST", "/songs", song_data)
+                if response.status_code == 200:
+                    song_id = response.json()["id"]
+                    batch_songs.append({"id": song_id, "title": song_data["title"]})
+                    print(f"📊 Created batch song {i+1}: {song_data['title']} (ID: {song_id})")
+                else:
+                    self.log_result("Song Deletion Batch - Setup", False, f"Failed to create batch song {i+1}")
+                    return
+            
+            # Get initial count
+            songs_before_response = self.make_request("GET", "/songs")
+            if songs_before_response.status_code == 200:
+                initial_count = len(songs_before_response.json())
+                print(f"📊 Initial song count before batch deletion: {initial_count}")
+            else:
+                self.log_result("Song Deletion Batch - Initial Count", False, "Could not get initial count")
+                return
+            
+            # Test rapid sequential deletion (simulate batch deletion)
+            print("🔍 Testing rapid sequential deletion...")
+            deletion_results = []
+            
+            for i, song in enumerate(batch_songs):
+                print(f"🔍 Deleting song {i+1}/10: {song['title']}")
+                
+                response = self.make_request("DELETE", f"/songs/{song['id']}")
+                deletion_results.append({
+                    "song_id": song["id"],
+                    "title": song["title"],
+                    "status_code": response.status_code,
+                    "success": response.status_code == 200
+                })
+                
+                if response.status_code != 200:
+                    print(f"❌ CRITICAL BUG: Failed to delete song {i+1}: {response.status_code} - {response.text}")
+            
+            # Analyze deletion results
+            successful_deletions = [r for r in deletion_results if r["success"]]
+            failed_deletions = [r for r in deletion_results if not r["success"]]
+            
+            print(f"📊 Batch deletion results: {len(successful_deletions)}/10 successful, {len(failed_deletions)}/10 failed")
+            
+            # Verify final database state
+            songs_after_response = self.make_request("GET", "/songs")
+            if songs_after_response.status_code == 200:
+                songs_after = songs_after_response.json()
+                final_count = len(songs_after)
+                expected_count = initial_count - len(successful_deletions)
+                
+                # Check if any deleted songs still exist
+                still_existing = []
+                for result in successful_deletions:
+                    if any(song["id"] == result["song_id"] for song in songs_after):
+                        still_existing.append(result["title"])
+                
+                if len(still_existing) == 0 and final_count == expected_count:
+                    self.log_result("Song Deletion Batch - Database Verification", True, 
+                        f"✅ Batch deletion verified: {len(successful_deletions)} songs deleted, count: {initial_count} → {final_count}")
+                else:
+                    self.log_result("Song Deletion Batch - Database Verification", False, 
+                        f"❌ CRITICAL BUG: Database inconsistency. Still existing: {still_existing}, Expected count: {expected_count}, Actual: {final_count}")
+                
+                if len(failed_deletions) == 0:
+                    self.log_result("Song Deletion Batch - Success Rate", True, 
+                        f"✅ All 10 batch deletions successful")
+                else:
+                    self.log_result("Song Deletion Batch - Success Rate", False, 
+                        f"❌ CRITICAL BUG: {len(failed_deletions)}/10 batch deletions failed")
+            else:
+                self.log_result("Song Deletion Batch - Final Verification", False, 
+                    f"Could not verify final state: {songs_after_response.status_code}")
+                    
+        except Exception as e:
+            self.log_result("Song Deletion Batch", False, f"❌ CRITICAL BUG: Exception: {str(e)}")
+
+    def test_song_deletion_database_verification(self):
+        """Test database verification after deletion - CRITICAL BUG INVESTIGATION"""
+        try:
+            print("🔍 CRITICAL BUG INVESTIGATION: Testing database verification after deletion")
+            
+            # Create a test song specifically for database verification
+            song_data = {
+                "title": "Database Verification Test Song",
+                "artist": "DB Test Artist",
+                "genres": ["Test"],
+                "moods": ["Test"],
+                "year": 2023,
+                "notes": "Song for database verification testing"
+            }
+            
+            response = self.make_request("POST", "/songs", song_data)
+            if response.status_code == 200:
+                song_id = response.json()["id"]
+                print(f"📊 Created verification test song: {song_id}")
+            else:
+                self.log_result("Song Deletion DB Verification - Setup", False, "Failed to create test song")
+                return
+            
+            # Verify song exists before deletion
+            songs_before_response = self.make_request("GET", "/songs")
+            if songs_before_response.status_code == 200:
+                songs_before = songs_before_response.json()
+                song_exists_before = any(song["id"] == song_id for song in songs_before)
+                
+                if song_exists_before:
+                    print(f"✅ Song exists in database before deletion")
+                else:
+                    self.log_result("Song Deletion DB Verification - Pre-check", False, "Test song not found before deletion")
+                    return
+            else:
+                self.log_result("Song Deletion DB Verification - Pre-check", False, "Could not verify song existence before deletion")
+                return
+            
+            # Delete the song
+            print(f"🔍 Deleting song for database verification: {song_id}")
+            response = self.make_request("DELETE", f"/songs/{song_id}")
+            
+            if response.status_code == 200:
+                print(f"✅ Delete API returned success")
+                
+                # Multiple verification checks
+                verification_checks = []
+                
+                # Check 1: Immediate verification
+                songs_after_response = self.make_request("GET", "/songs")
+                if songs_after_response.status_code == 200:
+                    songs_after = songs_after_response.json()
+                    song_exists_after = any(song["id"] == song_id for song in songs_after)
+                    verification_checks.append(("Immediate check", not song_exists_after))
+                    
+                    if not song_exists_after:
+                        print(f"✅ Immediate verification: Song not found in database")
+                    else:
+                        print(f"❌ CRITICAL BUG: Song still exists immediately after deletion")
+                
+                # Check 2: Delayed verification (simulate potential race conditions)
+                import time
+                time.sleep(1)
+                
+                songs_delayed_response = self.make_request("GET", "/songs")
+                if songs_delayed_response.status_code == 200:
+                    songs_delayed = songs_delayed_response.json()
+                    song_exists_delayed = any(song["id"] == song_id for song in songs_delayed)
+                    verification_checks.append(("Delayed check (1s)", not song_exists_delayed))
+                    
+                    if not song_exists_delayed:
+                        print(f"✅ Delayed verification: Song not found in database")
+                    else:
+                        print(f"❌ CRITICAL BUG: Song still exists after 1 second delay")
+                
+                # Check 3: Try to access deleted song directly
+                try:
+                    direct_response = self.make_request("GET", f"/songs/{song_id}")
+                    if direct_response.status_code == 404:
+                        verification_checks.append(("Direct access check", True))
+                        print(f"✅ Direct access verification: Song returns 404")
+                    else:
+                        verification_checks.append(("Direct access check", False))
+                        print(f"❌ CRITICAL BUG: Deleted song still accessible directly: {direct_response.status_code}")
+                except:
+                    verification_checks.append(("Direct access check", True))
+                    print(f"✅ Direct access verification: Song not accessible")
+                
+                # Evaluate all verification checks
+                all_passed = all(check[1] for check in verification_checks)
+                failed_checks = [check[0] for check in verification_checks if not check[1]]
+                
+                if all_passed:
+                    self.log_result("Song Deletion DB Verification", True, 
+                        f"✅ All database verification checks passed: {[check[0] for check in verification_checks]}")
+                else:
+                    self.log_result("Song Deletion DB Verification", False, 
+                        f"❌ CRITICAL BUG: Failed verification checks: {failed_checks}")
+            else:
+                self.log_result("Song Deletion DB Verification", False, 
+                    f"❌ CRITICAL BUG: Delete API failed: {response.status_code} - {response.text}")
+                    
+        except Exception as e:
+            self.log_result("Song Deletion DB Verification", False, f"❌ CRITICAL BUG: Exception: {str(e)}")
+
+    def test_song_deletion_limits_check(self):
+        """Test song limits and deletion behavior - CRITICAL BUG INVESTIGATION"""
+        try:
+            print("🔍 CRITICAL BUG INVESTIGATION: Testing song limits and deletion behavior")
+            
+            # Get current song count
+            songs_response = self.make_request("GET", "/songs")
+            if songs_response.status_code == 200:
+                current_songs = songs_response.json()
+                current_count = len(current_songs)
+                print(f"📊 Current song count: {current_count}")
+                
+                # Check if we're approaching the 1000-song limit mentioned in the review
+                if current_count > 900:
+                    print(f"⚠️ WARNING: Approaching 1000-song limit with {current_count} songs")
+                    self.log_result("Song Deletion Limits - High Count Warning", True, 
+                        f"High song count detected: {current_count} (approaching 1000 limit)")
+                
+                # Test deletion behavior with current song count
+                if current_count > 0:
+                    # Try to delete the first song to test deletion at current count
+                    first_song = current_songs[0]
+                    song_id = first_song["id"]
+                    
+                    print(f"🔍 Testing deletion at current count ({current_count}): {first_song['title']}")
+                    
+                    response = self.make_request("DELETE", f"/songs/{song_id}")
+                    
+                    if response.status_code == 200:
+                        # Verify deletion worked
+                        songs_after_response = self.make_request("GET", "/songs")
+                        if songs_after_response.status_code == 200:
+                            songs_after = songs_after_response.json()
+                            new_count = len(songs_after)
+                            
+                            if new_count == current_count - 1:
+                                self.log_result("Song Deletion Limits - Current Count Test", True, 
+                                    f"✅ Deletion works at current count: {current_count} → {new_count}")
+                            else:
+                                self.log_result("Song Deletion Limits - Current Count Test", False, 
+                                    f"❌ CRITICAL BUG: Count mismatch after deletion: expected {current_count - 1}, got {new_count}")
+                        else:
+                            self.log_result("Song Deletion Limits - Current Count Test", False, 
+                                f"Could not verify count after deletion: {songs_after_response.status_code}")
+                    else:
+                        self.log_result("Song Deletion Limits - Current Count Test", False, 
+                            f"❌ CRITICAL BUG: Deletion failed at current count: {response.status_code} - {response.text}")
+                else:
+                    self.log_result("Song Deletion Limits - Current Count Test", True, 
+                        "No songs to test deletion with (empty database)")
+                
+                # Test fetching behavior with current count (check for 1000-song limit)
+                if current_count >= 1000:
+                    print(f"⚠️ CRITICAL: Song count at or above 1000 limit: {current_count}")
+                    self.log_result("Song Deletion Limits - 1000 Song Limit", False, 
+                        f"❌ CRITICAL BUG: Song count exceeds 1000 limit: {current_count}")
+                elif current_count > 500:
+                    print(f"📊 High song count detected: {current_count} (user wants 4000+ support)")
+                    self.log_result("Song Deletion Limits - High Count Support", False, 
+                        f"❌ LIMITATION: Current count {current_count} - user needs 4000+ song support")
+                else:
+                    self.log_result("Song Deletion Limits - Count Check", True, 
+                        f"✅ Song count within reasonable limits: {current_count}")
+                        
+            else:
+                self.log_result("Song Deletion Limits - Count Check", False, 
+                    f"Could not get current song count: {songs_response.status_code}")
+                    
+        except Exception as e:
+            self.log_result("Song Deletion Limits", False, f"❌ CRITICAL BUG: Exception: {str(e)}")
+
+    def test_song_deletion_edge_cases(self):
+        """Test song deletion edge cases - CRITICAL BUG INVESTIGATION"""
+        try:
+            print("🔍 CRITICAL BUG INVESTIGATION: Testing song deletion edge cases")
+            
+            # Edge Case 1: Delete non-existent song
+            fake_song_id = "non-existent-song-id-12345"
+            print(f"🔍 Testing deletion of non-existent song: {fake_song_id}")
+            
+            response = self.make_request("DELETE", f"/songs/{fake_song_id}")
+            
+            if response.status_code == 404:
+                self.log_result("Song Deletion Edge Cases - Non-existent Song", True, 
+                    "✅ Correctly returned 404 for non-existent song")
+            else:
+                self.log_result("Song Deletion Edge Cases - Non-existent Song", False, 
+                    f"❌ Expected 404 for non-existent song, got: {response.status_code}")
+            
+            # Edge Case 2: Delete with invalid song ID format
+            invalid_song_ids = ["", "invalid-id", "123", "null", "undefined"]
+            
+            for invalid_id in invalid_song_ids:
+                print(f"🔍 Testing deletion with invalid ID: '{invalid_id}'")
+                
+                response = self.make_request("DELETE", f"/songs/{invalid_id}")
+                
+                if response.status_code in [400, 404]:
+                    self.log_result(f"Song Deletion Edge Cases - Invalid ID '{invalid_id}'", True, 
+                        f"✅ Correctly rejected invalid ID with status {response.status_code}")
+                else:
+                    self.log_result(f"Song Deletion Edge Cases - Invalid ID '{invalid_id}'", False, 
+                        f"❌ Expected 400/404 for invalid ID, got: {response.status_code}")
+            
+            # Edge Case 3: Test deletion without authentication (already covered in other tests)
+            original_token = self.auth_token
+            self.auth_token = None
+            
+            response = self.make_request("DELETE", f"/songs/{fake_song_id}")
+            
+            if response.status_code in [401, 403]:
+                self.log_result("Song Deletion Edge Cases - No Auth", True, 
+                    f"✅ Correctly rejected deletion without auth: {response.status_code}")
+            else:
+                self.log_result("Song Deletion Edge Cases - No Auth", False, 
+                    f"❌ Expected 401/403 without auth, got: {response.status_code}")
+            
+            # Restore auth token
+            self.auth_token = original_token
+            
+            # Edge Case 4: Test deletion of song with active requests
+            if self.test_song_id:
+                print(f"🔍 Testing deletion of song with active requests")
+                
+                # Create a request for the test song
+                request_data = {
+                    "song_id": self.test_song_id,
+                    "requester_name": "Edge Case Requester",
+                    "requester_email": "edge@example.com",
+                    "dedication": "Request for deletion edge case testing"
+                }
+                
+                request_response = self.make_request("POST", "/requests", request_data)
+                
+                if request_response.status_code == 200:
+                    print(f"✅ Created request for song deletion edge case testing")
+                    
+                    # Now try to delete the song that has an active request
+                    response = self.make_request("DELETE", f"/songs/{self.test_song_id}")
+                    
+                    if response.status_code == 200:
+                        self.log_result("Song Deletion Edge Cases - Song with Requests", True, 
+                            "✅ Successfully deleted song with active requests")
+                        
+                        # Verify the song is actually deleted
+                        songs_response = self.make_request("GET", "/songs")
+                        if songs_response.status_code == 200:
+                            songs = songs_response.json()
+                            song_exists = any(song["id"] == self.test_song_id for song in songs)
+                            
+                            if not song_exists:
+                                self.log_result("Song Deletion Edge Cases - Verification with Requests", True, 
+                                    "✅ Song with requests successfully deleted from database")
+                            else:
+                                self.log_result("Song Deletion Edge Cases - Verification with Requests", False, 
+                                    "❌ CRITICAL BUG: Song with requests still exists after deletion")
+                    else:
+                        self.log_result("Song Deletion Edge Cases - Song with Requests", False, 
+                            f"❌ CRITICAL BUG: Failed to delete song with requests: {response.status_code}")
+                else:
+                    print(f"⚠️ Could not create request for edge case testing: {request_response.status_code}")
+                    
+        except Exception as e:
+            self.log_result("Song Deletion Edge Cases", False, f"❌ CRITICAL BUG: Exception: {str(e)}")
+
+    def run_song_deletion_investigation(self):
+        """Run comprehensive song deletion investigation as requested in the review"""
+        print("🚨 CRITICAL BUG INVESTIGATION - SONG DELETION FUNCTIONALITY")
+        print("=" * 70)
+        print("User reported: 'I cant seem to log in. i tried forgot password and it still wont work'")
+        print("User reported: Error when deleting all songs + songs limited to 1000 (wants 4000+)")
+        print("=" * 70)
+        print("INVESTIGATION PRIORITIES:")
+        print("1. Individual Song Deletion (DELETE /api/songs/{song_id})")
+        print("2. Batch Deletion Patterns (simulate 'delete all songs')")
+        print("3. Database Verification (ensure songs actually deleted)")
+        print("4. Song Limits Check (1000-song limit vs 4000+ requirement)")
+        print("5. Edge Cases (authentication, invalid IDs, etc.)")
+        print("=" * 70)
+        
+        # Reset results for focused testing
+        self.results = {
+            "passed": 0,
+            "failed": 0,
+            "errors": []
+        }
+        
+        # Authentication setup
+        self.test_musician_registration()
+        if not self.auth_token:
+            print("❌ CRITICAL: Could not authenticate - cannot proceed with deletion tests")
+            return False
+        
+        # Create a test song for basic deletion testing
+        self.test_create_song()
+        
+        print("\n🔥 PRIORITY 1: INDIVIDUAL SONG DELETION")
+        print("-" * 50)
+        self.test_song_deletion_individual()
+        
+        print("\n🔥 PRIORITY 2: BATCH DELETION PATTERNS")
+        print("-" * 50)
+        self.test_song_deletion_batch_patterns()
+        
+        print("\n🔥 PRIORITY 3: DATABASE VERIFICATION")
+        print("-" * 50)
+        self.test_song_deletion_database_verification()
+        
+        print("\n🔥 PRIORITY 4: SONG LIMITS CHECK")
+        print("-" * 50)
+        self.test_song_deletion_limits_check()
+        
+        print("\n🔥 PRIORITY 5: EDGE CASES")
+        print("-" * 50)
+        self.test_song_deletion_edge_cases()
+        
+        # Also run existing deletion tests for completeness
+        print("\n🔥 EXISTING DELETION TESTS")
+        print("-" * 50)
+        self.test_delete_song_authentication()
+        
+        # Print comprehensive summary
+        print("\n" + "=" * 70)
+        print("🏁 SONG DELETION INVESTIGATION SUMMARY")
+        print("=" * 70)
+        print(f"✅ Passed: {self.results['passed']}")
+        print(f"❌ Failed: {self.results['failed']}")
+        
+        if self.results['errors']:
+            print("\n🔍 CRITICAL ISSUES FOUND:")
+            for error in self.results['errors']:
+                print(f"   • {error}")
+        else:
+            print("\n🎉 NO CRITICAL ISSUES FOUND!")
+            print("✅ Individual song deletion working correctly")
+            print("✅ Batch deletion patterns working correctly")
+            print("✅ Database verification successful")
+            print("✅ Song limits within acceptable range")
+            print("✅ Edge cases handled properly")
+        
+        # Specific analysis for the user's reported issues
+        deletion_tests = [error for error in self.results['errors'] if 'deletion' in error.lower() or 'delete' in error.lower()]
+        limit_tests = [error for error in self.results['errors'] if 'limit' in error.lower() or 'count' in error.lower()]
+        
+        print(f"\n📊 SONG DELETION FUNCTIONALITY: {'✅ WORKING' if len(deletion_tests) == 0 else '❌ FAILING'}")
+        if deletion_tests:
+            print("   DELETION ISSUES:")
+            for error in deletion_tests:
+                print(f"   • {error}")
+        
+        print(f"📊 SONG LIMITS (1000 vs 4000+): {'✅ OK' if len(limit_tests) == 0 else '❌ LIMITATION'}")
+        if limit_tests:
+            print("   LIMIT ISSUES:")
+            for error in limit_tests:
+                print(f"   • {error}")
+        
+        return self.results['failed'] == 0
+
 if __name__ == "__main__":
     tester = RequestWaveAPITester()
     
-    # Run Tip Support System tests as requested in the review
-    success = tester.run_tip_support_tests()
+    # Run Song Deletion Investigation as requested in the review
+    success = tester.run_song_deletion_investigation()
     
     if success:
-        print("\n🎉 All tip support system tests passed!")
-        print("✅ Profile payment fields working correctly")
-        print("✅ Tip links generation working correctly")
-        print("✅ Tip recording working correctly")
-        print("✅ PayPal and Venmo integration working")
+        print("\n🎉 Song deletion investigation completed successfully!")
+        print("✅ No critical bugs found in song deletion functionality")
+        print("✅ Individual and batch deletion working correctly")
+        print("✅ Database operations completing successfully")
+        print("✅ Authentication working properly for deletions")
         exit(0)
     else:
-        print(f"\n💥 {tester.results['failed']} tip support system tests failed!")
+        print(f"\n💥 CRITICAL BUGS FOUND: {tester.results['failed']} issues detected!")
+        print("❌ Song deletion functionality has critical problems")
+        print("❌ Immediate investigation and fixes required")
         exit(1)
