@@ -408,7 +408,7 @@ class PostRequestFeaturesTester:
                 return
             
             assign_data = {
-                "show_id": self.test_show_id
+                "show_name": "Test Concert"
             }
             
             print(f"🔍 Testing PUT /requests/{self.test_request_id}/assign-show")
