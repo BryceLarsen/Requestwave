@@ -956,6 +956,25 @@ const MusicianDashboard = () => {
     try {
       const response = await axios.put(`${API}/profile`, profile);
       setProfile(response.data);
+      
+      // NEW: Update the musician object with the new profile data to persist changes
+      const updatedMusician = {
+        ...musician,
+        name: response.data.name,
+        bio: response.data.bio,
+        website: response.data.website,
+        paypal_username: response.data.paypal_username,
+        venmo_username: response.data.venmo_username,
+        instagram_username: response.data.instagram_username,
+        facebook_username: response.data.facebook_username,
+        tiktok_username: response.data.tiktok_username,
+        spotify_artist_url: response.data.spotify_artist_url,
+        apple_music_artist_url: response.data.apple_music_artist_url
+      };
+      
+      setMusician(updatedMusician);
+      localStorage.setItem('musician', JSON.stringify(updatedMusician));
+      
       setShowProfile(false);
       alert('Profile updated successfully!');
     } catch (error) {
