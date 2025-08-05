@@ -2812,7 +2812,7 @@ const AudienceInterface = () => {
     requester_name: '',
     requester_email: '',
     dedication: '',
-    tip_amount: 0
+    show_name: '' // NEW: Show grouping field
   });
   const [selectedSong, setSelectedSong] = useState(null);
   const [loading, setLoading] = useState(true);
