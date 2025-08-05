@@ -565,6 +565,86 @@ const MusicianDashboard = () => {
 
   const getTipPresetAmounts = () => [1, 5, 10, 20];
 
+  // NEW: Show management functions
+  const fetchCurrentShow = async () => {
+    try {
+      const response = await axios.get(`${API}/shows/current`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      
+      if (response.data.active) {
+        setCurrentShow(response.data.show);
+      } else {
+        setCurrentShow(null);
+      }
+    } catch (error) {
+      console.error('Error fetching current show:', error);
+    }
+  };
+
+  const fetchShows = async () => {
+    try {
+      const response = await axios.get(`${API}/shows`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      setShows(response.data);
+    } catch (error) {
+      console.error('Error fetching shows:', error);
+    }
+  };
+
+  const fetchGroupedRequests = async () => {
+    try {
+      const response = await axios.get(`${API}/requests/grouped`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      setGroupedRequests(response.data);
+    } catch (error) {
+      console.error('Error fetching grouped requests:', error);
+    }
+  };
+
+  const handleStartShow = async () => {
+    if (!newShowName.trim()) {
+      alert('Please enter a show name');
+      return;
+    }
+
+    try {
+      await axios.post(`${API}/shows/start`, { name: newShowName }, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+
+      setShowStartModal(false);
+      setNewShowName('');
+      fetchCurrentShow();
+      fetchShows();
+      alert(`Show "${newShowName}" started! All new requests will be organized under this show.`);
+    } catch (error) {
+      console.error('Error starting show:', error);
+      alert('Error starting show. Please try again.');
+    }
+  };
+
+  const handleStopShow = async () => {
+    if (!currentShow) return;
+
+    if (confirm(`Stop the current show "${currentShow.name}"? New requests will go to the main requests list.`)) {
+      try {
+        await axios.post(`${API}/shows/stop`, {}, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+
+        setCurrentShow(null);
+        fetchGroupedRequests();
+        alert('Show stopped. New requests will go to the main requests list.');
+      } catch (error) {
+        console.error('Error stopping show:', error);
+        alert('Error stopping show. Please try again.');
+      }
+    }
+  };
+
   const handleBatchEnrich = async () => {
     if (!confirm('Auto-fill missing metadata for all your existing songs using Spotify? This may take a few moments.')) {
       return;
