@@ -253,6 +253,263 @@ class RequestWaveAPITester:
         except Exception as e:
             self.log_result("Get Musician by Slug", False, f"Exception: {str(e)}")
 
+    def test_musician_public_endpoint_social_media_fields(self):
+        """Test that musician public endpoint includes all 7 social media fields - PRIORITY 1"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Musician Public Endpoint - Social Media Fields", False, "No musician slug available")
+                return
+            
+            print(f"🔍 Testing GET /musicians/{self.musician_slug} for social media fields")
+            
+            # First, update the musician profile with social media data
+            profile_update = {
+                "paypal_username": "testmusician",
+                "venmo_username": "testmusician", 
+                "instagram_username": "@testmusician",
+                "facebook_username": "testmusician",
+                "tiktok_username": "@testmusician",
+                "spotify_artist_url": "https://open.spotify.com/artist/testmusician",
+                "apple_music_artist_url": "https://music.apple.com/artist/testmusician"
+            }
+            
+            update_response = self.make_request("PUT", "/profile", profile_update)
+            if update_response.status_code != 200:
+                self.log_result("Musician Public Endpoint - Profile Update", False, f"Failed to update profile: {update_response.status_code}")
+                return
+            
+            print("📊 Updated musician profile with social media data")
+            
+            # Now test the public endpoint
+            response = self.make_request("GET", f"/musicians/{self.musician_slug}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"📊 Public endpoint response: {json.dumps(data, indent=2)}")
+                
+                # Check for all 7 required social media fields
+                required_fields = [
+                    "paypal_username",
+                    "venmo_username", 
+                    "instagram_username",
+                    "facebook_username",
+                    "tiktok_username",
+                    "spotify_artist_url",
+                    "apple_music_artist_url"
+                ]
+                
+                missing_fields = []
+                present_fields = []
+                field_values = {}
+                
+                for field in required_fields:
+                    if field in data:
+                        present_fields.append(field)
+                        field_values[field] = data[field]
+                    else:
+                        missing_fields.append(field)
+                
+                if len(missing_fields) == 0:
+                    self.log_result("Musician Public Endpoint - All Social Media Fields Present", True, f"✅ All 7 social media fields present: {present_fields}")
+                    
+                    # Verify field values are correct (usernames should have @ symbols removed)
+                    expected_values = {
+                        "paypal_username": "testmusician",
+                        "venmo_username": "testmusician",
+                        "instagram_username": "testmusician",  # @ should be removed
+                        "facebook_username": "testmusician",
+                        "tiktok_username": "testmusician",  # @ should be removed
+                        "spotify_artist_url": "https://open.spotify.com/artist/testmusician",
+                        "apple_music_artist_url": "https://music.apple.com/artist/testmusician"
+                    }
+                    
+                    value_errors = []
+                    for field, expected_value in expected_values.items():
+                        actual_value = field_values.get(field)
+                        if actual_value != expected_value:
+                            value_errors.append(f"{field}: expected '{expected_value}', got '{actual_value}'")
+                    
+                    if len(value_errors) == 0:
+                        self.log_result("Musician Public Endpoint - Social Media Field Values", True, "✅ All social media field values are correct (@ symbols properly removed from usernames)")
+                        self.log_result("Musician Public Endpoint - Social Media Fields", True, "✅ PRIORITY 1 COMPLETE: All 7 social media fields working correctly in public endpoint")
+                    else:
+                        self.log_result("Musician Public Endpoint - Social Media Field Values", False, f"❌ Field value errors: {value_errors}")
+                        self.log_result("Musician Public Endpoint - Social Media Fields", False, f"❌ Social media field values incorrect: {value_errors}")
+                else:
+                    self.log_result("Musician Public Endpoint - Social Media Fields", False, f"❌ CRITICAL: Missing social media fields: {missing_fields}")
+            else:
+                self.log_result("Musician Public Endpoint - Social Media Fields", False, f"❌ Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Musician Public Endpoint - Social Media Fields", False, f"❌ Exception: {str(e)}")
+
+    def test_musician_public_endpoint_null_social_media_fields(self):
+        """Test that musician public endpoint handles null social media fields without errors - PRIORITY 1"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Musician Public Endpoint - Null Social Media Fields", False, "No musician slug available")
+                return
+            
+            print(f"🔍 Testing GET /musicians/{self.musician_slug} with null social media fields")
+            
+            # Clear all social media fields by setting them to empty strings
+            profile_update = {
+                "paypal_username": "",
+                "venmo_username": "", 
+                "instagram_username": "",
+                "facebook_username": "",
+                "tiktok_username": "",
+                "spotify_artist_url": "",
+                "apple_music_artist_url": ""
+            }
+            
+            update_response = self.make_request("PUT", "/profile", profile_update)
+            if update_response.status_code != 200:
+                self.log_result("Musician Public Endpoint - Clear Profile", False, f"Failed to clear profile: {update_response.status_code}")
+                return
+            
+            print("📊 Cleared musician profile social media data")
+            
+            # Now test the public endpoint
+            response = self.make_request("GET", f"/musicians/{self.musician_slug}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"📊 Public endpoint response with null fields: {json.dumps(data, indent=2)}")
+                
+                # Check that all social media fields are present and return null/empty values
+                social_media_fields = [
+                    "paypal_username",
+                    "venmo_username", 
+                    "instagram_username",
+                    "facebook_username",
+                    "tiktok_username",
+                    "spotify_artist_url",
+                    "apple_music_artist_url"
+                ]
+                
+                field_status = {}
+                for field in social_media_fields:
+                    if field in data:
+                        value = data[field]
+                        field_status[field] = value
+                        print(f"   • {field}: {repr(value)}")
+                    else:
+                        field_status[field] = "MISSING"
+                
+                # All fields should be present (even if null/empty)
+                missing_fields = [field for field, value in field_status.items() if value == "MISSING"]
+                
+                if len(missing_fields) == 0:
+                    self.log_result("Musician Public Endpoint - Null Social Media Fields", True, "✅ PRIORITY 1 COMPLETE: All social media fields present and handle null values without errors")
+                else:
+                    self.log_result("Musician Public Endpoint - Null Social Media Fields", False, f"❌ CRITICAL: Missing fields when null: {missing_fields}")
+            else:
+                self.log_result("Musician Public Endpoint - Null Social Media Fields", False, f"❌ Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Musician Public Endpoint - Null Social Media Fields", False, f"❌ Exception: {str(e)}")
+
+    def test_social_media_integration_flow(self):
+        """Test complete social media integration flow for post-request modal - PRIORITY 2"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Social Media Integration Flow", False, "No musician slug available")
+                return
+            
+            print(f"🔍 Testing complete social media integration flow")
+            
+            # Step 1: Create a musician with comprehensive social media data
+            social_media_data = {
+                "paypal_username": "jazzvirtuoso",
+                "venmo_username": "@jazzvirtuoso", 
+                "instagram_username": "@jazzvirtuoso_official",
+                "facebook_username": "JazzVirtuosoOfficial",
+                "tiktok_username": "@jazzvirtuoso",
+                "spotify_artist_url": "https://open.spotify.com/artist/1234567890",
+                "apple_music_artist_url": "https://music.apple.com/us/artist/jazz-virtuoso/1234567890"
+            }
+            
+            update_response = self.make_request("PUT", "/profile", social_media_data)
+            if update_response.status_code != 200:
+                self.log_result("Social Media Integration Flow - Profile Update", False, f"Failed to update profile: {update_response.status_code}")
+                return
+            
+            print("📊 Step 1: Updated musician profile with comprehensive social media data")
+            
+            # Step 2: Test that public endpoint returns all social media data
+            public_response = self.make_request("GET", f"/musicians/{self.musician_slug}")
+            
+            if public_response.status_code != 200:
+                self.log_result("Social Media Integration Flow", False, f"Failed to get public musician data: {public_response.status_code}")
+                return
+            
+            public_data = public_response.json()
+            print(f"📊 Step 2: Retrieved public musician data")
+            
+            # Step 3: Verify usernames without @ symbols are returned correctly
+            username_tests = [
+                ("paypal_username", "jazzvirtuoso", "jazzvirtuoso"),
+                ("venmo_username", "@jazzvirtuoso", "jazzvirtuoso"),  # @ should be removed
+                ("instagram_username", "@jazzvirtuoso_official", "jazzvirtuoso_official"),  # @ should be removed
+                ("tiktok_username", "@jazzvirtuoso", "jazzvirtuoso")  # @ should be removed
+            ]
+            
+            username_errors = []
+            for field, input_value, expected_output in username_tests:
+                actual_output = public_data.get(field)
+                if actual_output != expected_output:
+                    username_errors.append(f"{field}: input '{input_value}' → expected '{expected_output}', got '{actual_output}'")
+                else:
+                    print(f"   ✅ {field}: '{input_value}' → '{actual_output}' (correct)")
+            
+            if len(username_errors) == 0:
+                self.log_result("Social Media Integration Flow - Username Processing", True, "✅ Usernames without @ symbols returned correctly")
+            else:
+                self.log_result("Social Media Integration Flow - Username Processing", False, f"❌ Username processing errors: {username_errors}")
+            
+            # Step 4: Verify URLs are returned as full URLs
+            url_tests = [
+                ("spotify_artist_url", "https://open.spotify.com/artist/1234567890"),
+                ("apple_music_artist_url", "https://music.apple.com/us/artist/jazz-virtuoso/1234567890")
+            ]
+            
+            url_errors = []
+            for field, expected_url in url_tests:
+                actual_url = public_data.get(field)
+                if actual_url != expected_url:
+                    url_errors.append(f"{field}: expected '{expected_url}', got '{actual_url}'")
+                else:
+                    print(f"   ✅ {field}: '{actual_url}' (correct)")
+            
+            if len(url_errors) == 0:
+                self.log_result("Social Media Integration Flow - URL Processing", True, "✅ URLs returned as full URLs correctly")
+            else:
+                self.log_result("Social Media Integration Flow - URL Processing", False, f"❌ URL processing errors: {url_errors}")
+            
+            # Step 5: Verify response format matches MusicianPublic model
+            required_public_fields = ["id", "name", "slug", "paypal_username", "venmo_username", 
+                                    "instagram_username", "facebook_username", "tiktok_username", 
+                                    "spotify_artist_url", "apple_music_artist_url"]
+            
+            missing_public_fields = [field for field in required_public_fields if field not in public_data]
+            
+            if len(missing_public_fields) == 0:
+                self.log_result("Social Media Integration Flow - MusicianPublic Model", True, "✅ Response format matches MusicianPublic model")
+            else:
+                self.log_result("Social Media Integration Flow - MusicianPublic Model", False, f"❌ Missing fields in MusicianPublic response: {missing_public_fields}")
+            
+            # Final result
+            if len(username_errors) == 0 and len(url_errors) == 0 and len(missing_public_fields) == 0:
+                self.log_result("Social Media Integration Flow", True, "✅ PRIORITY 2 COMPLETE: Complete social media integration flow working correctly")
+            else:
+                error_summary = []
+                if username_errors: error_summary.append(f"Username errors: {len(username_errors)}")
+                if url_errors: error_summary.append(f"URL errors: {len(url_errors)}")
+                if missing_public_fields: error_summary.append(f"Missing fields: {len(missing_public_fields)}")
+                self.log_result("Social Media Integration Flow", False, f"❌ Integration flow issues: {', '.join(error_summary)}")
+                
+        except Exception as e:
+            self.log_result("Social Media Integration Flow", False, f"❌ Exception: {str(e)}")
+
     def test_advanced_filtering(self):
         """Test advanced song filtering"""
         try:
