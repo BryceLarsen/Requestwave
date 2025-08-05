@@ -1658,6 +1658,16 @@ const MusicianDashboard = () => {
                   Upgrade
                 </button>
               )}
+              {/* NEW: Upgrade button for trial users */}
+              {subscriptionStatus && subscriptionStatus.plan === 'trial' && (
+                <button
+                  onClick={() => setShowUpgrade(true)}
+                  className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-bold transition duration-300 flex items-center space-x-2"
+                >
+                  <span>⚡</span>
+                  <span>Upgrade Now</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
