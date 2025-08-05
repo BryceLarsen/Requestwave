@@ -296,7 +296,7 @@ class StripeSubscriptionTester:
             }
             
             # Test without signature (should fail validation, not method)
-            response = self.make_request("POST", "/webhook/stripe", test_payload)
+            response = self.make_request("POST", "/webhook/stripe", test_payload, headers={"Content-Type": "application/json"})
             
             if response.status_code == 405:
                 self.log_result("Webhook Endpoint", False, "❌ Webhook endpoint returns 405 Method Not Allowed - endpoint not properly configured")
