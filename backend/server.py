@@ -1637,6 +1637,10 @@ async def import_from_playlist(import_data: PlaylistImport, musician_id: str = D
                     "created_at": datetime.utcnow()
                 }
                 
+                # Calculate decade from year
+                decade = calculate_decade(song_dict['year'])
+                song_dict['decade'] = decade
+                
                 # Insert into database
                 await db.songs.insert_one(song_dict)
                 songs_added += 1
