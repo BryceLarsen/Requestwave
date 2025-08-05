@@ -3059,6 +3059,54 @@ class RequestWaveAPITester:
         
         return self.results['failed'] == 0
 
+    def run_new_features_tests(self):
+        """Run only the new CSV Auto-enrichment and Batch Enrichment feature tests"""
+        print("=" * 70)
+        print("🚀 NEW FEATURES TESTING - CSV AUTO-ENRICHMENT & BATCH ENRICHMENT")
+        print("=" * 70)
+        print("🔑 Testing with Spotify credentials:")
+        print("   Client ID: 24f25c0b6f1048819102bd13ae768bde")
+        print("   Testing comprehensive auto-enrichment functionality...")
+        print()
+        
+        # Authentication setup
+        self.test_musician_registration()
+        if not self.auth_token:
+            print("❌ Cannot proceed without authentication")
+            return False
+        
+        # CSV Auto-enrichment Feature Tests
+        print("\n🎵 CSV AUTO-ENRICHMENT FEATURE TESTING")
+        print("=" * 50)
+        self.test_csv_upload_auto_enrichment_empty_metadata()
+        self.test_csv_upload_auto_enrichment_partial_metadata()
+        self.test_csv_upload_auto_enrichment_complete_metadata()
+        self.test_csv_upload_auto_enrichment_disabled()
+        self.test_csv_upload_auto_enrichment_authentication()
+        
+        # Batch Enrichment Feature Tests
+        print("\n🔄 BATCH ENRICHMENT FEATURE TESTING")
+        print("=" * 50)
+        self.test_batch_enrichment_all_songs()
+        self.test_batch_enrichment_specific_songs()
+        self.test_batch_enrichment_no_songs_needed()
+        self.test_batch_enrichment_authentication()
+        self.test_batch_enrichment_response_format()
+        
+        # Print focused summary
+        print("\n" + "=" * 70)
+        print("🏁 NEW FEATURES TEST SUMMARY")
+        print("=" * 70)
+        print(f"✅ Passed: {self.results['passed']}")
+        print(f"❌ Failed: {self.results['failed']}")
+        
+        if self.results['errors']:
+            print("\n🔍 Failed Tests:")
+            for error in self.results['errors']:
+                print(f"   • {error}")
+        
+        return self.results['failed'] == 0
+
     def run_spotify_metadata_tests(self):
         """Run only the Spotify Metadata Auto-fill Feature tests as requested in the review"""
         print("=" * 60)
