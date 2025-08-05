@@ -1164,7 +1164,15 @@ async def get_musician_by_slug(slug: str):
     return MusicianPublic(
         id=musician["id"],
         name=musician["name"],
-        slug=musician["slug"]
+        slug=musician["slug"],
+        # NEW: Include social media fields
+        paypal_username=musician.get("paypal_username"),
+        venmo_username=musician.get("venmo_username"),
+        instagram_username=musician.get("instagram_username"),
+        facebook_username=musician.get("facebook_username"),
+        tiktok_username=musician.get("tiktok_username"),
+        spotify_artist_url=musician.get("spotify_artist_url"),
+        apple_music_artist_url=musician.get("apple_music_artist_url")
     )
 
 @api_router.get("/musicians/{slug}/design")
