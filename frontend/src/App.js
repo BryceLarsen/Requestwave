@@ -2170,7 +2170,11 @@ const MusicianDashboard = () => {
 
               <div className="space-y-4">
                 {filteredSongs.map((song) => (
-                  <div key={song.id} className="bg-gray-700 rounded-lg p-4">
+                  <div key={song.id} className={`rounded-lg p-4 ${
+                    song.hidden 
+                      ? 'bg-gray-800 border-2 border-dashed border-gray-600 opacity-75' 
+                      : 'bg-gray-700'
+                  }`}>
                     <div className="flex items-center space-x-3">
                       {/* Checkbox for selection */}
                       <input
@@ -2183,8 +2187,19 @@ const MusicianDashboard = () => {
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <h3 className="font-bold text-lg">{song.title}</h3>
-                            <p className="text-gray-300">by {song.artist}</p>
+                            <div className="flex items-center space-x-2 mb-1">
+                              <h3 className={`font-bold text-lg ${song.hidden ? 'text-gray-400' : 'text-white'}`}>
+                                {song.title}
+                              </h3>
+                              {song.hidden && (
+                                <span className="bg-gray-600 text-gray-300 text-xs px-2 py-1 rounded-full font-medium">
+                                  👁️‍🗨️ Hidden
+                                </span>
+                              )}
+                            </div>
+                            <p className={`${song.hidden ? 'text-gray-500' : 'text-gray-300'}`}>
+                              by {song.artist}
+                            </p>
                             <div className="flex flex-wrap gap-2 mt-2">
                               {song.genres.map((genre, index) => (
                                 <span key={index} className="bg-purple-600 text-xs px-2 py-1 rounded-full">
@@ -2201,13 +2216,15 @@ const MusicianDashboard = () => {
                                   {song.year}
                                 </span>
                               )}
-                              {/* NEW: Request Count Badge */}
+                              {/* Request Count Badge */}
                               <span className="bg-orange-600 text-xs px-2 py-1 rounded-full font-semibold">
                                 🔥 {song.request_count || 0} requests
                               </span>
                             </div>
                             {song.notes && (
-                              <p className="text-gray-400 text-sm mt-1">{song.notes}</p>
+                              <p className={`text-sm mt-1 ${song.hidden ? 'text-gray-500' : 'text-gray-400'}`}>
+                                {song.notes}
+                              </p>
                             )}
                           </div>
                           <div className="flex space-x-2 ml-4">
@@ -2216,6 +2233,18 @@ const MusicianDashboard = () => {
                               className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm font-medium transition duration-300"
                             >
                               Edit
+                            </button>
+                            {/* NEW: Hide/Show Button */}
+                            <button
+                              onClick={() => handleToggleSongVisibility(song.id)}
+                              className={`px-3 py-1 rounded text-sm font-medium transition duration-300 ${
+                                song.hidden 
+                                  ? 'bg-green-600 hover:bg-green-700' 
+                                  : 'bg-yellow-600 hover:bg-yellow-700'
+                              }`}
+                              title={song.hidden ? 'Show to audience' : 'Hide from audience'}
+                            >
+                              {song.hidden ? 'Show' : 'Hide'}
                             </button>
                             <button
                               onClick={() => handleDeleteSong(song.id)}
