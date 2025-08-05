@@ -2494,6 +2494,14 @@ class RequestWaveAPITester:
         self.test_playlist_import_song_data_quality()
         self.test_playlist_import_duplicate_detection()
         
+        # Spotify Metadata Auto-fill tests (NEW - HIGH PRIORITY)
+        self.test_spotify_metadata_autofill_basic()
+        self.test_spotify_metadata_autofill_second_song()
+        self.test_spotify_metadata_autofill_authentication()
+        self.test_spotify_metadata_autofill_edge_cases()
+        self.test_spotify_metadata_autofill_response_format()
+        self.test_spotify_metadata_autofill_credentials_verification()
+        
         # Cleanup
         self.test_delete_song()
         
