@@ -732,6 +732,10 @@ const MusicianDashboard = () => {
     fetchSongs();
     fetchRequests();
     fetchSubscriptionStatus();
+    // NEW: Fetch show-related data
+    fetchCurrentShow();
+    fetchShows();
+    fetchGroupedRequests();
     
     // Check for successful payment
     const urlParams = new URLSearchParams(window.location.search);
