@@ -362,8 +362,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "CSV Upload Auto-enrichment - Extend auto-fill to CSV upload process"
-    - "Existing Playlist Songs Metadata - Batch metadata enrichment for already imported songs"
+    - "Song Metadata Auto-fill Feature (Spotify Integration) - Confirmed working with new credentials"
+    - "CSV Upload Auto-enrichment Enhancement - NEW feature implemented, needs testing"
+    - "Existing Playlist Songs Metadata Enrichment - NEW feature implemented, needs testing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
