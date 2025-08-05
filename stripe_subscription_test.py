@@ -409,7 +409,9 @@ class StripeSubscriptionTester:
                 self.log_result("Subscription Authentication - Status", False, f"Should require auth, got: {response.status_code}")
             
             # Test upgrade without token
-            response = self.make_request("POST", "/subscription/upgrade", {})
+            response = self.make_request("POST", "/subscription/upgrade")
+            if response.status_code == 422:
+                response = self.make_request("POST", "/subscription/upgrade", {})
             
             if response.status_code in [401, 403]:
                 self.log_result("Subscription Authentication - Upgrade", True, f"✅ Subscription upgrade requires auth (status: {response.status_code})")
