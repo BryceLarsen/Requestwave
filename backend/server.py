@@ -1803,11 +1803,13 @@ async def get_my_songs(
     
     songs = await db.songs.find({"musician_id": musician_id}).sort(sort_field, sort_direction).to_list(None)  # Removed 1000 limit
     
-    # Ensure request_count field exists for older songs
+    # Ensure request_count and hidden fields exist for older songs
     updated_songs = []
     for song in songs:
         if "request_count" not in song:
             song["request_count"] = 0
+        if "hidden" not in song:
+            song["hidden"] = False  # Default to visible for older songs
         updated_songs.append(Song(**song))
     
     return updated_songs
