@@ -365,6 +365,7 @@ const MusicianDashboard = () => {
   const [csvUploading, setCsvUploading] = useState(false);
   const [csvError, setCsvError] = useState('');
   const [showCsvUpload, setShowCsvUpload] = useState(false);
+  const [csvAutoEnrich, setCsvAutoEnrich] = useState(false);  // NEW: Auto-enrichment option
 
   // Song form state
   const [songForm, setSongForm] = useState({
