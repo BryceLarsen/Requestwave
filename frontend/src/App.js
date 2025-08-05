@@ -2813,6 +2813,12 @@ const AudienceInterface = () => {
   const [success, setSuccess] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
+  // NEW: Tip functionality state
+  const [showTipModal, setShowTipModal] = useState(false);
+  const [tipAmount, setTipAmount] = useState('');
+  const [tipMessage, setTipMessage] = useState('');
+  const [tipPlatform, setTipPlatform] = useState('paypal'); // 'paypal' or 'venmo'
+
   // Color scheme mappings
   const colorSchemes = {
     purple: {
