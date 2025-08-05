@@ -6018,21 +6018,91 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
 if __name__ == "__main__":
     tester = RequestWaveAPITester()
     
-    # Run Decade Functionality Tests as requested in the review
-    success = tester.run_decade_functionality_tests()
+    # Run Stripe Subscription System Tests as requested in the review
+    print("🚀 STRIPE SUBSCRIPTION SYSTEM TESTING - CRITICAL ROUTING FIX VERIFICATION")
+    print("=" * 80)
+    print("Testing the FIXED Stripe subscription endpoints after resolving critical routing conflicts")
+    print("Focus areas:")
+    print("1. Fixed Subscription Upgrade Endpoint (POST /api/subscription/upgrade)")
+    print("2. Fixed Webhook Endpoint (POST /api/webhook/stripe)")
+    print("3. Complete Subscription Flow Testing")
+    print("4. Live Stripe Integration Verification")
+    print("5. Database Integration")
+    print("=" * 80)
+    
+    # Reset results for focused testing
+    tester.results = {
+        "passed": 0,
+        "failed": 0,
+        "errors": []
+    }
+    
+    # Authentication setup
+    tester.test_musician_registration()
+    if not tester.auth_token:
+        print("❌ CRITICAL: Could not authenticate - cannot proceed with Stripe tests")
+        exit(1)
+    
+    # Run Stripe subscription tests
+    print("\n🔥 CRITICAL: STRIPE SUBSCRIPTION SYSTEM - FIXED ROUTING TESTS")
+    print("=" * 70)
+    tester.test_stripe_api_key_configuration()
+    tester.test_subscription_status()
+    tester.test_subscription_upgrade_endpoint()
+    tester.test_stripe_webhook_endpoint()
+    tester.test_subscription_upgrade_authentication()
+    tester.test_subscription_pricing_verification()
+    tester.test_complete_subscription_flow()
+    
+    # Print comprehensive summary
+    print("\n" + "=" * 80)
+    print("🏁 STRIPE SUBSCRIPTION SYSTEM TEST SUMMARY")
+    print("=" * 80)
+    print(f"✅ Passed: {tester.results['passed']}")
+    print(f"❌ Failed: {tester.results['failed']}")
+    
+    if tester.results['errors']:
+        print("\n🔍 CRITICAL ISSUES FOUND:")
+        for error in tester.results['errors']:
+            print(f"   • {error}")
+    else:
+        print("\n🎉 NO CRITICAL ISSUES FOUND!")
+        print("✅ Stripe API key properly configured")
+        print("✅ Subscription status endpoint working")
+        print("✅ Subscription upgrade endpoint working (routing fixed)")
+        print("✅ Stripe webhook endpoint working (routing fixed)")
+        print("✅ Authentication properly enforced")
+        print("✅ Subscription pricing set to $5.00/month")
+        print("✅ Complete subscription flow working")
+    
+    # Specific analysis for the reported routing issues
+    routing_tests = [error for error in tester.results['errors'] if '422' in error or 'routing' in error.lower() or 'validation' in error.lower()]
+    stripe_tests = [error for error in tester.results['errors'] if 'stripe' in error.lower() or 'checkout' in error.lower() or 'webhook' in error.lower()]
+    
+    print(f"\n📊 STRIPE ROUTING CONFLICTS: {'✅ FIXED' if len(routing_tests) == 0 else '❌ STILL EXISTS'}")
+    if routing_tests:
+        print("   ROUTING ISSUES:")
+        for error in routing_tests:
+            print(f"   • {error}")
+    
+    print(f"📊 STRIPE INTEGRATION: {'✅ WORKING' if len(stripe_tests) == 0 else '❌ FAILING'}")
+    if stripe_tests:
+        print("   STRIPE ISSUES:")
+        for error in stripe_tests:
+            print(f"   • {error}")
+    
+    success = tester.results['failed'] == 0
     
     if success:
-        print("\n🎉 Decade functionality testing completed successfully!")
-        print("✅ Song creation automatically calculates decades from years")
-        print("✅ Song updates recalculate decades when year changes")
-        print("✅ Filter options include decades array with available decades")
-        print("✅ Songs can be filtered by decade parameter")
-        print("✅ CSV uploads automatically calculate decades")
-        print("✅ Playlist imports automatically calculate decades")
-        print("✅ Batch enrichment updates decades when years are added")
-        print("✅ All decade calculation edge cases work correctly")
+        print("\n🎉 Stripe subscription system testing completed successfully!")
+        print("✅ Critical routing conflicts have been resolved")
+        print("✅ POST /api/subscription/upgrade endpoint working correctly")
+        print("✅ POST /api/webhook/stripe endpoint working correctly")
+        print("✅ Live Stripe API integration functional")
+        print("✅ Payment transaction records created properly")
+        print("✅ Subscription system is production-ready")
         exit(0)
     else:
-        print(f"\n💥 DECADE FUNCTIONALITY ISSUES FOUND: {tester.results['failed']} problems detected!")
-        print("❌ The decade functionality needs attention before it can be considered fully working")
+        print(f"\n💥 STRIPE SUBSCRIPTION ISSUES FOUND: {tester.results['failed']} problems detected!")
+        print("❌ The Stripe subscription system needs attention before it can be considered production-ready")
         exit(1)
