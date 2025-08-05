@@ -905,6 +905,110 @@ def assign_genre_and_mood(song_title: str, artist: str) -> Dict[str, Any]:
     
     return {"genre": genre, "mood": mood}
 
+# NEW: Spotify Client Credentials Setup
+def get_spotify_client():
+    """Get Spotify client using Client Credentials flow (no user auth needed)"""
+    try:
+        client_credentials_manager = SpotifyClientCredentials(
+            client_id=os.getenv("SPOTIFY_CLIENT_ID"),
+            client_secret=os.getenv("SPOTIFY_CLIENT_SECRET")
+        )
+        return spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+    except Exception as e:
+        logger.error(f"Error setting up Spotify client: {str(e)}")
+        return None
+
+def get_mood_from_audio_features(audio_features: dict) -> str:
+    """Determine mood from Spotify audio features"""
+    if not audio_features:
+        return "Upbeat"
+    
+    valence = audio_features.get('valence', 0.5)  # 0.0 = sad, 1.0 = happy
+    energy = audio_features.get('energy', 0.5)    # 0.0 = low energy, 1.0 = high energy
+    danceability = audio_features.get('danceability', 0.5)
+    
+    # Determine mood based on audio features
+    if valence > 0.7 and energy > 0.7:
+        return "Energetic"
+    elif valence > 0.6 and danceability > 0.6:
+        return "Upbeat"
+    elif valence < 0.4 and energy < 0.5:
+        return "Melancholy"
+    elif energy < 0.4:
+        return "Chill"
+    elif valence > 0.6 and energy < 0.6:
+        return "Romantic"
+    else:
+        return "Upbeat"
+
+async def search_spotify_metadata(title: str, artist: str) -> Dict[str, Any]:
+    """Search Spotify for song metadata using Client Credentials"""
+    try:
+        sp = get_spotify_client()
+        if not sp:
+            logger.error("Failed to initialize Spotify client")
+            return None
+        
+        # Search for the track
+        query = f"track:{title} artist:{artist}"
+        results = sp.search(q=query, type='track', limit=1)
+        
+        if not results['tracks']['items']:
+            # Try a simpler search if exact search fails
+            query = f"{title} {artist}"
+            results = sp.search(q=query, type='track', limit=1)
+        
+        if not results['tracks']['items']:
+            logger.warning(f"No Spotify results found for: {title} by {artist}")
+            return None
+        
+        track = results['tracks']['items'][0]
+        
+        # Extract basic info
+        title_found = track['name']
+        artist_found = track['artists'][0]['name']
+        album = track['album']['name']
+        release_date = track['album']['release_date']
+        year = int(release_date[:4]) if release_date else None
+        
+        # Get genres from artist or album
+        genres = []
+        if track['artists'][0]['id']:
+            try:
+                artist_info = sp.artist(track['artists'][0]['id'])
+                genres = artist_info.get('genres', [])
+            except:
+                pass
+        
+        # Default to Pop if no genres found, otherwise use the first one
+        primary_genre = genres[0].title() if genres else "Pop"
+        
+        # Get audio features for mood analysis
+        mood = "Upbeat"  # Default
+        try:
+            audio_features = sp.audio_features(track['id'])
+            if audio_features and audio_features[0]:
+                mood = get_mood_from_audio_features(audio_features[0])
+        except:
+            # Fallback to heuristic-based mood
+            mood_data = assign_genre_and_mood(title, artist)
+            mood = mood_data['mood']
+        
+        return {
+            "title": title_found,
+            "artist": artist_found,
+            "album": album,
+            "year": year,
+            "genres": [primary_genre],
+            "moods": [mood],
+            "spotify_id": track['id'],
+            "confidence": "high" if title.lower() in title_found.lower() and artist.lower() in artist_found.lower() else "medium"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error searching Spotify metadata for '{title}' by '{artist}': {str(e)}")
+        return None
+
 # Auth endpoints
 @api_router.post("/auth/register", response_model=AuthResponse)
 async def register_musician(musician_data: MusicianRegister):
