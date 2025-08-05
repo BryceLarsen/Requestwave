@@ -3551,6 +3551,10 @@ const AudienceInterface = () => {
     if (selectedFilters.year) {
       filtered = filtered.filter(song => song.year === parseInt(selectedFilters.year));
     }
+    // NEW: Apply decade filter
+    if (selectedFilters.decade) {
+      filtered = filtered.filter(song => song.decade === selectedFilters.decade);
+    }
 
     setFilteredSongs(filtered);
   };
