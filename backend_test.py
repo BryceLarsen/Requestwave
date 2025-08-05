@@ -3715,6 +3715,13 @@ class RequestWaveAPITester:
         # Advanced filtering tests
         self.test_advanced_filtering()
         
+        # NEW: Audience Page Search Functionality tests (HIGH PRIORITY)
+        print("\n🔍 AUDIENCE PAGE SEARCH FUNCTIONALITY TESTING")
+        print("=" * 50)
+        self.test_audience_page_search_functionality()
+        self.test_search_edge_cases()
+        self.test_search_performance()
+        
         # Request management tests
         self.test_create_request()
         self.test_get_musician_requests()
