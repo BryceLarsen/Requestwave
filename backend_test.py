@@ -1933,7 +1933,7 @@ class RequestWaveAPITester:
             for test_case in edge_cases:
                 print(f"🔍 Testing edge case: {test_case['description']}")
                 
-                response = self.make_request("POST", "/songs/search-metadata", {
+                response = self.make_request("POST", "/songs/search-metadata", params={
                     "title": test_case["title"],
                     "artist": test_case["artist"]
                 })
