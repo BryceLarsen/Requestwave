@@ -95,6 +95,7 @@ class Song(BaseModel):
     genres: List[str] = []
     moods: List[str] = []
     year: Optional[int] = None
+    decade: Optional[str] = None  # NEW: Automatically calculated from year (e.g., "70's", "80's")
     notes: str = ""
     request_count: int = 0  # Track number of requests for this song
     hidden: bool = False  # NEW: Hide song from audience view
