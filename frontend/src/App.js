@@ -3377,6 +3377,14 @@ const AudienceInterface = () => {
                   required
                 />
                 
+                <input
+                  type="text"
+                  placeholder="Show/Event name (optional)"
+                  value={requestForm.show_name}
+                  onChange={(e) => setRequestForm({...requestForm, show_name: e.target.value})}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
+                />
+                
                 <textarea
                   placeholder="Dedication message (optional)"
                   value={requestForm.dedication}
