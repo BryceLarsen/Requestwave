@@ -462,6 +462,9 @@ class NewFeaturesAPITester:
                         missing_fields.append(field)
                 
                 if not missing_fields:
+                    # Store the request ID for later tests
+                    self.test_request_id = data["id"]
+                    
                     # Check initial values
                     if (data["tip_clicked"] == False and 
                         data["social_clicks"] == [] and 
