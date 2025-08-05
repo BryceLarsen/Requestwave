@@ -866,6 +866,7 @@ const MusicianDashboard = () => {
       
       await axios.put(`${API}/songs/${editingSong.id}`, songData);
       setEditingSong(null);
+      setShowEditModal(false); // NEW: Close modal after successful update
       setSongForm({
         title: '',
         artist: '',
