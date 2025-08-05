@@ -485,7 +485,7 @@ class NewFeaturesAPITester:
             
             # Test tip click tracking for venmo
             click_data = {
-                "click_type": "tip",
+                "type": "tip",
                 "platform": "venmo"
             }
             
