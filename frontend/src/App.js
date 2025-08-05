@@ -379,6 +379,7 @@ const MusicianDashboard = () => {
 
   // Song editing state
   const [editingSong, setEditingSong] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false); // NEW: Modal state for editing songs
 
   // NEW: Batch editing and filtering state
   const [selectedSongs, setSelectedSongs] = useState(new Set());
