@@ -2618,6 +2618,88 @@ const MusicianDashboard = () => {
                 />
               </div>
               
+              {/* NEW: Social Media Links for "Follow Me" Section */}
+              <div className="border-t border-gray-600 pt-6">
+                <h3 className="text-lg font-semibold text-white mb-4">📱 Social Media Links</h3>
+                <p className="text-gray-300 text-sm mb-4">Add your social media accounts so fans can follow you</p>
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-gray-300 text-sm font-bold mb-2">
+                        Instagram Username
+                        <span className="text-pink-400 ml-1">📷</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="yourusername (without @)"
+                        value={profile.instagram_username || ''}
+                        onChange={(e) => setProfile({...profile, instagram_username: e.target.value})}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-gray-300 text-sm font-bold mb-2">
+                        TikTok Username
+                        <span className="text-purple-400 ml-1">🎵</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="yourusername (without @)"
+                        value={profile.tiktok_username || ''}
+                        onChange={(e) => setProfile({...profile, tiktok_username: e.target.value})}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-gray-300 text-sm font-bold mb-2">
+                      Facebook Page/Username
+                      <span className="text-blue-400 ml-1">👥</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="yourpage or facebook.com/yourpage"
+                      value={profile.facebook_username || ''}
+                      onChange={(e) => setProfile({...profile, facebook_username: e.target.value})}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <label className="block text-gray-300 text-sm font-bold mb-2">
+                        Spotify Artist URL
+                        <span className="text-green-400 ml-1">🎧</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="https://open.spotify.com/artist/..."
+                        value={profile.spotify_artist_url || ''}
+                        onChange={(e) => setProfile({...profile, spotify_artist_url: e.target.value})}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-gray-300 text-sm font-bold mb-2">
+                        Apple Music Artist URL
+                        <span className="text-red-400 ml-1">🍎</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="https://music.apple.com/us/artist/..."
+                        value={profile.apple_music_artist_url || ''}
+                        onChange={(e) => setProfile({...profile, apple_music_artist_url: e.target.value})}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
               <button
                 type="submit"
                 className="w-full bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300"
