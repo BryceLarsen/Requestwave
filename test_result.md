@@ -368,8 +368,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "CSV Upload Auto-enrichment Enhancement - NEW feature implemented, needs testing"
-    - "Existing Playlist Songs Metadata Enrichment - NEW feature implemented, needs testing"
+    - "Song Metadata Auto-fill Feature (Spotify Integration) - Confirmed working with new credentials"
+    - "CSV Upload Auto-enrichment Enhancement - NEW feature implemented and tested, working correctly"
+    - "Existing Playlist Songs Metadata Enrichment - NEW feature implemented and tested, working correctly"
+    - "Audience-Side Tip Support (PayPal and Venmo) - NEW feature implemented and tested, working perfectly"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
