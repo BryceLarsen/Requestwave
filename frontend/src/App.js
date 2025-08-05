@@ -3439,8 +3439,10 @@ const AudienceInterface = () => {
   }, [slug]);
 
   useEffect(() => {
-    applyFilters();
-  }, [songs, selectedFilters, searchQuery]); // Added searchQuery to dependencies
+    if (musician) {
+      fetchSongs(); // Use backend filtering instead of client-side
+    }
+  }, [selectedFilters, searchQuery, musician]); // Trigger when filters or search changes
 
   const fetchMusician = async () => {
     try {
