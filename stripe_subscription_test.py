@@ -408,7 +408,7 @@ class StripeSubscriptionTester:
                     self.log_result("Subscription Flow - Initial Status", False, f"Expected trial, got: {initial_status.get('plan')}")
             
             # Step 2: Create upgrade session
-            upgrade_response = self.make_request("POST", "/subscription/upgrade")
+            upgrade_response = self.make_request("POST", "/subscription/upgrade", {})
             if upgrade_response.status_code == 200:
                 upgrade_data = upgrade_response.json()
                 if upgrade_data.get("checkout_url") and upgrade_data.get("session_id"):
