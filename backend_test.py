@@ -5151,8 +5151,8 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
                 if upgrade_response.status_code == 200:
                     upgrade_data = upgrade_response.json()
                     
-                    if "checkout_url" in upgrade_data and "session_id" in upgrade_data:
-                        checkout_url = upgrade_data["checkout_url"]
+                    if "url" in upgrade_data and "session_id" in upgrade_data:
+                        checkout_url = upgrade_data["url"]  # Correct field name is "url"
                         session_id = upgrade_data["session_id"]
                         
                         # Verify checkout URL points to correct dashboard URLs
