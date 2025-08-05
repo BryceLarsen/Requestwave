@@ -900,6 +900,59 @@ const MusicianDashboard = () => {
     }
   }, [activeTab, analyticsDays]);
 
+  // NEW: Auto-fill song metadata function
+  const handleAutoFillMetadata = async () => {
+    if (!songForm.title.trim() || !songForm.artist.trim()) {
+      alert('Please enter both song title and artist before auto-filling.');
+      return;
+    }
+
+    setAutoFillLoading(true);
+    try {
+      const response = await axios.post(`${API}/songs/search-metadata`, null, {
+        params: {
+          title: songForm.title.trim(),
+          artist: songForm.artist.trim()
+        }
+      });
+
+      if (response.data.success && response.data.metadata) {
+        const metadata = response.data.metadata;
+        
+        // Show confirmation dialog with suggestions
+        const confirmMessage = `Found metadata from ${metadata.source}:\n\n` +
+          `Title: ${metadata.title}\n` +
+          `Artist: ${metadata.artist}\n` +
+          `Year: ${metadata.year || 'Unknown'}\n` +
+          `Genres: ${metadata.genres.join(', ')}\n` +
+          `Moods: ${metadata.moods.join(', ')}\n\n` +
+          `Confidence: ${metadata.confidence}\n\n` +
+          `Would you like to use this information?`;
+
+        if (window.confirm(confirmMessage)) {
+          setSongForm({
+            ...songForm,
+            year: metadata.year || songForm.year,
+            genres: metadata.genres.length > 0 ? metadata.genres : songForm.genres,
+            moods: metadata.moods.length > 0 ? metadata.moods : songForm.moods
+          });
+          alert('Metadata applied successfully! You can still edit any fields before saving.');
+        }
+      } else {
+        alert('No metadata found. You can still add the song manually.');
+      }
+    } catch (error) {
+      console.error('Error fetching metadata:', error);
+      if (error.response?.status === 400) {
+        alert('Please provide both title and artist to search for metadata.');
+      } else {
+        alert('Error searching for song metadata. You can still add the song manually.');
+      }
+    } finally {
+      setAutoFillLoading(false);
+    }
+  };
+
   const fetchDesignSettings = async () => {
     try {
       const response = await axios.get(`${API}/design/settings`);
