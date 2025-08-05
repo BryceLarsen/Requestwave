@@ -1172,9 +1172,15 @@ async def get_profile(musician_id: str = Depends(get_current_musician)):
         venmo_link=musician.get("venmo_link", ""),
         bio=musician.get("bio", ""),
         website=musician.get("website", ""),
-        # NEW: Include payment usernames
+        # Payment usernames
         paypal_username=musician.get("paypal_username", ""),
-        venmo_username=musician.get("venmo_username", "")
+        venmo_username=musician.get("venmo_username", ""),
+        # NEW: Social media fields
+        instagram_username=musician.get("instagram_username", ""),
+        facebook_username=musician.get("facebook_username", ""),
+        tiktok_username=musician.get("tiktok_username", ""),
+        spotify_artist_url=musician.get("spotify_artist_url", ""),
+        apple_music_artist_url=musician.get("apple_music_artist_url", "")
     )
 
 @api_router.put("/profile", response_model=MusicianProfile)
