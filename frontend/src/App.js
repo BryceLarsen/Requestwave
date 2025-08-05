@@ -849,6 +849,7 @@ const MusicianDashboard = () => {
       notes: song.notes
     });
     setSongError('');
+    setShowEditModal(true); // NEW: Open modal instead of scrolling to form
   };
 
   const handleUpdateSong = async (e) => {
