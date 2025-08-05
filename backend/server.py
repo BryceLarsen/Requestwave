@@ -1800,7 +1800,7 @@ async def get_musician_songs(
     mood: Optional[str] = None,
     year: Optional[int] = None
 ):
-    """Get songs for a musician with filtering support"""
+    """Get songs for a musician with filtering and search support"""
     # Get musician
     musician = await db.musicians.find_one({"slug": slug})
     if not musician:
@@ -1809,7 +1809,29 @@ async def get_musician_songs(
     # Build filter query
     query = {"musician_id": musician["id"]}
     
-    # Apply filters with AND logic
+    # Apply search across all fields (title, artist, genres, moods, year)
+    if search:
+        search_term = search.strip()
+        if search_term:
+            # Create search conditions for different fields
+            search_conditions = [
+                {"title": {"$regex": search_term, "$options": "i"}},  # Case insensitive title search
+                {"artist": {"$regex": search_term, "$options": "i"}},  # Case insensitive artist search
+                {"genres": {"$regex": search_term, "$options": "i"}},  # Case insensitive genre search
+                {"moods": {"$regex": search_term, "$options": "i"}},  # Case insensitive mood search
+            ]
+            
+            # Add year search if search term is numeric
+            try:
+                year_search = int(search_term)
+                search_conditions.append({"year": year_search})
+            except ValueError:
+                pass  # Not a number, skip year search
+            
+            # Use $or to search across all fields
+            query["$or"] = search_conditions
+    
+    # Apply additional filters with AND logic (these work with search)
     if genre:
         query["genres"] = {"$in": [genre]}
     
