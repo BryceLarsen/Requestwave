@@ -568,8 +568,7 @@ class PostRequestFeaturesTester:
             # Test bulk status update
             bulk_data = {
                 "request_ids": bulk_request_ids,
-                "action": "update_status",
-                "status": "accepted"
+                "action": "archive"
             }
             
             print(f"🔍 Testing POST /requests/bulk-action")
