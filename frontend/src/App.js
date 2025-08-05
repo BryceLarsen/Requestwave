@@ -4246,6 +4246,110 @@ const AudienceInterface = () => {
             </div>
           </div>
         )}
+
+        {/* NEW: Edit Song Modal */}
+        {showEditModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <h2 className="text-xl font-bold mb-4">Edit Song</h2>
+              
+              {songError && editingSong && (
+                <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200">
+                  {songError}
+                </div>
+              )}
+              
+              <form onSubmit={handleUpdateSong} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Song Title"
+                  value={songForm.title}
+                  onChange={(e) => setSongForm({...songForm, title: e.target.value})}
+                  className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Artist"
+                  value={songForm.artist}
+                  onChange={(e) => setSongForm({...songForm, artist: e.target.value})}
+                  className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                  required
+                />
+                
+                {/* Auto-fill Metadata Button */}
+                <div className="md:col-span-2 mb-4">
+                  <button
+                    type="button"
+                    onClick={handleAutoFillMetadata}
+                    disabled={autoFillLoading || !songForm.title.trim() || !songForm.artist.trim()}
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-medium transition duration-300 disabled:cursor-not-allowed flex items-center space-x-2"
+                  >
+                    {autoFillLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Searching...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🔍</span>
+                        <span>Auto-fill Info from Spotify</span>
+                      </>
+                    )}
+                  </button>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Fill in Title and Artist above, then click to automatically find Genre, Mood, and Year
+                  </p>
+                </div>
+                
+                <input
+                  type="text"
+                  placeholder="Genres (comma separated)"
+                  value={songForm.genres.join(', ')}
+                  onChange={(e) => setSongForm({...songForm, genres: e.target.value.split(',').map(g => g.trim())})}
+                  className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                />
+                <input
+                  type="text"
+                  placeholder="Moods (comma separated)"
+                  value={songForm.moods.join(', ')}
+                  onChange={(e) => setSongForm({...songForm, moods: e.target.value.split(',').map(m => m.trim())})}
+                  className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                />
+                <input
+                  type="number"
+                  placeholder="Year"
+                  value={songForm.year}
+                  onChange={(e) => setSongForm({...songForm, year: e.target.value})}
+                  className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                />
+                <input
+                  type="text"
+                  placeholder="Notes (optional)"
+                  value={songForm.notes}
+                  onChange={(e) => setSongForm({...songForm, notes: e.target.value})}
+                  className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                />
+                
+                <div className="md:col-span-2 flex space-x-4">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300"
+                  >
+                    Update Song
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelEdit}
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 py-2 rounded-lg font-bold transition duration-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
