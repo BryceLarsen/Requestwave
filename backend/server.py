@@ -2626,17 +2626,24 @@ def generate_payment_links(musician: dict, amount: float, message: str = None) -
             # PayPal supports note parameter
             paypal_link += f"?note={message.replace(' ', '%20')}"
     
-    # Generate Venmo.me link if musician has Venmo username  
+    # Generate Venmo link if musician has Venmo username  
     if musician.get('venmo_username'):
-        venmo_link = f"https://venmo.com/{musician['venmo_username']}"
-        # Venmo links with amount and note (mobile app will handle)
-        params = []
+        # Use proper Venmo deep link format for mobile devices
+        # Format: venmo://paycharge?txn=pay&recipients=USERNAME&amount=AMOUNT&note=MESSAGE
+        venmo_username = musician['venmo_username']
+        
+        # For web compatibility, we'll generate both formats and let frontend handle detection
+        # Mobile deep link format
+        mobile_params = [f"recipients={venmo_username}", "txn=pay"]
         if amount:
-            params.append(f"amount={amount}")
+            mobile_params.append(f"amount={amount}")
         if message:
-            params.append(f"note={message.replace(' ', '%20')}")
-        if params:
-            venmo_link += "?" + "&".join(params)
+            mobile_params.append(f"note={message.replace(' ', '%20').replace('&', '%26')}")
+        
+        # Use venmo://paycharge for mobile app deep link
+        venmo_link = "venmo://paycharge?" + "&".join(mobile_params)
+        
+        # Note: If deep link fails, we fallback to web URL in frontend
     
     return PaymentLinkResponse(
         paypal_link=paypal_link,
