@@ -2073,7 +2073,7 @@ const MusicianDashboard = () => {
                 </div>
 
                 {/* Search and Filter Bar */}
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mb-4">
                   <input
                     type="text"
                     placeholder="Search songs..."
@@ -2107,6 +2107,14 @@ const MusicianDashboard = () => {
                     placeholder="Filter by year..."
                     value={yearFilter}
                     onChange={(e) => setYearFilter(e.target.value)}
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
+                  />
+                  {/* NEW: Decade filter */}
+                  <input
+                    type="text"
+                    placeholder="Filter by decade..."
+                    value={decadeFilter}
+                    onChange={(e) => setDecadeFilter(e.target.value)}
                     className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
                   />
                 </div>
