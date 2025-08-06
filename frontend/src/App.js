@@ -4127,7 +4127,7 @@ const AudienceInterface = () => {
         </div>
 
         {/* Songs Display */}
-        <div className="mb-4">
+        <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <p className="text-gray-400 text-sm md:text-base">
             {searchQuery ? (
               <>
@@ -4143,6 +4143,17 @@ const AudienceInterface = () => {
               </>
             )}
           </p>
+          
+          {/* NEW: Random Song Button */}
+          {filteredSongs.length > 0 && (
+            <button
+              onClick={handleRandomSong}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+              <span>🎲</span>
+              <span>Random Song</span>
+            </button>
+          )}
         </div>
 
         {/* List/Grid Toggle for larger screens */}
