@@ -615,11 +615,11 @@ test_plan:
 
   - task: "Bulk/Batch Edit Functionality"
     implemented: true
-    working: true
+    working: false
     file: "App.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "critical"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "user"
@@ -627,6 +627,9 @@ test_plan:
       - working: true
         agent: "testing"
         comment: "BULK/BATCH EDIT FUNCTIONALITY FULLY WORKING: Comprehensive testing confirms the FIXED bulk editing workflow is completely functional. ✅ CRITICAL FIX VERIFIED: The missing 'Edit Selected' button is now present and visible alongside 'Delete Selected' button in the bulk operations bar. ✅ SONG SELECTION: Individual song checkboxes are visible and functional, 'Select All' checkbox works correctly, selected count displays properly (e.g., '1 selected'). ✅ BULK ACTION BUTTONS: Both 'Edit Selected (X)' and 'Delete Selected' buttons appear when songs are selected, properly styled and positioned together, button shows selected count correctly. ✅ BATCH EDIT FORM: Opens successfully when 'Edit Selected' is clicked, contains all required fields (Artist, Genres, Moods, Year, Notes), all fields accept input correctly. ✅ FIELD UPDATES: Genres field accepts comma-separated values ('Rock, Pop, Electronic'), Moods field accepts comma-separated values ('Energetic, Happy'), Notes field allows text input and replaces existing notes, Artist field updates correctly, Year field updates and triggers decade calculation. ✅ FORM FUNCTIONALITY: 'Apply Changes' button processes updates successfully, 'Cancel' button closes form without saving, form validation prevents empty submissions. ✅ UI IMPLEMENTATION: All 6 filter inputs present (Search, Genre, Artist, Mood, Year, Decade), proper responsive design and styling, bulk operations discoverable and user-friendly. ✅ DATA PERSISTENCE: Changes persist after form submission, songs display updated values correctly, unselected songs remain unchanged. The key issue where the 'Edit Selected' button was missing from the bulk operations bar has been completely RESOLVED, making the bulk edit feature fully discoverable and usable for musicians."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL BUG CONFIRMED: '[object Object],[object Object]' popup issue found in batch edit functionality. COMPREHENSIVE TESTING RESULTS: ✅ UI FUNCTIONALITY: Batch edit form opens correctly, all fields (Artist, Genres, Moods, Year, Notes) are present and accept input, 'Edit Selected' button works and shows correct count. ✅ FORM SUBMISSION: Form submits data to backend API (PUT /api/songs/batch-edit). ❌ CRITICAL ERROR HANDLING BUG: When backend returns 422 validation errors, frontend displays 'Error: [object Object],[object Object]' popup instead of proper error messages. ROOT CAUSE IDENTIFIED: In App.js line 1155, error handling code assumes error.response.data.detail is always a string, but FastAPI validation errors return detail as an array of validation error objects. When JavaScript converts array to string for alert(), each object becomes '[object Object]'. BACKEND RESPONSE: 422 status with {detail: Array(2)} containing validation error objects. CONSOLE ERRORS: 'Error response data: {detail: Array(2)}', 'Error batch editing songs: AxiosError'. FIX NEEDED: Update frontend error handling to properly parse and display validation error arrays instead of showing '[object Object]' messages."
 
   - task: "Individual and Bulk Song Deletion Functionality"
     implemented: true
