@@ -3830,7 +3830,7 @@ const AudienceInterface = () => {
     });
 
     // Show the request modal
-    setShowRequestModal(true);
+    setSelectedSong(randomSong);
   };
 
   const handleRequest = async (song) => {
