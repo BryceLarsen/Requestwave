@@ -388,7 +388,8 @@ const MusicianDashboard = () => {
     artist: '',
     genres: '',
     moods: '',
-    year: ''
+    year: '',
+    notes: ''  // NEW: Add notes to batch edit form
   });
   const [songFilter, setSongFilter] = useState('');
   const [genreFilter, setGenreFilter] = useState('');
