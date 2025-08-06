@@ -1099,11 +1099,21 @@ const MusicianDashboard = () => {
     }
 
     const updates = {};
-    if (batchEditForm.artist.trim()) updates.artist = batchEditForm.artist.trim();
-    if (batchEditForm.genres.trim()) updates.genres = batchEditForm.genres.trim(); // Send as string, backend will parse
-    if (batchEditForm.moods.trim()) updates.moods = batchEditForm.moods.trim(); // Send as string, backend will parse
-    if (batchEditForm.year.trim()) updates.year = batchEditForm.year.trim(); // Send as string, backend will parse
-    if (batchEditForm.notes !== undefined) updates.notes = batchEditForm.notes; // Include notes (can be empty to clear)
+    if (batchEditForm.artist && batchEditForm.artist.trim()) {
+      updates.artist = batchEditForm.artist.trim();
+    }
+    if (batchEditForm.genres && batchEditForm.genres.trim()) {
+      updates.genres = batchEditForm.genres.trim();
+    }
+    if (batchEditForm.moods && batchEditForm.moods.trim()) {
+      updates.moods = batchEditForm.moods.trim();
+    }
+    if (batchEditForm.year && batchEditForm.year.trim()) {
+      updates.year = batchEditForm.year.trim();
+    }
+    if (batchEditForm.notes !== undefined) {
+      updates.notes = batchEditForm.notes; // Include notes (can be empty to clear)
+    }
 
     if (Object.keys(updates).length === 0) {
       alert('Please enter values to update');
@@ -1111,10 +1121,17 @@ const MusicianDashboard = () => {
     }
 
     try {
+      console.log('Batch edit data being sent:', {
+        song_ids: Array.from(selectedSongs),
+        updates: updates
+      });
+
       const response = await axios.put(`${API}/songs/batch-edit`, {
         song_ids: Array.from(selectedSongs),
         updates: updates
       });
+
+      console.log('Batch edit response:', response.data);
 
       if (response.data.success) {
         alert(`Successfully updated ${response.data.updated_count} songs!`);
@@ -1128,10 +1145,14 @@ const MusicianDashboard = () => {
         setSelectedSongs(new Set());
         setShowBatchEdit(false);
         fetchSongs(); // Refresh the song list
+      } else {
+        alert('Update completed but with unexpected response');
       }
     } catch (error) {
       console.error('Error batch editing songs:', error);
-      alert(error.response?.data?.detail || 'Error updating songs');
+      console.error('Error response data:', error.response?.data);
+      const errorMessage = error.response?.data?.detail || error.message || 'Error updating songs';
+      alert(`Error: ${errorMessage}`);
     }
   };
 
