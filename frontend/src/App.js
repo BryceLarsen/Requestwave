@@ -2510,6 +2510,14 @@ const MusicianDashboard = () => {
                               Mark Played
                             </button>
                           )}
+                          {/* NEW: Delete button for unassigned requests */}
+                          <button
+                            onClick={() => handleDeleteRequest(request.id, request.song_title)}
+                            className="bg-gray-600 hover:bg-red-600 text-white text-xs px-2 py-1 rounded transition duration-300"
+                            title="Delete this request permanently"
+                          >
+                            🗑️
+                          </button>
                         </div>
                       </div>
                     </div>
