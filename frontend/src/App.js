@@ -949,22 +949,13 @@ const MusicianDashboard = () => {
   const handleDeleteSong = async (songId) => {
     if (window.confirm('Are you sure you want to delete this song?')) {
       try {
-        console.log('Deleting song with ID:', songId, 'using token:', token ? 'present' : 'missing');
-        await axios.delete(`${API}/songs/${songId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        console.log('Deleting song with ID:', songId);
+        await axios.delete(`${API}/songs/${songId}`); // Removed manual headers - axios already has auth token set globally
         fetchSongs();
         console.log('Song deleted successfully');
       } catch (error) {
         console.error('Error deleting song:', error);
-        console.error('Error response:', error.response?.data);
-        if (error.response?.status === 401) {
-          // Token expired or invalid, redirect to login
-          alert('Session expired. Please log in again.');
-          logout();
-        }
+        alert(`Error deleting song: ${error.response?.data?.detail || error.message}`);
       }
     }
   };
