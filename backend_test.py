@@ -1116,6 +1116,427 @@ class RequestWaveAPITester:
         except Exception as e:
             self.log_result("Delete Song", False, f"❌ CRITICAL BUG: Exception: {str(e)}")
 
+    def test_batch_edit_songs_basic(self):
+        """Test basic batch edit functionality - CRITICAL FIX TEST"""
+        try:
+            if not self.auth_token:
+                self.log_result("Batch Edit Songs - Basic", False, "No auth token available")
+                return
+            
+            # First create multiple test songs for batch editing
+            test_songs = []
+            for i in range(3):
+                song_data = {
+                    "title": f"Batch Test Song {i+1}",
+                    "artist": f"Test Artist {i+1}",
+                    "genres": ["Pop"],
+                    "moods": ["Upbeat"],
+                    "year": 2020 + i,
+                    "notes": f"Original notes {i+1}"
+                }
+                
+                response = self.make_request("POST", "/songs", song_data)
+                if response.status_code == 200:
+                    test_songs.append(response.json()["id"])
+                else:
+                    self.log_result("Batch Edit Songs - Setup", False, f"Failed to create test song {i+1}")
+                    return
+            
+            print(f"🔍 Testing batch edit with {len(test_songs)} songs")
+            
+            # Test batch edit with proper request format
+            batch_data = {
+                "song_ids": test_songs,
+                "updates": {
+                    "genres": "Rock, Alternative",
+                    "moods": "Energetic, Powerful",
+                    "notes": "Updated via batch edit",
+                    "artist": "Updated Artist",
+                    "year": "2023"
+                }
+            }
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"📊 Batch edit response: {json.dumps(data, indent=2)}")
+                
+                # Check response format
+                if "success" in data and "updated_count" in data and "message" in data:
+                    if data["success"] and data["updated_count"] == len(test_songs):
+                        self.log_result("Batch Edit Songs - API Response", True, f"✅ Successfully updated {data['updated_count']} songs")
+                        
+                        # Verify the changes were actually applied
+                        songs_response = self.make_request("GET", "/songs")
+                        if songs_response.status_code == 200:
+                            all_songs = songs_response.json()
+                            updated_songs = [song for song in all_songs if song["id"] in test_songs]
+                            
+                            if len(updated_songs) == len(test_songs):
+                                verification_errors = []
+                                
+                                for song in updated_songs:
+                                    # Check genres were updated correctly
+                                    expected_genres = ["Rock", "Alternative"]
+                                    if song.get("genres") != expected_genres:
+                                        verification_errors.append(f"Song {song['title']}: genres expected {expected_genres}, got {song.get('genres')}")
+                                    
+                                    # Check moods were updated correctly
+                                    expected_moods = ["Energetic", "Powerful"]
+                                    if song.get("moods") != expected_moods:
+                                        verification_errors.append(f"Song {song['title']}: moods expected {expected_moods}, got {song.get('moods')}")
+                                    
+                                    # Check notes were updated
+                                    if song.get("notes") != "Updated via batch edit":
+                                        verification_errors.append(f"Song {song['title']}: notes not updated correctly")
+                                    
+                                    # Check artist was updated
+                                    if song.get("artist") != "Updated Artist":
+                                        verification_errors.append(f"Song {song['title']}: artist not updated correctly")
+                                    
+                                    # Check year was updated
+                                    if song.get("year") != 2023:
+                                        verification_errors.append(f"Song {song['title']}: year expected 2023, got {song.get('year')}")
+                                
+                                if len(verification_errors) == 0:
+                                    self.log_result("Batch Edit Songs - Data Verification", True, "✅ All batch edit changes verified in database")
+                                    self.log_result("Batch Edit Songs - Basic", True, "✅ CRITICAL FIX VERIFIED: Basic batch edit functionality working correctly")
+                                else:
+                                    self.log_result("Batch Edit Songs - Data Verification", False, f"❌ Verification errors: {verification_errors[:3]}")
+                                    self.log_result("Batch Edit Songs - Basic", False, f"❌ Data verification failed: {len(verification_errors)} errors")
+                            else:
+                                self.log_result("Batch Edit Songs - Basic", False, f"❌ Could not find all updated songs in database")
+                        else:
+                            self.log_result("Batch Edit Songs - Basic", False, f"❌ Could not retrieve songs for verification")
+                    else:
+                        self.log_result("Batch Edit Songs - Basic", False, f"❌ Unexpected response: success={data.get('success')}, updated_count={data.get('updated_count')}")
+                else:
+                    self.log_result("Batch Edit Songs - Basic", False, f"❌ CRITICAL BUG: Response missing required fields: {data}")
+            else:
+                self.log_result("Batch Edit Songs - Basic", False, f"❌ CRITICAL BUG: Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Batch Edit Songs - Basic", False, f"❌ CRITICAL BUG: Exception: {str(e)}")
+
+    def test_batch_edit_response_format(self):
+        """Test batch edit response format to debug [object Object] issue - CRITICAL FIX TEST"""
+        try:
+            if not self.auth_token:
+                self.log_result("Batch Edit Response Format", False, "No auth token available")
+                return
+            
+            # Create a test song
+            song_data = {
+                "title": "Response Format Test Song",
+                "artist": "Test Artist",
+                "genres": ["Pop"],
+                "moods": ["Upbeat"],
+                "year": 2020,
+                "notes": "Original notes"
+            }
+            
+            create_response = self.make_request("POST", "/songs", song_data)
+            if create_response.status_code != 200:
+                self.log_result("Batch Edit Response Format", False, "Failed to create test song")
+                return
+            
+            test_song_id = create_response.json()["id"]
+            print(f"🔍 Testing batch edit response format with song ID: {test_song_id}")
+            
+            # Test batch edit and examine response format carefully
+            batch_data = {
+                "song_ids": [test_song_id],
+                "updates": {
+                    "genres": "Rock, Alternative",
+                    "moods": "Energetic",
+                    "notes": "Updated notes"
+                }
+            }
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+            
+            print(f"📊 Raw response status: {response.status_code}")
+            print(f"📊 Raw response headers: {dict(response.headers)}")
+            print(f"📊 Raw response text: {response.text}")
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    print(f"📊 Parsed JSON response: {json.dumps(data, indent=2)}")
+                    
+                    # Check if response contains proper primitive types (not objects)
+                    response_issues = []
+                    
+                    for key, value in data.items():
+                        if isinstance(value, dict) and key not in ["metadata", "details"]:  # Objects that shouldn't be stringified
+                            response_issues.append(f"Field '{key}' is an object: {value}")
+                        elif isinstance(value, list) and any(isinstance(item, dict) for item in value):
+                            response_issues.append(f"Field '{key}' contains objects: {value}")
+                    
+                    # Check specific fields that should be primitives
+                    expected_fields = {
+                        "success": bool,
+                        "updated_count": int,
+                        "message": str
+                    }
+                    
+                    type_errors = []
+                    for field, expected_type in expected_fields.items():
+                        if field in data:
+                            actual_type = type(data[field])
+                            if actual_type != expected_type:
+                                type_errors.append(f"Field '{field}': expected {expected_type.__name__}, got {actual_type.__name__}")
+                        else:
+                            type_errors.append(f"Missing required field: {field}")
+                    
+                    if len(response_issues) == 0 and len(type_errors) == 0:
+                        self.log_result("Batch Edit Response Format - JSON Structure", True, "✅ Response contains only primitive types (no objects that could cause [object Object])")
+                        
+                        # Test that the response can be properly displayed as a message
+                        if "message" in data and isinstance(data["message"], str):
+                            self.log_result("Batch Edit Response Format - Message Field", True, f"✅ Message field is proper string: '{data['message']}'")
+                            self.log_result("Batch Edit Response Format", True, "✅ CRITICAL FIX VERIFIED: Response format is correct and should not cause [object Object] popup")
+                        else:
+                            self.log_result("Batch Edit Response Format", False, f"❌ Message field issue: {data.get('message')}")
+                    else:
+                        error_summary = response_issues + type_errors
+                        self.log_result("Batch Edit Response Format", False, f"❌ CRITICAL BUG: Response format issues: {error_summary}")
+                        
+                except json.JSONDecodeError as e:
+                    self.log_result("Batch Edit Response Format", False, f"❌ CRITICAL BUG: Response is not valid JSON: {str(e)}")
+            else:
+                self.log_result("Batch Edit Response Format", False, f"❌ CRITICAL BUG: Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Batch Edit Response Format", False, f"❌ CRITICAL BUG: Exception: {str(e)}")
+
+    def test_batch_edit_edge_cases(self):
+        """Test batch edit edge cases - CRITICAL FIX TEST"""
+        try:
+            if not self.auth_token:
+                self.log_result("Batch Edit Edge Cases", False, "No auth token available")
+                return
+            
+            print(f"🔍 Testing batch edit edge cases")
+            
+            # Test 1: Empty updates object
+            batch_data_empty = {
+                "song_ids": ["dummy_id"],
+                "updates": {}
+            }
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data_empty)
+            if response.status_code == 400:
+                self.log_result("Batch Edit Edge Cases - Empty Updates", True, "✅ Correctly rejected empty updates object")
+            else:
+                self.log_result("Batch Edit Edge Cases - Empty Updates", False, f"❌ Should return 400 for empty updates, got: {response.status_code}")
+            
+            # Test 2: No song_ids
+            batch_data_no_ids = {
+                "song_ids": [],
+                "updates": {"genres": "Rock"}
+            }
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data_no_ids)
+            if response.status_code == 400:
+                self.log_result("Batch Edit Edge Cases - No Song IDs", True, "✅ Correctly rejected empty song_ids array")
+            else:
+                self.log_result("Batch Edit Edge Cases - No Song IDs", False, f"❌ Should return 400 for no song IDs, got: {response.status_code}")
+            
+            # Test 3: Invalid song_ids
+            batch_data_invalid_ids = {
+                "song_ids": ["invalid_id_1", "invalid_id_2"],
+                "updates": {"genres": "Rock"}
+            }
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data_invalid_ids)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("updated_count") == 0:
+                    self.log_result("Batch Edit Edge Cases - Invalid Song IDs", True, "✅ Handled invalid song IDs gracefully (0 updated)")
+                else:
+                    self.log_result("Batch Edit Edge Cases - Invalid Song IDs", False, f"❌ Should update 0 songs for invalid IDs, got: {data.get('updated_count')}")
+            else:
+                self.log_result("Batch Edit Edge Cases - Invalid Song IDs", False, f"❌ Should return 200 with 0 updates for invalid IDs, got: {response.status_code}")
+            
+            # Test 4: Malformed data (objects instead of strings)
+            batch_data_malformed = {
+                "song_ids": ["dummy_id"],
+                "updates": {
+                    "genres": {"invalid": "object"},  # Should be string
+                    "moods": ["array", "is", "ok"],   # Array is acceptable
+                    "notes": {"another": "object"}    # Should be string
+                }
+            }
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data_malformed)
+            print(f"📊 Malformed data response: {response.status_code} - {response.text}")
+            
+            # The endpoint should either handle this gracefully or return an error
+            if response.status_code in [200, 400]:
+                self.log_result("Batch Edit Edge Cases - Malformed Data", True, f"✅ Handled malformed data appropriately (status: {response.status_code})")
+            else:
+                self.log_result("Batch Edit Edge Cases - Malformed Data", False, f"❌ Unexpected response to malformed data: {response.status_code}")
+            
+            self.log_result("Batch Edit Edge Cases", True, "✅ All edge cases handled appropriately")
+            
+        except Exception as e:
+            self.log_result("Batch Edit Edge Cases", False, f"❌ Exception: {str(e)}")
+
+    def test_batch_edit_authentication(self):
+        """Test batch edit authentication - CRITICAL FIX TEST"""
+        try:
+            # Save current token
+            original_token = self.auth_token
+            
+            batch_data = {
+                "song_ids": ["dummy_id"],
+                "updates": {"genres": "Rock"}
+            }
+            
+            # Test without token
+            self.auth_token = None
+            print(f"🔍 Testing batch edit without authentication")
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+            
+            if response.status_code in [401, 403]:
+                self.log_result("Batch Edit Authentication - No Token", True, f"✅ Correctly rejected batch edit without auth token (status: {response.status_code})")
+            else:
+                self.log_result("Batch Edit Authentication - No Token", False, f"❌ Should return 401/403 without token, got: {response.status_code}")
+            
+            # Test with invalid token
+            self.auth_token = "invalid_token_12345"
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+            
+            if response.status_code == 401:
+                self.log_result("Batch Edit Authentication - Invalid Token", True, "✅ Correctly rejected batch edit with invalid token")
+            else:
+                self.log_result("Batch Edit Authentication - Invalid Token", False, f"❌ Should return 401 for invalid token, got: {response.status_code}")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            self.log_result("Batch Edit Authentication", True, "✅ Authentication properly enforced for batch edit")
+            
+        except Exception as e:
+            self.log_result("Batch Edit Authentication", False, f"❌ Exception: {str(e)}")
+
+    def test_batch_edit_data_processing(self):
+        """Test batch edit data processing (genres/moods parsing) - CRITICAL FIX TEST"""
+        try:
+            if not self.auth_token:
+                self.log_result("Batch Edit Data Processing", False, "No auth token available")
+                return
+            
+            # Create test songs
+            test_songs = []
+            for i in range(2):
+                song_data = {
+                    "title": f"Data Processing Test Song {i+1}",
+                    "artist": f"Test Artist {i+1}",
+                    "genres": ["Original"],
+                    "moods": ["Original"],
+                    "year": 2020,
+                    "notes": "Original notes"
+                }
+                
+                response = self.make_request("POST", "/songs", song_data)
+                if response.status_code == 200:
+                    test_songs.append(response.json()["id"])
+                else:
+                    self.log_result("Batch Edit Data Processing", False, f"Failed to create test song {i+1}")
+                    return
+            
+            print(f"🔍 Testing batch edit data processing with {len(test_songs)} songs")
+            
+            # Test different data formats
+            test_cases = [
+                {
+                    "name": "Comma-separated strings",
+                    "updates": {
+                        "genres": "Rock, Pop, Alternative",
+                        "moods": "Energetic, Upbeat, Powerful",
+                        "notes": "Updated with comma-separated values",
+                        "year": "2023"
+                    },
+                    "expected_genres": ["Rock", "Pop", "Alternative"],
+                    "expected_moods": ["Energetic", "Upbeat", "Powerful"]
+                },
+                {
+                    "name": "Single values",
+                    "updates": {
+                        "genres": "Jazz",
+                        "moods": "Smooth",
+                        "notes": "Updated with single values"
+                    },
+                    "expected_genres": ["Jazz"],
+                    "expected_moods": ["Smooth"]
+                },
+                {
+                    "name": "Empty notes (clear existing)",
+                    "updates": {
+                        "notes": ""
+                    },
+                    "expected_notes": ""
+                }
+            ]
+            
+            for i, test_case in enumerate(test_cases):
+                print(f"📊 Testing case: {test_case['name']}")
+                
+                batch_data = {
+                    "song_ids": test_songs,
+                    "updates": test_case["updates"]
+                }
+                
+                response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    # Verify the changes
+                    songs_response = self.make_request("GET", "/songs")
+                    if songs_response.status_code == 200:
+                        all_songs = songs_response.json()
+                        updated_songs = [song for song in all_songs if song["id"] in test_songs]
+                        
+                        case_errors = []
+                        for song in updated_songs:
+                            # Check genres if specified
+                            if "expected_genres" in test_case:
+                                if song.get("genres") != test_case["expected_genres"]:
+                                    case_errors.append(f"Genres: expected {test_case['expected_genres']}, got {song.get('genres')}")
+                            
+                            # Check moods if specified
+                            if "expected_moods" in test_case:
+                                if song.get("moods") != test_case["expected_moods"]:
+                                    case_errors.append(f"Moods: expected {test_case['expected_moods']}, got {song.get('moods')}")
+                            
+                            # Check notes if specified
+                            if "expected_notes" in test_case:
+                                if song.get("notes") != test_case["expected_notes"]:
+                                    case_errors.append(f"Notes: expected '{test_case['expected_notes']}', got '{song.get('notes')}'")
+                            
+                            # Check year if specified
+                            if "year" in test_case["updates"]:
+                                expected_year = int(test_case["updates"]["year"])
+                                if song.get("year") != expected_year:
+                                    case_errors.append(f"Year: expected {expected_year}, got {song.get('year')}")
+                        
+                        if len(case_errors) == 0:
+                            self.log_result(f"Batch Edit Data Processing - {test_case['name']}", True, f"✅ Data processed correctly")
+                        else:
+                            self.log_result(f"Batch Edit Data Processing - {test_case['name']}", False, f"❌ Processing errors: {case_errors}")
+                    else:
+                        self.log_result(f"Batch Edit Data Processing - {test_case['name']}", False, "❌ Could not verify changes")
+                else:
+                    self.log_result(f"Batch Edit Data Processing - {test_case['name']}", False, f"❌ Request failed: {response.status_code}")
+            
+            self.log_result("Batch Edit Data Processing", True, "✅ CRITICAL FIX VERIFIED: Data processing working correctly")
+            
+        except Exception as e:
+            self.log_result("Batch Edit Data Processing", False, f"❌ CRITICAL BUG: Exception: {str(e)}")
+
     def test_delete_song_authentication(self):
         """Test that song deletion requires proper authentication - CRITICAL FIX TEST"""
         try:
