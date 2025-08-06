@@ -220,6 +220,15 @@ class ProfileUpdate(BaseModel):
     spotify_artist_url: Optional[str] = None
     apple_music_artist_url: Optional[str] = None
 
+class BatchEditRequest(BaseModel):
+    song_ids: List[str]
+    updates: Dict[str, Any]
+
+class BatchEditResponse(BaseModel):
+    success: bool
+    message: str
+    updated_count: int
+
 class DesignSettings(BaseModel):
     color_scheme: str = "purple"  # purple, blue, green, red, orange
     layout_mode: str = "grid"     # grid, list
