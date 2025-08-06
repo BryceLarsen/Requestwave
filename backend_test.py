@@ -6201,6 +6201,67 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
         
         return self.results['failed'] == 0
 
+    def run_batch_edit_tests(self):
+        """Run only the batch edit functionality tests - CRITICAL FIX TESTING"""
+        print("=" * 80)
+        print("🔥 CRITICAL: BATCH EDIT FUNCTIONALITY TESTING - FIXING [object Object] POPUP")
+        print("=" * 80)
+        print("🎯 Focus: Testing the FIXED batch edit functionality for RequestWave songs")
+        print("🐛 Issue: Batch edit shows '[object Object],[object Object]' popup and no changes occur")
+        print("=" * 80)
+        
+        # Authentication setup
+        self.test_musician_registration()
+        if not self.auth_token:
+            print("❌ CRITICAL: Could not authenticate - stopping batch edit tests")
+            return False
+        
+        # Run batch edit specific tests
+        print("\n🔍 BATCH EDIT ENDPOINT TESTING")
+        print("-" * 50)
+        self.test_batch_edit_songs_basic()
+        
+        print("\n🔍 RESPONSE FORMAT DEBUGGING")
+        print("-" * 50)
+        self.test_batch_edit_response_format()
+        
+        print("\n🔍 DATA PROCESSING TESTING")
+        print("-" * 50)
+        self.test_batch_edit_data_processing()
+        
+        print("\n🔍 EDGE CASES TESTING")
+        print("-" * 50)
+        self.test_batch_edit_edge_cases()
+        
+        print("\n🔍 AUTHENTICATION TESTING")
+        print("-" * 50)
+        self.test_batch_edit_authentication()
+        
+        # Print focused summary
+        print("\n" + "=" * 80)
+        print("🏁 BATCH EDIT TEST SUMMARY")
+        print("=" * 80)
+        print(f"✅ Passed: {self.results['passed']}")
+        print(f"❌ Failed: {self.results['failed']}")
+        
+        if self.results['errors']:
+            print("\n🔍 Failed Tests:")
+            for error in self.results['errors']:
+                if "batch" in error.lower() or "edit" in error.lower():
+                    print(f"   • {error}")
+        
+        # Determine if the critical issue is fixed
+        batch_edit_errors = [error for error in self.results['errors'] if "batch" in error.lower() or "edit" in error.lower()]
+        
+        if len(batch_edit_errors) == 0:
+            print("\n🎉 SUCCESS: Batch edit functionality appears to be working correctly!")
+            print("✅ The [object Object] popup issue should be resolved")
+        else:
+            print(f"\n⚠️  WARNING: Found {len(batch_edit_errors)} batch edit related issues")
+            print("❌ The [object Object] popup issue may still exist")
+        
+        return len(batch_edit_errors) == 0
+
     def run_new_features_tests(self):
         """Run only the new CSV Auto-enrichment and Batch Enrichment feature tests"""
         print("=" * 70)
