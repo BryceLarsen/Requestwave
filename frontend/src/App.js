@@ -2599,11 +2599,25 @@ const MusicianDashboard = () => {
                 <div className="space-y-3">
                   {shows.map((show) => (
                     <details key={show.id} className="bg-gray-700 rounded-lg">
-                      <summary className="cursor-pointer p-4 font-medium hover:bg-gray-600 rounded-lg transition duration-300">
-                        📁 {show.name} ({show.date || 'No date'})
-                        <span className="text-gray-400 text-sm ml-2">
-                          ({requests.filter(r => r.show_name === show.name).length} requests)
-                        </span>
+                      <summary className="cursor-pointer p-4 font-medium hover:bg-gray-600 rounded-lg transition duration-300 flex justify-between items-center">
+                        <div>
+                          📁 {show.name} ({show.date || 'No date'})
+                          <span className="text-gray-400 text-sm ml-2">
+                            ({requests.filter(r => r.show_name === show.name).length} requests)
+                          </span>
+                        </div>
+                        {/* NEW: Delete button for entire show */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault(); // Prevent details from toggling
+                            e.stopPropagation(); // Prevent event bubbling
+                            handleDeleteShow(show.id, show.name);
+                          }}
+                          className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded transition duration-300 ml-4"
+                          title={`Delete show "${show.name}" and all requests permanently`}
+                        >
+                          🗑️ Delete Show
+                        </button>
                       </summary>
                       <div className="px-4 pb-4 space-y-2">
                         {requests.filter(r => r.show_name === show.name).map((request) => (
