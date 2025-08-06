@@ -6973,91 +6973,30 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
 if __name__ == "__main__":
     tester = RequestWaveAPITester()
     
-    # Run Stripe Subscription System Tests as requested in the review
-    print("🚀 STRIPE SUBSCRIPTION SYSTEM TESTING - CRITICAL ROUTING FIX VERIFICATION")
+    # Run Batch Edit Functionality Tests as requested in the review
+    print("🚀 BATCH EDIT FUNCTIONALITY TESTING - CRITICAL [object Object] POPUP FIX")
     print("=" * 80)
-    print("Testing the FIXED Stripe subscription endpoints after resolving critical routing conflicts")
+    print("Testing the FIXED batch edit functionality for RequestWave songs")
     print("Focus areas:")
-    print("1. Fixed Subscription Upgrade Endpoint (POST /api/subscription/upgrade)")
-    print("2. Fixed Webhook Endpoint (POST /api/webhook/stripe)")
-    print("3. Complete Subscription Flow Testing")
-    print("4. Live Stripe Integration Verification")
-    print("5. Database Integration")
+    print("1. Backend Batch Edit Endpoint (PUT /api/songs/batch-edit)")
+    print("2. Response Format Debugging ([object Object] issue)")
+    print("3. Data Processing (genres/moods parsing)")
+    print("4. Edge Cases (empty updates, invalid IDs)")
+    print("5. Authentication & Authorization")
     print("=" * 80)
     
-    # Reset results for focused testing
-    tester.results = {
-        "passed": 0,
-        "failed": 0,
-        "errors": []
-    }
-    
-    # Authentication setup
-    tester.test_musician_registration()
-    if not tester.auth_token:
-        print("❌ CRITICAL: Could not authenticate - cannot proceed with Stripe tests")
-        exit(1)
-    
-    # Run Stripe subscription tests
-    print("\n🔥 CRITICAL: STRIPE SUBSCRIPTION SYSTEM - FIXED ROUTING TESTS")
-    print("=" * 70)
-    tester.test_stripe_api_key_configuration()
-    tester.test_subscription_status()
-    tester.test_subscription_upgrade_endpoint()
-    tester.test_stripe_webhook_endpoint()
-    tester.test_subscription_upgrade_authentication()
-    tester.test_subscription_pricing_verification()
-    tester.test_complete_subscription_flow()
-    
-    # Print comprehensive summary
-    print("\n" + "=" * 80)
-    print("🏁 STRIPE SUBSCRIPTION SYSTEM TEST SUMMARY")
-    print("=" * 80)
-    print(f"✅ Passed: {tester.results['passed']}")
-    print(f"❌ Failed: {tester.results['failed']}")
-    
-    if tester.results['errors']:
-        print("\n🔍 CRITICAL ISSUES FOUND:")
-        for error in tester.results['errors']:
-            print(f"   • {error}")
-    else:
-        print("\n🎉 NO CRITICAL ISSUES FOUND!")
-        print("✅ Stripe API key properly configured")
-        print("✅ Subscription status endpoint working")
-        print("✅ Subscription upgrade endpoint working (routing fixed)")
-        print("✅ Stripe webhook endpoint working (routing fixed)")
-        print("✅ Authentication properly enforced")
-        print("✅ Subscription pricing set to $5.00/month")
-        print("✅ Complete subscription flow working")
-    
-    # Specific analysis for the reported routing issues
-    routing_tests = [error for error in tester.results['errors'] if '422' in error or 'routing' in error.lower() or 'validation' in error.lower()]
-    stripe_tests = [error for error in tester.results['errors'] if 'stripe' in error.lower() or 'checkout' in error.lower() or 'webhook' in error.lower()]
-    
-    print(f"\n📊 STRIPE ROUTING CONFLICTS: {'✅ FIXED' if len(routing_tests) == 0 else '❌ STILL EXISTS'}")
-    if routing_tests:
-        print("   ROUTING ISSUES:")
-        for error in routing_tests:
-            print(f"   • {error}")
-    
-    print(f"📊 STRIPE INTEGRATION: {'✅ WORKING' if len(stripe_tests) == 0 else '❌ FAILING'}")
-    if stripe_tests:
-        print("   STRIPE ISSUES:")
-        for error in stripe_tests:
-            print(f"   • {error}")
-    
-    success = tester.results['failed'] == 0
+    success = tester.run_batch_edit_tests()
     
     if success:
-        print("\n🎉 Stripe subscription system testing completed successfully!")
-        print("✅ Critical routing conflicts have been resolved")
-        print("✅ POST /api/subscription/upgrade endpoint working correctly")
-        print("✅ POST /api/webhook/stripe endpoint working correctly")
-        print("✅ Live Stripe API integration functional")
-        print("✅ Payment transaction records created properly")
-        print("✅ Subscription system is production-ready")
+        print("\n🎉 Batch edit functionality testing completed successfully!")
+        print("✅ PUT /api/songs/batch-edit endpoint working correctly")
+        print("✅ Response format is proper JSON (no [object Object] issues)")
+        print("✅ Data processing handles comma-separated values correctly")
+        print("✅ Edge cases handled appropriately")
+        print("✅ Authentication properly enforced")
+        print("✅ The [object Object] popup issue should be resolved")
         exit(0)
     else:
-        print(f"\n💥 STRIPE SUBSCRIPTION ISSUES FOUND: {tester.results['failed']} problems detected!")
-        print("❌ The Stripe subscription system needs attention before it can be considered production-ready")
+        print(f"\n💥 BATCH EDIT ISSUES FOUND!")
+        print("❌ The batch edit functionality needs attention before the [object Object] popup will be fixed")
         exit(1)
