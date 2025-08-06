@@ -3142,6 +3142,41 @@ async def get_current_show(
         logger.error(f"Error getting current show: {str(e)}")
         raise HTTPException(status_code=500, detail="Error getting current show")
 
+@api_router.delete("/shows/{show_id}")
+async def delete_show(
+    show_id: str,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Delete a show permanently (and all associated requests)"""
+    try:
+        # Verify show belongs to musician
+        show = await db.shows.find_one({"id": show_id, "musician_id": musician_id})
+        if not show:
+            raise HTTPException(status_code=404, detail="Show not found")
+        
+        # Delete all requests associated with this show
+        await db.requests.delete_many({"show_name": show["name"], "musician_id": musician_id})
+        
+        # Delete the show
+        await db.shows.delete_one({"id": show_id})
+        
+        # If this was the current active show, clear it from musician
+        musician = await db.musicians.find_one({"id": musician_id})
+        if musician and musician.get("current_show_id") == show_id:
+            await db.musicians.update_one(
+                {"id": musician_id},
+                {"$set": {"current_show_id": None, "current_show_name": None}}
+            )
+        
+        logger.info(f"Deleted show {show_id} and all associated requests for musician {musician_id}")
+        return {"success": True, "message": f"Show '{show['name']}' and all associated requests deleted"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting show: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error deleting show")
+
 # Health check
 @api_router.get("/health")
 async def health_check():
