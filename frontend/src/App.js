@@ -1151,7 +1151,27 @@ const MusicianDashboard = () => {
     } catch (error) {
       console.error('Error batch editing songs:', error);
       console.error('Error response data:', error.response?.data);
-      const errorMessage = error.response?.data?.detail || error.message || 'Error updating songs';
+      
+      // Handle validation errors properly (detail can be an array of error objects)
+      let errorMessage = 'Error updating songs';
+      if (error.response?.data?.detail) {
+        const detail = error.response.data.detail;
+        if (Array.isArray(detail)) {
+          // Handle FastAPI validation errors (array of error objects)
+          errorMessage = detail.map(err => {
+            if (typeof err === 'object' && err.msg) {
+              return `${err.loc ? err.loc.join('.') + ': ' : ''}${err.msg}`;
+            }
+            return String(err);
+          }).join('\n');
+        } else {
+          // Handle simple string errors
+          errorMessage = String(detail);
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       alert(`Error: ${errorMessage}`);
     }
   };
