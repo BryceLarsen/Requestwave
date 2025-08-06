@@ -485,8 +485,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Stripe Subscription System - FULLY WORKING: All critical routing conflicts resolved, live Stripe integration working, users can successfully upgrade to $5/month Pro subscriptions"
-  stuck_tasks: []
+    - "Bulk/Batch Edit Functionality - CRITICAL BUG: '[object Object],[object Object]' popup issue identified and needs fixing in error handling code"
+  stuck_tasks:
+    - "Bulk/Batch Edit Functionality - Error handling bug prevents proper error message display"
   test_all: false
   test_priority: "critical_first"
 
