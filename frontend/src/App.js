@@ -645,6 +645,36 @@ const MusicianDashboard = () => {
     }
   };
 
+  // NEW: Delete individual request from history
+  const handleDeleteRequest = async (requestId, requestTitle) => {
+    if (confirm(`Permanently delete request for "${requestTitle}"? This cannot be undone.`)) {
+      try {
+        await axios.delete(`${API}/requests/${requestId}`);
+        fetchGroupedRequests();
+        alert('Request deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting request:', error);
+        alert('Error deleting request. Please try again.');
+      }
+    }
+  };
+
+  // NEW: Delete entire show and all associated requests
+  const handleDeleteShow = async (showId, showName) => {
+    if (confirm(`Permanently delete show "${showName}" and ALL associated requests? This cannot be undone.`)) {
+      try {
+        await axios.delete(`${API}/shows/${showId}`);
+        fetchGroupedRequests();
+        fetchShows();
+        fetchCurrentShow(); // Update current show status
+        alert(`Show "${showName}" and all associated requests deleted successfully!`);
+      } catch (error) {
+        console.error('Error deleting show:', error);
+        alert('Error deleting show. Please try again.');
+      }
+    }
+  };
+
   // NEW: Toggle song visibility function
   const handleToggleSongVisibility = async (songId) => {
     try {
