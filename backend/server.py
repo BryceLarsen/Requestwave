@@ -132,6 +132,17 @@ class Request(BaseModel):
     status: str = "pending"  # pending, accepted, played, rejected, archived
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
+class SongSuggestion(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    musician_id: str
+    suggested_title: str
+    suggested_artist: str
+    requester_name: str
+    requester_email: str
+    message: str = ""  # Optional message from requester explaining why they want this song
+    status: str = "pending"  # pending, added, rejected
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
 # NEW: Show management for artists
 class ShowCreate(BaseModel):
     name: str
