@@ -2609,7 +2609,7 @@ const MusicianDashboard = () => {
                         {requests.filter(r => r.show_name === show.name).map((request) => (
                           <div key={request.id} className="bg-gray-600 p-3 rounded">
                             <div className="flex justify-between items-start">
-                              <div>
+                              <div className="flex-1">
                                 <div className="flex items-center space-x-2 mb-1">
                                   <span className="font-medium text-blue-400 text-sm">{request.song_title}</span>
                                   <span className="text-gray-400 text-sm">by {request.song_artist}</span>
@@ -2623,14 +2623,24 @@ const MusicianDashboard = () => {
                                   {request.dedication && <span className="italic ml-1">"{request.dedication}"</span>}
                                 </p>
                               </div>
-                              <span className={`px-2 py-1 rounded text-xs ${
-                                request.status === 'pending' ? 'bg-yellow-600/20 text-yellow-400' :
-                                request.status === 'accepted' ? 'bg-green-600/20 text-green-400' :
-                                request.status === 'played' ? 'bg-blue-600/20 text-blue-400' :
-                                'bg-red-600/20 text-red-400'
-                              }`}>
-                                {request.status}
-                              </span>
+                              <div className="flex items-center space-x-2 ml-4">
+                                <span className={`px-2 py-1 rounded text-xs ${
+                                  request.status === 'pending' ? 'bg-yellow-600/20 text-yellow-400' :
+                                  request.status === 'accepted' ? 'bg-green-600/20 text-green-400' :
+                                  request.status === 'played' ? 'bg-blue-600/20 text-blue-400' :
+                                  'bg-red-600/20 text-red-400'
+                                }`}>
+                                  {request.status}
+                                </span>
+                                {/* NEW: Delete button for individual requests */}
+                                <button
+                                  onClick={() => handleDeleteRequest(request.id, request.song_title)}
+                                  className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded transition duration-300"
+                                  title="Delete this request permanently"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))}
