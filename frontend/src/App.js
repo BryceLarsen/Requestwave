@@ -2231,6 +2231,12 @@ const MusicianDashboard = () => {
                     {selectedSongs.size > 0 && (
                       <div className="flex space-x-2">
                         <button
+                          onClick={() => setShowBatchEdit(!showBatchEdit)}
+                          className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm font-medium transition duration-300"
+                        >
+                          Edit Selected ({selectedSongs.size})
+                        </button>
+                        <button
                           onClick={handleBatchDelete}
                           className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm font-medium transition duration-300"
                         >
