@@ -2046,15 +2046,15 @@ async def get_musician_songs(
     
     return updated_songs
 
-@api_router.put("/songs/batch-edit")
+@api_router.put("/songs/batch-edit", response_model=BatchEditResponse)
 async def batch_edit_songs(
-    batch_data: dict,  # {"song_ids": [...], "updates": {"genres": [...], "moods": [...], "notes": "...", "artist": "..."}}
+    batch_data: BatchEditRequest,
     musician_id: str = Depends(get_current_musician)
 ):
     """Batch edit multiple songs - updates genres, moods, notes, and artist for selected songs"""
     try:
-        song_ids = batch_data.get("song_ids", [])
-        updates = batch_data.get("updates", {})
+        song_ids = batch_data.song_ids
+        updates = batch_data.updates
         
         if not song_ids:
             raise HTTPException(status_code=400, detail="No songs selected for editing")
@@ -2114,11 +2114,11 @@ async def batch_edit_songs(
         )
         
         logger.info(f"Batch edited {result.modified_count} songs for musician {musician_id}")
-        return {
-            "success": True,
-            "message": f"Successfully updated {result.modified_count} songs",
-            "updated_count": result.modified_count
-        }
+        return BatchEditResponse(
+            success=True,
+            message=f"Successfully updated {result.modified_count} songs",
+            updated_count=result.modified_count
+        )
         
     except HTTPException:
         raise
