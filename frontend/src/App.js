@@ -3810,6 +3810,29 @@ const AudienceInterface = () => {
     setFilteredSongs(filtered);
   };
 
+  // NEW: Random song selector function
+  const handleRandomSong = () => {
+    if (filteredSongs.length === 0) {
+      alert('No songs available to choose from. Try adjusting your filters.');
+      return;
+    }
+
+    // Select a random song from filtered results
+    const randomIndex = Math.floor(Math.random() * filteredSongs.length);
+    const randomSong = filteredSongs[randomIndex];
+
+    // Pre-fill the request form with the random song
+    setRequestForm({
+      ...requestForm,
+      song_id: randomSong.id,
+      song_title: randomSong.title,
+      song_artist: randomSong.artist
+    });
+
+    // Show the request modal
+    setShowRequestModal(true);
+  };
+
   const handleRequest = async (song) => {
     if (!requestForm.requester_name || !requestForm.requester_email) {
       alert('Please enter your name and email');
