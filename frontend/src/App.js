@@ -1109,9 +1109,10 @@ const MusicianDashboard = () => {
 
     const updates = {};
     if (batchEditForm.artist.trim()) updates.artist = batchEditForm.artist.trim();
-    if (batchEditForm.genres.trim()) updates.genres = batchEditForm.genres.split(',').map(g => g.trim());
-    if (batchEditForm.moods.trim()) updates.moods = batchEditForm.moods.split(',').map(m => m.trim());
-    if (batchEditForm.year.trim()) updates.year = parseInt(batchEditForm.year.trim());
+    if (batchEditForm.genres.trim()) updates.genres = batchEditForm.genres.trim(); // Send as string, backend will parse
+    if (batchEditForm.moods.trim()) updates.moods = batchEditForm.moods.trim(); // Send as string, backend will parse
+    if (batchEditForm.year.trim()) updates.year = batchEditForm.year.trim(); // Send as string, backend will parse
+    if (batchEditForm.notes !== undefined) updates.notes = batchEditForm.notes; // Include notes (can be empty to clear)
 
     if (Object.keys(updates).length === 0) {
       alert('Please enter values to update');
@@ -1119,32 +1120,27 @@ const MusicianDashboard = () => {
     }
 
     try {
-      // Update each selected song
-      const updatePromises = Array.from(selectedSongs).map(async (songId) => {
-        const song = songs.find(s => s.id === songId);
-        const updatedSong = { ...song, ...updates };
-        return axios.put(`${API}/songs/${songId}`, {
-          title: updatedSong.title,
-          artist: updatedSong.artist,
-          genres: updatedSong.genres,
-          moods: updatedSong.moods,
-          year: updatedSong.year,
-          notes: updatedSong.notes
-        }, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+      const response = await axios.put(`${API}/songs/batch-edit`, {
+        song_ids: Array.from(selectedSongs),
+        updates: updates
       });
 
-      await Promise.all(updatePromises);
-      
-      fetchSongs();
-      setSelectedSongs(new Set());
-      setShowBatchEdit(false);
-      setBatchEditForm({ artist: '', genres: '', moods: '', year: '' });
-      alert(`Successfully updated ${selectedSongs.size} songs`);
+      if (response.data.success) {
+        alert(`Successfully updated ${response.data.updated_count} songs!`);
+        setBatchEditForm({
+          artist: '',
+          genres: '',
+          moods: '',
+          year: '',
+          notes: ''
+        });
+        setSelectedSongs(new Set());
+        setShowBatchEdit(false);
+        fetchSongs(); // Refresh the song list
+      }
     } catch (error) {
       console.error('Error batch editing songs:', error);
-      alert('Error updating songs. Please try again.');
+      alert(error.response?.data?.detail || 'Error updating songs');
     }
   };
 
