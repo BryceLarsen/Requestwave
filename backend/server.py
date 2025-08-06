@@ -2037,6 +2037,86 @@ async def get_musician_songs(
     
     return updated_songs
 
+@api_router.put("/songs/batch-edit")
+async def batch_edit_songs(
+    batch_data: dict,  # {"song_ids": [...], "updates": {"genres": [...], "moods": [...], "notes": "...", "artist": "..."}}
+    musician_id: str = Depends(get_current_musician)
+):
+    """Batch edit multiple songs - updates genres, moods, notes, and artist for selected songs"""
+    try:
+        song_ids = batch_data.get("song_ids", [])
+        updates = batch_data.get("updates", {})
+        
+        if not song_ids:
+            raise HTTPException(status_code=400, detail="No songs selected for editing")
+        
+        if not updates:
+            raise HTTPException(status_code=400, detail="No updates provided")
+        
+        # Build the update document
+        update_doc = {}
+        
+        # Handle genres (convert comma-separated string to list)
+        if "genres" in updates and updates["genres"]:
+            if isinstance(updates["genres"], str):
+                genres_list = [g.strip() for g in updates["genres"].split(",") if g.strip()]
+            else:
+                genres_list = updates["genres"]
+            update_doc["genres"] = genres_list
+        
+        # Handle moods (convert comma-separated string to list)
+        if "moods" in updates and updates["moods"]:
+            if isinstance(updates["moods"], str):
+                moods_list = [m.strip() for m in updates["moods"].split(",") if m.strip()]
+            else:
+                moods_list = updates["moods"]
+            update_doc["moods"] = moods_list
+        
+        # Handle notes (replace existing notes)
+        if "notes" in updates:
+            update_doc["notes"] = updates["notes"]
+        
+        # Handle artist
+        if "artist" in updates and updates["artist"]:
+            update_doc["artist"] = updates["artist"]
+        
+        # Handle year
+        if "year" in updates and updates["year"]:
+            try:
+                year_int = int(updates["year"])
+                update_doc["year"] = year_int
+                # Auto-calculate decade when year is updated
+                decade = calculate_decade(year_int)
+                if decade:
+                    update_doc["decade"] = decade
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Year must be a valid integer")
+        
+        if not update_doc:
+            raise HTTPException(status_code=400, detail="No valid updates provided")
+        
+        # Update all selected songs that belong to the musician
+        result = await db.songs.update_many(
+            {
+                "id": {"$in": song_ids},
+                "musician_id": musician_id
+            },
+            {"$set": update_doc}
+        )
+        
+        logger.info(f"Batch edited {result.modified_count} songs for musician {musician_id}")
+        return {
+            "success": True,
+            "message": f"Successfully updated {result.modified_count} songs",
+            "updated_count": result.modified_count
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error batch editing songs: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error batch editing songs")
+
 # Request endpoints
 @api_router.post("/requests", response_model=Request)
 async def create_request(request_data: RequestCreate):
