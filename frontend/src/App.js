@@ -2274,6 +2274,14 @@ const MusicianDashboard = () => {
                         onChange={(e) => setBatchEditForm({...batchEditForm, year: e.target.value})}
                         className="bg-gray-600 border border-gray-500 rounded px-3 py-2 text-white placeholder-gray-400 text-sm"
                       />
+                      {/* NEW: Notes field for batch editing */}
+                      <textarea
+                        placeholder="New Notes (will replace existing notes)"
+                        value={batchEditForm.notes}
+                        onChange={(e) => setBatchEditForm({...batchEditForm, notes: e.target.value})}
+                        className="bg-gray-600 border border-gray-500 rounded px-3 py-2 text-white placeholder-gray-400 text-sm"
+                        rows="2"
+                      />
                     </div>
                     <div className="flex space-x-2">
                       <button
