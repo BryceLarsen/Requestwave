@@ -633,13 +633,11 @@ const MusicianDashboard = () => {
 
     if (confirm(`Stop the current show "${currentShow.name}"? New requests will go to the main requests list.`)) {
       try {
-        await axios.post(`${API}/shows/stop`, {}, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
+        await axios.post(`${API}/shows/stop`); // Removed manual headers - axios already has auth token set
 
         setCurrentShow(null);
         fetchGroupedRequests();
-        alert('Show stopped. New requests will go to the main requests list.');
+        alert('Show stopped successfully!');
       } catch (error) {
         console.error('Error stopping show:', error);
         alert('Error stopping show. Please try again.');
