@@ -1183,9 +1183,7 @@ const MusicianDashboard = () => {
 
     try {
       const deletePromises = Array.from(selectedSongs).map(songId => 
-        axios.delete(`${API}/songs/${songId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
+        axios.delete(`${API}/songs/${songId}`) // Removed manual headers - axios already has auth token set globally
       );
 
       await Promise.all(deletePromises);
