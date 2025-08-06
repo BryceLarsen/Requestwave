@@ -5689,6 +5689,16 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
         self.test_update_request_status()
         self.test_real_time_polling()
         
+        # CRITICAL: Show Management and Deletion Tests - HIGHEST PRIORITY
+        print("\n" + "🎯" * 20 + " CRITICAL SHOW MANAGEMENT & DELETION TESTS " + "🎯" * 20)
+        print("Testing the FIXED show management and deletion functionality")
+        print("=" * 80)
+        self.test_show_stop_functionality()
+        self.test_request_deletion()
+        self.test_show_deletion_with_requests()
+        self.test_show_management_flow()
+        self.test_authentication_and_authorization()
+        
         # CSV upload tests
         self.test_csv_preview_valid()
         self.test_csv_preview_invalid()
