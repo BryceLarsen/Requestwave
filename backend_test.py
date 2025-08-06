@@ -6085,6 +6085,16 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
         self.test_get_songs()
         self.test_update_song()
         
+        # CRITICAL: Batch Edit Functionality Tests - HIGHEST PRIORITY
+        print("\n" + "🔥" * 15 + " CRITICAL: BATCH EDIT FUNCTIONALITY TESTS " + "🔥" * 15)
+        print("Testing the FIXED batch edit functionality to resolve [object Object] popup issue")
+        print("=" * 100)
+        self.test_batch_edit_songs_basic()
+        self.test_batch_edit_response_format()
+        self.test_batch_edit_edge_cases()
+        self.test_batch_edit_authentication()
+        self.test_batch_edit_data_processing()
+        
         # Musician profile tests
         self.test_get_musician_by_slug()
         
