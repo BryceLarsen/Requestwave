@@ -1903,6 +1903,12 @@ const MusicianDashboard = () => {
                   )}
                 </button>
                 <button
+                  onClick={() => setShowAddSong(!showAddSong)}
+                  className="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg font-bold transition duration-300"
+                >
+                  {showAddSong ? 'Hide Add Song' : 'Add New Song'}
+                </button>
+                <button
                   onClick={() => setShowPlaylistImport(!showPlaylistImport)}
                   className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-bold transition duration-300"
                 >
