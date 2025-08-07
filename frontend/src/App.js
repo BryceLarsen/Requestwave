@@ -186,12 +186,13 @@ const AuthForm = ({ mode, onSwitch }) => {
       <div className="max-w-md w-full space-y-8">
         {/* RequestWave Logo */}
         <div className="text-center mb-8">
-          <img
-            src="https://cdn.pixabay.com/photo/2017/02/27/19/34/microphone-2104091_1280.png"
-            alt="RequestWave Logo"
-            className="w-32 h-32 mx-auto mb-4 object-contain filter brightness-0 invert"
-            style={{ filter: 'hue-rotate(270deg) saturate(1.5) brightness(1.2)' }}
-          />
+          <div className="w-32 h-32 mx-auto mb-4 bg-gradient-to-br from-purple-500 to-green-500 rounded-full flex items-center justify-center shadow-lg">
+            <img
+              src="https://cdn.pixabay.com/photo/2017/02/27/19/34/microphone-2104091_1280.png"
+              alt="RequestWave Logo"
+              className="w-16 h-16 object-contain filter brightness-0 invert"
+            />
+          </div>
         </div>
         
         <div className="text-center">
