@@ -2520,13 +2520,16 @@ const MusicianDashboard = () => {
                     onChange={(e) => setSongFilter(e.target.value)}
                     className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
                   />
-                  <input
-                    type="text"
-                    placeholder="Filter by genre..."
+                  <select
                     value={genreFilter}
                     onChange={(e) => setGenreFilter(e.target.value)}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
-                  />
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+                  >
+                    <option value="">All Genres</option>
+                    {filterOptions.genres?.map((genre) => (
+                      <option key={genre} value={genre}>{genre}</option>
+                    ))}
+                  </select>
                   <input
                     type="text"
                     placeholder="Filter by artist..."
@@ -2534,28 +2537,36 @@ const MusicianDashboard = () => {
                     onChange={(e) => setArtistFilter(e.target.value)}
                     className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
                   />
-                  <input
-                    type="text"
-                    placeholder="Filter by mood..."
+                  <select
                     value={moodFilter}
                     onChange={(e) => setMoodFilter(e.target.value)}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Filter by year..."
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+                  >
+                    <option value="">All Moods</option>
+                    {filterOptions.moods?.map((mood) => (
+                      <option key={mood} value={mood}>{mood}</option>
+                    ))}
+                  </select>
+                  <select
                     value={yearFilter}
                     onChange={(e) => setYearFilter(e.target.value)}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
-                  />
-                  {/* NEW: Decade filter */}
-                  <input
-                    type="text"
-                    placeholder="Filter by decade..."
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+                  >
+                    <option value="">All Years</option>
+                    {filterOptions.years?.map((year) => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                  <select
                     value={decadeFilter}
                     onChange={(e) => setDecadeFilter(e.target.value)}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
-                  />
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+                  >
+                    <option value="">All Decades</option>
+                    {filterOptions.decades?.map((decade) => (
+                      <option key={decade} value={decade}>{decade}</option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Batch Operations Bar */}
