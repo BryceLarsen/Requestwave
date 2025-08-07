@@ -5502,7 +5502,7 @@ const OnStageInterface = () => {
       // In production, you would need public endpoints for requests
       setLoading(false);
       
-      // Simulate some requests for demo
+      // Simulate some requests for demo (with proper status management)
       const demoRequests = [
         {
           id: 'demo-1',
@@ -5510,18 +5510,27 @@ const OnStageInterface = () => {
           song_artist: 'Oasis',
           requester_name: 'Sarah',
           dedication: 'Happy birthday mom!',
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          status: 'pending'
         },
         {
           id: 'demo-2', 
           song_title: 'Sweet Caroline',
           song_artist: 'Neil Diamond',
           requester_name: 'Mike',
-          created_at: new Date(Date.now() - 300000).toISOString() // 5 minutes ago
+          created_at: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
+          status: 'pending'
         }
       ];
       
-      setRequests(demoRequests);
+      // Keep existing request statuses if they exist
+      setRequests(prevRequests => {
+        const updatedRequests = demoRequests.map(demoReq => {
+          const existingReq = prevRequests.find(req => req.id === demoReq.id);
+          return existingReq ? { ...demoReq, status: existingReq.status } : demoReq;
+        });
+        return updatedRequests;
+      });
       
     } catch (error) {
       console.error('Error fetching updates:', error);
