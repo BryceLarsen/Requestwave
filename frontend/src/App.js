@@ -2007,7 +2007,13 @@ const MusicianDashboard = () => {
                 <span className="text-purple-200 text-sm font-medium">Active Playlist:</span>
                 <select
                   value={activePlaylistId || 'all_songs'}
-                  onChange={(e) => activatePlaylist(e.target.value)}
+                  onChange={(e) => {
+                    if (e.target.value === 'manage_playlists') {
+                      setShowManagePlaylistsModal(true);
+                    } else {
+                      activatePlaylist(e.target.value);
+                    }
+                  }}
                   className="bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-purple-500 focus:border-purple-500"
                 >
                   {playlists.map(playlist => (
@@ -2015,6 +2021,9 @@ const MusicianDashboard = () => {
                       {playlist.name} ({playlist.song_count} songs)
                     </option>
                   ))}
+                  <option value="manage_playlists" className="font-bold text-yellow-300">
+                    ⚙️ Manage Playlists
+                  </option>
                 </select>
               </div>
             )}
