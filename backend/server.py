@@ -782,21 +782,21 @@ def get_popular_songs_by_playlist_type(playlist_title: str) -> List[Dict[str, An
                 'title': 'Skinny Love',
                 'artist': 'Bon Iver',
                 'genres': ['Indie'],
-                'moods': ['Melancholy'],
+                'moods': ['Fall Acoustic'],
                 'year': 2007
             },
             {
                 'title': 'Holocene',
                 'artist': 'Bon Iver',
                 'genres': ['Indie'],
-                'moods': ['Chill'],
+                'moods': ['Chill Vibes'],
                 'year': 2011
             },
             {
                 'title': 'Mad World',
                 'artist': 'Gary Jules',
                 'genres': ['Alternative'],
-                'moods': ['Melancholy'],
+                'moods': ['Late Night'],
                 'year': 2001
             }
         ]
@@ -807,14 +807,14 @@ def get_popular_songs_by_playlist_type(playlist_title: str) -> List[Dict[str, An
                 'title': 'Watermelon Sugar',
                 'artist': 'Harry Styles',
                 'genres': ['Pop'],
-                'moods': ['Upbeat'],
+                'moods': ['Summer Vibes'],
                 'year': 2020
             },
             {
                 'title': 'Drivers License',
                 'artist': 'Olivia Rodrigo',
                 'genres': ['Pop'],
-                'moods': ['Melancholy'],
+                'moods': ['Heartbreak'],
                 'year': 2021
             },
             {
