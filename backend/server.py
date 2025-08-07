@@ -683,9 +683,9 @@ async def scrape_spotify_playlist(playlist_id: str) -> List[Dict[str, Any]]:
                     # Generate realistic songs based on playlist type/title
                     popular_songs = get_popular_songs_by_playlist_type(playlist_title)
                     
-                    # Add playlist context to notes
+                    # Leave notes blank for user customization
                     for song in popular_songs:
-                        song['notes'] = f'Imported from Spotify playlist: {playlist_title}'
+                        song['notes'] = ''
                         song['source'] = 'spotify'
                     
                     logger.info(f"Successfully parsed Spotify playlist: {playlist_title} with {len(popular_songs)} songs")
