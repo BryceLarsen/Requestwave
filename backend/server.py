@@ -1800,6 +1800,141 @@ async def stripe_webhook():
         logger.error(f"Error processing webhook: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing webhook: {str(e)}")
 
+# Song suggestion endpoints
+@api_router.post("/song-suggestions", response_model=SongSuggestion)
+async def create_song_suggestion(suggestion_data: dict):
+    """Create a new song suggestion from audience member"""
+    try:
+        # Validate required fields
+        required_fields = ["musician_slug", "suggested_title", "suggested_artist", "requester_name", "requester_email"]
+        for field in required_fields:
+            if not suggestion_data.get(field):
+                raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
+        
+        # Get musician by slug
+        musician = await db.musicians.find_one({"slug": suggestion_data["musician_slug"]})
+        if not musician:
+            raise HTTPException(status_code=404, detail="Musician not found")
+        
+        # Check if song suggestions are enabled (Pro feature)
+        design_settings = await db.design_settings.find_one({"musician_id": musician["id"]})
+        if design_settings and not design_settings.get("allow_song_suggestions", True):
+            raise HTTPException(status_code=403, detail="Song suggestions are not enabled for this artist")
+        
+        # Check for duplicate suggestions
+        existing = await db.song_suggestions.find_one({
+            "musician_id": musician["id"],
+            "suggested_title": {"$regex": f"^{re.escape(suggestion_data['suggested_title'])}$", "$options": "i"},
+            "suggested_artist": {"$regex": f"^{re.escape(suggestion_data['suggested_artist'])}$", "$options": "i"}
+        })
+        
+        if existing:
+            raise HTTPException(status_code=400, detail="This song has already been suggested")
+        
+        # Create suggestion
+        suggestion = {
+            "id": str(uuid.uuid4()),
+            "musician_id": musician["id"],
+            "suggested_title": suggestion_data["suggested_title"],
+            "suggested_artist": suggestion_data["suggested_artist"],
+            "requester_name": suggestion_data["requester_name"],
+            "requester_email": suggestion_data["requester_email"],
+            "message": suggestion_data.get("message", ""),
+            "status": "pending",
+            "created_at": datetime.utcnow()
+        }
+        
+        await db.song_suggestions.insert_one(suggestion)
+        return SongSuggestion(**suggestion)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating song suggestion: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error creating song suggestion")
+
+@api_router.get("/song-suggestions", response_model=List[SongSuggestion])
+async def get_song_suggestions(musician_id: str = Depends(get_current_musician)):
+    """Get all song suggestions for a musician"""
+    try:
+        suggestions = await db.song_suggestions.find({"musician_id": musician_id}).sort("created_at", DESCENDING).to_list(length=None)
+        return [SongSuggestion(**suggestion) for suggestion in suggestions]
+    except Exception as e:
+        logger.error(f"Error getting song suggestions: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error getting song suggestions")
+
+@api_router.put("/song-suggestions/{suggestion_id}/status")
+async def update_suggestion_status(
+    suggestion_id: str,
+    status_data: dict,  # {"status": "added|rejected"}
+    musician_id: str = Depends(get_current_musician)
+):
+    """Update song suggestion status (add to repertoire or reject)"""
+    try:
+        # Verify suggestion belongs to musician
+        suggestion = await db.song_suggestions.find_one({"id": suggestion_id, "musician_id": musician_id})
+        if not suggestion:
+            raise HTTPException(status_code=404, detail="Song suggestion not found")
+        
+        new_status = status_data.get("status")
+        if new_status not in ["added", "rejected"]:
+            raise HTTPException(status_code=400, detail="Status must be 'added' or 'rejected'")
+        
+        # If adding to repertoire, create the song
+        if new_status == "added":
+            # Check if song already exists in musician's repertoire
+            existing_song = await db.songs.find_one({
+                "musician_id": musician_id,
+                "title": {"$regex": f"^{re.escape(suggestion['suggested_title'])}$", "$options": "i"},
+                "artist": {"$regex": f"^{re.escape(suggestion['suggested_artist'])}$", "$options": "i"}
+            })
+            
+            if not existing_song:
+                # Add the suggested song to the repertoire
+                song_dict = {
+                    "id": str(uuid.uuid4()),
+                    "musician_id": musician_id,
+                    "title": suggestion["suggested_title"],
+                    "artist": suggestion["suggested_artist"],
+                    "genres": ["Pop"],  # Default genre
+                    "moods": ["Upbeat"],  # Default mood
+                    "year": None,
+                    "decade": None,
+                    "notes": f"Added from audience suggestion by {suggestion['requester_name']}",
+                    "request_count": 0,
+                    "hidden": False,
+                    "created_at": datetime.utcnow()
+                }
+                await db.songs.insert_one(song_dict)
+        
+        # Update suggestion status
+        await db.song_suggestions.update_one(
+            {"id": suggestion_id},
+            {"$set": {"status": new_status}}
+        )
+        
+        return {"success": True, "message": f"Song suggestion {new_status} successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating suggestion status: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error updating suggestion status")
+
+@api_router.delete("/song-suggestions/{suggestion_id}")
+async def delete_song_suggestion(suggestion_id: str, musician_id: str = Depends(get_current_musician)):
+    """Delete a song suggestion"""
+    try:
+        result = await db.song_suggestions.delete_one({"id": suggestion_id, "musician_id": musician_id})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Song suggestion not found")
+        return {"success": True, "message": "Song suggestion deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting song suggestion: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error deleting song suggestion")
+
 # Song endpoints
 @api_router.get("/songs", response_model=List[Song])
 async def get_my_songs(
