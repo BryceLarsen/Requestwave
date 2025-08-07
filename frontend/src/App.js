@@ -3994,6 +3994,55 @@ const AudienceInterface = () => {
     }
   };
 
+  // NEW: Handle song suggestion submission
+  const handleSuggestionSubmit = async (e) => {
+    e.preventDefault();
+    setSuggestionError('');
+
+    // Validate form
+    if (!suggestionForm.suggested_title.trim() || !suggestionForm.suggested_artist.trim() || 
+        !suggestionForm.requester_name.trim() || !suggestionForm.requester_email.trim()) {
+      setSuggestionError('Please fill in all required fields');
+      return;
+    }
+
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(suggestionForm.requester_email)) {
+      setSuggestionError('Please enter a valid email address');
+      return;
+    }
+
+    try {
+      const suggestionData = {
+        musician_slug: slug,
+        suggested_title: suggestionForm.suggested_title.trim(),
+        suggested_artist: suggestionForm.suggested_artist.trim(),
+        requester_name: suggestionForm.requester_name.trim(),
+        requester_email: suggestionForm.requester_email.trim(),
+        message: suggestionForm.message.trim()
+      };
+
+      await axios.post(`${API}/song-suggestions`, suggestionData);
+      
+      // Reset form and close modal
+      setSuggestionForm({
+        suggested_title: '',
+        suggested_artist: '',
+        requester_name: '',
+        requester_email: '',
+        message: ''
+      });
+      setShowSuggestionModal(false);
+      alert('Thank you for your song suggestion! The artist will review it soon.');
+      
+    } catch (error) {
+      console.error('Error submitting suggestion:', error);
+      const errorMessage = error.response?.data?.detail || 'Error submitting suggestion';
+      setSuggestionError(errorMessage);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
