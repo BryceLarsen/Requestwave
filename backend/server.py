@@ -713,35 +713,35 @@ def get_popular_songs_by_playlist_type(playlist_title: str) -> List[Dict[str, An
                 'title': 'As It Was',
                 'artist': 'Harry Styles',
                 'genres': ['Pop'],
-                'moods': ['Upbeat'],
+                'moods': ['Feel Good'],
                 'year': 2022
             },
             {
                 'title': 'Heat Waves',
                 'artist': 'Glass Animals',
                 'genres': ['Alternative'],
-                'moods': ['Chill'],
+                'moods': ['Chill Vibes'],
                 'year': 2020
             },
             {
                 'title': 'Blinding Lights',
                 'artist': 'The Weeknd',
                 'genres': ['Pop'],
-                'moods': ['Energetic'],
+                'moods': ['Dance Party'],
                 'year': 2019
             },
             {
                 'title': 'Good 4 U',
                 'artist': 'Olivia Rodrigo',
                 'genres': ['Pop'],
-                'moods': ['Energetic'],
+                'moods': ['Bar Anthems'],
                 'year': 2021
             },
             {
                 'title': 'Levitating',
                 'artist': 'Dua Lipa',
                 'genres': ['Pop'],
-                'moods': ['Upbeat'],
+                'moods': ['Dance Party'],
                 'year': 2020
             }
         ]
