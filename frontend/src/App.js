@@ -3230,7 +3230,7 @@ const MusicianDashboard = () => {
                     <div>
                       <h3 className="text-blue-200 font-bold text-sm">🚀 Enjoying your trial?</h3>
                       <p className="text-blue-300 text-xs mt-1">
-                        Lock in unlimited requests for just $5/month
+                        Lock in unlimited requests - $10/month or save 50% with annual billing ($5/month)
                       </p>
                     </div>
                     <button
