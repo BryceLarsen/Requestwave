@@ -963,7 +963,7 @@ async def scrape_apple_music_playlist(playlist_url: str) -> List[Dict[str, Any]]
                     'title': 'Good 4 U',
                     'artist': 'Olivia Rodrigo',
                     'genres': ['Pop'],
-                    'moods': ['Energetic'],
+                    'moods': ['Bar Anthems'],
                     'year': 2021,
                     'notes': '',  # Leave blank for user customization
                     'source': 'apple_music'
@@ -972,7 +972,7 @@ async def scrape_apple_music_playlist(playlist_url: str) -> List[Dict[str, Any]]
                     'title': 'Levitating',
                     'artist': 'Dua Lipa',
                     'genres': ['Pop'],
-                    'moods': ['Upbeat'],
+                    'moods': ['Dance Party'],
                     'year': 2020,
                     'notes': '',  # Leave blank for user customization
                     'source': 'apple_music'
@@ -981,7 +981,7 @@ async def scrape_apple_music_playlist(playlist_url: str) -> List[Dict[str, Any]]
                     'title': 'drivers license',
                     'artist': 'Olivia Rodrigo',
                     'genres': ['Pop'],
-                    'moods': ['Melancholy'],
+                    'moods': ['Heartbreak'],
                     'year': 2021,
                     'notes': '',  # Leave blank for user customization
                     'source': 'apple_music'
@@ -990,7 +990,7 @@ async def scrape_apple_music_playlist(playlist_url: str) -> List[Dict[str, Any]]
                     'title': 'Peaches',
                     'artist': 'Justin Bieber',
                     'genres': ['Pop'],
-                    'moods': ['Chill'],
+                    'moods': ['Chill Vibes'],
                     'year': 2021,
                     'notes': '',  # Leave blank for user customization
                     'source': 'apple_music'
