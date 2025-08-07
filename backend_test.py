@@ -7247,6 +7247,544 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
         except Exception as e:
             self.log_result("Demo Pro Account Creation", False, f"Exception: {str(e)}")
 
+    def test_pro_account_login_for_playlists(self):
+        """Login with Pro account for playlist testing"""
+        try:
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            response = self.make_request("POST", "/auth/login", login_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "token" in data and "musician" in data:
+                    self.auth_token = data["token"]
+                    self.musician_id = data["musician"]["id"]
+                    self.musician_slug = data["musician"]["slug"]
+                    self.log_result("Pro Account Login for Playlists", True, f"Logged in Pro musician: {data['musician']['name']}")
+                    return True
+                else:
+                    self.log_result("Pro Account Login for Playlists", False, f"Missing token or musician in response: {data}")
+                    return False
+            else:
+                self.log_result("Pro Account Login for Playlists", False, f"Status code: {response.status_code}, Response: {response.text}")
+                return False
+        except Exception as e:
+            self.log_result("Pro Account Login for Playlists", False, f"Exception: {str(e)}")
+            return False
+
+    def test_playlist_pro_access_control(self):
+        """Test that playlist endpoints require Pro subscription"""
+        try:
+            # Save Pro token
+            pro_token = self.auth_token
+            
+            # Login with regular account (non-Pro)
+            self.test_musician_registration()  # This creates/logs in regular account
+            
+            # Test playlist creation without Pro access
+            playlist_data = {
+                "name": "Test Playlist",
+                "song_ids": []
+            }
+            
+            response = self.make_request("POST", "/playlists", playlist_data)
+            
+            if response.status_code == 403:
+                self.log_result("Playlist Pro Access Control - Create", True, "Correctly rejected non-Pro user with 403")
+            else:
+                self.log_result("Playlist Pro Access Control - Create", False, f"Should have returned 403, got: {response.status_code}")
+            
+            # Test playlist listing without Pro access
+            response = self.make_request("GET", "/playlists")
+            
+            if response.status_code == 403:
+                self.log_result("Playlist Pro Access Control - List", True, "Correctly rejected non-Pro user with 403")
+            else:
+                self.log_result("Playlist Pro Access Control - List", False, f"Should have returned 403, got: {response.status_code}")
+            
+            # Restore Pro token for subsequent tests
+            self.auth_token = pro_token
+            
+        except Exception as e:
+            self.log_result("Playlist Pro Access Control", False, f"Exception: {str(e)}")
+
+    def test_playlist_crud_operations(self):
+        """Test playlist CRUD operations with Pro account"""
+        try:
+            if not self.auth_token:
+                self.log_result("Playlist CRUD Operations", False, "No auth token available")
+                return
+            
+            # First create some test songs for the playlist
+            test_songs = []
+            for i in range(3):
+                song_data = {
+                    "title": f"Playlist Test Song {i+1}",
+                    "artist": f"Test Artist {i+1}",
+                    "genres": ["Pop"],
+                    "moods": ["Upbeat"],
+                    "year": 2020 + i,
+                    "notes": f"Test song for playlist {i+1}"
+                }
+                
+                response = self.make_request("POST", "/songs", song_data)
+                if response.status_code == 200:
+                    test_songs.append(response.json()["id"])
+                else:
+                    self.log_result("Playlist CRUD - Song Setup", False, f"Failed to create test song {i+1}")
+                    return
+            
+            print(f"🔍 Created {len(test_songs)} test songs for playlist testing")
+            
+            # Test 1: Create playlist
+            playlist_data = {
+                "name": "My Test Playlist",
+                "song_ids": test_songs[:2]  # Add first 2 songs
+            }
+            
+            create_response = self.make_request("POST", "/playlists", playlist_data)
+            
+            if create_response.status_code == 200:
+                playlist_info = create_response.json()
+                if "id" in playlist_info and playlist_info["name"] == playlist_data["name"]:
+                    playlist_id = playlist_info["id"]
+                    self.log_result("Playlist CRUD - Create", True, f"Created playlist: {playlist_info['name']} with {playlist_info['song_count']} songs")
+                else:
+                    self.log_result("Playlist CRUD - Create", False, f"Unexpected response structure: {playlist_info}")
+                    return
+            else:
+                self.log_result("Playlist CRUD - Create", False, f"Status code: {create_response.status_code}, Response: {create_response.text}")
+                return
+            
+            # Test 2: Get all playlists
+            list_response = self.make_request("GET", "/playlists")
+            
+            if list_response.status_code == 200:
+                playlists = list_response.json()
+                if isinstance(playlists, list) and len(playlists) >= 1:
+                    # Should include "All Songs" + our created playlist
+                    all_songs_playlist = next((p for p in playlists if p["name"] == "All Songs"), None)
+                    created_playlist = next((p for p in playlists if p["id"] == playlist_id), None)
+                    
+                    if all_songs_playlist and created_playlist:
+                        self.log_result("Playlist CRUD - List", True, f"Retrieved {len(playlists)} playlists including 'All Songs' and created playlist")
+                    else:
+                        self.log_result("Playlist CRUD - List", False, f"Missing expected playlists: All Songs={all_songs_playlist is not None}, Created={created_playlist is not None}")
+                else:
+                    self.log_result("Playlist CRUD - List", False, f"Expected list with playlists, got: {playlists}")
+            else:
+                self.log_result("Playlist CRUD - List", False, f"Status code: {list_response.status_code}, Response: {list_response.text}")
+            
+            # Test 3: Update playlist songs
+            update_data = {
+                "song_ids": test_songs  # Add all 3 songs
+            }
+            
+            update_response = self.make_request("PUT", f"/playlists/{playlist_id}", update_data)
+            
+            if update_response.status_code == 200:
+                update_result = update_response.json()
+                if update_result.get("success"):
+                    self.log_result("Playlist CRUD - Update", True, f"Updated playlist songs: {update_result['message']}")
+                else:
+                    self.log_result("Playlist CRUD - Update", False, f"Update failed: {update_result}")
+            else:
+                self.log_result("Playlist CRUD - Update", False, f"Status code: {update_response.status_code}, Response: {update_response.text}")
+            
+            # Test 4: Delete playlist
+            delete_response = self.make_request("DELETE", f"/playlists/{playlist_id}")
+            
+            if delete_response.status_code == 200:
+                delete_result = delete_response.json()
+                if delete_result.get("success"):
+                    self.log_result("Playlist CRUD - Delete", True, f"Deleted playlist: {delete_result['message']}")
+                else:
+                    self.log_result("Playlist CRUD - Delete", False, f"Delete failed: {delete_result}")
+            else:
+                self.log_result("Playlist CRUD - Delete", False, f"Status code: {delete_response.status_code}, Response: {delete_response.text}")
+            
+        except Exception as e:
+            self.log_result("Playlist CRUD Operations", False, f"Exception: {str(e)}")
+
+    def test_playlist_activation_and_filtering(self):
+        """Test playlist activation and audience filtering"""
+        try:
+            if not self.auth_token:
+                self.log_result("Playlist Activation and Filtering", False, "No auth token available")
+                return
+            
+            # Create test songs
+            test_songs = []
+            for i in range(4):
+                song_data = {
+                    "title": f"Filter Test Song {i+1}",
+                    "artist": f"Filter Artist {i+1}",
+                    "genres": ["Rock"],
+                    "moods": ["Energetic"],
+                    "year": 2021 + i,
+                    "notes": f"Filter test song {i+1}"
+                }
+                
+                response = self.make_request("POST", "/songs", song_data)
+                if response.status_code == 200:
+                    test_songs.append(response.json()["id"])
+            
+            if len(test_songs) < 4:
+                self.log_result("Playlist Activation - Song Setup", False, "Failed to create enough test songs")
+                return
+            
+            print(f"🔍 Created {len(test_songs)} test songs for filtering test")
+            
+            # Create a playlist with only 2 of the 4 songs
+            playlist_data = {
+                "name": "Filter Test Playlist",
+                "song_ids": test_songs[:2]  # Only first 2 songs
+            }
+            
+            create_response = self.make_request("POST", "/playlists", playlist_data)
+            if create_response.status_code != 200:
+                self.log_result("Playlist Activation - Create Playlist", False, f"Failed to create playlist: {create_response.status_code}")
+                return
+            
+            playlist_id = create_response.json()["id"]
+            
+            # Test 1: Default behavior (All Songs) - should show all 4 songs
+            all_songs_response = self.make_request("GET", f"/musicians/{self.musician_slug}/songs")
+            
+            if all_songs_response.status_code == 200:
+                all_songs = all_songs_response.json()
+                filter_test_songs = [song for song in all_songs if "Filter Test Song" in song.get("title", "")]
+                
+                if len(filter_test_songs) >= 4:
+                    self.log_result("Playlist Filtering - All Songs Default", True, f"Default 'All Songs' shows all {len(filter_test_songs)} songs")
+                else:
+                    self.log_result("Playlist Filtering - All Songs Default", False, f"Expected 4+ songs, got {len(filter_test_songs)}")
+            else:
+                self.log_result("Playlist Filtering - All Songs Default", False, f"Failed to get songs: {all_songs_response.status_code}")
+            
+            # Test 2: Activate playlist
+            activate_response = self.make_request("PUT", f"/playlists/{playlist_id}/activate")
+            
+            if activate_response.status_code == 200:
+                activate_result = activate_response.json()
+                if activate_result.get("success"):
+                    self.log_result("Playlist Activation - Activate", True, f"Activated playlist: {activate_result['message']}")
+                else:
+                    self.log_result("Playlist Activation - Activate", False, f"Activation failed: {activate_result}")
+                    return
+            else:
+                self.log_result("Playlist Activation - Activate", False, f"Status code: {activate_response.status_code}")
+                return
+            
+            # Test 3: Filtered behavior - should show only 2 songs from playlist
+            filtered_response = self.make_request("GET", f"/musicians/{self.musician_slug}/songs")
+            
+            if filtered_response.status_code == 200:
+                filtered_songs = filtered_response.json()
+                filter_test_songs = [song for song in filtered_songs if "Filter Test Song" in song.get("title", "")]
+                
+                if len(filter_test_songs) == 2:
+                    self.log_result("Playlist Filtering - Active Playlist", True, f"Active playlist correctly filters to {len(filter_test_songs)} songs")
+                else:
+                    self.log_result("Playlist Filtering - Active Playlist", False, f"Expected 2 songs, got {len(filter_test_songs)}")
+            else:
+                self.log_result("Playlist Filtering - Active Playlist", False, f"Failed to get filtered songs: {filtered_response.status_code}")
+            
+            # Test 4: Activate "All Songs" again
+            all_songs_activate_response = self.make_request("PUT", "/playlists/all_songs/activate")
+            
+            if all_songs_activate_response.status_code == 200:
+                activate_result = all_songs_activate_response.json()
+                if activate_result.get("success"):
+                    self.log_result("Playlist Activation - All Songs", True, f"Activated All Songs: {activate_result['message']}")
+                else:
+                    self.log_result("Playlist Activation - All Songs", False, f"All Songs activation failed: {activate_result}")
+            else:
+                self.log_result("Playlist Activation - All Songs", False, f"Status code: {all_songs_activate_response.status_code}")
+            
+            # Test 5: Verify All Songs shows all songs again
+            final_response = self.make_request("GET", f"/musicians/{self.musician_slug}/songs")
+            
+            if final_response.status_code == 200:
+                final_songs = final_response.json()
+                filter_test_songs = [song for song in final_songs if "Filter Test Song" in song.get("title", "")]
+                
+                if len(filter_test_songs) >= 4:
+                    self.log_result("Playlist Filtering - All Songs Restored", True, f"All Songs restored, showing {len(filter_test_songs)} songs")
+                else:
+                    self.log_result("Playlist Filtering - All Songs Restored", False, f"Expected 4+ songs, got {len(filter_test_songs)}")
+            else:
+                self.log_result("Playlist Filtering - All Songs Restored", False, f"Failed to get final songs: {final_response.status_code}")
+            
+            # Cleanup: Delete the test playlist
+            self.make_request("DELETE", f"/playlists/{playlist_id}")
+            
+        except Exception as e:
+            self.log_result("Playlist Activation and Filtering", False, f"Exception: {str(e)}")
+
+    def test_playlist_edge_cases(self):
+        """Test playlist edge cases and error handling"""
+        try:
+            if not self.auth_token:
+                self.log_result("Playlist Edge Cases", False, "No auth token available")
+                return
+            
+            # Test 1: Create playlist with invalid song IDs
+            invalid_playlist_data = {
+                "name": "Invalid Playlist",
+                "song_ids": ["invalid-song-id-1", "invalid-song-id-2"]
+            }
+            
+            invalid_response = self.make_request("POST", "/playlists", invalid_playlist_data)
+            
+            if invalid_response.status_code == 400:
+                self.log_result("Playlist Edge Cases - Invalid Song IDs", True, "Correctly rejected playlist with invalid song IDs")
+            else:
+                self.log_result("Playlist Edge Cases - Invalid Song IDs", False, f"Should have returned 400, got: {invalid_response.status_code}")
+            
+            # Test 2: Create empty playlist
+            empty_playlist_data = {
+                "name": "Empty Playlist",
+                "song_ids": []
+            }
+            
+            empty_response = self.make_request("POST", "/playlists", empty_playlist_data)
+            
+            if empty_response.status_code == 200:
+                empty_playlist = empty_response.json()
+                if empty_playlist["song_count"] == 0:
+                    self.log_result("Playlist Edge Cases - Empty Playlist", True, "Successfully created empty playlist")
+                    empty_playlist_id = empty_playlist["id"]
+                    
+                    # Test activating empty playlist
+                    activate_empty_response = self.make_request("PUT", f"/playlists/{empty_playlist_id}/activate")
+                    
+                    if activate_empty_response.status_code == 200:
+                        # Check that audience sees no songs
+                        songs_response = self.make_request("GET", f"/musicians/{self.musician_slug}/songs")
+                        if songs_response.status_code == 200:
+                            songs = songs_response.json()
+                            if len(songs) == 0:
+                                self.log_result("Playlist Edge Cases - Empty Playlist Filtering", True, "Empty playlist correctly shows no songs to audience")
+                            else:
+                                self.log_result("Playlist Edge Cases - Empty Playlist Filtering", False, f"Empty playlist should show no songs, got {len(songs)}")
+                        else:
+                            self.log_result("Playlist Edge Cases - Empty Playlist Filtering", False, f"Failed to get songs: {songs_response.status_code}")
+                    else:
+                        self.log_result("Playlist Edge Cases - Empty Playlist Activation", False, f"Failed to activate empty playlist: {activate_empty_response.status_code}")
+                    
+                    # Cleanup
+                    self.make_request("DELETE", f"/playlists/{empty_playlist_id}")
+                else:
+                    self.log_result("Playlist Edge Cases - Empty Playlist", False, f"Expected song_count 0, got {empty_playlist['song_count']}")
+            else:
+                self.log_result("Playlist Edge Cases - Empty Playlist", False, f"Failed to create empty playlist: {empty_response.status_code}")
+            
+            # Test 3: Operations on non-existent playlist
+            fake_playlist_id = "non-existent-playlist-id"
+            
+            # Try to update non-existent playlist
+            update_fake_response = self.make_request("PUT", f"/playlists/{fake_playlist_id}", {"song_ids": []})
+            
+            if update_fake_response.status_code == 404:
+                self.log_result("Playlist Edge Cases - Update Non-existent", True, "Correctly returned 404 for non-existent playlist update")
+            else:
+                self.log_result("Playlist Edge Cases - Update Non-existent", False, f"Should have returned 404, got: {update_fake_response.status_code}")
+            
+            # Try to delete non-existent playlist
+            delete_fake_response = self.make_request("DELETE", f"/playlists/{fake_playlist_id}")
+            
+            if delete_fake_response.status_code == 404:
+                self.log_result("Playlist Edge Cases - Delete Non-existent", True, "Correctly returned 404 for non-existent playlist deletion")
+            else:
+                self.log_result("Playlist Edge Cases - Delete Non-existent", False, f"Should have returned 404, got: {delete_fake_response.status_code}")
+            
+            # Try to activate non-existent playlist
+            activate_fake_response = self.make_request("PUT", f"/playlists/{fake_playlist_id}/activate")
+            
+            if activate_fake_response.status_code == 404:
+                self.log_result("Playlist Edge Cases - Activate Non-existent", True, "Correctly returned 404 for non-existent playlist activation")
+            else:
+                self.log_result("Playlist Edge Cases - Activate Non-existent", False, f"Should have returned 404, got: {activate_fake_response.status_code}")
+            
+        except Exception as e:
+            self.log_result("Playlist Edge Cases", False, f"Exception: {str(e)}")
+
+    def test_playlist_song_ownership(self):
+        """Test that playlist operations respect song ownership"""
+        try:
+            if not self.auth_token:
+                self.log_result("Playlist Song Ownership", False, "No auth token available")
+                return
+            
+            # Create a test song with current Pro account
+            song_data = {
+                "title": "Ownership Test Song",
+                "artist": "Pro Artist",
+                "genres": ["Jazz"],
+                "moods": ["Smooth"],
+                "year": 2023,
+                "notes": "Song for ownership testing"
+            }
+            
+            song_response = self.make_request("POST", "/songs", song_data)
+            if song_response.status_code != 200:
+                self.log_result("Playlist Song Ownership - Song Creation", False, "Failed to create test song")
+                return
+            
+            pro_song_id = song_response.json()["id"]
+            
+            # Save Pro token and switch to regular account
+            pro_token = self.auth_token
+            pro_musician_id = self.musician_id
+            
+            # Login with regular account
+            self.test_musician_registration()  # Creates/logs in regular account
+            regular_token = self.auth_token
+            
+            # Switch back to Pro account
+            self.auth_token = pro_token
+            self.musician_id = pro_musician_id
+            
+            # Test 1: Try to create playlist with song from another musician (should fail)
+            # First, we need to create a song with the regular account
+            self.auth_token = regular_token
+            regular_song_response = self.make_request("POST", "/songs", {
+                "title": "Regular User Song",
+                "artist": "Regular Artist",
+                "genres": ["Pop"],
+                "moods": ["Happy"],
+                "year": 2023,
+                "notes": "Song from regular user"
+            })
+            
+            if regular_song_response.status_code == 200:
+                regular_song_id = regular_song_response.json()["id"]
+                
+                # Switch back to Pro account and try to use regular user's song
+                self.auth_token = pro_token
+                
+                cross_ownership_playlist = {
+                    "name": "Cross Ownership Test",
+                    "song_ids": [pro_song_id, regular_song_id]  # Mix of own and other's songs
+                }
+                
+                cross_response = self.make_request("POST", "/playlists", cross_ownership_playlist)
+                
+                if cross_response.status_code == 400:
+                    self.log_result("Playlist Song Ownership - Cross Ownership Prevention", True, "Correctly prevented playlist creation with other musician's songs")
+                else:
+                    self.log_result("Playlist Song Ownership - Cross Ownership Prevention", False, f"Should have returned 400, got: {cross_response.status_code}")
+            else:
+                self.log_result("Playlist Song Ownership - Regular Song Creation", False, "Failed to create regular user song for testing")
+            
+            # Test 2: Create playlist with only own songs (should succeed)
+            own_songs_playlist = {
+                "name": "Own Songs Playlist",
+                "song_ids": [pro_song_id]
+            }
+            
+            own_response = self.make_request("POST", "/playlists", own_songs_playlist)
+            
+            if own_response.status_code == 200:
+                playlist_info = own_response.json()
+                self.log_result("Playlist Song Ownership - Own Songs Only", True, f"Successfully created playlist with own songs: {playlist_info['name']}")
+                
+                # Cleanup
+                self.make_request("DELETE", f"/playlists/{playlist_info['id']}")
+            else:
+                self.log_result("Playlist Song Ownership - Own Songs Only", False, f"Failed to create playlist with own songs: {own_response.status_code}")
+            
+        except Exception as e:
+            self.log_result("Playlist Song Ownership", False, f"Exception: {str(e)}")
+
+    def run_playlist_tests(self):
+        """Run comprehensive playlist functionality tests (Pro feature)"""
+        print("\n" + "🎵" * 60)
+        print("🎵 PLAYLIST FUNCTIONALITY TESTING (PRO FEATURE)")
+        print("🎵" * 60)
+        print("🔍 Testing the new Playlist functionality as requested in the review")
+        print("📋 FOCUS AREAS:")
+        print("  1. Pro Access Control - Verify endpoints require Pro subscription")
+        print("  2. Playlist CRUD Operations - Create, Read, Update, Delete playlists")
+        print("  3. Playlist Activation - Set playlists as active for audience interface")
+        print("  4. Playlist Filtering - Audience songs endpoint filters by active playlist")
+        print("  5. Song Management Integration - Songs in playlists belong to musician")
+        print("  6. Default 'All Songs' Behavior - When no playlist active, show all songs")
+        print("  7. Edge Cases - Empty playlists, non-existent playlists, invalid song IDs")
+        print("🔑 AUTHENTICATION: Using Pro account brycelarsenmusic@gmail.com")
+        print("🎵" * 60)
+        
+        # Reset results for focused testing
+        playlist_results = {
+            "passed": 0,
+            "failed": 0,
+            "errors": []
+        }
+        original_results = self.results
+        self.results = playlist_results
+        
+        # Login with Pro account for playlist testing
+        if self.test_pro_account_login_for_playlists():
+            print(f"✅ Authenticated as Pro musician: {self.musician_slug}")
+            
+            print("\n🔒 TESTING PRO ACCESS CONTROL")
+            print("-" * 50)
+            self.test_playlist_pro_access_control()
+            
+            print("\n📝 TESTING PLAYLIST CRUD OPERATIONS")
+            print("-" * 50)
+            self.test_playlist_crud_operations()
+            
+            print("\n🎯 TESTING PLAYLIST ACTIVATION & FILTERING")
+            print("-" * 50)
+            self.test_playlist_activation_and_filtering()
+            
+            print("\n⚠️  TESTING EDGE CASES")
+            print("-" * 50)
+            self.test_playlist_edge_cases()
+            
+            print("\n🔐 TESTING SONG OWNERSHIP")
+            print("-" * 50)
+            self.test_playlist_song_ownership()
+            
+        else:
+            self.log_result("Playlist Testing", False, "Failed to login with Pro account - skipping playlist tests")
+        
+        # Print focused summary
+        print("\n" + "🎵" * 60)
+        print("🏁 PLAYLIST FUNCTIONALITY TEST SUMMARY")
+        print("🎵" * 60)
+        print(f"✅ Passed: {self.results['passed']}")
+        print(f"❌ Failed: {self.results['failed']}")
+        
+        if self.results['failed'] == 0:
+            print("\n🎉 SUCCESS: All playlist functionality tests passed!")
+            print("✅ Pro Access Control - Playlist endpoints correctly require Pro subscription")
+            print("✅ Playlist CRUD Operations - Create, read, update, delete working correctly")
+            print("✅ Playlist Activation - Setting playlists as active works properly")
+            print("✅ Playlist Filtering - Audience interface correctly filters by active playlist")
+            print("✅ Song Management Integration - Playlist operations respect song ownership")
+            print("✅ Default 'All Songs' Behavior - Shows all songs when no playlist active")
+            print("✅ Edge Cases - Empty playlists, non-existent playlists handled correctly")
+            print("✅ The new Playlist functionality (Pro feature) is working correctly!")
+        else:
+            print("\n❌ PLAYLIST FUNCTIONALITY ISSUES FOUND:")
+            for error in self.results['errors']:
+                print(f"   • {error}")
+            print("\n🔧 The playlist functionality needs attention before it's ready for production")
+        
+        # Restore original results and merge
+        success = self.results['failed'] == 0
+        original_results['passed'] += self.results['passed']
+        original_results['failed'] += self.results['failed']
+        original_results['errors'].extend(self.results['errors'])
+        self.results = original_results
+        
+        return success
+
     def run_all_tests(self):
         """Run all tests in order"""
         print("=" * 50)
