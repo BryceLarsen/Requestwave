@@ -420,9 +420,10 @@ const MusicianDashboard = () => {
   // NEW: Auto-fill metadata state
   const [autoFillLoading, setAutoFillLoading] = useState(false);
   
-  // NEW: Post-request state for tip/social modal
-  const [showPostRequestModal, setShowPostRequestModal] = useState(false);
-  const [currentRequestId, setCurrentRequestId] = useState(null);
+  // NEW: Song suggestions state
+  const [songSuggestions, setSongSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestionError, setSuggestionError] = useState('');
   
   // NEW: Tip functionality state
   const [showTipModal, setShowTipModal] = useState(false);
