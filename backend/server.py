@@ -1045,37 +1045,128 @@ def calculate_decade(year: Optional[int]) -> Optional[str]:
         return f"{decade_suffix}'s"
 
 def assign_genre_and_mood(song_title: str, artist: str) -> Dict[str, Any]:
-    """Assign genre and mood based on song title and artist using simple heuristics"""
+    """Assign genre and mood based on song title and artist using curated categories"""
     title_lower = song_title.lower()
     artist_lower = artist.lower()
     
-    # Genre assignment based on keywords
-    genre = "Pop"  # Default
-    if any(word in title_lower for word in ["rock", "metal", "guitar"]):
-        genre = "Rock"
-    elif any(word in title_lower for word in ["hip", "rap", "beat"]):  
-        genre = "Hip-Hop"
-    elif any(word in title_lower for word in ["country", "cowboy", "truck"]):
-        genre = "Country"
-    elif any(word in title_lower for word in ["jazz", "blues", "soul"]):
-        genre = "Jazz"
-    elif any(word in title_lower for word in ["electronic", "edm", "house", "techno"]):
-        genre = "Electronic"
-    elif any(word in title_lower for word in ["classic", "symphony", "opera"]):
-        genre = "Classical"
+    # Curated Genre List (20 options)
+    CURATED_GENRES = [
+        "Pop", "Rock", "Classic Rock", "Folk", "Country", "Americana", "Indie", 
+        "Alternative", "Singer-Songwriter", "R&B", "Soul", "Funk", "Blues", 
+        "Jazz", "Hip Hop", "Reggae", "Electronic", "Dance", "Latin", "Acoustic"
+    ]
     
-    # Mood assignment based on keywords
-    mood = "Upbeat"  # Default
-    if any(word in title_lower for word in ["love", "heart", "baby", "kiss"]):
+    # Genre assignment based on keywords - prioritize specific categories
+    genre = "Pop"  # Default
+    
+    # Artist-based genre detection (common artists people know)
+    if any(artist in artist_lower for artist in ["taylor swift", "adele", "ed sheeran", "bruno mars"]):
+        genre = "Pop"
+    elif any(artist in artist_lower for artist in ["the beatles", "led zeppelin", "queen", "eagles", "fleetwood mac"]):
+        genre = "Classic Rock"
+    elif any(artist in artist_lower for artist in ["johnny cash", "dolly parton", "chris stapleton", "kacey musgraves"]):
+        genre = "Country"
+    elif any(artist in artist_lower for artist in ["bob dylan", "joni mitchell", "simon and garfunkel"]):
+        genre = "Folk"
+    elif any(artist in artist_lower for artist in ["john mayer", "james taylor", "jack johnson"]):
+        genre = "Singer-Songwriter"
+    elif any(artist in artist_lower for artist in ["stevie wonder", "marvin gaye", "alicia keys"]):
+        genre = "R&B"
+    elif any(artist in artist_lower for artist in ["bb king", "muddy waters", "eric clapton"]):
+        genre = "Blues"
+    elif any(artist in artist_lower for artist in ["miles davis", "ella fitzgerald", "frank sinatra"]):
+        genre = "Jazz"
+    elif any(artist in artist_lower for artist in ["bob marley", "jimmy buffett"]):
+        genre = "Reggae"
+    
+    # Title-based genre detection
+    elif any(word in title_lower for word in ["rock", "stone", "highway", "guitar"]):
+        genre = "Rock"
+    elif any(word in title_lower for word in ["classic", "oldies", "vintage"]):
+        genre = "Classic Rock"
+    elif any(word in title_lower for word in ["country", "truck", "whiskey", "cowboy", "honky"]):
+        genre = "Country"
+    elif any(word in title_lower for word in ["folk", "mountain", "cabin", "prairie"]):
+        genre = "Folk"
+    elif any(word in title_lower for word in ["acoustic", "unplugged", "stripped"]):
+        genre = "Acoustic"
+    elif any(word in title_lower for word in ["hip", "rap", "beat", "street"]):
+        genre = "Hip Hop"
+    elif any(word in title_lower for word in ["jazz", "swing", "smooth"]):
+        genre = "Jazz"
+    elif any(word in title_lower for word in ["blues", "blue", "lonesome"]):
+        genre = "Blues"
+    elif any(word in title_lower for word in ["electronic", "digital", "synth", "techno"]):
+        genre = "Electronic"
+    elif any(word in title_lower for word in ["dance", "club", "party", "disco"]):
+        genre = "Dance"
+    elif any(word in title_lower for word in ["reggae", "island", "caribbean"]):
+        genre = "Reggae"
+    elif any(word in title_lower for word in ["soul", "funky", "groove"]):
+        genre = "Soul"
+    elif any(word in title_lower for word in ["indie", "alternative", "underground"]):
+        genre = "Indie"
+    elif any(word in title_lower for word in ["latin", "spanish", "salsa", "tango"]):
+        genre = "Latin"
+    
+    # Curated Mood List (20 options)
+    CURATED_MOODS = [
+        "Chill Vibes", "Feel Good", "Throwback", "Romantic", "Poolside", "Island Vibes", 
+        "Dance Party", "Late Night", "Road Trip", "Sad Bangers", "Coffeehouse", 
+        "Campfire", "Bar Anthems", "Summer Vibes", "Rainy Day", "Feel It Live", 
+        "Heartbreak", "Fall Acoustic", "Weekend Warm-Up", "Groovy"
+    ]
+    
+    # Mood assignment based on keywords - more contextual and performance-oriented
+    mood = "Feel Good"  # Default
+    
+    # Love and relationship moods
+    if any(word in title_lower for word in ["love", "heart", "baby", "kiss", "valentine", "together"]):
         mood = "Romantic"
-    elif any(word in title_lower for word in ["sad", "blue", "cry", "hurt", "broken"]):
-        mood = "Melancholy"
-    elif any(word in title_lower for word in ["party", "dance", "fun", "celebration"]):
-        mood = "Energetic"
-    elif any(word in title_lower for word in ["peace", "calm", "quiet", "soft"]):
-        mood = "Chill"
-    elif any(word in title_lower for word in ["angry", "fight", "mad", "rage"]):
-        mood = "Aggressive"
+    elif any(word in title_lower for word in ["break", "goodbye", "tears", "lonely", "miss", "gone"]):
+        mood = "Heartbreak"
+    
+    # Energy and party moods  
+    elif any(word in title_lower for word in ["party", "dance", "celebration", "tonight", "weekend"]):
+        mood = "Dance Party"
+    elif any(word in title_lower for word in ["bar", "beer", "whiskey", "shots", "crowd", "anthem"]):
+        mood = "Bar Anthems"
+    elif any(word in title_lower for word in ["warm up", "getting ready", "pump", "hype"]):
+        mood = "Weekend Warm-Up"
+    elif any(word in title_lower for word in ["groove", "funky", "smooth", "soul", "rhythm"]):
+        mood = "Groovy"
+    
+    # Chill and relaxed moods
+    elif any(word in title_lower for word in ["chill", "relax", "peace", "calm", "quiet", "soft", "mellow"]):
+        mood = "Chill Vibes"
+    elif any(word in title_lower for word in ["coffee", "morning", "café", "acoustic", "intimate"]):
+        mood = "Coffeehouse"
+    elif any(word in title_lower for word in ["campfire", "around", "circle", "sing along"]):
+        mood = "Campfire"
+    elif any(word in title_lower for word in ["late", "night", "midnight", "after dark", "3am"]):
+        mood = "Late Night"
+    elif any(word in title_lower for word in ["rain", "storm", "grey", "cozy", "inside"]):
+        mood = "Rainy Day"
+    
+    # Seasonal and setting moods
+    elif any(word in title_lower for word in ["summer", "sun", "beach", "vacation", "hot"]):
+        mood = "Summer Vibes"
+    elif any(word in title_lower for word in ["pool", "swimming", "drinks", "cocktail", "tropical"]):
+        mood = "Poolside"
+    elif any(word in title_lower for word in ["island", "caribbean", "beach", "ocean", "waves"]):
+        mood = "Island Vibes"
+    elif any(word in title_lower for word in ["road", "highway", "drive", "car", "journey", "adventure"]):
+        mood = "Road Trip"
+    elif any(word in title_lower for word in ["fall", "autumn", "leaves", "cozy", "sweater"]):
+        mood = "Fall Acoustic"
+    
+    # Performance and nostalgia moods
+    elif any(word in title_lower for word in ["throwback", "oldies", "remember", "back", "classic"]):
+        mood = "Throwback"
+    elif any(word in title_lower for word in ["live", "stage", "show", "performance", "crowd"]):
+        mood = "Feel It Live"
+    elif any(word in title_lower for word in ["sad", "blue", "hurt", "pain"]) and any(word in title_lower for word in ["but", "still", "anyway", "dance", "sing"]):
+        mood = "Sad Bangers"  # Sad but still hits hard
     
     return {"genre": genre, "mood": mood}
 
