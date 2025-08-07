@@ -476,8 +476,16 @@ def validate_csv_file(file: UploadFile) -> None:
     if not file.filename.lower().endswith('.csv'):
         raise HTTPException(status_code=400, detail="File must be a CSV file")
     
-    if file.size > 5 * 1024 * 1024:  # 5MB limit
-        raise HTTPException(status_code=400, detail="File size must be less than 5MB")
+    if file.size > 10 * 1024 * 1024:  # 10MB limit
+        raise HTTPException(status_code=400, detail="File size must be less than 10MB")
+
+def validate_lst_file(file: UploadFile) -> None:
+    """Validate uploaded LST file"""
+    if not file.filename.lower().endswith('.lst'):
+        raise HTTPException(status_code=400, detail="File must be a .lst file")
+    
+    if file.size > 10 * 1024 * 1024:  # 10MB limit
+        raise HTTPException(status_code=400, detail="File size must be less than 10MB")
 
 async def get_subscription_status(musician_id: str) -> SubscriptionStatus:
     """Get current subscription status and request limits for a musician"""
