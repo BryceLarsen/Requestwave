@@ -1889,16 +1889,16 @@ async def update_suggestion_status(
             })
             
             if not existing_song:
-                # Add the suggested song to the repertoire
+                # Add the suggested song to the repertoire with default values (no Spotify enrichment)
                 song_dict = {
                     "id": str(uuid.uuid4()),
                     "musician_id": musician_id,
                     "title": suggestion["suggested_title"],
                     "artist": suggestion["suggested_artist"],
-                    "genres": ["Pop"],  # Default genre
-                    "moods": ["Upbeat"],  # Default mood
-                    "year": None,
-                    "decade": None,
+                    "genres": ["Pop"],  # Default genre as specified
+                    "moods": ["Upbeat"],  # Default mood as specified
+                    "year": None,  # No year by default
+                    "decade": None,  # No decade calculation without year
                     "notes": f"Added from audience suggestion by {suggestion['requester_name']}",
                     "request_count": 0,
                     "hidden": False,
