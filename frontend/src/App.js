@@ -1947,6 +1947,41 @@ const MusicianDashboard = () => {
     }
   };
 
+  // NEW: Quick Start guide functions
+  const handleQuickStartClose = () => {
+    setShowQuickStart(false);
+    if (isFirstLogin) {
+      localStorage.setItem(`quickstart_seen_${musician.id}`, 'true');
+      setIsFirstLogin(false);
+    }
+  };
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    if (!contactForm.name.trim() || !contactForm.email.trim() || !contactForm.message.trim()) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    setContactLoading(true);
+    try {
+      await axios.post(`${API}/contact`, {
+        name: contactForm.name,
+        email: contactForm.email,
+        message: contactForm.message,
+        musician_id: musician.id
+      });
+      
+      alert('Message sent successfully! We\'ll get back to you soon.');
+      setContactForm({ name: '', email: '', message: '' });
+    } catch (error) {
+      console.error('Error sending contact message:', error);
+      alert('Error sending message. Please try again.');
+    } finally {
+      setContactLoading(false);
+    }
+  };
+
   // Fetch playlists on component mount and when subscription status changes
   useEffect(() => {
     if (musician && subscriptionStatus && subscriptionStatus.plan === 'pro') {
