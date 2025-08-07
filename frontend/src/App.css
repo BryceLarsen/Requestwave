@@ -37,6 +37,22 @@
   }
 }
 
+/* NEW: Toast notification animation for On Stage interface */
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  20%, 80% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
 /* Custom RequestWave Styles */
 body {
   margin: 0;
