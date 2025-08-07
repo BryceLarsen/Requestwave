@@ -1546,7 +1546,11 @@ const MusicianDashboard = () => {
 
   const generateAndDownloadFlyer = async () => {
     try {
-      const response = await axios.get(`${API}/qr-flyer`);
+      const response = await axios.get(`${API}/qr-flyer`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       const link = document.createElement('a');
       link.href = response.data.flyer;
       link.download = `${musician.name}-qr-flyer.png`;
@@ -1555,7 +1559,7 @@ const MusicianDashboard = () => {
       document.body.removeChild(link);
     } catch (error) {
       console.error('Error generating flyer:', error);
-      alert('Error generating flyer');
+      alert('Error generating flyer. Please make sure you are logged in.');
     }
   };
 
