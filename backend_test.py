@@ -1543,6 +1543,524 @@ class RequestWaveAPITester:
         except Exception as e:
             self.log_result("Batch Edit Data Processing", False, f"❌ CRITICAL BUG: Exception: {str(e)}")
 
+    def test_pro_account_login(self):
+        """Login with Pro account for batch edit testing"""
+        try:
+            print("🔑 Logging in with Pro account for batch edit testing")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            response = self.make_request("POST", "/auth/login", login_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "token" in data and "musician" in data:
+                    self.auth_token = data["token"]
+                    self.musician_id = data["musician"]["id"]
+                    self.musician_slug = data["musician"]["slug"]
+                    self.log_result("Pro Account Login", True, f"Logged in Pro account: {data['musician']['name']}")
+                    return True
+                else:
+                    self.log_result("Pro Account Login", False, f"Missing token or musician in response: {data}")
+                    return False
+            else:
+                self.log_result("Pro Account Login", False, f"Status code: {response.status_code}, Response: {response.text}")
+                return False
+        except Exception as e:
+            self.log_result("Pro Account Login", False, f"Exception: {str(e)}")
+            return False
+
+    def test_batch_edit_routing_fix(self):
+        """Test the FIXED batch edit routing issue - CRITICAL ROUTING FIX TEST"""
+        try:
+            if not self.auth_token:
+                self.log_result("Batch Edit Routing Fix", False, "No auth token available")
+                return
+            
+            print("🔍 Testing FIXED batch edit routing - verifying PUT /api/songs/batch-edit routes correctly")
+            
+            # First create test songs for batch editing
+            test_songs = []
+            for i in range(2):
+                song_data = {
+                    "title": f"Routing Test Song {i+1}",
+                    "artist": f"Test Artist {i+1}",
+                    "genres": ["Pop"],
+                    "moods": ["Upbeat"],
+                    "year": 2020,
+                    "notes": f"Original notes {i+1}"
+                }
+                
+                response = self.make_request("POST", "/songs", song_data)
+                if response.status_code == 200:
+                    test_songs.append(response.json()["id"])
+                else:
+                    self.log_result("Batch Edit Routing Fix - Setup", False, f"Failed to create test song {i+1}")
+                    return
+            
+            print(f"📊 Created {len(test_songs)} test songs for routing test")
+            
+            # CRITICAL TEST: Verify batch-edit endpoint is routed correctly (not to individual song handler)
+            batch_data = {
+                "song_ids": test_songs,
+                "updates": {
+                    "notes": "Updated via batch edit routing test"
+                }
+            }
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"📊 Batch edit response: {json.dumps(data, indent=2)}")
+                
+                # Check if response has batch edit structure (not individual song structure)
+                if "success" in data and "updated_count" in data and "message" in data:
+                    if data.get("updated_count") == len(test_songs):
+                        self.log_result("Batch Edit Routing Fix - Response Structure", True, "✅ ROUTING FIX VERIFIED: Response has correct batch edit structure")
+                        
+                        # Verify songs were actually updated
+                        songs_response = self.make_request("GET", "/songs")
+                        if songs_response.status_code == 200:
+                            songs = songs_response.json()
+                            updated_songs = [song for song in songs if song["id"] in test_songs and "batch edit routing test" in song.get("notes", "")]
+                            
+                            if len(updated_songs) == len(test_songs):
+                                self.log_result("Batch Edit Routing Fix", True, "✅ CRITICAL ROUTING FIX VERIFIED: PUT /api/songs/batch-edit correctly routed to batch edit handler")
+                            else:
+                                self.log_result("Batch Edit Routing Fix", False, f"❌ Songs not updated correctly: {len(updated_songs)}/{len(test_songs)}")
+                        else:
+                            self.log_result("Batch Edit Routing Fix", False, "❌ Could not verify song updates")
+                    else:
+                        self.log_result("Batch Edit Routing Fix", False, f"❌ Wrong update count: expected {len(test_songs)}, got {data.get('updated_count')}")
+                else:
+                    self.log_result("Batch Edit Routing Fix", False, f"❌ ROUTING ISSUE: Response structure suggests individual song handler was called: {data}")
+            elif response.status_code == 422:
+                # This would indicate the old routing issue where it's going to individual song handler
+                try:
+                    error_data = response.json()
+                    if "detail" in error_data:
+                        self.log_result("Batch Edit Routing Fix", False, f"❌ CRITICAL ROUTING BUG: 422 validation error suggests routing to individual song handler: {error_data['detail']}")
+                    else:
+                        self.log_result("Batch Edit Routing Fix", False, f"❌ CRITICAL ROUTING BUG: 422 error indicates routing issue: {response.text}")
+                except:
+                    self.log_result("Batch Edit Routing Fix", False, f"❌ CRITICAL ROUTING BUG: 422 error indicates routing issue: {response.text}")
+            else:
+                self.log_result("Batch Edit Routing Fix", False, f"❌ Unexpected status code: {response.status_code}, Response: {response.text}")
+                
+        except Exception as e:
+            self.log_result("Batch Edit Routing Fix", False, f"❌ Exception: {str(e)}")
+
+    def test_batch_edit_notes_only(self):
+        """Test batch editing ONLY notes field - CRITICAL NOTES-ONLY FIX TEST"""
+        try:
+            if not self.auth_token:
+                self.log_result("Batch Edit Notes Only", False, "No auth token available")
+                return
+            
+            print("🔍 Testing batch edit with ONLY notes field (the specific failing scenario)")
+            
+            # Create test songs
+            test_songs = []
+            for i in range(2):
+                song_data = {
+                    "title": f"Notes Only Test Song {i+1}",
+                    "artist": f"Test Artist {i+1}",
+                    "genres": ["Pop"],
+                    "moods": ["Upbeat"],
+                    "year": 2020,
+                    "notes": f"Original notes {i+1}"
+                }
+                
+                response = self.make_request("POST", "/songs", song_data)
+                if response.status_code == 200:
+                    test_songs.append(response.json()["id"])
+                else:
+                    self.log_result("Batch Edit Notes Only - Setup", False, f"Failed to create test song {i+1}")
+                    return
+            
+            print(f"📊 Created {len(test_songs)} test songs for notes-only test")
+            
+            # CRITICAL TEST: Edit ONLY notes field (this was causing "Field required" errors)
+            batch_data = {
+                "song_ids": test_songs,
+                "updates": {
+                    "notes": "Updated notes only - no title/artist provided"
+                }
+            }
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"📊 Notes-only batch edit response: {json.dumps(data, indent=2)}")
+                
+                if data.get("success") and data.get("updated_count") == len(test_songs):
+                    # Verify notes were actually updated
+                    songs_response = self.make_request("GET", "/songs")
+                    if songs_response.status_code == 200:
+                        songs = songs_response.json()
+                        updated_songs = [song for song in songs if song["id"] in test_songs]
+                        
+                        notes_updated_correctly = all(
+                            "Updated notes only - no title/artist provided" in song.get("notes", "")
+                            for song in updated_songs
+                        )
+                        
+                        if notes_updated_correctly:
+                            self.log_result("Batch Edit Notes Only", True, "✅ CRITICAL NOTES-ONLY FIX VERIFIED: Successfully updated only notes field without title/artist")
+                        else:
+                            self.log_result("Batch Edit Notes Only", False, "❌ Notes were not updated correctly")
+                    else:
+                        self.log_result("Batch Edit Notes Only", False, "❌ Could not verify notes updates")
+                else:
+                    self.log_result("Batch Edit Notes Only", False, f"❌ Batch edit failed: {data}")
+            elif response.status_code == 422:
+                # This is the specific error that was happening before the fix
+                try:
+                    error_data = response.json()
+                    if "detail" in error_data:
+                        detail = error_data["detail"]
+                        if isinstance(detail, list):
+                            field_errors = [str(err) for err in detail]
+                            if any("title" in err.lower() and "required" in err.lower() for err in field_errors):
+                                self.log_result("Batch Edit Notes Only", False, f"❌ CRITICAL BUG: Still getting 'Field required' errors for title/artist when editing only notes: {field_errors}")
+                            else:
+                                self.log_result("Batch Edit Notes Only", False, f"❌ 422 validation error: {field_errors}")
+                        else:
+                            self.log_result("Batch Edit Notes Only", False, f"❌ 422 validation error: {detail}")
+                    else:
+                        self.log_result("Batch Edit Notes Only", False, f"❌ 422 error: {response.text}")
+                except:
+                    self.log_result("Batch Edit Notes Only", False, f"❌ 422 error: {response.text}")
+            else:
+                self.log_result("Batch Edit Notes Only", False, f"❌ Unexpected status code: {response.status_code}, Response: {response.text}")
+                
+        except Exception as e:
+            self.log_result("Batch Edit Notes Only", False, f"❌ Exception: {str(e)}")
+
+    def test_batch_edit_partial_fields(self):
+        """Test batch editing individual fields independently"""
+        try:
+            if not self.auth_token:
+                self.log_result("Batch Edit Partial Fields", False, "No auth token available")
+                return
+            
+            print("🔍 Testing batch edit with individual fields independently")
+            
+            # Create test songs
+            test_songs = []
+            for i in range(3):
+                song_data = {
+                    "title": f"Partial Test Song {i+1}",
+                    "artist": f"Original Artist {i+1}",
+                    "genres": ["Pop"],
+                    "moods": ["Upbeat"],
+                    "year": 2020,
+                    "notes": f"Original notes {i+1}"
+                }
+                
+                response = self.make_request("POST", "/songs", song_data)
+                if response.status_code == 200:
+                    test_songs.append(response.json()["id"])
+                else:
+                    self.log_result("Batch Edit Partial Fields - Setup", False, f"Failed to create test song {i+1}")
+                    return
+            
+            # Test 1: Update only artist
+            batch_data = {
+                "song_ids": test_songs,
+                "updates": {
+                    "artist": "Updated Artist Only"
+                }
+            }
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+            if response.status_code == 200:
+                self.log_result("Batch Edit Partial Fields - Artist Only", True, "✅ Successfully updated only artist field")
+            else:
+                self.log_result("Batch Edit Partial Fields - Artist Only", False, f"❌ Failed to update artist only: {response.status_code}")
+                return
+            
+            # Test 2: Update only genres
+            batch_data = {
+                "song_ids": test_songs,
+                "updates": {
+                    "genres": "Rock, Alternative"
+                }
+            }
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+            if response.status_code == 200:
+                self.log_result("Batch Edit Partial Fields - Genres Only", True, "✅ Successfully updated only genres field")
+            else:
+                self.log_result("Batch Edit Partial Fields - Genres Only", False, f"❌ Failed to update genres only: {response.status_code}")
+                return
+            
+            # Test 3: Update only moods
+            batch_data = {
+                "song_ids": test_songs,
+                "updates": {
+                    "moods": "Energetic, Powerful"
+                }
+            }
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+            if response.status_code == 200:
+                self.log_result("Batch Edit Partial Fields - Moods Only", True, "✅ Successfully updated only moods field")
+            else:
+                self.log_result("Batch Edit Partial Fields - Moods Only", False, f"❌ Failed to update moods only: {response.status_code}")
+                return
+            
+            # Test 4: Update only year
+            batch_data = {
+                "song_ids": test_songs,
+                "updates": {
+                    "year": "2023"
+                }
+            }
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+            if response.status_code == 200:
+                self.log_result("Batch Edit Partial Fields - Year Only", True, "✅ Successfully updated only year field")
+                self.log_result("Batch Edit Partial Fields", True, "✅ All individual field updates working correctly")
+            else:
+                self.log_result("Batch Edit Partial Fields - Year Only", False, f"❌ Failed to update year only: {response.status_code}")
+                self.log_result("Batch Edit Partial Fields", False, "❌ Some individual field updates failed")
+                
+        except Exception as e:
+            self.log_result("Batch Edit Partial Fields", False, f"❌ Exception: {str(e)}")
+
+    def test_batch_edit_combined_fields(self):
+        """Test batch editing multiple fields together"""
+        try:
+            if not self.auth_token:
+                self.log_result("Batch Edit Combined Fields", False, "No auth token available")
+                return
+            
+            print("🔍 Testing batch edit with multiple fields combined")
+            
+            # Create test songs
+            test_songs = []
+            for i in range(2):
+                song_data = {
+                    "title": f"Combined Test Song {i+1}",
+                    "artist": f"Original Artist {i+1}",
+                    "genres": ["Pop"],
+                    "moods": ["Upbeat"],
+                    "year": 2020,
+                    "notes": f"Original notes {i+1}"
+                }
+                
+                response = self.make_request("POST", "/songs", song_data)
+                if response.status_code == 200:
+                    test_songs.append(response.json()["id"])
+                else:
+                    self.log_result("Batch Edit Combined Fields - Setup", False, f"Failed to create test song {i+1}")
+                    return
+            
+            # Test combined field updates
+            batch_data = {
+                "song_ids": test_songs,
+                "updates": {
+                    "artist": "Combined Update Artist",
+                    "genres": "Rock, Metal, Alternative",
+                    "moods": "Aggressive, Energetic",
+                    "year": "2024",
+                    "notes": "Combined update - all fields changed"
+                }
+            }
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success") and data.get("updated_count") == len(test_songs):
+                    # Verify all fields were updated
+                    songs_response = self.make_request("GET", "/songs")
+                    if songs_response.status_code == 200:
+                        songs = songs_response.json()
+                        updated_songs = [song for song in songs if song["id"] in test_songs]
+                        
+                        all_fields_updated = True
+                        for song in updated_songs:
+                            if (song.get("artist") != "Combined Update Artist" or
+                                "Rock" not in song.get("genres", []) or
+                                "Aggressive" not in song.get("moods", []) or
+                                song.get("year") != 2024 or
+                                "Combined update" not in song.get("notes", "")):
+                                all_fields_updated = False
+                                break
+                        
+                        if all_fields_updated:
+                            self.log_result("Batch Edit Combined Fields", True, "✅ Successfully updated multiple fields together")
+                        else:
+                            self.log_result("Batch Edit Combined Fields", False, "❌ Not all fields were updated correctly")
+                    else:
+                        self.log_result("Batch Edit Combined Fields", False, "❌ Could not verify field updates")
+                else:
+                    self.log_result("Batch Edit Combined Fields", False, f"❌ Batch edit failed: {data}")
+            else:
+                self.log_result("Batch Edit Combined Fields", False, f"❌ Status code: {response.status_code}, Response: {response.text}")
+                
+        except Exception as e:
+            self.log_result("Batch Edit Combined Fields", False, f"❌ Exception: {str(e)}")
+
+    def test_batch_edit_authentication_comprehensive(self):
+        """Test batch edit JWT authentication comprehensively"""
+        try:
+            # Save current token
+            original_token = self.auth_token
+            
+            # Create test song first
+            if not original_token:
+                self.log_result("Batch Edit Authentication", False, "No auth token available for setup")
+                return
+            
+            song_data = {
+                "title": "Auth Test Song",
+                "artist": "Test Artist",
+                "genres": ["Pop"],
+                "moods": ["Upbeat"],
+                "year": 2020,
+                "notes": "Auth test"
+            }
+            
+            response = self.make_request("POST", "/songs", song_data)
+            if response.status_code != 200:
+                self.log_result("Batch Edit Authentication - Setup", False, "Failed to create test song")
+                return
+            
+            test_song_id = response.json()["id"]
+            
+            # Test 1: No token
+            self.auth_token = None
+            batch_data = {
+                "song_ids": [test_song_id],
+                "updates": {"notes": "Unauthorized update"}
+            }
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+            if response.status_code in [401, 403]:
+                self.log_result("Batch Edit Authentication - No Token", True, f"✅ Correctly rejected request without token ({response.status_code})")
+            else:
+                self.log_result("Batch Edit Authentication - No Token", False, f"❌ Should reject without token, got: {response.status_code}")
+            
+            # Test 2: Invalid token
+            self.auth_token = "invalid_token_12345"
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+            if response.status_code == 401:
+                self.log_result("Batch Edit Authentication - Invalid Token", True, "✅ Correctly rejected invalid token")
+            else:
+                self.log_result("Batch Edit Authentication - Invalid Token", False, f"❌ Should reject invalid token, got: {response.status_code}")
+            
+            # Test 3: Valid token
+            self.auth_token = original_token
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+            if response.status_code == 200:
+                self.log_result("Batch Edit Authentication - Valid Token", True, "✅ Correctly accepted valid token")
+                self.log_result("Batch Edit Authentication", True, "✅ JWT authentication working properly for batch edit")
+            else:
+                self.log_result("Batch Edit Authentication - Valid Token", False, f"❌ Should accept valid token, got: {response.status_code}")
+                self.log_result("Batch Edit Authentication", False, "❌ JWT authentication issues")
+                
+        except Exception as e:
+            self.log_result("Batch Edit Authentication", False, f"❌ Exception: {str(e)}")
+        finally:
+            # Restore original token
+            self.auth_token = original_token
+
+    def test_batch_edit_error_handling(self):
+        """Test batch edit error handling and validation"""
+        try:
+            if not self.auth_token:
+                self.log_result("Batch Edit Error Handling", False, "No auth token available")
+                return
+            
+            print("🔍 Testing batch edit error handling and validation")
+            
+            # Test 1: Empty song_ids array
+            batch_data = {
+                "song_ids": [],
+                "updates": {"notes": "Test update"}
+            }
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+            if response.status_code in [400, 422]:
+                self.log_result("Batch Edit Error Handling - Empty Song IDs", True, f"✅ Correctly rejected empty song_ids ({response.status_code})")
+            else:
+                self.log_result("Batch Edit Error Handling - Empty Song IDs", False, f"❌ Should reject empty song_ids, got: {response.status_code}")
+            
+            # Test 2: Non-existent song IDs
+            batch_data = {
+                "song_ids": ["non-existent-id-1", "non-existent-id-2"],
+                "updates": {"notes": "Test update"}
+            }
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+            if response.status_code in [400, 404]:
+                self.log_result("Batch Edit Error Handling - Non-existent IDs", True, f"✅ Correctly handled non-existent song IDs ({response.status_code})")
+            elif response.status_code == 200:
+                # Check if response indicates no songs were updated
+                data = response.json()
+                if data.get("updated_count", 0) == 0:
+                    self.log_result("Batch Edit Error Handling - Non-existent IDs", True, "✅ Correctly handled non-existent IDs (0 updated)")
+                else:
+                    self.log_result("Batch Edit Error Handling - Non-existent IDs", False, f"❌ Should not update non-existent songs: {data}")
+            else:
+                self.log_result("Batch Edit Error Handling - Non-existent IDs", False, f"❌ Unexpected response for non-existent IDs: {response.status_code}")
+            
+            # Test 3: Empty updates object
+            batch_data = {
+                "song_ids": ["some-id"],
+                "updates": {}
+            }
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+            if response.status_code in [400, 422]:
+                self.log_result("Batch Edit Error Handling - Empty Updates", True, f"✅ Correctly rejected empty updates ({response.status_code})")
+            else:
+                self.log_result("Batch Edit Error Handling - Empty Updates", False, f"❌ Should reject empty updates, got: {response.status_code}")
+            
+            # Test 4: Invalid year format
+            batch_data = {
+                "song_ids": ["some-id"],
+                "updates": {"year": "invalid-year"}
+            }
+            
+            response = self.make_request("PUT", "/songs/batch-edit", batch_data)
+            if response.status_code in [400, 422]:
+                self.log_result("Batch Edit Error Handling - Invalid Year", True, f"✅ Correctly rejected invalid year format ({response.status_code})")
+                self.log_result("Batch Edit Error Handling", True, "✅ Error handling and validation working properly")
+            else:
+                self.log_result("Batch Edit Error Handling - Invalid Year", False, f"❌ Should reject invalid year, got: {response.status_code}")
+                self.log_result("Batch Edit Error Handling", False, "❌ Some error handling issues found")
+                
+        except Exception as e:
+            self.log_result("Batch Edit Error Handling", False, f"❌ Exception: {str(e)}")
+
+    def run_batch_edit_tests(self):
+        """Run comprehensive batch edit tests with Pro account"""
+        print("\n" + "🔧" * 20 + " TESTING FIXED BATCH EDIT FUNCTIONALITY " + "🔧" * 20)
+        print("Testing the FIXED batch edit routing issue and notes-only editing")
+        print("=" * 80)
+        
+        # Login with Pro account
+        if not self.test_pro_account_login():
+            print("❌ Could not login with Pro account, skipping batch edit tests")
+            return
+        
+        # Run the new batch edit tests
+        self.test_batch_edit_routing_fix()
+        self.test_batch_edit_notes_only()
+        self.test_batch_edit_partial_fields()
+        self.test_batch_edit_combined_fields()
+        self.test_batch_edit_authentication_comprehensive()
+        self.test_batch_edit_error_handling()
+        
+        print("\n" + "🔧" * 20 + " BATCH EDIT TESTING COMPLETE " + "🔧" * 20)
+
     def test_delete_song_authentication(self):
         """Test that song deletion requires proper authentication - CRITICAL FIX TEST"""
         try:
