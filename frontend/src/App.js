@@ -184,12 +184,13 @@ const AuthForm = ({ mode, onSwitch }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
-        {/* NEW: RequestWave Logo */}
+        {/* RequestWave Logo */}
         <div className="text-center mb-8">
           <img
-            src="https://customer-assets.emergentagent.com/job_requestwave-1/artifacts/fw848xgw_2E5CF5AB-AA0E-4457-A94A-4709CB4C4882.PNG"
-            alt="RequestWave"
-            className="w-48 h-48 mx-auto mb-4 object-contain"
+            src="https://cdn.pixabay.com/photo/2017/02/27/19/34/microphone-2104091_1280.png"
+            alt="RequestWave Logo"
+            className="w-32 h-32 mx-auto mb-4 object-contain filter brightness-0 invert"
+            style={{ filter: 'hue-rotate(270deg) saturate(1.5) brightness(1.2)' }}
           />
         </div>
         
