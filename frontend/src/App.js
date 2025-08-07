@@ -453,7 +453,7 @@ const MusicianDashboard = () => {
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [playlistName, setPlaylistName] = useState('');
   const [activePlaylistId, setActivePlaylistId] = useState(null);
-  const [playlistError, setPlaylistError] = useState('');
+  const [playlistManagementError, setPlaylistManagementError] = useState('');
   const [playlistLoading, setPlaylistLoading] = useState(false);
   
   // NEW: Tip functionality functions
