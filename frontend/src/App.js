@@ -1846,7 +1846,7 @@ const MusicianDashboard = () => {
 
         {/* Tabs */}
         <div className="flex space-x-1 bg-gray-800 rounded-lg p-1 mb-8">
-          {['songs', 'requests', 'analytics', 'profile', 'suggestions'].map((tab) => (
+          {['songs', 'requests', 'analytics', 'profile', 'design'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -1856,16 +1856,14 @@ const MusicianDashboard = () => {
                   : 'text-gray-400 hover:text-white'
               }`}
             >
-              {tab === 'analytics' ? '📊 Analytics' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'analytics' ? '📊 Analytics' : tab === 'design' ? 'Design & Pro Features ✨' : tab.charAt(0).toUpperCase() + tab.slice(1)}
               {tab === 'requests' && requests.filter(r => r.status === 'pending').length > 0 && (
                 <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-xs">
                   {requests.filter(r => r.status === 'pending').length}
                 </span>
               )}
-              {tab === 'suggestions' && songSuggestions.filter(s => s.status === 'pending').length > 0 && (
-                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full ml-2">
-                  {songSuggestions.filter(s => s.status === 'pending').length}
-                </span>
+              {tab === 'design' && subscriptionStatus && subscriptionStatus.plan !== 'pro' && subscriptionStatus.plan !== 'trial' && (
+                <span className="ml-1 text-xs bg-green-600 rounded px-1">PRO</span>
               )}
             </button>
           ))}
