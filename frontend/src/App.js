@@ -413,6 +413,7 @@ const MusicianDashboard = () => {
   const [moodFilter, setMoodFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
   const [decadeFilter, setDecadeFilter] = useState('');  // NEW: Add decade filter
+  const [notesFilter, setNotesFilter] = useState('');  // NEW: Add notes filter
   const [filteredSongs, setFilteredSongs] = useState([]);
   const [songError, setSongError] = useState('');
   const [filterOptions, setFilterOptions] = useState({  // NEW: Filter options for dropdowns
