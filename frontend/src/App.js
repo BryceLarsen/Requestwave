@@ -5669,7 +5669,7 @@ const OnStageInterface = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <img
-              src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/9wbfmlsw_A_logo_for_%22RequestWave%22_features_a_purple_microph.png"
+              src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png"
               alt="RequestWave"
               className="w-8 h-8 object-contain"
             />
