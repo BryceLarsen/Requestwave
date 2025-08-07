@@ -1116,7 +1116,9 @@ const MusicianDashboard = () => {
   const handleUpgrade = async () => {
     setUpgrading(true);
     try {
-      const response = await axios.post(`${API}/subscription/upgrade`);
+      const response = await axios.post(`${API}/subscription/upgrade`, {
+        plan: selectedPlan // Send selected plan (monthly or annual)
+      });
       if (response.data.url) {
         window.location.href = response.data.url;
       }
