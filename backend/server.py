@@ -3711,6 +3711,45 @@ async def activate_playlist(
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
 
+# NEW: Contact form endpoint
+class ContactRequest(BaseModel):
+    name: str
+    email: str
+    message: str
+    musician_id: Optional[str] = None
+
+@api_router.post("/contact")
+async def send_contact_message(contact: ContactRequest):
+    """Send contact message to support email"""
+    try:
+        # In a real application, you would send an email here
+        # For now, we'll log the message and return success
+        
+        # Create contact record in database
+        contact_record = {
+            "id": str(uuid.uuid4()),
+            "name": contact.name,
+            "email": contact.email,
+            "message": contact.message,
+            "musician_id": contact.musician_id,
+            "created_at": datetime.utcnow(),
+            "status": "received"
+        }
+        
+        await db.contact_messages.insert_one(contact_record)
+        
+        logger.info(f"Contact message received from {contact.name} ({contact.email})")
+        logger.info(f"Message: {contact.message}")
+        
+        # Here you would integrate with your email service (SendGrid, AWS SES, etc.)
+        # For now, we'll simulate success
+        
+        return {"success": True, "message": "Contact message received successfully"}
+        
+    except Exception as e:
+        logger.error(f"Error processing contact message: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error sending contact message")
+
 # Test endpoint to debug routing
 @api_router.post("/test/subscription")
 async def test_subscription_endpoint():
