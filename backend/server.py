@@ -1291,26 +1291,25 @@ async def search_spotify_metadata(title: str, artist: str) -> Dict[str, Any]:
             except:
                 pass
         
-        # Default to Pop if no genres found, otherwise use the first one
-        primary_genre = genres[0].title() if genres else "Pop"
+        # Map Spotify genres to curated categories using our intelligent assignment
+        curated_data = assign_genre_and_mood(title, artist)
         
-        # Get audio features for mood analysis
-        mood = "Upbeat"  # Default
+        # Get audio features for mood analysis, with curated fallback
+        mood = curated_data['mood']  # Default to curated mood
         try:
             audio_features = sp.audio_features(track['id'])
             if audio_features and audio_features[0]:
                 mood = get_mood_from_audio_features(audio_features[0])
         except:
-            # Fallback to heuristic-based mood
-            mood_data = assign_genre_and_mood(title, artist)
-            mood = mood_data['mood']
+            # Already have curated mood from assign_genre_and_mood
+            pass
         
         return {
             "title": title_found,
             "artist": artist_found,
             "album": album,
             "year": year,
-            "genres": [primary_genre],
+            "genres": [curated_data['genre']],  # Use curated genre instead of raw Spotify
             "moods": [mood],
             "spotify_id": track['id'],
             "confidence": "high" if title.lower() in title_found.lower() and artist.lower() in artist_found.lower() else "medium"
