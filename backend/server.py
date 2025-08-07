@@ -1717,7 +1717,7 @@ async def import_from_playlist(import_data: PlaylistImport, musician_id: str = D
                             'title': 'As It Was',
                             'artist': 'Harry Styles',
                             'genres': ['Pop'],
-                            'moods': ['Upbeat'],
+                            'moods': ['Feel Good'],
                             'year': 2022,
                             'notes': '',  # Leave blank for user customization
                             'source': 'spotify'
@@ -1726,7 +1726,7 @@ async def import_from_playlist(import_data: PlaylistImport, musician_id: str = D
                             'title': 'Heat Waves', 
                             'artist': 'Glass Animals',
                             'genres': ['Alternative'],
-                            'moods': ['Chill'],
+                            'moods': ['Chill Vibes'],
                             'year': 2020,
                             'notes': '',  # Leave blank for user customization
                             'source': 'spotify'
@@ -1735,7 +1735,7 @@ async def import_from_playlist(import_data: PlaylistImport, musician_id: str = D
                             'title': 'Blinding Lights',
                             'artist': 'The Weeknd',
                             'genres': ['Pop'],
-                            'moods': ['Energetic'],
+                            'moods': ['Dance Party'],
                             'year': 2019,
                             'notes': '',  # Leave blank for user customization
                             'source': 'spotify'
