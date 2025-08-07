@@ -3907,9 +3907,33 @@ const MusicianDashboard = () => {
               </h2>
               
               <div className="text-center mb-6">
-                <div className="bg-green-600 text-white rounded-full px-6 py-3 text-3xl font-bold mb-4">
-                  $5/month
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  {/* Monthly Plan */}
+                  <div className="bg-gray-700 rounded-lg p-4 border-2 border-gray-600">
+                    <div className="text-center">
+                      <h3 className="text-lg font-bold mb-2">Monthly</h3>
+                      <div className="bg-purple-600 text-white rounded-full px-4 py-2 text-2xl font-bold mb-2">
+                        $10/month
+                      </div>
+                      <p className="text-gray-300 text-sm">Billed monthly</p>
+                    </div>
+                  </div>
+                  
+                  {/* Annual Plan - Recommended */}
+                  <div className="bg-gray-700 rounded-lg p-4 border-2 border-green-500 relative">
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">50% OFF</span>
+                    </div>
+                    <div className="text-center">
+                      <h3 className="text-lg font-bold mb-2">Annual</h3>
+                      <div className="bg-green-600 text-white rounded-full px-4 py-2 text-2xl font-bold mb-2">
+                        $5/month
+                      </div>
+                      <p className="text-gray-300 text-sm">Billed annually ($60)</p>
+                    </div>
+                  </div>
                 </div>
+                
                 <p className="text-gray-300 mb-4">Get unlimited song requests from your audience</p>
                 
                 <div className="text-left bg-gray-700 rounded-lg p-4 mb-6">
