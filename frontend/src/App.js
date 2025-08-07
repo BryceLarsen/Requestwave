@@ -1953,7 +1953,7 @@ const MusicianDashboard = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-8">
 
         {/* Tabs */}
         <div className="flex flex-wrap gap-1 bg-gray-800 rounded-lg p-1 mb-8">
