@@ -1760,15 +1760,28 @@ async def create_upgrade_checkout(
         success_url = f"{base_url}/dashboard?payment=success&session_id={{CHECKOUT_SESSION_ID}}"
         cancel_url = f"{base_url}/dashboard?payment=cancelled"
         
+        # Determine pricing based on selected plan
+        if request.plan == "monthly":
+            amount = MONTHLY_SUBSCRIPTION_PRICE
+            product_name = "RequestWave Pro - Monthly"
+            subscription_type = "monthly_unlimited"
+        elif request.plan == "annual":
+            amount = ANNUAL_SUBSCRIPTION_PRICE
+            product_name = "RequestWave Pro - Annual"
+            subscription_type = "annual_unlimited"
+        else:
+            raise HTTPException(status_code=400, detail="Invalid plan. Choose 'monthly' or 'annual'")
+        
         checkout_request = CheckoutSessionRequest(
-            amount=MONTHLY_SUBSCRIPTION_PRICE,
+            amount=amount,
             currency="usd",
             success_url=success_url,
             cancel_url=cancel_url,
             metadata={
                 "musician_id": musician_id,
-                "subscription_type": "monthly_unlimited",
-                "product": "RequestWave Pro - Monthly"
+                "subscription_type": subscription_type,
+                "product": product_name,
+                "plan": request.plan
             }
         )
         
