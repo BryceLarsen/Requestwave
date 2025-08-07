@@ -1934,11 +1934,13 @@ const MusicianDashboard = () => {
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-3">
               <img
-                src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/9wbfmlsw_A_logo_for_%22RequestWave%22_features_a_purple_microph.png"
+                src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png"
                 alt="RequestWave"
                 className="w-10 h-10 object-contain"
               />
-              <h1 className="text-2xl font-bold text-purple-400">RequestWave</h1>
+              <h1 className="text-2xl font-bold">
+                <span className="text-purple-400">Request</span><span className="text-green-400">Wave</span>
+              </h1>
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-300">Welcome, {musician.name}</span>
