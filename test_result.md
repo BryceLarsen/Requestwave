@@ -981,6 +981,21 @@ agent_communication:
       - working: true
         agent: "testing"
         comment: "CRITICAL FIX #1 FINAL VERIFICATION: Playlist import IS working with real song data extraction. ✅ Spotify Import: Successfully extracts real songs from user-reported URL https://open.spotify.com/playlist/37i9dQZEVXbLRQDuF5jeBp including 'As It Was' by Harry Styles, 'Heat Waves' by Glass Animals, 'Blinding Lights' by The Weeknd, 'Good 4 U' by Olivia Rodrigo, 'Levitating' by Dua Lipa. ✅ Apple Music Import: Works with real song data but skips duplicates from previous imports. ✅ Authentication: Properly requires JWT tokens (403/401 for unauthorized). ✅ Database persistence: Songs are saved with proper metadata (title, artist, genres, moods, year). The backend playlist import functionality IS working correctly - user's issue is likely frontend-related or browser cache problems."
+      - working: "NA"
+        agent: "main"
+        comment: "PLAYLIST IMPORT NOTES FIELD UPDATE: User requested to remove default 'Imported from [platform] playlist' messages from notes field. Modified server.py to set notes='' (blank) for all playlist import scenarios: Spotify imports, Apple Music imports, and fallback songs. This gives users flexibility to add their own relevant song notes instead of default import messages."
+
+  - task: "Playlist Import Notes Field Fix"
+    implemented: true
+    working: "NA"
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "User requested: 'when importing playlists from spotify or apple music, currently there is default message in the notes for each song saying where it came from. we do not need to do that, please leave notes blank on playlist import, or include relevant data for the song' - Modified playlist import functionality to leave notes field blank instead of adding default platform messages."
 
   - task: "Song Delete Functionality"
     implemented: true
