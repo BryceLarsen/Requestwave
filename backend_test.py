@@ -8585,7 +8585,13 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
         self.test_csv_upload_valid()
         self.test_csv_duplicate_detection()
         
-        # Playlist import tests (NEW)
+        # PRIORITY TESTING: Playlist import with blank notes field
+        print("\n" + "🎯" * 20 + " PRIORITY: PLAYLIST IMPORT BLANK NOTES TESTING " + "🎯" * 20)
+        print("Testing the UPDATED playlist import functionality with blank notes field")
+        print("=" * 80)
+        self.test_playlist_import_blank_notes_field()
+        
+        # Additional playlist import tests (NEW)
         self.test_playlist_import_authentication()
         self.test_playlist_import_invalid_urls()
         self.test_spotify_playlist_import()
