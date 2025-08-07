@@ -6,7 +6,7 @@ Edge case testing for search functionality
 import requests
 import json
 
-BASE_URL = "https://0601336b-88bf-46ac-b637-628cb0460f2a.preview.emergentagent.com/api"
+BASE_URL = "https://4ea289bc-16f8-4f83-aa5c-66fcd9ce34a7.preview.emergentagent.com/api"
 
 def test_search_edge_cases():
     """Test search functionality edge cases"""
