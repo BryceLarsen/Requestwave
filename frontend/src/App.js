@@ -5579,6 +5579,46 @@ const OnStageInterface = () => {
     setNewRequestCount(0);
   };
   
+  // NEW: Request management functions
+  const updateRequestStatus = async (requestId, status) => {
+    try {
+      await axios.put(`${API}/requests/${requestId}/status`, { status });
+      // Update local state
+      setRequests(prevRequests => 
+        prevRequests.map(req => 
+          req.id === requestId ? { ...req, status } : req
+        )
+      );
+      
+      // Show visual feedback
+      const statusMessages = {
+        'accepted': '✅ Request accepted!',
+        'played': '🎵 Marked as played!',
+        'rejected': '❌ Request rejected'
+      };
+      
+      // Simple toast notification (you could enhance this)
+      const toast = document.createElement('div');
+      toast.textContent = statusMessages[status];
+      toast.style.cssText = `
+        position: fixed; top: 20px; right: 20px; z-index: 1000;
+        background: ${status === 'rejected' ? '#ef4444' : '#10b981'};
+        color: white; padding: 12px 20px; border-radius: 8px;
+        font-weight: bold; animation: fadeInOut 3s;
+      `;
+      document.body.appendChild(toast);
+      setTimeout(() => document.body.removeChild(toast), 3000);
+      
+    } catch (error) {
+      console.error('Error updating request status:', error);
+      alert('Error updating request status');
+    }
+  };
+  
+  const handleAccept = (requestId) => updateRequestStatus(requestId, 'accepted');
+  const handlePlay = (requestId) => updateRequestStatus(requestId, 'played');
+  const handleReject = (requestId) => updateRequestStatus(requestId, 'rejected');
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
