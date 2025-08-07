@@ -849,7 +849,7 @@ def get_fallback_spotify_songs(playlist_id: str) -> List[Dict[str, Any]]:
             'genres': ['Pop'],
             'moods': ['Upbeat'],
             'year': 2023,
-            'notes': f'Popular song from Spotify playlist {playlist_id}',
+            'notes': '',  # Leave blank for user customization
             'source': 'spotify'
         },
         {
@@ -858,7 +858,7 @@ def get_fallback_spotify_songs(playlist_id: str) -> List[Dict[str, Any]]:
             'genres': ['Pop'],
             'moods': ['Chill'],
             'year': 2022,
-            'notes': f'Popular song from Spotify playlist {playlist_id}',
+            'notes': '',  # Leave blank for user customization
             'source': 'spotify'
         },
         {
@@ -867,7 +867,7 @@ def get_fallback_spotify_songs(playlist_id: str) -> List[Dict[str, Any]]:
             'genres': ['Pop'],
             'moods': ['Energetic'],
             'year': 2022,
-            'notes': f'Popular song from Spotify playlist {playlist_id}',
+            'notes': '',  # Leave blank for user customization
             'source': 'spotify'
         }
     ]
