@@ -7982,9 +7982,220 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
         
         return success
 
+    def test_qr_flyer_generation_debug(self):
+        """Debug QR flyer generation issue - SPECIFIC DEBUGGING FOCUS"""
+        try:
+            print("🔍 SPECIFIC DEBUGGING FOCUS: QR Flyer Generation Issue")
+            print("=" * 80)
+            
+            # Step 1: Login with Pro account brycelarsenmusic@gmail.com / RequestWave2024!
+            print("📊 Step 1: Login with Pro account brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("QR Flyer Debug - Pro Account Login", False, f"Failed to login with Pro account: {login_response.status_code}, Response: {login_response.text}")
+                return
+            
+            login_data_response = login_response.json()
+            if "token" not in login_data_response or "musician" not in login_data_response:
+                self.log_result("QR Flyer Debug - Pro Account Login", False, f"Invalid login response structure: {login_data_response}")
+                return
+            
+            # Store Pro account credentials
+            pro_auth_token = login_data_response["token"]
+            pro_musician_id = login_data_response["musician"]["id"]
+            pro_musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            print(f"   ✅ Musician slug: {pro_musician_slug}")
+            print(f"   ✅ JWT Token: {pro_auth_token[:20]}...")
+            
+            self.log_result("QR Flyer Debug - Pro Account Login", True, f"Successfully logged in as {login_data_response['musician']['name']} with slug: {pro_musician_slug}")
+            
+            # Step 2: Verify JWT token is valid by testing a protected endpoint
+            print("📊 Step 2: Verify JWT token is valid")
+            
+            # Save current auth token and use Pro account token
+            original_token = self.auth_token
+            self.auth_token = pro_auth_token
+            
+            profile_response = self.make_request("GET", "/profile")
+            
+            if profile_response.status_code == 200:
+                profile_data = profile_response.json()
+                print(f"   ✅ JWT token is valid - profile retrieved for: {profile_data.get('name', 'Unknown')}")
+                self.log_result("QR Flyer Debug - JWT Token Validation", True, f"JWT token is valid and working for protected endpoints")
+            else:
+                print(f"   ❌ JWT token validation failed: {profile_response.status_code}, Response: {profile_response.text}")
+                self.log_result("QR Flyer Debug - JWT Token Validation", False, f"JWT token validation failed: {profile_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            # Step 3: Test GET /api/qr-code endpoint first for comparison
+            print("📊 Step 3: Test GET /api/qr-code endpoint for comparison")
+            
+            qr_code_response = self.make_request("GET", "/qr-code")
+            
+            if qr_code_response.status_code == 200:
+                qr_code_data = qr_code_response.json()
+                print(f"   ✅ QR Code endpoint working - response keys: {list(qr_code_data.keys())}")
+                if "qr_code" in qr_code_data and "audience_url" in qr_code_data:
+                    print(f"   ✅ QR Code data structure correct")
+                    print(f"   ✅ Audience URL: {qr_code_data['audience_url']}")
+                    self.log_result("QR Flyer Debug - QR Code Endpoint", True, "QR Code endpoint working correctly")
+                else:
+                    print(f"   ❌ QR Code response missing required fields: {qr_code_data}")
+                    self.log_result("QR Flyer Debug - QR Code Endpoint", False, f"QR Code response missing required fields")
+            else:
+                print(f"   ❌ QR Code endpoint failed: {qr_code_response.status_code}")
+                print(f"   ❌ QR Code error response: {qr_code_response.text}")
+                self.log_result("QR Flyer Debug - QR Code Endpoint", False, f"QR Code endpoint failed: {qr_code_response.status_code}")
+            
+            # Step 4: Test GET /api/qr-flyer endpoint - THE MAIN ISSUE
+            print("📊 Step 4: Test GET /api/qr-flyer endpoint - THE MAIN DEBUGGING TARGET")
+            
+            qr_flyer_response = self.make_request("GET", "/qr-flyer")
+            
+            print(f"   📊 QR Flyer Response Status Code: {qr_flyer_response.status_code}")
+            print(f"   📊 QR Flyer Response Headers: {dict(qr_flyer_response.headers)}")
+            
+            if qr_flyer_response.status_code == 200:
+                try:
+                    qr_flyer_data = qr_flyer_response.json()
+                    print(f"   ✅ QR Flyer endpoint SUCCESS - response keys: {list(qr_flyer_data.keys())}")
+                    
+                    # Check response structure
+                    required_fields = ["flyer", "musician_name", "audience_url"]
+                    missing_fields = [field for field in required_fields if field not in qr_flyer_data]
+                    
+                    if len(missing_fields) == 0:
+                        print(f"   ✅ QR Flyer response structure correct")
+                        print(f"   ✅ Musician Name: {qr_flyer_data['musician_name']}")
+                        print(f"   ✅ Audience URL: {qr_flyer_data['audience_url']}")
+                        print(f"   ✅ Flyer data length: {len(qr_flyer_data['flyer'])} characters")
+                        
+                        # Check if flyer data is base64 encoded image
+                        if qr_flyer_data['flyer'].startswith('data:image/png;base64,'):
+                            print(f"   ✅ Flyer data is properly formatted base64 PNG image")
+                            self.log_result("QR Flyer Debug - QR Flyer Endpoint", True, "✅ QR FLYER WORKING: Endpoint returns correct response with base64 PNG image")
+                        else:
+                            print(f"   ❌ Flyer data format incorrect: {qr_flyer_data['flyer'][:50]}...")
+                            self.log_result("QR Flyer Debug - QR Flyer Endpoint", False, "QR Flyer data format incorrect")
+                    else:
+                        print(f"   ❌ QR Flyer response missing fields: {missing_fields}")
+                        self.log_result("QR Flyer Debug - QR Flyer Endpoint", False, f"QR Flyer response missing fields: {missing_fields}")
+                        
+                except Exception as json_error:
+                    print(f"   ❌ QR Flyer response is not valid JSON: {str(json_error)}")
+                    print(f"   ❌ Raw response text: {qr_flyer_response.text[:200]}...")
+                    self.log_result("QR Flyer Debug - QR Flyer Endpoint", False, f"QR Flyer response not valid JSON: {str(json_error)}")
+                    
+            else:
+                print(f"   ❌ QR FLYER ENDPOINT FAILED: Status {qr_flyer_response.status_code}")
+                print(f"   ❌ Error Response Text: {qr_flyer_response.text}")
+                
+                # Try to parse error response
+                try:
+                    error_data = qr_flyer_response.json()
+                    print(f"   ❌ Error Response JSON: {json.dumps(error_data, indent=2)}")
+                    
+                    if "detail" in error_data:
+                        print(f"   ❌ Error Detail: {error_data['detail']}")
+                        self.log_result("QR Flyer Debug - QR Flyer Endpoint", False, f"❌ QR FLYER FAILED: {qr_flyer_response.status_code} - {error_data['detail']}")
+                    else:
+                        self.log_result("QR Flyer Debug - QR Flyer Endpoint", False, f"❌ QR FLYER FAILED: {qr_flyer_response.status_code} - {error_data}")
+                        
+                except:
+                    print(f"   ❌ Error response is not JSON")
+                    self.log_result("QR Flyer Debug - QR Flyer Endpoint", False, f"❌ QR FLYER FAILED: {qr_flyer_response.status_code} - {qr_flyer_response.text}")
+            
+            # Step 5: Test authentication scenarios
+            print("📊 Step 5: Test authentication scenarios")
+            
+            # Test without authentication
+            self.auth_token = None
+            no_auth_response = self.make_request("GET", "/qr-flyer")
+            
+            if no_auth_response.status_code in [401, 403]:
+                print(f"   ✅ Correctly rejects requests without authentication: {no_auth_response.status_code}")
+                self.log_result("QR Flyer Debug - No Auth", True, f"Correctly rejects unauthenticated requests")
+            else:
+                print(f"   ❌ Should reject unauthenticated requests, got: {no_auth_response.status_code}")
+                self.log_result("QR Flyer Debug - No Auth", False, f"Should reject unauthenticated requests")
+            
+            # Test with invalid token
+            self.auth_token = "invalid_token_12345"
+            invalid_auth_response = self.make_request("GET", "/qr-flyer")
+            
+            if invalid_auth_response.status_code == 401:
+                print(f"   ✅ Correctly rejects requests with invalid token: {invalid_auth_response.status_code}")
+                self.log_result("QR Flyer Debug - Invalid Auth", True, f"Correctly rejects invalid tokens")
+            else:
+                print(f"   ❌ Should reject invalid tokens, got: {invalid_auth_response.status_code}")
+                self.log_result("QR Flyer Debug - Invalid Auth", False, f"Should reject invalid tokens")
+            
+            # Restore Pro account token
+            self.auth_token = pro_auth_token
+            
+            # Step 6: Compare both QR endpoints side by side
+            print("📊 Step 6: Compare QR Code vs QR Flyer endpoints")
+            
+            qr_code_working = qr_code_response.status_code == 200
+            qr_flyer_working = qr_flyer_response.status_code == 200
+            
+            print(f"   📊 QR Code endpoint: {'✅ WORKING' if qr_code_working else '❌ FAILED'} (Status: {qr_code_response.status_code})")
+            print(f"   📊 QR Flyer endpoint: {'✅ WORKING' if qr_flyer_working else '❌ FAILED'} (Status: {qr_flyer_response.status_code})")
+            
+            if qr_code_working and not qr_flyer_working:
+                print(f"   🔍 DIAGNOSIS: QR Code works but QR Flyer fails - issue is specific to flyer generation")
+                self.log_result("QR Flyer Debug - Comparison", False, "QR Code works but QR Flyer fails - flyer generation issue")
+            elif not qr_code_working and not qr_flyer_working:
+                print(f"   🔍 DIAGNOSIS: Both QR endpoints fail - authentication or general QR issue")
+                self.log_result("QR Flyer Debug - Comparison", False, "Both QR endpoints fail - authentication issue")
+            elif qr_code_working and qr_flyer_working:
+                print(f"   🔍 DIAGNOSIS: Both QR endpoints work - no issue found")
+                self.log_result("QR Flyer Debug - Comparison", True, "Both QR endpoints working correctly")
+            else:
+                print(f"   🔍 DIAGNOSIS: QR Flyer works but QR Code fails - unexpected scenario")
+                self.log_result("QR Flyer Debug - Comparison", False, "Unexpected: QR Flyer works but QR Code fails")
+            
+            # Restore original auth token
+            self.auth_token = original_token
+            
+            # Final summary
+            print("📊 Step 7: Final Debugging Summary")
+            
+            if qr_flyer_working:
+                print("   ✅ RESULT: QR Flyer generation is WORKING correctly")
+                print("   ✅ User should be able to generate flyers without 'Error generating flyer' message")
+                self.log_result("QR Flyer Generation Debug", True, "✅ QR FLYER WORKING: No issues found - flyer generation working correctly")
+            else:
+                print("   ❌ RESULT: QR Flyer generation is FAILING")
+                print("   ❌ This explains the 'Error generating flyer' message users are seeing")
+                print(f"   ❌ Error details: Status {qr_flyer_response.status_code}, Response: {qr_flyer_response.text[:100]}...")
+                self.log_result("QR Flyer Generation Debug", False, f"❌ QR FLYER FAILING: Status {qr_flyer_response.status_code} - {qr_flyer_response.text[:100]}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("QR Flyer Generation Debug", False, f"❌ Exception during debugging: {str(e)}")
+            # Restore original auth token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
     def run_all_tests(self):
         """Run all tests in order"""
         print("=" * 50)
+        
+        # PRIORITY: QR Flyer Generation Debugging - HIGHEST PRIORITY
+        print("\n🔍 QR FLYER GENERATION DEBUGGING - HIGHEST PRIORITY")
+        print("=" * 80)
+        self.test_qr_flyer_generation_debug()
         
         # PRIORITY: Create Demo Pro Account
         print("\n🎯 DEMO PRO ACCOUNT CREATION - HIGHEST PRIORITY")
