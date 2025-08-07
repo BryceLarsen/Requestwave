@@ -206,12 +206,12 @@ class RequestWaveAPITester:
                 print(f"\n🎵 Testing: '{title}' by {artist}")
                 
                 # Test Spotify metadata search endpoint
-                metadata_data = {
+                params = {
                     "title": title,
                     "artist": artist
                 }
                 
-                response = self.make_request("POST", "/songs/search-metadata", metadata_data)
+                response = self.make_request("POST", "/songs/search-metadata", params=params)
                 
                 if response.status_code == 200:
                     data = response.json()
