@@ -1360,6 +1360,13 @@ const MusicianDashboard = () => {
     }
   }, [activeTab, analyticsDays]);
 
+  // Fetch suggestions when suggestions tab is active
+  React.useEffect(() => {
+    if (activeTab === 'suggestions') {
+      fetchSongSuggestions();
+    }
+  }, [activeTab]);
+
   // NEW: Auto-fill song metadata function
   const handleAutoFillMetadata = async () => {
     if (!songForm.title.trim() || !songForm.artist.trim()) {
