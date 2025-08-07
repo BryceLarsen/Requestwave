@@ -10,7 +10,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://4ea289bc-16f8-4f83-aa5c-66fcd9ce34a7.preview.emergentagent.com/api"
+BASE_URL = "https://2d821f37-5e3c-493f-a28d-8ff61cf1519e.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
     "name": "Search Test Musician",
     "email": "search.test@requestwave.com",

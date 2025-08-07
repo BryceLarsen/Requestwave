@@ -727,7 +727,7 @@ agent_communication:
     - agent: "main"
       message: "Implemented JWT-based authentication system with registration/login endpoints"
     - agent: "testing"
-      message: "DEMO PRO ACCOUNT CREATION COMPLETE: Successfully created and upgraded brycelarsenmusic@gmail.com to Pro status. Account ID: 8ff07da2-a1b4-4adc-85a7-9384b1635807, Slug: bryce-larsen, Password: RequestWave2024!. All Pro features verified working: song suggestions, design customization, unlimited requests. Account has 1449+ songs in repertoire and 2 song suggestions. Public URL: https://4ea289bc-16f8-4f83-aa5c-66fcd9ce34a7.preview.emergentagent.com/musician/bryce-larsen"
+      message: "DEMO PRO ACCOUNT CREATION COMPLETE: Successfully created and upgraded brycelarsenmusic@gmail.com to Pro status. Account ID: 8ff07da2-a1b4-4adc-85a7-9384b1635807, Slug: bryce-larsen, Password: RequestWave2024!. All Pro features verified working: song suggestions, design customization, unlimited requests. Account has 1449+ songs in repertoire and 2 song suggestions. Public URL: https://2d821f37-5e3c-493f-a28d-8ff61cf1519e.preview.emergentagent.com/musician/bryce-larsen"
     - agent: "testing"
       message: "Authentication system tested and working correctly with JWT tokens"
     - agent: "testing"
