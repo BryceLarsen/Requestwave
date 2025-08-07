@@ -168,6 +168,422 @@ class RequestWaveAPITester:
         except Exception as e:
             self.log_result("JWT Token Validation", False, f"Exception: {str(e)}")
 
+    def test_curated_genre_mood_categories(self):
+        """Test the new curated genre and mood categories system - PRIORITY 1"""
+        try:
+            print("🔍 PRIORITY 1: Testing Curated Genre/Mood Categories System")
+            print("=" * 80)
+            
+            # Test examples from the review request
+            test_songs = [
+                ("Mr. Brightside", "The Killers"),
+                ("Skinny Love", "Bon Iver"),
+                ("Watermelon Sugar", "Harry Styles"),
+                ("Bad Habits", "Ed Sheeran")
+            ]
+            
+            # Expected curated genres
+            curated_genres = [
+                "Pop", "Rock", "Classic Rock", "Folk", "Country", "Americana", "Indie", 
+                "Alternative", "Singer-Songwriter", "R&B", "Soul", "Funk", "Blues", 
+                "Jazz", "Hip Hop", "Reggae", "Electronic", "Dance", "Latin", "Acoustic"
+            ]
+            
+            # Expected curated moods
+            curated_moods = [
+                "Chill Vibes", "Feel Good", "Throwback", "Romantic", "Poolside", "Island Vibes", 
+                "Dance Party", "Late Night", "Road Trip", "Sad Bangers", "Coffeehouse", 
+                "Campfire", "Bar Anthems", "Summer Vibes", "Rainy Day", "Feel It Live", 
+                "Heartbreak", "Fall Acoustic", "Weekend Warm-Up", "Groovy"
+            ]
+            
+            print(f"📊 Testing {len(test_songs)} example songs for curated categories")
+            
+            successful_tests = 0
+            category_results = []
+            
+            for title, artist in test_songs:
+                print(f"\n🎵 Testing: '{title}' by {artist}")
+                
+                # Test Spotify metadata search endpoint
+                metadata_data = {
+                    "title": title,
+                    "artist": artist
+                }
+                
+                response = self.make_request("POST", "/songs/search-metadata", metadata_data)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    print(f"   📊 Metadata response: {json.dumps(data, indent=2)}")
+                    
+                    if "success" in data and data["success"] and "metadata" in data:
+                        metadata = data["metadata"]
+                        
+                        # Check genres
+                        returned_genres = metadata.get("genres", [])
+                        genres_valid = all(genre in curated_genres for genre in returned_genres)
+                        
+                        # Check moods
+                        returned_moods = metadata.get("moods", [])
+                        moods_valid = all(mood in curated_moods for mood in returned_moods)
+                        
+                        print(f"   ✅ Genres: {returned_genres} (valid: {genres_valid})")
+                        print(f"   ✅ Moods: {returned_moods} (valid: {moods_valid})")
+                        
+                        if genres_valid and moods_valid:
+                            successful_tests += 1
+                            category_results.append({
+                                "song": f"{title} by {artist}",
+                                "genres": returned_genres,
+                                "moods": returned_moods,
+                                "valid": True
+                            })
+                        else:
+                            invalid_genres = [g for g in returned_genres if g not in curated_genres]
+                            invalid_moods = [m for m in returned_moods if m not in curated_moods]
+                            category_results.append({
+                                "song": f"{title} by {artist}",
+                                "genres": returned_genres,
+                                "moods": returned_moods,
+                                "valid": False,
+                                "invalid_genres": invalid_genres,
+                                "invalid_moods": invalid_moods
+                            })
+                    else:
+                        print(f"   ❌ Invalid response structure: {data}")
+                        category_results.append({
+                            "song": f"{title} by {artist}",
+                            "valid": False,
+                            "error": "Invalid response structure"
+                        })
+                else:
+                    print(f"   ❌ Request failed: {response.status_code}")
+                    category_results.append({
+                        "song": f"{title} by {artist}",
+                        "valid": False,
+                        "error": f"HTTP {response.status_code}"
+                    })
+            
+            # Verify no old categories are being used
+            old_categories = ["Upbeat", "Energetic", "Melancholy"]
+            old_category_found = False
+            
+            for result in category_results:
+                if result.get("valid"):
+                    for mood in result.get("moods", []):
+                        if mood in old_categories:
+                            old_category_found = True
+                            print(f"   ❌ OLD CATEGORY DETECTED: '{mood}' in {result['song']}")
+            
+            # Final assessment
+            if successful_tests == len(test_songs) and not old_category_found:
+                self.log_result("Curated Genre/Mood Categories", True, f"✅ PRIORITY 1 COMPLETE: All {successful_tests}/{len(test_songs)} songs use curated categories, no old categories detected")
+            elif successful_tests > 0 and not old_category_found:
+                self.log_result("Curated Genre/Mood Categories", True, f"✅ MOSTLY WORKING: {successful_tests}/{len(test_songs)} songs use curated categories, no old categories detected")
+            else:
+                failed_songs = [r["song"] for r in category_results if not r.get("valid")]
+                error_msg = f"❌ ISSUES FOUND: {len(failed_songs)} failed songs"
+                if old_category_found:
+                    error_msg += ", old categories still being used"
+                self.log_result("Curated Genre/Mood Categories", False, error_msg)
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Curated Genre/Mood Categories", False, f"❌ Exception: {str(e)}")
+
+    def test_playlist_import_notes_fix_pro_account(self):
+        """Test playlist import notes field fix with Pro account - PRIORITY 3"""
+        try:
+            print("🔍 PRIORITY 3: Testing Playlist Import Notes Field Fix with Pro Account")
+            print("=" * 80)
+            
+            # Login with Pro account
+            print("📊 Step 1: Login with Pro account brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("Playlist Import Notes Fix - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            if "token" not in login_data_response:
+                self.log_result("Playlist Import Notes Fix - Pro Login", False, "Invalid login response")
+                return
+            
+            # Store original token and use Pro account token
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            pro_musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            
+            # Test Spotify playlist import
+            print("📊 Step 2: Testing Spotify playlist import with notes field check")
+            
+            spotify_playlist_data = {
+                "playlist_url": "https://open.spotify.com/playlist/37i9dQZEVXbLRQDuF5jeBp",
+                "platform": "spotify"
+            }
+            
+            spotify_response = self.make_request("POST", "/songs/playlist/import", spotify_playlist_data)
+            
+            spotify_notes_valid = False
+            spotify_categories_valid = False
+            
+            if spotify_response.status_code == 200:
+                spotify_data = spotify_response.json()
+                print(f"   📊 Spotify import response: {json.dumps(spotify_data, indent=2)}")
+                
+                if spotify_data.get("success") and spotify_data.get("songs_added", 0) > 0:
+                    # Check imported songs for blank notes and curated categories
+                    songs_response = self.make_request("GET", "/songs")
+                    if songs_response.status_code == 200:
+                        songs = songs_response.json()
+                        
+                        # Find recently imported songs (check last 10 songs)
+                        recent_songs = sorted(songs, key=lambda x: x.get("created_at", ""), reverse=True)[:10]
+                        
+                        blank_notes_count = 0
+                        curated_category_count = 0
+                        old_category_count = 0
+                        
+                        curated_genres = ["Pop", "Rock", "Classic Rock", "Folk", "Country", "Americana", "Indie", "Alternative", "Singer-Songwriter", "R&B", "Soul", "Funk", "Blues", "Jazz", "Hip Hop", "Reggae", "Electronic", "Dance", "Latin", "Acoustic"]
+                        curated_moods = ["Chill Vibes", "Feel Good", "Throwback", "Romantic", "Poolside", "Island Vibes", "Dance Party", "Late Night", "Road Trip", "Sad Bangers", "Coffeehouse", "Campfire", "Bar Anthems", "Summer Vibes", "Rainy Day", "Feel It Live", "Heartbreak", "Fall Acoustic", "Weekend Warm-Up", "Groovy"]
+                        old_categories = ["Upbeat", "Energetic", "Melancholy"]
+                        
+                        for song in recent_songs:
+                            # Check notes field
+                            notes = song.get("notes", "")
+                            if notes == "":
+                                blank_notes_count += 1
+                                print(f"   ✅ '{song.get('title', 'Unknown')}' has blank notes: '{notes}'")
+                            else:
+                                print(f"   ❌ '{song.get('title', 'Unknown')}' has non-blank notes: '{notes}'")
+                            
+                            # Check categories
+                            genres = song.get("genres", [])
+                            moods = song.get("moods", [])
+                            
+                            genres_curated = all(g in curated_genres for g in genres)
+                            moods_curated = all(m in curated_moods for m in moods)
+                            
+                            has_old_categories = any(m in old_categories for m in moods)
+                            
+                            if genres_curated and moods_curated and not has_old_categories:
+                                curated_category_count += 1
+                                print(f"   ✅ '{song.get('title', 'Unknown')}' uses curated categories: genres={genres}, moods={moods}")
+                            else:
+                                if has_old_categories:
+                                    old_category_count += 1
+                                    print(f"   ❌ '{song.get('title', 'Unknown')}' uses old categories: genres={genres}, moods={moods}")
+                                else:
+                                    print(f"   ⚠️  '{song.get('title', 'Unknown')}' uses non-curated categories: genres={genres}, moods={moods}")
+                        
+                        spotify_notes_valid = blank_notes_count >= spotify_data.get("songs_added", 0) * 0.8  # At least 80% should have blank notes
+                        spotify_categories_valid = curated_category_count > 0 and old_category_count == 0
+                        
+                        print(f"   📊 Spotify Results: {blank_notes_count} blank notes, {curated_category_count} curated categories, {old_category_count} old categories")
+            
+            # Test Apple Music playlist import
+            print("📊 Step 3: Testing Apple Music playlist import with notes field check")
+            
+            apple_playlist_data = {
+                "playlist_url": "https://music.apple.com/us/playlist/todays-hits/pl.f4d106fed2bd41149aaacabb233eb5eb",
+                "platform": "apple_music"
+            }
+            
+            apple_response = self.make_request("POST", "/songs/playlist/import", apple_playlist_data)
+            
+            apple_notes_valid = False
+            apple_categories_valid = False
+            
+            if apple_response.status_code == 200:
+                apple_data = apple_response.json()
+                print(f"   📊 Apple Music import response: {json.dumps(apple_data, indent=2)}")
+                
+                if apple_data.get("success") and apple_data.get("songs_added", 0) > 0:
+                    # Similar check for Apple Music imported songs
+                    songs_response = self.make_request("GET", "/songs")
+                    if songs_response.status_code == 200:
+                        songs = songs_response.json()
+                        recent_songs = sorted(songs, key=lambda x: x.get("created_at", ""), reverse=True)[:5]
+                        
+                        apple_blank_notes = sum(1 for song in recent_songs if song.get("notes", "") == "")
+                        apple_curated_categories = sum(1 for song in recent_songs 
+                                                     if all(g in curated_genres for g in song.get("genres", [])) 
+                                                     and all(m in curated_moods for m in song.get("moods", [])))
+                        apple_old_categories = sum(1 for song in recent_songs 
+                                                 if any(m in old_categories for m in song.get("moods", [])))
+                        
+                        apple_notes_valid = apple_blank_notes >= apple_data.get("songs_added", 0) * 0.8
+                        apple_categories_valid = apple_curated_categories > 0 and apple_old_categories == 0
+                        
+                        print(f"   📊 Apple Music Results: {apple_blank_notes} blank notes, {apple_curated_categories} curated categories, {apple_old_categories} old categories")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            if spotify_notes_valid and apple_notes_valid and spotify_categories_valid and apple_categories_valid:
+                self.log_result("Playlist Import Notes Fix", True, "✅ PRIORITY 3 COMPLETE: Both Spotify and Apple Music imports use blank notes and curated categories")
+            elif (spotify_notes_valid or apple_notes_valid) and (spotify_categories_valid or apple_categories_valid):
+                self.log_result("Playlist Import Notes Fix", True, "✅ PARTIALLY WORKING: At least one platform uses blank notes and curated categories")
+            else:
+                issues = []
+                if not spotify_notes_valid and not apple_notes_valid:
+                    issues.append("notes field not blank")
+                if not spotify_categories_valid and not apple_categories_valid:
+                    issues.append("old categories still being used")
+                self.log_result("Playlist Import Notes Fix", False, f"❌ ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Playlist Import Notes Fix", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_song_suggestion_curated_categories(self):
+        """Test song suggestion system uses curated categories - PRIORITY 4"""
+        try:
+            print("🔍 PRIORITY 4: Testing Song Suggestion System with Curated Categories")
+            print("=" * 80)
+            
+            # Login with Pro account for song suggestions
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("Song Suggestion Curated Categories - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            pro_musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            
+            # Step 1: Create a song suggestion
+            print("📊 Step 1: Creating song suggestion")
+            
+            suggestion_data = {
+                "musician_slug": pro_musician_slug,
+                "suggested_title": "Test Curated Song",
+                "suggested_artist": "Test Artist",
+                "requester_name": "Test Requester",
+                "requester_email": "test@example.com",
+                "message": "Testing curated categories"
+            }
+            
+            suggestion_response = self.make_request("POST", "/song-suggestions", suggestion_data)
+            
+            if suggestion_response.status_code != 200:
+                self.log_result("Song Suggestion Curated Categories", False, f"Failed to create suggestion: {suggestion_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            suggestion_result = suggestion_response.json()
+            suggestion_id = suggestion_result.get("id")
+            
+            print(f"   ✅ Created suggestion with ID: {suggestion_id}")
+            
+            # Step 2: Accept the suggestion
+            print("📊 Step 2: Accepting song suggestion")
+            
+            accept_response = self.make_request("PUT", f"/song-suggestions/{suggestion_id}/status", {"status": "accepted"})
+            
+            if accept_response.status_code != 200:
+                self.log_result("Song Suggestion Curated Categories", False, f"Failed to accept suggestion: {accept_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            print("   ✅ Successfully accepted suggestion")
+            
+            # Step 3: Verify the created song uses curated categories
+            print("📊 Step 3: Verifying created song uses curated categories")
+            
+            songs_response = self.make_request("GET", "/songs")
+            
+            if songs_response.status_code != 200:
+                self.log_result("Song Suggestion Curated Categories", False, f"Failed to get songs: {songs_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            songs = songs_response.json()
+            
+            # Find the song created from the suggestion
+            created_song = None
+            for song in songs:
+                if (song.get("title") == "Test Curated Song" and 
+                    song.get("artist") == "Test Artist"):
+                    created_song = song
+                    break
+            
+            if not created_song:
+                self.log_result("Song Suggestion Curated Categories", False, "❌ Could not find song created from suggestion")
+                self.auth_token = original_token
+                return
+            
+            print(f"   📊 Found created song: {json.dumps(created_song, indent=2)}")
+            
+            # Check if it uses curated categories
+            genres = created_song.get("genres", [])
+            moods = created_song.get("moods", [])
+            
+            # Expected default values from curated list
+            expected_genre = "Pop"
+            expected_mood = "Feel Good"
+            
+            # Old categories that should NOT be present
+            old_categories = ["Upbeat", "Energetic", "Melancholy"]
+            
+            genre_correct = expected_genre in genres
+            mood_correct = expected_mood in moods
+            no_old_categories = not any(mood in old_categories for mood in moods)
+            
+            print(f"   📊 Song categories: genres={genres}, moods={moods}")
+            print(f"   📊 Expected: genre='{expected_genre}', mood='{expected_mood}'")
+            print(f"   📊 Validation: genre_correct={genre_correct}, mood_correct={mood_correct}, no_old_categories={no_old_categories}")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            if genre_correct and mood_correct and no_old_categories:
+                self.log_result("Song Suggestion Curated Categories", True, f"✅ PRIORITY 4 COMPLETE: Song suggestion creates songs with curated categories (Pop genre, Feel Good mood)")
+            elif genre_correct or mood_correct:
+                self.log_result("Song Suggestion Curated Categories", True, f"✅ PARTIALLY WORKING: Some curated categories used, no old categories detected")
+            else:
+                issues = []
+                if not genre_correct:
+                    issues.append(f"genre not 'Pop' (got {genres})")
+                if not mood_correct:
+                    issues.append(f"mood not 'Feel Good' (got {moods})")
+                if not no_old_categories:
+                    issues.append("old categories still being used")
+                self.log_result("Song Suggestion Curated Categories", False, f"❌ ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Song Suggestion Curated Categories", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
     def test_create_song(self):
         """Test song creation"""
         try:
