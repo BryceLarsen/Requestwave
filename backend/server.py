@@ -1817,8 +1817,7 @@ async def create_song_suggestion(suggestion_data: dict):
             raise HTTPException(status_code=404, detail="Musician not found")
         
         # Check if song suggestions are enabled (Pro feature)
-        design_settings = await db.design_settings.find_one({"musician_id": musician["id"]})
-        if design_settings and not design_settings.get("allow_song_suggestions", True):
+        if not musician.get("design_settings", {}).get("allow_song_suggestions", True):
             raise HTTPException(status_code=403, detail="Song suggestions are not enabled for this artist")
         
         # Check for duplicate suggestions
