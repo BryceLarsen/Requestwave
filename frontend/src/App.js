@@ -2417,6 +2417,12 @@ const MusicianDashboard = () => {
                     {selectedSongs.size > 0 && (
                       <div className="flex space-x-2">
                         <button
+                          onClick={() => setShowPlaylistModal(true)}
+                          className="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded text-sm font-medium transition duration-300"
+                        >
+                          Add to Playlist ({selectedSongs.size})
+                        </button>
+                        <button
                           onClick={() => setShowBatchEdit(!showBatchEdit)}
                           className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm font-medium transition duration-300"
                         >
