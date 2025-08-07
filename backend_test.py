@@ -6045,6 +6045,517 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
         except Exception as e:
             self.log_result("Show Stop Functionality", False, f"❌ Exception: {str(e)}")
 
+    def test_song_suggestion_creation_endpoint(self):
+        """Test POST /song-suggestions endpoint with proper data"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Song Suggestion Creation", False, "No musician slug available")
+                return
+            
+            # Test valid song suggestion creation
+            suggestion_data = {
+                "musician_slug": self.musician_slug,
+                "suggested_title": "Bohemian Rhapsody",
+                "suggested_artist": "Queen",
+                "requester_name": "Rock Music Fan",
+                "requester_email": "rockfan@example.com",
+                "message": "This would be amazing to hear live!"
+            }
+            
+            response = self.make_request("POST", "/song-suggestions", suggestion_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if all(key in data for key in ["id", "musician_id", "suggested_title", "suggested_artist", "status"]):
+                    if data["status"] == "pending" and data["suggested_title"] == suggestion_data["suggested_title"]:
+                        self.log_result("Song Suggestion Creation - Valid Data", True, f"Created suggestion: {data['suggested_title']} by {data['suggested_artist']}")
+                    else:
+                        self.log_result("Song Suggestion Creation - Valid Data", False, f"Incorrect data in response: {data}")
+                else:
+                    self.log_result("Song Suggestion Creation - Valid Data", False, f"Missing required fields in response: {data}")
+            else:
+                self.log_result("Song Suggestion Creation - Valid Data", False, f"Status code: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_result("Song Suggestion Creation - Valid Data", False, f"Exception: {str(e)}")
+
+    def test_song_suggestion_required_fields_validation(self):
+        """Test required fields validation for song suggestions"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Song Suggestion Required Fields", False, "No musician slug available")
+                return
+            
+            # Test missing required fields
+            required_fields = ["musician_slug", "suggested_title", "suggested_artist", "requester_name", "requester_email"]
+            
+            for missing_field in required_fields:
+                suggestion_data = {
+                    "musician_slug": self.musician_slug,
+                    "suggested_title": "Test Song",
+                    "suggested_artist": "Test Artist",
+                    "requester_name": "Test User",
+                    "requester_email": "test@example.com"
+                }
+                
+                # Remove the field to test
+                del suggestion_data[missing_field]
+                
+                response = self.make_request("POST", "/song-suggestions", suggestion_data)
+                
+                if response.status_code == 400:
+                    self.log_result(f"Song Suggestion Validation - Missing {missing_field}", True, f"Correctly rejected missing {missing_field}")
+                else:
+                    self.log_result(f"Song Suggestion Validation - Missing {missing_field}", False, f"Should have returned 400, got: {response.status_code}")
+                    
+        except Exception as e:
+            self.log_result("Song Suggestion Required Fields", False, f"Exception: {str(e)}")
+
+    def test_song_suggestion_email_validation(self):
+        """Test email validation for song suggestions"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Song Suggestion Email Validation", False, "No musician slug available")
+                return
+            
+            # Test invalid email formats
+            invalid_emails = ["invalid-email", "test@", "@example.com", "test.example.com"]
+            
+            for invalid_email in invalid_emails:
+                suggestion_data = {
+                    "musician_slug": self.musician_slug,
+                    "suggested_title": "Test Song",
+                    "suggested_artist": "Test Artist",
+                    "requester_name": "Test User",
+                    "requester_email": invalid_email
+                }
+                
+                response = self.make_request("POST", "/song-suggestions", suggestion_data)
+                
+                # Note: The current implementation doesn't validate email format, so we expect 200
+                # This test documents the current behavior
+                if response.status_code == 200:
+                    self.log_result(f"Song Suggestion Email - {invalid_email}", True, f"Accepted email format: {invalid_email} (no validation implemented)")
+                else:
+                    self.log_result(f"Song Suggestion Email - {invalid_email}", False, f"Unexpected status: {response.status_code}")
+                    
+        except Exception as e:
+            self.log_result("Song Suggestion Email Validation", False, f"Exception: {str(e)}")
+
+    def test_song_suggestion_duplicate_prevention(self):
+        """Test duplicate suggestion prevention"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Song Suggestion Duplicate Prevention", False, "No musician slug available")
+                return
+            
+            # Create first suggestion
+            suggestion_data = {
+                "musician_slug": self.musician_slug,
+                "suggested_title": "Stairway to Heaven",
+                "suggested_artist": "Led Zeppelin",
+                "requester_name": "Rock Fan 1",
+                "requester_email": "fan1@example.com",
+                "message": "Classic rock masterpiece!"
+            }
+            
+            first_response = self.make_request("POST", "/song-suggestions", suggestion_data)
+            
+            if first_response.status_code == 200:
+                # Try to create duplicate suggestion
+                duplicate_data = suggestion_data.copy()
+                duplicate_data["requester_name"] = "Rock Fan 2"
+                duplicate_data["requester_email"] = "fan2@example.com"
+                
+                second_response = self.make_request("POST", "/song-suggestions", duplicate_data)
+                
+                if second_response.status_code == 400:
+                    error_data = second_response.json()
+                    if "already been suggested" in error_data.get("detail", ""):
+                        self.log_result("Song Suggestion Duplicate Prevention", True, "Correctly prevented duplicate suggestion")
+                    else:
+                        self.log_result("Song Suggestion Duplicate Prevention", False, f"Wrong error message: {error_data}")
+                else:
+                    self.log_result("Song Suggestion Duplicate Prevention", False, f"Should have returned 400, got: {second_response.status_code}")
+            else:
+                self.log_result("Song Suggestion Duplicate Prevention", False, f"Failed to create first suggestion: {first_response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Song Suggestion Duplicate Prevention", False, f"Exception: {str(e)}")
+
+    def test_song_suggestion_pro_feature_access_control(self):
+        """Test Pro feature access control for song suggestions"""
+        try:
+            if not self.musician_slug:
+                self.log_result("Song Suggestion Pro Feature Access", False, "No musician slug available")
+                return
+            
+            # Note: The current implementation has a bug - it looks for design_settings in a separate collection
+            # but they're stored in the musicians collection. This test will document the current behavior.
+            
+            suggestion_data = {
+                "musician_slug": self.musician_slug,
+                "suggested_title": "Test Disabled Song",
+                "suggested_artist": "Test Artist",
+                "requester_name": "Test User",
+                "requester_email": "test@example.com"
+            }
+            
+            response = self.make_request("POST", "/song-suggestions", suggestion_data)
+            
+            # Due to the bug in the implementation, this will likely succeed when it should fail
+            if response.status_code == 403:
+                self.log_result("Song Suggestion Pro Feature Access - Disabled", True, "Correctly blocked suggestion when disabled")
+            elif response.status_code == 200:
+                self.log_result("Song Suggestion Pro Feature Access - Disabled", False, "BUG: Allowed suggestion when should be disabled (design_settings lookup bug)")
+            else:
+                self.log_result("Song Suggestion Pro Feature Access - Disabled", False, f"Unexpected status: {response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Song Suggestion Pro Feature Access", False, f"Exception: {str(e)}")
+
+    def test_song_suggestion_invalid_musician_slug(self):
+        """Test song suggestion with invalid musician slug"""
+        try:
+            suggestion_data = {
+                "musician_slug": "non-existent-musician",
+                "suggested_title": "Test Song",
+                "suggested_artist": "Test Artist",
+                "requester_name": "Test User",
+                "requester_email": "test@example.com"
+            }
+            
+            response = self.make_request("POST", "/song-suggestions", suggestion_data)
+            
+            if response.status_code == 404:
+                error_data = response.json()
+                if "Musician not found" in error_data.get("detail", ""):
+                    self.log_result("Song Suggestion Invalid Musician", True, "Correctly rejected invalid musician slug")
+                else:
+                    self.log_result("Song Suggestion Invalid Musician", False, f"Wrong error message: {error_data}")
+            else:
+                self.log_result("Song Suggestion Invalid Musician", False, f"Should have returned 404, got: {response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Song Suggestion Invalid Musician", False, f"Exception: {str(e)}")
+
+    def test_musician_song_suggestions_management(self):
+        """Test GET /song-suggestions endpoint for musicians"""
+        try:
+            if not self.auth_token:
+                self.log_result("Musician Song Suggestions Management", False, "No auth token available")
+                return
+            
+            # First create a suggestion to ensure we have data
+            suggestion_data = {
+                "musician_slug": self.musician_slug,
+                "suggested_title": "Hotel California",
+                "suggested_artist": "Eagles",
+                "requester_name": "Classic Rock Fan",
+                "requester_email": "classicrock@example.com",
+                "message": "Please play this classic!"
+            }
+            
+            create_response = self.make_request("POST", "/song-suggestions", suggestion_data)
+            
+            if create_response.status_code == 200:
+                # Now test getting suggestions as the musician
+                response = self.make_request("GET", "/song-suggestions")
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if isinstance(data, list):
+                        # Find our created suggestion
+                        our_suggestion = None
+                        for suggestion in data:
+                            if suggestion.get("suggested_title") == "Hotel California":
+                                our_suggestion = suggestion
+                                break
+                        
+                        if our_suggestion:
+                            required_fields = ["id", "musician_id", "suggested_title", "suggested_artist", "requester_name", "requester_email", "status", "created_at"]
+                            if all(field in our_suggestion for field in required_fields):
+                                self.log_result("Musician Song Suggestions Management - GET", True, f"Retrieved {len(data)} suggestions with correct structure")
+                            else:
+                                missing_fields = [field for field in required_fields if field not in our_suggestion]
+                                self.log_result("Musician Song Suggestions Management - GET", False, f"Missing fields: {missing_fields}")
+                        else:
+                            self.log_result("Musician Song Suggestions Management - GET", False, "Created suggestion not found in list")
+                    else:
+                        self.log_result("Musician Song Suggestions Management - GET", False, f"Expected list, got: {type(data)}")
+                else:
+                    self.log_result("Musician Song Suggestions Management - GET", False, f"Status code: {response.status_code}, Response: {response.text}")
+            else:
+                self.log_result("Musician Song Suggestions Management", False, f"Failed to create test suggestion: {create_response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Musician Song Suggestions Management", False, f"Exception: {str(e)}")
+
+    def test_song_suggestion_status_update_accept(self):
+        """Test PUT /song-suggestions/{id}/status to accept suggestions"""
+        try:
+            if not self.auth_token:
+                self.log_result("Song Suggestion Status Update Accept", False, "No auth token available")
+                return
+            
+            # Create a suggestion first
+            suggestion_data = {
+                "musician_slug": self.musician_slug,
+                "suggested_title": "Sweet Child O' Mine",
+                "suggested_artist": "Guns N' Roses",
+                "requester_name": "Rock Enthusiast",
+                "requester_email": "rockenthusiast@example.com"
+            }
+            
+            create_response = self.make_request("POST", "/song-suggestions", suggestion_data)
+            
+            if create_response.status_code == 200:
+                suggestion_id = create_response.json()["id"]
+                
+                # Accept the suggestion
+                status_update = {"status": "added"}
+                response = self.make_request("PUT", f"/song-suggestions/{suggestion_id}/status", status_update)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get("success") and "added successfully" in data.get("message", ""):
+                        # Verify the song was added to repertoire
+                        songs_response = self.make_request("GET", "/songs")
+                        if songs_response.status_code == 200:
+                            songs = songs_response.json()
+                            added_song = None
+                            for song in songs:
+                                if song.get("title") == "Sweet Child O' Mine" and song.get("artist") == "Guns N' Roses":
+                                    added_song = song
+                                    break
+                            
+                            if added_song:
+                                # Check default values
+                                if (added_song.get("genres") == ["Pop"] and 
+                                    added_song.get("moods") == ["Upbeat"] and
+                                    "audience suggestion" in added_song.get("notes", "").lower()):
+                                    self.log_result("Song Suggestion Status Update Accept", True, "Successfully accepted suggestion and added to repertoire with correct defaults")
+                                else:
+                                    self.log_result("Song Suggestion Status Update Accept", False, f"Song added but with incorrect defaults: {added_song}")
+                            else:
+                                self.log_result("Song Suggestion Status Update Accept", False, "Song not found in repertoire after accepting suggestion")
+                        else:
+                            self.log_result("Song Suggestion Status Update Accept", False, f"Could not verify song addition: {songs_response.status_code}")
+                    else:
+                        self.log_result("Song Suggestion Status Update Accept", False, f"Unexpected response: {data}")
+                else:
+                    self.log_result("Song Suggestion Status Update Accept", False, f"Status code: {response.status_code}, Response: {response.text}")
+            else:
+                self.log_result("Song Suggestion Status Update Accept", False, f"Failed to create test suggestion: {create_response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Song Suggestion Status Update Accept", False, f"Exception: {str(e)}")
+
+    def test_song_suggestion_status_update_reject(self):
+        """Test PUT /song-suggestions/{id}/status to reject suggestions"""
+        try:
+            if not self.auth_token:
+                self.log_result("Song Suggestion Status Update Reject", False, "No auth token available")
+                return
+            
+            # Create a suggestion first
+            suggestion_data = {
+                "musician_slug": self.musician_slug,
+                "suggested_title": "Thunderstruck",
+                "suggested_artist": "AC/DC",
+                "requester_name": "Metal Fan",
+                "requester_email": "metalfan@example.com"
+            }
+            
+            create_response = self.make_request("POST", "/song-suggestions", suggestion_data)
+            
+            if create_response.status_code == 200:
+                suggestion_id = create_response.json()["id"]
+                
+                # Reject the suggestion
+                status_update = {"status": "rejected"}
+                response = self.make_request("PUT", f"/song-suggestions/{suggestion_id}/status", status_update)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get("success") and "rejected successfully" in data.get("message", ""):
+                        # Verify the song was NOT added to repertoire
+                        songs_response = self.make_request("GET", "/songs")
+                        if songs_response.status_code == 200:
+                            songs = songs_response.json()
+                            rejected_song = None
+                            for song in songs:
+                                if song.get("title") == "Thunderstruck" and song.get("artist") == "AC/DC":
+                                    rejected_song = song
+                                    break
+                            
+                            if not rejected_song:
+                                self.log_result("Song Suggestion Status Update Reject", True, "Successfully rejected suggestion - song not added to repertoire")
+                            else:
+                                self.log_result("Song Suggestion Status Update Reject", False, "Song was added to repertoire despite being rejected")
+                        else:
+                            self.log_result("Song Suggestion Status Update Reject", False, f"Could not verify song rejection: {songs_response.status_code}")
+                    else:
+                        self.log_result("Song Suggestion Status Update Reject", False, f"Unexpected response: {data}")
+                else:
+                    self.log_result("Song Suggestion Status Update Reject", False, f"Status code: {response.status_code}, Response: {response.text}")
+            else:
+                self.log_result("Song Suggestion Status Update Reject", False, f"Failed to create test suggestion: {create_response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Song Suggestion Status Update Reject", False, f"Exception: {str(e)}")
+
+    def test_song_suggestion_delete(self):
+        """Test DELETE /song-suggestions/{id} endpoint"""
+        try:
+            if not self.auth_token:
+                self.log_result("Song Suggestion Delete", False, "No auth token available")
+                return
+            
+            # Create a suggestion first
+            suggestion_data = {
+                "musician_slug": self.musician_slug,
+                "suggested_title": "Delete Test Song",
+                "suggested_artist": "Test Artist",
+                "requester_name": "Test User",
+                "requester_email": "test@example.com"
+            }
+            
+            create_response = self.make_request("POST", "/song-suggestions", suggestion_data)
+            
+            if create_response.status_code == 200:
+                suggestion_id = create_response.json()["id"]
+                
+                # Delete the suggestion
+                response = self.make_request("DELETE", f"/song-suggestions/{suggestion_id}")
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get("success") and "deleted" in data.get("message", ""):
+                        # Verify the suggestion was deleted
+                        suggestions_response = self.make_request("GET", "/song-suggestions")
+                        if suggestions_response.status_code == 200:
+                            suggestions = suggestions_response.json()
+                            deleted_suggestion = None
+                            for suggestion in suggestions:
+                                if suggestion.get("id") == suggestion_id:
+                                    deleted_suggestion = suggestion
+                                    break
+                            
+                            if not deleted_suggestion:
+                                self.log_result("Song Suggestion Delete", True, "Successfully deleted suggestion")
+                            else:
+                                self.log_result("Song Suggestion Delete", False, "Suggestion still exists after deletion")
+                        else:
+                            self.log_result("Song Suggestion Delete", False, f"Could not verify deletion: {suggestions_response.status_code}")
+                    else:
+                        self.log_result("Song Suggestion Delete", False, f"Unexpected response: {data}")
+                else:
+                    self.log_result("Song Suggestion Delete", False, f"Status code: {response.status_code}, Response: {response.text}")
+            else:
+                self.log_result("Song Suggestion Delete", False, f"Failed to create test suggestion: {create_response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Song Suggestion Delete", False, f"Exception: {str(e)}")
+
+    def test_song_suggestion_authentication_required(self):
+        """Test that song suggestion management requires authentication"""
+        try:
+            # Save current token
+            original_token = self.auth_token
+            
+            # Test GET without token
+            self.auth_token = None
+            response = self.make_request("GET", "/song-suggestions")
+            
+            if response.status_code in [401, 403]:
+                self.log_result("Song Suggestion Auth - GET No Token", True, f"Correctly rejected GET without auth (status: {response.status_code})")
+            else:
+                self.log_result("Song Suggestion Auth - GET No Token", False, f"Should have returned 401/403, got: {response.status_code}")
+            
+            # Test PUT without token
+            status_update = {"status": "added"}
+            response = self.make_request("PUT", "/song-suggestions/test-id/status", status_update)
+            
+            if response.status_code in [401, 403]:
+                self.log_result("Song Suggestion Auth - PUT No Token", True, f"Correctly rejected PUT without auth (status: {response.status_code})")
+            else:
+                self.log_result("Song Suggestion Auth - PUT No Token", False, f"Should have returned 401/403, got: {response.status_code}")
+            
+            # Test DELETE without token
+            response = self.make_request("DELETE", "/song-suggestions/test-id")
+            
+            if response.status_code in [401, 403]:
+                self.log_result("Song Suggestion Auth - DELETE No Token", True, f"Correctly rejected DELETE without auth (status: {response.status_code})")
+            else:
+                self.log_result("Song Suggestion Auth - DELETE No Token", False, f"Should have returned 401/403, got: {response.status_code}")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+        except Exception as e:
+            self.log_result("Song Suggestion Authentication", False, f"Exception: {str(e)}")
+
+    def test_song_suggestion_duplicate_song_prevention(self):
+        """Test that accepting suggestions doesn't create duplicate songs"""
+        try:
+            if not self.auth_token:
+                self.log_result("Song Suggestion Duplicate Song Prevention", False, "No auth token available")
+                return
+            
+            # First, manually add a song to the repertoire
+            song_data = {
+                "title": "Duplicate Test Song",
+                "artist": "Duplicate Test Artist",
+                "genres": ["Rock"],
+                "moods": ["Energetic"],
+                "year": 2020,
+                "notes": "Manually added song"
+            }
+            
+            song_response = self.make_request("POST", "/songs", song_data)
+            
+            if song_response.status_code == 200:
+                # Now create a suggestion for the same song
+                suggestion_data = {
+                    "musician_slug": self.musician_slug,
+                    "suggested_title": "Duplicate Test Song",
+                    "suggested_artist": "Duplicate Test Artist",
+                    "requester_name": "Test User",
+                    "requester_email": "test@example.com"
+                }
+                
+                create_response = self.make_request("POST", "/song-suggestions", suggestion_data)
+                
+                if create_response.status_code == 200:
+                    suggestion_id = create_response.json()["id"]
+                    
+                    # Try to accept the suggestion
+                    status_update = {"status": "added"}
+                    response = self.make_request("PUT", f"/song-suggestions/{suggestion_id}/status", status_update)
+                    
+                    if response.status_code == 200:
+                        # Check that no duplicate was created
+                        songs_response = self.make_request("GET", "/songs")
+                        if songs_response.status_code == 200:
+                            songs = songs_response.json()
+                            duplicate_songs = [song for song in songs if song.get("title") == "Duplicate Test Song" and song.get("artist") == "Duplicate Test Artist"]
+                            
+                            if len(duplicate_songs) == 1:
+                                self.log_result("Song Suggestion Duplicate Song Prevention", True, "Correctly prevented duplicate song creation when accepting suggestion")
+                            else:
+                                self.log_result("Song Suggestion Duplicate Song Prevention", False, f"Found {len(duplicate_songs)} songs with same title/artist - should be 1")
+                        else:
+                            self.log_result("Song Suggestion Duplicate Song Prevention", False, f"Could not verify duplicate prevention: {songs_response.status_code}")
+                    else:
+                        self.log_result("Song Suggestion Duplicate Song Prevention", False, f"Failed to accept suggestion: {response.status_code}")
+                else:
+                    self.log_result("Song Suggestion Duplicate Song Prevention", False, f"Failed to create suggestion: {create_response.status_code}")
+            else:
+                self.log_result("Song Suggestion Duplicate Song Prevention", False, f"Failed to create initial song: {song_response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Song Suggestion Duplicate Song Prevention", False, f"Exception: {str(e)}")
+
     def run_all_tests(self):
         """Run all tests in order"""
         print("=" * 50)
