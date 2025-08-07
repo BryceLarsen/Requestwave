@@ -1007,16 +1007,16 @@ async def scrape_apple_music_playlist(playlist_url: str) -> List[Dict[str, Any]]
                 'title': 'Apple Music Song 1',
                 'artist': 'Demo Artist',
                 'genres': ['Pop'],
-                'moods': ['Upbeat'],
+                'moods': ['Feel Good'],
                 'year': 2023,
-                'notes': 'Demo song from Apple Music import',
+                'notes': '',  # Leave blank for user customization
                 'source': 'apple_music'
             },
             {
                 'title': 'Apple Music Song 2',
                 'artist': 'Demo Artist 2',
                 'genres': ['Alternative'],
-                'moods': ['Chill'],
+                'moods': ['Chill Vibes'],
                 'year': 2022,
                 'notes': 'Demo song from Apple Music import',
                 'source': 'apple_music'
