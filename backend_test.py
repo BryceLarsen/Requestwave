@@ -18,6 +18,12 @@ TEST_MUSICIAN = {
     "password": "SecurePassword123!"
 }
 
+# Pro account for batch edit testing
+PRO_MUSICIAN = {
+    "email": "brycelarsenmusic@gmail.com",
+    "password": "RequestWave2024!"
+}
+
 class RequestWaveAPITester:
     def __init__(self):
         self.base_url = BASE_URL
