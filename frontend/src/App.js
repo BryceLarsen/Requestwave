@@ -5713,7 +5713,7 @@ const OnStageInterface = () => {
                 </p>
               </div>
               
-              <div className="flex justify-between items-center text-sm">
+              <div className="flex justify-between items-center text-sm mb-4">
                 <div className="text-gray-400">
                   <span className="font-medium">From:</span> {item.requester_name || 'Anonymous'}
                 </div>
@@ -5723,6 +5723,44 @@ const OnStageInterface = () => {
                   </div>
                 )}
               </div>
+              
+              {/* NEW: Request Action Buttons */}
+              {item.type === 'request' && (
+                <div className="flex space-x-2 mt-4">
+                  {!item.status || item.status === 'pending' ? (
+                    <>
+                      <button
+                        onClick={() => handleAccept(item.id)}
+                        className="flex-1 bg-green-600 hover:bg-green-700 active:bg-green-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
+                      >
+                        ✅ Accept
+                      </button>
+                      <button
+                        onClick={() => handlePlay(item.id)}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
+                      >
+                        🎵 Play
+                      </button>
+                      <button
+                        onClick={() => handleReject(item.id)}
+                        className="flex-1 bg-red-600 hover:bg-red-700 active:bg-red-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
+                      >
+                        ❌ Reject
+                      </button>
+                    </>
+                  ) : (
+                    <div className={`w-full py-3 px-4 rounded-lg font-bold text-center ${
+                      item.status === 'accepted' ? 'bg-green-800 text-green-200' :
+                      item.status === 'played' ? 'bg-blue-800 text-blue-200' :
+                      'bg-red-800 text-red-200'
+                    }`}>
+                      {item.status === 'accepted' ? '✅ Accepted' :
+                       item.status === 'played' ? '🎵 Played' :
+                       '❌ Rejected'}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ))
         )}
