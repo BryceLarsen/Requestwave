@@ -85,6 +85,8 @@ class Musician(BaseModel):
     # NEW: Current active show tracking
     current_show_id: Optional[str] = None
     current_show_name: Optional[str] = None
+    # NEW: Active playlist for Pro feature (None = All Songs)
+    active_playlist_id: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Song(BaseModel):
