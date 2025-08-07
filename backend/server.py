@@ -751,28 +751,28 @@ def get_popular_songs_by_playlist_type(playlist_title: str) -> List[Dict[str, An
                 'title': 'Mr. Brightside',
                 'artist': 'The Killers',
                 'genres': ['Rock'],
-                'moods': ['Energetic'],
+                'moods': ['Bar Anthems'],
                 'year': 2003
             },
             {
                 'title': 'Somebody Told Me',
                 'artist': 'The Killers',
                 'genres': ['Rock'],
-                'moods': ['Upbeat'],
+                'moods': ['Feel Good'],
                 'year': 2004
             },
             {
                 'title': 'Take Me Out',
                 'artist': 'Franz Ferdinand',
                 'genres': ['Alternative'],
-                'moods': ['Energetic'],
+                'moods': ['Feel It Live'],
                 'year': 2004
             },
             {
                 'title': 'Seven Nation Army',
                 'artist': 'The White Stripes',
                 'genres': ['Rock'],
-                'moods': ['Aggressive'],
+                'moods': ['Bar Anthems'],
                 'year': 2003
             }
         ]
