@@ -5488,9 +5488,10 @@ const OnStageInterface = () => {
     if (!musician) return;
     
     try {
+      // Use public endpoints that don't require authentication
       const [requestsRes, suggestionsRes] = await Promise.all([
-        axios.get(`${API}/requests/musician/${musician.id}`),
-        axios.get(`${API}/song-suggestions?musician_id=${musician.id}`)
+        axios.get(`${API}/musicians/${slug}/requests`), // Use public requests endpoint
+        axios.get(`${API}/musicians/${slug}/suggestions`) // Use public suggestions endpoint
       ]);
       
       const newRequests = requestsRes.data || [];
