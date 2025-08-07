@@ -75,6 +75,10 @@ class DemoAccountCreator:
         print("📝 Step 1: Creating/Logging into account...")
         register_response = self.make_request("POST", "/auth/register", demo_musician)
         
+        print(f"📊 Registration response: {register_response.status_code}")
+        if register_response.status_code != 200:
+            print(f"   Response: {register_response.text}")
+        
         if register_response.status_code == 200:
             # Account created successfully
             register_data = register_response.json()
