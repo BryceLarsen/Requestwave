@@ -1836,7 +1836,7 @@ async def import_from_playlist(import_data: PlaylistImport, musician_id: str = D
                     "title": song_data['title'],
                     "artist": song_data['artist'],
                     "genres": song_data.get('genres', ['Pop']),
-                    "moods": song_data.get('moods', ['Upbeat']),
+                    "moods": song_data.get('moods', ['Feel Good']),
                     "year": int(song_data.get('year', 2023)) if song_data.get('year') else None,
                     "notes": song_data.get('notes', ''),
                     "created_at": datetime.utcnow()
