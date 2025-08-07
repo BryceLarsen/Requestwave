@@ -2099,8 +2099,8 @@ async def update_suggestion_status(
                     "musician_id": musician_id,
                     "title": suggestion["suggested_title"],
                     "artist": suggestion["suggested_artist"],
-                    "genres": ["Pop"],  # Default genre as specified
-                    "moods": ["Upbeat"],  # Default mood as specified
+                    "genres": ["Pop"],  # Default genre from curated list
+                    "moods": ["Feel Good"],  # Default mood from curated list
                     "year": None,  # No year by default
                     "decade": None,  # No decade calculation without year
                     "notes": f"Added from audience suggestion by {suggestion['requester_name']}",
