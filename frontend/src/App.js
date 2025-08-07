@@ -1374,7 +1374,7 @@ const MusicianDashboard = () => {
   // Update filtered songs when songs or filters change
   React.useEffect(() => {
     filterSongs();
-  }, [songs, songFilter, genreFilter, artistFilter, moodFilter, yearFilter, decadeFilter]);
+  }, [songs, songFilter, genreFilter, artistFilter, moodFilter, yearFilter, decadeFilter, notesFilter]);
 
   // NEW: Refetch songs and filter options when sort order changes
   React.useEffect(() => {
