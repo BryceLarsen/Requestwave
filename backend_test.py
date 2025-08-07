@@ -8675,6 +8675,363 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
         
         return success
 
+    def test_song_deletion_functionality(self):
+        """Test FIXED song deletion functionality - PRIORITY 1"""
+        try:
+            print("🔍 PRIORITY 1: Testing FIXED Song Deletion Functionality")
+            print("=" * 80)
+            
+            # Login with brycelarsenmusic@gmail.com / RequestWave2024!
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": "brycelarsenmusic@gmail.com",
+                "password": "RequestWave2024!"
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("Song Deletion - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            if "token" not in login_data_response:
+                self.log_result("Song Deletion - Pro Login", False, "Invalid login response")
+                return
+            
+            # Store original token and use Pro account token
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            pro_musician_id = login_data_response["musician"]["id"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            
+            # Step 2: Create test songs for deletion testing
+            print("📊 Step 2: Creating test songs for deletion testing")
+            
+            test_songs_data = [
+                {
+                    "title": "Test Song for Deletion 1",
+                    "artist": "Test Artist 1",
+                    "genres": ["Pop"],
+                    "moods": ["Feel Good"],
+                    "year": 2023,
+                    "notes": "Test song for deletion testing"
+                },
+                {
+                    "title": "Test Song for Deletion 2", 
+                    "artist": "Test Artist 2",
+                    "genres": ["Rock"],
+                    "moods": ["Bar Anthems"],
+                    "year": 2022,
+                    "notes": "Another test song for deletion"
+                },
+                {
+                    "title": "Test Song for Deletion 3",
+                    "artist": "Test Artist 3", 
+                    "genres": ["Jazz"],
+                    "moods": ["Chill Vibes"],
+                    "year": 2021,
+                    "notes": "Third test song for deletion"
+                }
+            ]
+            
+            created_song_ids = []
+            
+            for i, song_data in enumerate(test_songs_data):
+                create_response = self.make_request("POST", "/songs", song_data)
+                if create_response.status_code == 200:
+                    song_result = create_response.json()
+                    created_song_ids.append(song_result["id"])
+                    print(f"   ✅ Created test song {i+1}: {song_result['title']} (ID: {song_result['id']})")
+                else:
+                    print(f"   ❌ Failed to create test song {i+1}: {create_response.status_code}")
+            
+            if len(created_song_ids) == 0:
+                self.log_result("Song Deletion - Test Song Creation", False, "Failed to create any test songs")
+                self.auth_token = original_token
+                return
+            
+            print(f"   📊 Created {len(created_song_ids)} test songs for deletion testing")
+            
+            # Step 3: Test Individual Song Deletion - DELETE /api/songs/{song_id}
+            print("📊 Step 3: Testing Individual Song Deletion")
+            
+            # Get initial song count
+            initial_songs_response = self.make_request("GET", "/songs")
+            initial_song_count = len(initial_songs_response.json()) if initial_songs_response.status_code == 200 else 0
+            print(f"   📊 Initial song count: {initial_song_count}")
+            
+            # Test deletion of first song
+            song_to_delete = created_song_ids[0]
+            print(f"   🗑️  Testing deletion of song ID: {song_to_delete}")
+            
+            delete_response = self.make_request("DELETE", f"/songs/{song_to_delete}")
+            
+            if delete_response.status_code == 200:
+                delete_result = delete_response.json()
+                print(f"   ✅ Delete response: {delete_result}")
+                
+                # Verify song is removed from database
+                after_delete_response = self.make_request("GET", "/songs")
+                if after_delete_response.status_code == 200:
+                    after_delete_songs = after_delete_response.json()
+                    after_delete_count = len(after_delete_songs)
+                    
+                    # Check if song count decreased
+                    if after_delete_count == initial_song_count - 1:
+                        print(f"   ✅ Song count decreased from {initial_song_count} to {after_delete_count}")
+                        
+                        # Verify specific song is no longer in list
+                        deleted_song_found = any(song["id"] == song_to_delete for song in after_delete_songs)
+                        if not deleted_song_found:
+                            self.log_result("Song Deletion - Individual Delete Success", True, "✅ Song successfully deleted from database")
+                        else:
+                            self.log_result("Song Deletion - Individual Delete Success", False, "❌ Song still found in database after deletion")
+                    else:
+                        self.log_result("Song Deletion - Individual Delete Success", False, f"❌ Song count did not decrease correctly: {initial_song_count} → {after_delete_count}")
+                else:
+                    self.log_result("Song Deletion - Individual Delete Success", False, "❌ Could not verify deletion - failed to get songs after delete")
+            else:
+                self.log_result("Song Deletion - Individual Delete Success", False, f"❌ Delete request failed: {delete_response.status_code}, Response: {delete_response.text}")
+            
+            # Step 4: Test deletion of non-existent song ID (should return 404)
+            print("📊 Step 4: Testing deletion of non-existent song ID")
+            
+            fake_song_id = "non-existent-song-id-12345"
+            fake_delete_response = self.make_request("DELETE", f"/songs/{fake_song_id}")
+            
+            if fake_delete_response.status_code == 404:
+                self.log_result("Song Deletion - Non-existent ID", True, "✅ Correctly returned 404 for non-existent song ID")
+            else:
+                self.log_result("Song Deletion - Non-existent ID", False, f"❌ Expected 404, got {fake_delete_response.status_code}")
+            
+            # Step 5: Test deletion with invalid authentication
+            print("📊 Step 5: Testing deletion with invalid authentication")
+            
+            # Save current token and use invalid token
+            valid_token = self.auth_token
+            self.auth_token = "invalid-token-12345"
+            
+            if len(created_song_ids) > 1:
+                invalid_auth_response = self.make_request("DELETE", f"/songs/{created_song_ids[1]}")
+                
+                if invalid_auth_response.status_code in [401, 403]:
+                    self.log_result("Song Deletion - Invalid Auth", True, f"✅ Correctly rejected invalid auth with status {invalid_auth_response.status_code}")
+                else:
+                    self.log_result("Song Deletion - Invalid Auth", False, f"❌ Expected 401/403, got {invalid_auth_response.status_code}")
+            
+            # Restore valid token
+            self.auth_token = valid_token
+            
+            # Step 6: Test rapid sequential deletions (simulate batch deletion)
+            print("📊 Step 6: Testing rapid sequential deletions")
+            
+            if len(created_song_ids) > 1:
+                remaining_songs = created_song_ids[1:]  # Skip first song (already deleted)
+                rapid_deletion_results = []
+                
+                for song_id in remaining_songs:
+                    rapid_delete_response = self.make_request("DELETE", f"/songs/{song_id}")
+                    rapid_deletion_results.append({
+                        "song_id": song_id,
+                        "status_code": rapid_delete_response.status_code,
+                        "success": rapid_delete_response.status_code == 200
+                    })
+                    print(f"   🗑️  Rapid delete {song_id}: {rapid_delete_response.status_code}")
+                
+                successful_rapid_deletes = sum(1 for result in rapid_deletion_results if result["success"])
+                
+                if successful_rapid_deletes == len(remaining_songs):
+                    self.log_result("Song Deletion - Rapid Sequential", True, f"✅ All {successful_rapid_deletes} rapid deletions successful")
+                else:
+                    failed_deletes = [r["song_id"] for r in rapid_deletion_results if not r["success"]]
+                    self.log_result("Song Deletion - Rapid Sequential", False, f"❌ {len(failed_deletes)} rapid deletions failed: {failed_deletes}")
+            
+            # Step 7: Database consistency verification
+            print("📊 Step 7: Final database consistency verification")
+            
+            final_songs_response = self.make_request("GET", "/songs")
+            if final_songs_response.status_code == 200:
+                final_songs = final_songs_response.json()
+                final_song_count = len(final_songs)
+                
+                # Check that none of our test songs remain
+                remaining_test_songs = [song["id"] for song in final_songs if song["id"] in created_song_ids]
+                
+                if len(remaining_test_songs) == 0:
+                    self.log_result("Song Deletion - Database Consistency", True, f"✅ All test songs removed from database. Final count: {final_song_count}")
+                else:
+                    self.log_result("Song Deletion - Database Consistency", False, f"❌ {len(remaining_test_songs)} test songs still in database: {remaining_test_songs}")
+            else:
+                self.log_result("Song Deletion - Database Consistency", False, "❌ Could not verify final database state")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Song Deletion Functionality", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_song_deletion_edge_cases(self):
+        """Test Song Deletion Edge Cases - PRIORITY 2"""
+        try:
+            print("🔍 PRIORITY 2: Testing Song Deletion Edge Cases")
+            print("=" * 80)
+            
+            # Login with brycelarsenmusic@gmail.com
+            login_data = {
+                "email": "brycelarsenmusic@gmail.com",
+                "password": "RequestWave2024!"
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("Song Deletion Edge Cases - Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            
+            # Create a test song for edge case testing
+            test_song_data = {
+                "title": "Edge Case Test Song",
+                "artist": "Edge Case Artist",
+                "genres": ["Pop"],
+                "moods": ["Feel Good"],
+                "year": 2023,
+                "notes": "Song for edge case testing"
+            }
+            
+            create_response = self.make_request("POST", "/songs", test_song_data)
+            if create_response.status_code != 200:
+                self.log_result("Song Deletion Edge Cases - Song Creation", False, "Failed to create test song")
+                self.auth_token = original_token
+                return
+            
+            test_song_id = create_response.json()["id"]
+            print(f"   ✅ Created test song for edge cases: {test_song_id}")
+            
+            # Edge Case 1: Test deletion with malformed song ID
+            print("📊 Edge Case 1: Testing deletion with malformed song ID")
+            
+            malformed_ids = [
+                "invalid-id",
+                "12345",
+                "",
+                "null",
+                "undefined",
+                "very-long-id-that-should-not-exist-in-database-12345678901234567890"
+            ]
+            
+            malformed_id_results = []
+            for malformed_id in malformed_ids:
+                malformed_response = self.make_request("DELETE", f"/songs/{malformed_id}")
+                malformed_id_results.append({
+                    "id": malformed_id,
+                    "status_code": malformed_response.status_code,
+                    "expected_404": malformed_response.status_code == 404
+                })
+                print(f"   🗑️  Malformed ID '{malformed_id}': {malformed_response.status_code}")
+            
+            successful_malformed_handling = sum(1 for result in malformed_id_results if result["expected_404"])
+            
+            if successful_malformed_handling == len(malformed_ids):
+                self.log_result("Song Deletion Edge Cases - Malformed IDs", True, f"✅ All {len(malformed_ids)} malformed IDs correctly returned 404")
+            else:
+                failed_malformed = [r["id"] for r in malformed_id_results if not r["expected_404"]]
+                self.log_result("Song Deletion Edge Cases - Malformed IDs", False, f"❌ {len(failed_malformed)} malformed IDs did not return 404: {failed_malformed}")
+            
+            # Edge Case 2: Test deletion without authentication token
+            print("📊 Edge Case 2: Testing deletion without authentication token")
+            
+            # Remove auth token temporarily
+            temp_token = self.auth_token
+            self.auth_token = None
+            
+            no_auth_response = self.make_request("DELETE", f"/songs/{test_song_id}")
+            
+            if no_auth_response.status_code in [401, 403]:
+                self.log_result("Song Deletion Edge Cases - No Auth", True, f"✅ Correctly rejected request without auth: {no_auth_response.status_code}")
+            else:
+                self.log_result("Song Deletion Edge Cases - No Auth", False, f"❌ Expected 401/403, got {no_auth_response.status_code}")
+            
+            # Restore auth token
+            self.auth_token = temp_token
+            
+            # Edge Case 3: Test deletion with expired/invalid token
+            print("📊 Edge Case 3: Testing deletion with expired/invalid token")
+            
+            invalid_tokens = [
+                "expired.jwt.token",
+                "Bearer invalid-token",
+                "malformed-token-structure",
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid.signature"
+            ]
+            
+            invalid_token_results = []
+            for invalid_token in invalid_tokens:
+                self.auth_token = invalid_token
+                invalid_token_response = self.make_request("DELETE", f"/songs/{test_song_id}")
+                invalid_token_results.append({
+                    "token": invalid_token[:20] + "..." if len(invalid_token) > 20 else invalid_token,
+                    "status_code": invalid_token_response.status_code,
+                    "expected_401_403": invalid_token_response.status_code in [401, 403]
+                })
+                print(f"   🔐 Invalid token '{invalid_token[:20]}...': {invalid_token_response.status_code}")
+            
+            successful_invalid_token_handling = sum(1 for result in invalid_token_results if result["expected_401_403"])
+            
+            if successful_invalid_token_handling == len(invalid_tokens):
+                self.log_result("Song Deletion Edge Cases - Invalid Tokens", True, f"✅ All {len(invalid_tokens)} invalid tokens correctly rejected")
+            else:
+                failed_invalid_tokens = [r["token"] for r in invalid_token_results if not r["expected_401_403"]]
+                self.log_result("Song Deletion Edge Cases - Invalid Tokens", False, f"❌ {len(failed_invalid_tokens)} invalid tokens not properly rejected")
+            
+            # Restore valid token
+            self.auth_token = temp_token
+            
+            # Edge Case 4: Test rapid deletion attempts (stress test)
+            print("📊 Edge Case 4: Testing rapid deletion attempts on same song")
+            
+            # Try to delete the same song multiple times rapidly
+            rapid_attempts = []
+            for i in range(5):
+                rapid_response = self.make_request("DELETE", f"/songs/{test_song_id}")
+                rapid_attempts.append({
+                    "attempt": i + 1,
+                    "status_code": rapid_response.status_code,
+                    "success": rapid_response.status_code in [200, 404]  # 200 for first delete, 404 for subsequent
+                })
+                print(f"   🗑️  Rapid attempt {i+1}: {rapid_response.status_code}")
+            
+            # First attempt should succeed (200), subsequent should return 404
+            first_attempt_success = rapid_attempts[0]["status_code"] == 200
+            subsequent_attempts_404 = all(attempt["status_code"] == 404 for attempt in rapid_attempts[1:])
+            
+            if first_attempt_success and subsequent_attempts_404:
+                self.log_result("Song Deletion Edge Cases - Rapid Attempts", True, "✅ Rapid deletion attempts handled correctly (first success, subsequent 404)")
+            else:
+                self.log_result("Song Deletion Edge Cases - Rapid Attempts", False, f"❌ Rapid deletion handling issue: first={rapid_attempts[0]['status_code']}, subsequent={[a['status_code'] for a in rapid_attempts[1:]]}")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Song Deletion Edge Cases", False, f"❌ Exception: {str(e)}")
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
     def test_qr_flyer_generation_debug(self):
         """Debug QR flyer generation issue - SPECIFIC DEBUGGING FOCUS"""
         try:
