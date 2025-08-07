@@ -4459,6 +4459,7 @@ const MusicianDashboard = () => {
                       
                       <div>
                         <h4 className="font-bold text-purple-200 mb-2">2. Build Your Song Library</h4>
+                        <p className="text-gray-300 text-sm">• <span className="text-yellow-300">🎵 New to RequestWave?</span> <a href="https://customer-assets.emergentagent.com/job_musicreq/artifacts/p32hqaaa_RequestWave%20Top%2050%20Demo%20Setlist.csv" download="RequestWave-Top-50-Demo-Setlist.csv" className="text-green-400 hover:text-green-300 underline font-medium">Download our Top 50 starter setlist</a> to practice with! It's packed with crowd favorites.</p>
                         <p className="text-gray-300 text-sm">• Click <span className="text-green-300">Upload CSV</span> if you have a list already.</p>
                         <p className="text-gray-300 text-sm">• Use <span className="text-green-300">Import Playlist</span> to bring songs from Spotify or Apple Music.</p>
                         <p className="text-gray-300 text-sm">• Add songs one by one with <span className="text-green-300">Add New Song</span>.</p>
