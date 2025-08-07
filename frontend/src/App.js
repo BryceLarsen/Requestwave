@@ -2355,6 +2355,110 @@ const MusicianDashboard = () => {
               </div>
             )}
 
+            {/* LST Upload Section */}
+            {showLstUpload && (
+              <div className="bg-gray-800 rounded-xl p-6 mb-8">
+                <h3 className="text-lg font-bold mb-4">Upload Songs from LST File</h3>
+                <p className="text-gray-300 mb-4 text-sm">
+                  Upload a setlist (.lst) file with songs in "Song Title - Artist" format
+                  <br />
+                  Perfect for importing existing setlists or song collections!
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <input
+                      type="file"
+                      accept=".lst"
+                      onChange={handleLstFileSelect}
+                      className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-orange-600 file:text-white hover:file:bg-orange-700"
+                    />
+                  </div>
+
+                  {lstFile && (
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <p className="text-sm font-medium">Selected: {lstFile.name}</p>
+                      <p className="text-xs text-gray-400">Size: {(lstFile.size / 1024).toFixed(1)} KB</p>
+                      
+                      {/* Auto-enrich option */}
+                      <div className="mt-3">
+                        <label className="flex items-center space-x-3 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={lstAutoEnrich}
+                            onChange={(e) => setLstAutoEnrich(e.target.checked)}
+                            className="rounded bg-gray-600 border-gray-500 text-orange-600 focus:ring-orange-500 focus:ring-offset-0"
+                          />
+                          <span className="text-gray-300">
+                            Auto-enrich metadata (adds year information via Spotify)
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {lstFile && (
+                    <div className="flex space-x-4">
+                      <button
+                        onClick={previewLst}
+                        disabled={lstUploading}
+                        className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-bold transition duration-300 disabled:opacity-50"
+                      >
+                        {lstUploading ? 'Processing...' : 'Preview'}
+                      </button>
+                      {lstPreview && (
+                        <button
+                          onClick={uploadLst}
+                          disabled={lstUploading}
+                          className="bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-lg font-bold transition duration-300 disabled:opacity-50"
+                        >
+                          {lstUploading ? 'Uploading...' : `Import ${lstPreview.total_songs} Songs`}
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* LST Preview */}
+                  {lstPreview && (
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <h4 className="font-bold mb-2">
+                        Preview: {lstPreview.total_songs} songs found
+                      </h4>
+                      
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-gray-600">
+                              <th className="text-left p-2">Title</th>
+                              <th className="text-left p-2">Artist</th>
+                              <th className="text-left p-2">Genre</th>
+                              <th className="text-left p-2">Mood</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {lstPreview.songs.map((song, index) => (
+                              <tr key={index} className="border-b border-gray-600">
+                                <td className="p-2">{song.title}</td>
+                                <td className="p-2">{song.artist}</td>
+                                <td className="p-2">{song.genres?.join(', ')}</td>
+                                <td className="p-2">{song.moods?.join(', ')}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {lstError && (
+                    <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-200">
+                      {lstError}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Playlist Import Section */}
             {showPlaylistImport && (
               <div className="bg-gray-800 rounded-xl p-6 mb-8">
