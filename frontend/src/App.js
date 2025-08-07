@@ -1890,6 +1890,24 @@ const MusicianDashboard = () => {
               </button>
             </div>
             
+            {/* NEW: Active Playlist Selector (Pro Feature) */}
+            {subscriptionStatus && subscriptionStatus.plan === 'pro' && playlists.length > 0 && (
+              <div className="flex items-center space-x-2">
+                <span className="text-purple-200 text-sm font-medium">Active Playlist:</span>
+                <select
+                  value={activePlaylistId || 'all_songs'}
+                  onChange={(e) => activatePlaylist(e.target.value)}
+                  className="bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-purple-500 focus:border-purple-500"
+                >
+                  {playlists.map(playlist => (
+                    <option key={playlist.id} value={playlist.id}>
+                      {playlist.name} ({playlist.song_count} songs)
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            
             <div className="flex items-center space-x-2">
               <button
                 onClick={generateQRCode}
