@@ -1701,6 +1701,12 @@ const MusicianDashboard = () => {
   // NEW: Playlist functions (Pro feature)
   const fetchPlaylists = async () => {
     try {
+      // Only fetch if user has Pro access
+      if (!subscriptionStatus || subscriptionStatus.plan !== 'pro') {
+        setPlaylists([]);
+        return;
+      }
+      
       const response = await axios.get(`${API}/playlists`);
       setPlaylists(response.data);
       
@@ -1713,6 +1719,8 @@ const MusicianDashboard = () => {
         setPlaylists([]);
       } else {
         console.error('Error fetching playlists:', error);
+        // Don't show error to user for this, just log it
+        setPlaylists([]);
       }
     }
   };
