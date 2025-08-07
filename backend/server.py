@@ -608,6 +608,9 @@ def generate_qr_flyer(musician_name: str, audience_url: str, qr_size: int = 8) -
     qr_size_pixels = qr_img.size[0]
     qr_x = (width - qr_size_pixels) // 2
     qr_y = 150
+    # Convert QR image to RGB mode to match the main canvas
+    if qr_img.mode != 'RGB':
+        qr_img = qr_img.convert('RGB')
     # Use 4-item box format to avoid PIL paste issues
     qr_box = (qr_x, qr_y, qr_x + qr_size_pixels, qr_y + qr_size_pixels)
     img.paste(qr_img, qr_box)
