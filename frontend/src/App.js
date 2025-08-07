@@ -1181,7 +1181,11 @@ const MusicianDashboard = () => {
       const decadeMatch = decadeFilter === '' || 
         (song.decade && song.decade === decadeFilter);
       
-      return searchMatch && genreMatch && artistMatch && moodMatch && yearMatch && decadeMatch;
+      // NEW: Notes filter
+      const notesMatch = notesFilter === '' ||
+        (song.notes && song.notes.toLowerCase().includes(notesFilter.toLowerCase()));
+      
+      return searchMatch && genreMatch && artistMatch && moodMatch && yearMatch && decadeMatch && notesMatch;
     });
     
     setFilteredSongs(filtered);
