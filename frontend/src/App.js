@@ -927,6 +927,23 @@ const MusicianDashboard = () => {
     }
   };
 
+  // NEW: Fetch filter options for musician dashboard
+  const fetchFilterOptions = async () => {
+    try {
+      const response = await axios.get(`${API}/musicians/${musician.slug}/filter-options`);
+      setFilterOptions(response.data);
+    } catch (error) {
+      console.error('Error fetching filter options:', error);
+      // Set empty arrays as fallback
+      setFilterOptions({
+        genres: [],
+        moods: [],
+        years: [],
+        decades: []
+      });
+    }
+  };
+
   const fetchRequests = async () => {
     try {
       const response = await axios.get(`${API}/requests/musician/${musician.id}`);
