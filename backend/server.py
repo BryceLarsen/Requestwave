@@ -1671,6 +1671,15 @@ async def reset_password(reset_data: PasswordResetConfirm):
     return {"message": "Password reset successful"}
 
 # QR Code endpoints
+@api_router.get("/debug/env")
+async def debug_env_vars():
+    """Debug endpoint to check environment variables"""
+    return {
+        "frontend_url": os.environ.get('FRONTEND_URL'),
+        "backend_env_status": "active",
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
 @api_router.get("/qr-code")
 async def generate_musician_qr(musician_id: str = Depends(get_current_musician)):
     """Generate QR code for musician's audience link"""
