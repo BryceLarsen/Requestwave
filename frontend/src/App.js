@@ -1956,12 +1956,12 @@ const MusicianDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Tabs */}
-        <div className="flex space-x-1 bg-gray-800 rounded-lg p-1 mb-8">
+        <div className="flex flex-wrap gap-1 bg-gray-800 rounded-lg p-1 mb-8">
           {['songs', 'requests', 'analytics', 'profile', 'design'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-2 px-4 rounded-lg font-medium transition duration-300 ${
+              className={`px-3 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0 ${
                 activeTab === tab
                   ? 'bg-purple-600 text-white'
                   : 'text-gray-400 hover:text-white'
