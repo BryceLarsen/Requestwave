@@ -634,7 +634,7 @@ test_plan:
   - task: "Bulk/Batch Edit Functionality"
     implemented: true
     working: true
-    file: "App.js"
+    file: "server.py"
     stuck_count: 0
     priority: "critical"
     needs_retesting: false
@@ -651,6 +651,9 @@ test_plan:
       - working: true
         agent: "testing"
         comment: "✅ BATCH EDIT '[object Object]' BUG COMPLETELY FIXED: Successfully identified, debugged, and resolved the critical '[object Object],[object Object]' popup issue. PROBLEM SOLVED: Updated error handling code in App.js to properly parse FastAPI validation error arrays instead of displaying '[object Object]' messages. BEFORE FIX: Error popup showed 'Error: [object Object],[object Object]' when validation failed. AFTER FIX: Error popup now shows proper formatted messages like 'Error: body.title: Field required\nbody.artist: Field required'. ROOT CAUSE RESOLVED: Frontend error handling now checks if error.response.data.detail is an array and properly formats validation error objects with field locations and messages. COMPREHENSIVE TESTING CONFIRMED: ✅ Batch edit form UI works correctly with all fields (Artist, Genres, Moods, Year, Notes). ✅ Song selection and 'Edit Selected' button functionality working. ✅ Form submission to PUT /api/songs/batch-edit endpoint working. ✅ Error messages now display meaningful validation errors instead of '[object Object]'. ✅ Success scenarios work properly when valid data is submitted. The critical bug that prevented users from understanding validation errors has been completely resolved."
+      - working: true
+        agent: "testing"
+        comment: "✅ BATCH EDIT ROUTING FIX COMPREHENSIVE TESTING COMPLETE: Extensive testing confirms the FIXED batch edit functionality is working perfectly after resolving the routing issue. ✅ CRITICAL ROUTING FIX VERIFIED: PUT /api/songs/batch-edit endpoint is now correctly routed to the batch edit handler instead of the individual song update handler (confirmed by moving /songs/batch-edit before /songs/{song_id} in server.py). ✅ NOTES-ONLY EDIT FIX VERIFIED: The specific failing scenario of editing only the notes field without providing title/artist now works correctly - no more 'Field required' errors when updating just notes. ✅ PARTIAL FIELD UPDATES: Successfully tested updating individual fields independently (artist only, genres only, moods only, year only, notes only) - all working correctly. ✅ COMBINED FIELD UPDATES: Multiple fields can be updated together (artist + genres + moods + year + notes) with proper data persistence. ✅ AUTHENTICATION: JWT authentication working properly - correctly rejects requests without tokens (403), rejects invalid tokens (401), accepts valid tokens (200). ✅ ERROR HANDLING: Proper validation working - correctly rejects empty song_ids (400), handles non-existent song IDs gracefully (0 updated), rejects empty updates (400), validates year format (400). ✅ RESPONSE FORMAT: All responses have correct batch edit structure with success, message, and updated_count fields. ✅ DATABASE INTEGRITY: All updates are properly persisted to database and verified through GET requests. Total: 19/19 tests passed (100% success rate). The routing fix has completely resolved the issue where batch edit requests were being incorrectly routed to the individual song handler, causing validation errors for missing title/artist fields."
 
   - task: "Individual and Bulk Song Deletion Functionality"
     implemented: true
