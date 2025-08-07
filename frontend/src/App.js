@@ -3879,6 +3879,50 @@ const MusicianDashboard = () => {
             </div>
           </div>
         )}
+        
+        {/* NEW: Create Playlist Modal */}
+        {showPlaylistModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+              <h2 className="text-xl font-bold mb-4">Create New Playlist</h2>
+              <p className="text-gray-300 mb-4">Selected {selectedSongs.size} songs</p>
+              
+              {playlistManagementError && (
+                <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200">
+                  {playlistManagementError}
+                </div>
+              )}
+              
+              <form onSubmit={(e) => { e.preventDefault(); createPlaylist(); }} className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Playlist Name"
+                  value={playlistName}
+                  onChange={(e) => setPlaylistName(e.target.value)}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                  required
+                />
+                
+                <div className="flex space-x-4">
+                  <button
+                    type="submit"
+                    disabled={playlistLoading}
+                    className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 py-2 rounded-lg font-bold transition duration-300"
+                  >
+                    {playlistLoading ? 'Creating...' : 'Create Playlist'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowPlaylistModal(false)}
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 py-2 rounded-lg font-bold transition duration-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
