@@ -1768,12 +1768,12 @@ const MusicianDashboard = () => {
     }
   };
 
-  // Fetch playlists on component mount
+  // Fetch playlists on component mount and when subscription status changes
   useEffect(() => {
-    if (musician) {
+    if (musician && subscriptionStatus && subscriptionStatus.plan === 'pro') {
       fetchPlaylists();
     }
-  }, [musician]);
+  }, [musician, subscriptionStatus]);
 
   const audienceUrl = `${window.location.origin}/musician/${musician.slug}`;
 
