@@ -1680,7 +1680,14 @@ async def generate_musician_qr(musician_id: str = Depends(get_current_musician))
     
     # Construct audience URL
     base_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+    
+    # DEBUG: Log what we're actually getting
+    print(f"DEBUG QR CODE: FRONTEND_URL = {repr(os.environ.get('FRONTEND_URL'))}")
+    print(f"DEBUG QR CODE: base_url = {repr(base_url)}")
+    print(f"DEBUG QR CODE: musician slug = {repr(musician['slug'])}")
+    
     audience_url = f"{base_url}/musician/{musician['slug']}"
+    print(f"DEBUG QR CODE: final audience_url = {repr(audience_url)}")
     
     qr_code_base64 = generate_qr_code(audience_url)
     
