@@ -302,6 +302,28 @@ class CSVPreviewResponse(BaseModel):
     valid_rows: int
     errors: List[str] = []
 
+# NEW: Playlist models for Pro feature
+class PlaylistCreate(BaseModel):
+    name: str
+    song_ids: List[str] = []
+
+class Playlist(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    musician_id: str
+    name: str
+    song_ids: List[str] = []
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class PlaylistResponse(BaseModel):
+    id: str
+    name: str
+    song_count: int
+    is_active: bool
+    created_at: datetime
+
+class PlaylistUpdate(BaseModel):
+    song_ids: List[str]
+
 # Utility functions
 def create_slug(name: str) -> str:
     """Create URL-friendly slug from musician name"""
