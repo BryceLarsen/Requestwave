@@ -3456,6 +3456,221 @@ async def delete_show(
         logger.error(f"Error deleting show: {str(e)}")
         raise HTTPException(status_code=500, detail="Error deleting show")
 
+# NEW: Playlist endpoints (Pro feature)
+@api_router.post("/playlists", response_model=PlaylistResponse)
+async def create_playlist(
+    playlist_data: PlaylistCreate,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Create a new playlist (Pro feature)"""
+    try:
+        # Check Pro access
+        await require_pro_access(musician_id)
+        
+        # Validate song IDs belong to the musician
+        if playlist_data.song_ids:
+            song_count = await db.songs.count_documents({
+                "id": {"$in": playlist_data.song_ids},
+                "musician_id": musician_id
+            })
+            if song_count != len(playlist_data.song_ids):
+                raise HTTPException(status_code=400, detail="Some songs don't belong to you")
+        
+        # Create playlist
+        playlist_dict = {
+            "id": str(uuid.uuid4()),
+            "musician_id": musician_id,
+            "name": playlist_data.name,
+            "song_ids": playlist_data.song_ids,
+            "created_at": datetime.utcnow()
+        }
+        
+        await db.playlists.insert_one(playlist_dict)
+        
+        # Get musician to check active playlist
+        musician = await db.musicians.find_one({"id": musician_id})
+        is_active = musician.get("active_playlist_id") == playlist_dict["id"]
+        
+        logger.info(f"Created playlist {playlist_dict['id']} for musician {musician_id}")
+        return PlaylistResponse(
+            id=playlist_dict["id"],
+            name=playlist_dict["name"],
+            song_count=len(playlist_dict["song_ids"]),
+            is_active=is_active,
+            created_at=playlist_dict["created_at"]
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating playlist: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error creating playlist")
+
+@api_router.get("/playlists", response_model=List[PlaylistResponse])
+async def get_playlists(musician_id: str = Depends(get_current_musician)):
+    """Get all playlists for the musician (Pro feature)"""
+    try:
+        # Check Pro access
+        await require_pro_access(musician_id)
+        
+        # Get musician's active playlist
+        musician = await db.musicians.find_one({"id": musician_id})
+        active_playlist_id = musician.get("active_playlist_id")
+        
+        # Get all playlists
+        playlists_cursor = db.playlists.find({"musician_id": musician_id}).sort("created_at", -1)
+        playlists = await playlists_cursor.to_list(None)
+        
+        # Build response with song counts
+        playlist_responses = []
+        for playlist in playlists:
+            is_active = active_playlist_id == playlist["id"]
+            playlist_responses.append(PlaylistResponse(
+                id=playlist["id"],
+                name=playlist["name"],
+                song_count=len(playlist["song_ids"]),
+                is_active=is_active,
+                created_at=playlist["created_at"]
+            ))
+        
+        # Add "All Songs" as the default option
+        all_songs_count = await db.songs.count_documents({
+            "musician_id": musician_id,
+            "hidden": {"$ne": True}
+        })
+        
+        # Insert "All Songs" at the beginning
+        all_songs_response = PlaylistResponse(
+            id="all_songs",
+            name="All Songs",
+            song_count=all_songs_count,
+            is_active=(active_playlist_id is None),
+            created_at=datetime.utcnow()  # This won't be used for display
+        )
+        playlist_responses.insert(0, all_songs_response)
+        
+        return playlist_responses
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting playlists: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error getting playlists")
+
+@api_router.put("/playlists/{playlist_id}")
+async def update_playlist(
+    playlist_id: str,
+    playlist_data: PlaylistUpdate,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Update playlist songs (Pro feature)"""
+    try:
+        # Check Pro access
+        await require_pro_access(musician_id)
+        
+        # Verify playlist belongs to musician
+        playlist = await db.playlists.find_one({"id": playlist_id, "musician_id": musician_id})
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+        
+        # Validate song IDs belong to the musician
+        if playlist_data.song_ids:
+            song_count = await db.songs.count_documents({
+                "id": {"$in": playlist_data.song_ids},
+                "musician_id": musician_id
+            })
+            if song_count != len(playlist_data.song_ids):
+                raise HTTPException(status_code=400, detail="Some songs don't belong to you")
+        
+        # Update playlist
+        await db.playlists.update_one(
+            {"id": playlist_id, "musician_id": musician_id},
+            {"$set": {"song_ids": playlist_data.song_ids}}
+        )
+        
+        logger.info(f"Updated playlist {playlist_id} for musician {musician_id}")
+        return {"success": True, "message": "Playlist updated successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating playlist: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error updating playlist")
+
+@api_router.delete("/playlists/{playlist_id}")
+async def delete_playlist(
+    playlist_id: str,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Delete a playlist (Pro feature)"""
+    try:
+        # Check Pro access
+        await require_pro_access(musician_id)
+        
+        # Verify playlist belongs to musician
+        playlist = await db.playlists.find_one({"id": playlist_id, "musician_id": musician_id})
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+        
+        # If this was the active playlist, reset to "All Songs"
+        musician = await db.musicians.find_one({"id": musician_id})
+        if musician.get("active_playlist_id") == playlist_id:
+            await db.musicians.update_one(
+                {"id": musician_id},
+                {"$unset": {"active_playlist_id": ""}}
+            )
+        
+        # Delete playlist
+        await db.playlists.delete_one({"id": playlist_id, "musician_id": musician_id})
+        
+        logger.info(f"Deleted playlist {playlist_id} for musician {musician_id}")
+        return {"success": True, "message": "Playlist deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting playlist: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error deleting playlist")
+
+@api_router.put("/playlists/{playlist_id}/activate")
+async def activate_playlist(
+    playlist_id: str,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Set a playlist as active for the audience interface (Pro feature)"""
+    try:
+        # Check Pro access
+        await require_pro_access(musician_id)
+        
+        # Handle "all_songs" special case
+        if playlist_id == "all_songs":
+            await db.musicians.update_one(
+                {"id": musician_id},
+                {"$unset": {"active_playlist_id": ""}}
+            )
+            logger.info(f"Activated 'All Songs' for musician {musician_id}")
+            return {"success": True, "message": "All Songs activated"}
+        
+        # Verify playlist belongs to musician
+        playlist = await db.playlists.find_one({"id": playlist_id, "musician_id": musician_id})
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+        
+        # Set as active playlist
+        await db.musicians.update_one(
+            {"id": musician_id},
+            {"$set": {"active_playlist_id": playlist_id}}
+        )
+        
+        logger.info(f"Activated playlist {playlist_id} for musician {musician_id}")
+        return {"success": True, "message": f"Playlist '{playlist['name']}' activated"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error activating playlist: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error activating playlist")
+
 # Health check
 @api_router.get("/health")
 async def health_check():
