@@ -408,6 +408,12 @@ const MusicianDashboard = () => {
   const [decadeFilter, setDecadeFilter] = useState('');  // NEW: Add decade filter
   const [filteredSongs, setFilteredSongs] = useState([]);
   const [songError, setSongError] = useState('');
+  const [filterOptions, setFilterOptions] = useState({  // NEW: Filter options for dropdowns
+    genres: [],
+    moods: [],
+    years: [],
+    decades: []
+  });
 
   // NEW: Phase 2 - Sorting and popularity state
   const [sortBy, setSortBy] = useState('created_at'); // 'created_at', 'popularity', 'title', 'artist', 'year'
