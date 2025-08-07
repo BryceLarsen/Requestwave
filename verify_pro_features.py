@@ -6,7 +6,7 @@ Verify Pro Features for brycelarsenmusic@gmail.com
 import requests
 import json
 
-BASE_URL = "https://4ea289bc-16f8-4f83-aa5c-66fcd9ce34a7.preview.emergentagent.com/api"
+BASE_URL = "https://c9aa150a-6f2f-42af-9179-ded9ed77f946.preview.emergentagent.com/api"
 
 class ProFeatureVerifier:
     def __init__(self):
@@ -250,7 +250,7 @@ def main():
     print("\n🌐 DEMO ACCOUNT ACCESS:")
     print("   • Email: brycelarsenmusic@gmail.com")
     print("   • Password: RequestWave2024!")
-    print("   • Public URL: https://4ea289bc-16f8-4f83-aa5c-66fcd9ce34a7.preview.emergentagent.com/musician/bryce-larsen")
+    print("   • Public URL: https://c9aa150a-6f2f-42af-9179-ded9ed77f946.preview.emergentagent.com/musician/bryce-larsen")
     
     print("\n🎯 PRO FEATURES CONFIRMED:")
     print("   • ✅ Unlimited song requests")
