@@ -1184,27 +1184,73 @@ def get_spotify_client():
         return None
 
 def get_mood_from_audio_features(audio_features: dict) -> str:
-    """Determine mood from Spotify audio features"""
+    """Determine mood from Spotify audio features using curated mood categories"""
     if not audio_features:
-        return "Upbeat"
+        return "Feel Good"  # Default
     
     valence = audio_features.get('valence', 0.5)  # 0.0 = sad, 1.0 = happy
     energy = audio_features.get('energy', 0.5)    # 0.0 = low energy, 1.0 = high energy
     danceability = audio_features.get('danceability', 0.5)
+    acousticness = audio_features.get('acousticness', 0.5)
+    tempo = audio_features.get('tempo', 120)
     
-    # Determine mood based on audio features
-    if valence > 0.7 and energy > 0.7:
-        return "Energetic"
-    elif valence > 0.6 and danceability > 0.6:
-        return "Upbeat"
-    elif valence < 0.4 and energy < 0.5:
-        return "Melancholy"
-    elif energy < 0.4:
-        return "Chill"
-    elif valence > 0.6 and energy < 0.6:
+    # Map to curated mood categories based on audio features
+    
+    # High energy, high danceability = party/dance moods
+    if energy > 0.8 and danceability > 0.7:
+        return "Dance Party"
+    elif energy > 0.7 and valence > 0.7 and tempo > 140:
+        return "Bar Anthems"
+    elif energy > 0.6 and valence > 0.6 and danceability > 0.6:
+        return "Weekend Warm-Up"
+    
+    # High valence but lower energy = good vibes
+    elif valence > 0.7 and energy > 0.5:
+        return "Feel Good"
+    elif valence > 0.6 and acousticness > 0.5:
+        return "Summer Vibes"
+    elif valence > 0.5 and danceability > 0.6:
+        return "Groovy"
+    
+    # Mid valence, romantic characteristics
+    elif 0.4 <= valence <= 0.7 and energy < 0.6 and acousticness > 0.4:
         return "Romantic"
+    elif 0.4 <= valence <= 0.6 and energy < 0.5:
+        return "Poolside"
+    
+    # Low energy, chill vibes
+    elif energy < 0.4 and valence > 0.4:
+        return "Chill Vibes"
+    elif energy < 0.5 and acousticness > 0.6:
+        return "Coffeehouse"
+    elif energy < 0.4 and tempo < 100:
+        return "Late Night"
+    
+    # Low valence = sad/melancholic but still engaging
+    elif valence < 0.4 and energy > 0.5:
+        return "Sad Bangers"  # Sad but still hits hard
+    elif valence < 0.4 and energy < 0.5:
+        return "Heartbreak"
+    elif valence < 0.5 and acousticness > 0.5:
+        return "Rainy Day"
+    
+    # Acoustic characteristics
+    elif acousticness > 0.7:
+        return "Fall Acoustic"
+    elif acousticness > 0.5 and energy < 0.6:
+        return "Campfire"
+    
+    # High energy, mid-range everything else = road trip vibes
+    elif energy > 0.6 and 0.4 <= valence <= 0.7:
+        return "Road Trip"
+    
+    # Default fallbacks
+    elif energy > 0.6:
+        return "Feel It Live"  # High energy, good for performance
+    elif valence > 0.5:
+        return "Throwback"  # Pleasant, nostalgic feeling
     else:
-        return "Upbeat"
+        return "Feel Good"  # Safe default
 
 async def search_spotify_metadata(title: str, artist: str) -> Dict[str, Any]:
     """Search Spotify for song metadata using Client Credentials"""
