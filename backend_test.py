@@ -8486,6 +8486,19 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
         self.test_musician_registration()
         self.test_jwt_token_validation()
         
+        # PRIORITY TESTS FOR CURATED CATEGORIES AND PLAYLIST IMPORT NOTES FIX
+        print("\n🎯 PRIORITY TESTING: Curated Categories & Playlist Import Notes Fix")
+        print("=" * 60)
+        
+        # Priority 1: Test curated genre/mood categories
+        self.test_curated_genre_mood_categories()
+        
+        # Priority 3: Test playlist import with blank notes and new categories
+        self.test_playlist_import_notes_fix_pro_account()
+        
+        # Priority 4: Test song suggestion system with new categories
+        self.test_song_suggestion_curated_categories()
+        
         # CRITICAL: Stripe Subscription System Testing - HIGHEST PRIORITY
         print("\n" + "🔥" * 15 + " CRITICAL: STRIPE SUBSCRIPTION SYSTEM - FIXED ROUTING TESTS " + "🔥" * 15)
         print("Testing the FIXED Stripe subscription endpoints after resolving critical routing conflicts")
