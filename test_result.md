@@ -502,8 +502,7 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus:
-    - "Bulk/Batch Edit Functionality - FIXED: '[object Object],[object Object]' popup issue resolved with proper error handling"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "critical_first"
