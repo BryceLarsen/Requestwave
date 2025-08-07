@@ -1702,7 +1702,14 @@ const MusicianDashboard = () => {
       <header className="bg-gray-800 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <h1 className="text-2xl font-bold text-purple-400">RequestWave</h1>
+            <div className="flex items-center space-x-3">
+              <img
+                src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/9wbfmlsw_A_logo_for_%22RequestWave%22_features_a_purple_microph.png"
+                alt="RequestWave"
+                className="w-10 h-10 object-contain"
+              />
+              <h1 className="text-2xl font-bold text-purple-400">RequestWave</h1>
+            </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-300">Welcome, {musician.name}</span>
               <button
