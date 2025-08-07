@@ -5565,8 +5565,8 @@ const OnStageInterface = () => {
     
     new Notification(title, {
       body,
-      icon: 'https://customer-assets.emergentagent.com/job_bandbridge/artifacts/9wbfmlsw_A_logo_for_%22RequestWave%22_features_a_purple_microph.png',
-      badge: 'https://customer-assets.emergentagent.com/job_bandbridge/artifacts/9wbfmlsw_A_logo_for_%22RequestWave%22_features_a_purple_microph.png',
+      icon: 'https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png',
+      badge: 'https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png',
       tag: 'new-request',
       requireInteraction: true
     });
