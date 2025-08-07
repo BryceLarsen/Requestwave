@@ -557,9 +557,9 @@ metadata:
 
   - task: "QR Code URL Fix Verification"
     implemented: true
-    working: true
+    working: false
     file: "server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "critical"
     needs_retesting: false
     status_history:
@@ -569,6 +569,9 @@ metadata:
       - working: true
         agent: "testing"
         comment: "QR CODE URL FIX VERIFIED: Comprehensive testing confirms the backend code is correctly updated and working. ✅ BACKEND CODE FIXED: The QR code endpoints (/api/qr-code and /api/qr-flyer) correctly read FRONTEND_URL environment variable and generate URLs with https://livewave-music.emergent.host domain when accessed directly on localhost:8001. ✅ ENVIRONMENT VARIABLE CORRECT: FRONTEND_URL is properly set to 'https://livewave-music.emergent.host' in backend/.env and supervisor configuration. ✅ CODE IMPLEMENTATION CORRECT: Both generate_musician_qr() and generate_qr_flyer_endpoint() functions use os.environ.get('FRONTEND_URL') correctly. ✅ DIRECT BACKEND ACCESS WORKING: Testing localhost:8001/api/qr-code returns correct audience_url: 'https://livewave-music.emergent.host/musician/bryce-larsen'. ⚠️ ROUTING/PROXY ISSUE: When accessing through public domain (https://livewave-music.emergent.host/api), requests are being routed to a different backend instance that still returns old preview URLs. This appears to be an infrastructure/deployment issue rather than a code issue. The QR code fix implementation is correct and working on the actual backend server."
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL QR CODE URL FIX STILL FAILING AFTER ROLLING RESTART: Comprehensive testing through public domain (https://livewave-music.emergent.host/api) confirms the QR code URL fix is NOT working despite rolling restart. ❌ PRIORITY 1 FAILED: GET /api/qr-code endpoint returns audience_url with old preview domain (2d821f37-5e3c-493f-a28d-8ff61cf1519e.preview.emergentagent.com/musician/bryce-larsen) instead of correct deployed domain (https://livewave-music.emergent.host). ❌ PRIORITY 2 FAILED: GET /api/qr-flyer endpoint also returns old preview domain in audience_url field. ✅ ENVIRONMENT VARIABLES CORRECT: Backend/.env contains FRONTEND_URL=https://livewave-music.emergent.host. ✅ CURATED CATEGORIES WORKING: Spotify metadata search correctly returns curated genres/moods (4/4 test songs passed). ❌ INFRASTRUCTURE ISSUE CONFIRMED: The rolling restart did not resolve the routing issue - public domain requests are still hitting an old backend instance that hasn't been updated with the new environment variables. This is a critical deployment/infrastructure problem preventing QR codes from working correctly for users."
 
 test_plan:
   current_focus: 
