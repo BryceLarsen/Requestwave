@@ -1524,12 +1524,16 @@ const MusicianDashboard = () => {
 
   const generateQRCode = async () => {
     try {
-      const response = await axios.get(`${API}/qr-code`);
+      const response = await axios.get(`${API}/qr-code`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       setQrCode(response.data);
       setShowQRModal(true);
     } catch (error) {
       console.error('Error generating QR code:', error);
-      alert('Error generating QR code');
+      alert('Error generating QR code. Please make sure you are logged in.');
     }
   };
 
