@@ -2246,7 +2246,7 @@ async def get_musician_songs(
     year: Optional[int] = None,
     decade: Optional[str] = None  # NEW: Add decade filter parameter
 ):
-    """Get songs for a musician with filtering and search support"""
+    """Get songs for a musician with filtering and search support, filtered by active playlist"""
     # Get musician
     musician = await db.musicians.find_one({"slug": slug})
     if not musician:
@@ -2257,6 +2257,18 @@ async def get_musician_songs(
         "musician_id": musician["id"],
         "hidden": {"$ne": True}  # NEW: Filter out hidden songs for audience
     }
+    
+    # NEW: Filter by active playlist if set (Pro feature)
+    active_playlist_id = musician.get("active_playlist_id")
+    if active_playlist_id:
+        # Get the active playlist
+        playlist = await db.playlists.find_one({"id": active_playlist_id, "musician_id": musician["id"]})
+        if playlist and playlist.get("song_ids"):
+            # Only show songs that are in the active playlist
+            query["id"] = {"$in": playlist["song_ids"]}
+        else:
+            # If playlist not found or empty, show no songs
+            return []
     
     # Apply search across all fields (title, artist, genres, moods, year)
     if search:
