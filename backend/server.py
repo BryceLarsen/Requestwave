@@ -1615,7 +1615,7 @@ async def import_from_playlist(import_data: PlaylistImport, musician_id: str = D
                         'genres': ['Pop'],
                         'moods': ['Upbeat'],
                         'year': 2023,
-                        'notes': f'Demo song from Spotify playlist {playlist_id}',
+                        'notes': '',  # Leave blank for user customization
                         'source': 'spotify'
                     },
                     {
@@ -1624,7 +1624,7 @@ async def import_from_playlist(import_data: PlaylistImport, musician_id: str = D
                         'genres': ['Rock'],
                         'moods': ['Energetic'],
                         'year': 2022,
-                        'notes': f'Demo song from Spotify playlist {playlist_id}',
+                        'notes': '',  # Leave blank for user customization
                         'source': 'spotify'
                     }
                 ]
