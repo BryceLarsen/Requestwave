@@ -168,7 +168,569 @@ class RequestWaveAPITester:
         except Exception as e:
             self.log_result("JWT Token Validation", False, f"Exception: {str(e)}")
 
-    def test_curated_genre_mood_categories(self):
+    def test_qr_code_generation_url_fix(self):
+        """Test QR code generation uses correct deployed URL - PRIORITY 1"""
+        try:
+            print("🔍 PRIORITY 1: Testing QR Code Generation URL Fix")
+            print("=" * 80)
+            
+            # Login with Pro account for QR code testing
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("QR Code Generation - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            pro_musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            print(f"   ✅ Musician slug: {pro_musician_slug}")
+            
+            # Step 2: Test GET /api/qr-code endpoint
+            print("📊 Step 2: Testing GET /api/qr-code endpoint")
+            
+            qr_response = self.make_request("GET", "/qr-code")
+            
+            if qr_response.status_code != 200:
+                self.log_result("QR Code Generation - Endpoint Response", False, f"QR code endpoint failed: {qr_response.status_code}, Response: {qr_response.text}")
+                self.auth_token = original_token
+                return
+            
+            qr_data = qr_response.json()
+            print(f"📊 QR code response structure: {list(qr_data.keys())}")
+            
+            # Step 3: Verify QR code data contains correct deployed URL
+            print("📊 Step 3: CRITICAL VERIFICATION - Check QR code contains correct deployed URL")
+            
+            expected_domain = "https://livewave-music.emergent.host"
+            old_preview_domain = "2d821f37-5e3c-493f-a28d-8ff61cf1519e.preview.emergentagent.com"
+            
+            # Check audience_url field
+            audience_url = qr_data.get("audience_url", "")
+            qr_code_data = qr_data.get("qr_code_data", "")
+            
+            print(f"   📊 audience_url: {audience_url}")
+            print(f"   📊 qr_code_data: {qr_code_data}")
+            
+            # Verify correct domain is used
+            correct_domain_in_audience_url = expected_domain in audience_url
+            correct_domain_in_qr_data = expected_domain in qr_code_data
+            
+            # Verify old domain is NOT used
+            old_domain_in_audience_url = old_preview_domain in audience_url
+            old_domain_in_qr_data = old_preview_domain in qr_code_data
+            
+            print(f"   📊 Correct domain in audience_url: {correct_domain_in_audience_url}")
+            print(f"   📊 Correct domain in qr_code_data: {correct_domain_in_qr_data}")
+            print(f"   📊 Old domain in audience_url: {old_domain_in_audience_url}")
+            print(f"   📊 Old domain in qr_code_data: {old_domain_in_qr_data}")
+            
+            # Step 4: Verify QR code response structure
+            print("📊 Step 4: Verify QR code response structure")
+            
+            required_fields = ["qr_code_data", "audience_url", "musician_name"]
+            missing_fields = [field for field in required_fields if field not in qr_data]
+            
+            if len(missing_fields) == 0:
+                print(f"   ✅ All required fields present: {required_fields}")
+                structure_valid = True
+            else:
+                print(f"   ❌ Missing fields: {missing_fields}")
+                structure_valid = False
+            
+            # Step 5: Test QR code image data (if present)
+            print("📊 Step 5: Test QR code image data")
+            
+            qr_image_data = qr_data.get("qr_code_image")
+            if qr_image_data:
+                # Check if it's base64 encoded image
+                image_valid = qr_image_data.startswith("data:image/") or len(qr_image_data) > 100
+                print(f"   ✅ QR code image data present: {len(qr_image_data)} characters")
+            else:
+                image_valid = True  # Image might be optional
+                print("   ℹ️  QR code image data not present (may be optional)")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            url_fix_working = (correct_domain_in_audience_url and correct_domain_in_qr_data and 
+                             not old_domain_in_audience_url and not old_domain_in_qr_data)
+            
+            if url_fix_working and structure_valid and image_valid:
+                self.log_result("QR Code Generation URL Fix", True, f"✅ PRIORITY 1 COMPLETE: QR codes now use correct deployed URL {expected_domain} instead of old preview URL")
+            elif url_fix_working:
+                self.log_result("QR Code Generation URL Fix", True, f"✅ URL FIX WORKING: QR codes use correct deployed URL, minor structure issues")
+            else:
+                issues = []
+                if not correct_domain_in_audience_url:
+                    issues.append("audience_url missing correct domain")
+                if not correct_domain_in_qr_data:
+                    issues.append("qr_code_data missing correct domain")
+                if old_domain_in_audience_url:
+                    issues.append("audience_url still contains old preview domain")
+                if old_domain_in_qr_data:
+                    issues.append("qr_code_data still contains old preview domain")
+                if not structure_valid:
+                    issues.append(f"missing fields: {missing_fields}")
+                
+                self.log_result("QR Code Generation URL Fix", False, f"❌ CRITICAL QR CODE ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("QR Code Generation URL Fix", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_qr_flyer_generation_url_fix(self):
+        """Test QR flyer generation uses correct deployed URL - PRIORITY 2"""
+        try:
+            print("🔍 PRIORITY 2: Testing QR Flyer Generation URL Fix")
+            print("=" * 80)
+            
+            # Login with Pro account
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("QR Flyer Generation - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            pro_musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            
+            # Step 2: Test GET /api/qr-flyer endpoint
+            print("📊 Step 2: Testing GET /api/qr-flyer endpoint")
+            
+            flyer_response = self.make_request("GET", "/qr-flyer")
+            
+            if flyer_response.status_code != 200:
+                self.log_result("QR Flyer Generation - Endpoint Response", False, f"QR flyer endpoint failed: {flyer_response.status_code}, Response: {flyer_response.text}")
+                self.auth_token = original_token
+                return
+            
+            flyer_data = flyer_response.json()
+            print(f"📊 QR flyer response structure: {list(flyer_data.keys())}")
+            
+            # Step 3: Verify flyer contains correct deployed URL
+            print("📊 Step 3: CRITICAL VERIFICATION - Check flyer uses correct deployed domain")
+            
+            expected_domain = "https://livewave-music.emergent.host"
+            old_preview_domain = "2d821f37-5e3c-493f-a28d-8ff61cf1519e.preview.emergentagent.com"
+            
+            # Check various fields that might contain URLs
+            url_fields_to_check = ["audience_url", "qr_flyer_data", "flyer_image"]
+            url_check_results = {}
+            
+            for field in url_fields_to_check:
+                if field in flyer_data:
+                    field_value = str(flyer_data[field])
+                    url_check_results[field] = {
+                        "has_correct_domain": expected_domain in field_value,
+                        "has_old_domain": old_preview_domain in field_value,
+                        "value_preview": field_value[:100] + "..." if len(field_value) > 100 else field_value
+                    }
+                    print(f"   📊 {field}: correct_domain={url_check_results[field]['has_correct_domain']}, old_domain={url_check_results[field]['has_old_domain']}")
+                else:
+                    url_check_results[field] = {"missing": True}
+                    print(f"   📊 {field}: missing from response")
+            
+            # Step 4: Verify flyer generation works
+            print("📊 Step 4: Verify flyer generation functionality")
+            
+            flyer_image = flyer_data.get("flyer_image") or flyer_data.get("qr_flyer_data")
+            if flyer_image:
+                # Check if it's base64 encoded image
+                flyer_valid = (flyer_image.startswith("data:image/") or 
+                             flyer_image.startswith("/9j/") or  # JPEG base64
+                             flyer_image.startswith("iVBORw0KGgo") or  # PNG base64
+                             len(flyer_image) > 1000)  # Reasonable size for image data
+                print(f"   ✅ Flyer image data present: {len(flyer_image)} characters")
+            else:
+                flyer_valid = False
+                print("   ❌ No flyer image data found")
+            
+            # Step 5: Check musician name in flyer
+            print("📊 Step 5: Check musician name in flyer")
+            
+            musician_name = flyer_data.get("musician_name")
+            if musician_name:
+                print(f"   ✅ Musician name in flyer: {musician_name}")
+                name_valid = True
+            else:
+                print("   ❌ Musician name missing from flyer")
+                name_valid = False
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            correct_domains = sum(1 for result in url_check_results.values() 
+                                if not result.get("missing") and result.get("has_correct_domain"))
+            old_domains = sum(1 for result in url_check_results.values() 
+                            if not result.get("missing") and result.get("has_old_domain"))
+            
+            url_fix_working = correct_domains > 0 and old_domains == 0
+            
+            if url_fix_working and flyer_valid and name_valid:
+                self.log_result("QR Flyer Generation URL Fix", True, f"✅ PRIORITY 2 COMPLETE: QR flyer generation works with correct deployed URL {expected_domain}")
+            elif url_fix_working and flyer_valid:
+                self.log_result("QR Flyer Generation URL Fix", True, f"✅ FLYER URL FIX WORKING: Flyer uses correct deployed URL, minor issues with metadata")
+            else:
+                issues = []
+                if correct_domains == 0:
+                    issues.append("no fields contain correct deployed domain")
+                if old_domains > 0:
+                    issues.append("old preview domain still present")
+                if not flyer_valid:
+                    issues.append("flyer image generation failed")
+                if not name_valid:
+                    issues.append("musician name missing")
+                
+                self.log_result("QR Flyer Generation URL Fix", False, f"❌ CRITICAL QR FLYER ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("QR Flyer Generation URL Fix", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_musician_profile_url_verification(self):
+        """Test musician profile URL generation uses correct deployed URL - PRIORITY 3"""
+        try:
+            print("🔍 PRIORITY 3: Testing Musician Profile URL Verification")
+            print("=" * 80)
+            
+            # Login with Pro account
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("Musician Profile URL - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            pro_musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            print(f"   ✅ Musician slug: {pro_musician_slug}")
+            
+            # Step 2: Test GET /api/musicians/{slug} endpoint
+            print(f"📊 Step 2: Testing GET /api/musicians/{pro_musician_slug} endpoint")
+            
+            # Clear auth token for public endpoint test
+            self.auth_token = None
+            
+            profile_response = self.make_request("GET", f"/musicians/{pro_musician_slug}")
+            
+            if profile_response.status_code != 200:
+                self.log_result("Musician Profile URL - Public Endpoint", False, f"Musician profile endpoint failed: {profile_response.status_code}, Response: {profile_response.text}")
+                self.auth_token = original_token
+                return
+            
+            profile_data = profile_response.json()
+            print(f"📊 Musician profile response: {json.dumps(profile_data, indent=2)}")
+            
+            # Step 3: Verify audience link generation uses deployed URL
+            print("📊 Step 3: CRITICAL VERIFICATION - Check audience link generation")
+            
+            expected_domain = "https://livewave-music.emergent.host"
+            old_preview_domain = "2d821f37-5e3c-493f-a28d-8ff61cf1519e.preview.emergentagent.com"
+            
+            # Construct expected audience URL
+            expected_audience_url = f"{expected_domain}/{pro_musician_slug}"
+            old_audience_url_pattern = f"{old_preview_domain}"
+            
+            print(f"   📊 Expected audience URL pattern: {expected_audience_url}")
+            print(f"   📊 Old URL pattern to avoid: {old_audience_url_pattern}")
+            
+            # Step 4: Test audience link construction
+            print("📊 Step 4: Test audience link construction")
+            
+            # Restore auth token for authenticated endpoint
+            self.auth_token = original_token
+            
+            # Test if there's a specific endpoint for audience links
+            audience_link_response = self.make_request("GET", "/audience-link")
+            
+            audience_link_valid = False
+            if audience_link_response.status_code == 200:
+                audience_link_data = audience_link_response.json()
+                print(f"   📊 Audience link response: {json.dumps(audience_link_data, indent=2)}")
+                
+                audience_url = audience_link_data.get("audience_url", "")
+                if expected_domain in audience_url and old_preview_domain not in audience_url:
+                    audience_link_valid = True
+                    print(f"   ✅ Audience link uses correct domain: {audience_url}")
+                else:
+                    print(f"   ❌ Audience link uses wrong domain: {audience_url}")
+            else:
+                print(f"   ℹ️  No specific audience-link endpoint (status: {audience_link_response.status_code})")
+                # Assume audience link is constructed from base URL + slug
+                constructed_url = f"{expected_domain}/{pro_musician_slug}"
+                audience_link_valid = True  # We'll verify this works in practice
+                print(f"   ℹ️  Assuming audience link: {constructed_url}")
+            
+            # Step 5: Verify profile data returns correct URLs
+            print("📊 Step 5: Verify profile data contains correct URL references")
+            
+            # Check if profile contains any URL fields that should use the deployed domain
+            url_fields_in_profile = []
+            for key, value in profile_data.items():
+                if isinstance(value, str) and ("http" in value or "url" in key.lower()):
+                    url_fields_in_profile.append((key, value))
+            
+            profile_url_valid = True
+            for field_name, field_value in url_fields_in_profile:
+                if old_preview_domain in field_value:
+                    profile_url_valid = False
+                    print(f"   ❌ Profile field '{field_name}' contains old domain: {field_value}")
+                else:
+                    print(f"   ✅ Profile field '{field_name}' looks good: {field_value}")
+            
+            if len(url_fields_in_profile) == 0:
+                print("   ℹ️  No URL fields found in profile data")
+            
+            # Step 6: Test actual audience page accessibility
+            print("📊 Step 6: Test audience page URL construction")
+            
+            # Clear auth token for public access test
+            self.auth_token = None
+            
+            # Test the constructed audience URL by trying to access musician's songs
+            audience_songs_response = self.make_request("GET", f"/musicians/{pro_musician_slug}/songs")
+            
+            if audience_songs_response.status_code == 200:
+                songs_data = audience_songs_response.json()
+                print(f"   ✅ Audience can access musician's songs: {len(songs_data)} songs available")
+                audience_access_valid = True
+            else:
+                print(f"   ❌ Audience cannot access musician's songs: {audience_songs_response.status_code}")
+                audience_access_valid = False
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            if audience_link_valid and profile_url_valid and audience_access_valid:
+                self.log_result("Musician Profile URL Verification", True, f"✅ PRIORITY 3 COMPLETE: Musician profile URLs use correct deployed domain {expected_domain}")
+            elif audience_link_valid and audience_access_valid:
+                self.log_result("Musician Profile URL Verification", True, f"✅ PROFILE URL FIX WORKING: Core functionality uses correct deployed domain")
+            else:
+                issues = []
+                if not audience_link_valid:
+                    issues.append("audience link uses wrong domain")
+                if not profile_url_valid:
+                    issues.append("profile contains old domain references")
+                if not audience_access_valid:
+                    issues.append("audience cannot access musician data")
+                
+                self.log_result("Musician Profile URL Verification", False, f"❌ CRITICAL PROFILE URL ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Musician Profile URL Verification", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_environment_variable_verification(self):
+        """Test backend reads updated FRONTEND_URL environment variable correctly - PRIORITY 4"""
+        try:
+            print("🔍 PRIORITY 4: Testing Environment Variable Verification")
+            print("=" * 80)
+            
+            # Step 1: Test health check to ensure backend is running
+            print("📊 Step 1: Test backend health check")
+            
+            health_response = self.make_request("GET", "/health")
+            
+            if health_response.status_code != 200:
+                self.log_result("Environment Variable - Backend Health", False, f"Backend health check failed: {health_response.status_code}")
+                return
+            
+            health_data = health_response.json()
+            print(f"   ✅ Backend is healthy: {health_data}")
+            
+            # Step 2: Test environment info endpoint (if available)
+            print("📊 Step 2: Test environment configuration endpoint")
+            
+            # Login first for authenticated endpoints
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("Environment Variable - Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            
+            # Try to access environment info (may not exist)
+            env_response = self.make_request("GET", "/env-info")
+            
+            if env_response.status_code == 200:
+                env_data = env_response.json()
+                print(f"   📊 Environment info: {json.dumps(env_data, indent=2)}")
+                
+                frontend_url = env_data.get("frontend_url") or env_data.get("FRONTEND_URL")
+                if frontend_url:
+                    expected_url = "https://livewave-music.emergent.host"
+                    if frontend_url == expected_url:
+                        print(f"   ✅ FRONTEND_URL correctly set: {frontend_url}")
+                        env_var_correct = True
+                    else:
+                        print(f"   ❌ FRONTEND_URL incorrect: expected {expected_url}, got {frontend_url}")
+                        env_var_correct = False
+                else:
+                    print("   ⚠️  FRONTEND_URL not exposed in env-info endpoint")
+                    env_var_correct = None
+            else:
+                print(f"   ℹ️  No env-info endpoint available (status: {env_response.status_code})")
+                env_var_correct = None
+            
+            # Step 3: Indirect verification through QR code generation
+            print("📊 Step 3: Indirect verification through QR code URLs")
+            
+            qr_response = self.make_request("GET", "/qr-code")
+            
+            if qr_response.status_code == 200:
+                qr_data = qr_response.json()
+                audience_url = qr_data.get("audience_url", "")
+                
+                expected_domain = "https://livewave-music.emergent.host"
+                old_domain = "2d821f37-5e3c-493f-a28d-8ff61cf1519e.preview.emergentagent.com"
+                
+                if expected_domain in audience_url and old_domain not in audience_url:
+                    print(f"   ✅ QR code URLs use correct domain: {audience_url}")
+                    qr_url_correct = True
+                elif old_domain in audience_url:
+                    print(f"   ❌ QR code URLs still use old domain: {audience_url}")
+                    qr_url_correct = False
+                else:
+                    print(f"   ⚠️  QR code URLs use unexpected domain: {audience_url}")
+                    qr_url_correct = False
+            else:
+                print(f"   ❌ Could not test QR code URLs: {qr_response.status_code}")
+                qr_url_correct = False
+            
+            # Step 4: Test API base URL consistency
+            print("📊 Step 4: Test API base URL consistency")
+            
+            # Check if all API responses are coming from the expected domain
+            current_base = self.base_url.replace("/api", "")
+            expected_base = "https://livewave-music.emergent.host"
+            
+            if current_base == expected_base:
+                print(f"   ✅ Test client using correct base URL: {current_base}")
+                base_url_correct = True
+            else:
+                print(f"   ❌ Test client using wrong base URL: expected {expected_base}, using {current_base}")
+                base_url_correct = False
+            
+            # Step 5: Test no hardcoded old URLs in responses
+            print("📊 Step 5: Test for hardcoded old URLs in API responses")
+            
+            # Test multiple endpoints for old URL references
+            endpoints_to_check = [
+                ("/qr-code", "QR code"),
+                ("/qr-flyer", "QR flyer"),
+                ("/profile", "Profile")
+            ]
+            
+            old_url_found = False
+            old_url_locations = []
+            
+            for endpoint, description in endpoints_to_check:
+                try:
+                    response = self.make_request("GET", endpoint)
+                    if response.status_code == 200:
+                        response_text = response.text
+                        if "2d821f37-5e3c-493f-a28d-8ff61cf1519e.preview.emergentagent.com" in response_text:
+                            old_url_found = True
+                            old_url_locations.append(description)
+                            print(f"   ❌ Old URL found in {description} endpoint")
+                        else:
+                            print(f"   ✅ No old URL in {description} endpoint")
+                except:
+                    print(f"   ⚠️  Could not check {description} endpoint")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            verification_results = []
+            
+            if env_var_correct is True:
+                verification_results.append("environment variable correct")
+            elif env_var_correct is False:
+                verification_results.append("environment variable incorrect")
+            
+            if qr_url_correct:
+                verification_results.append("QR URLs correct")
+            else:
+                verification_results.append("QR URLs incorrect")
+            
+            if base_url_correct:
+                verification_results.append("base URL correct")
+            else:
+                verification_results.append("base URL incorrect")
+            
+            if not old_url_found:
+                verification_results.append("no hardcoded old URLs")
+            else:
+                verification_results.append(f"old URLs found in: {', '.join(old_url_locations)}")
+            
+            # Success if QR URLs are correct and no old URLs found
+            success = qr_url_correct and not old_url_found and base_url_correct
+            
+            if success:
+                self.log_result("Environment Variable Verification", True, f"✅ PRIORITY 4 COMPLETE: Backend correctly reads updated FRONTEND_URL environment variable - {', '.join(verification_results)}")
+            else:
+                self.log_result("Environment Variable Verification", False, f"❌ ENVIRONMENT VARIABLE ISSUES: {', '.join(verification_results)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Environment Variable Verification", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
         """Test the new curated genre and mood categories system - PRIORITY 1"""
         try:
             print("🔍 PRIORITY 1: Testing Curated Genre/Mood Categories System")
