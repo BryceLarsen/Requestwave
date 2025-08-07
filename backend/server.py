@@ -1738,8 +1738,14 @@ async def get_subscription_status_endpoint(musician_id: str = Depends(get_curren
     """Get current subscription status"""
     return await get_subscription_status(musician_id)
 
+class UpgradeRequest(BaseModel):
+    plan: str = "annual"  # "monthly" or "annual"
+
 @api_router.post("/subscription/upgrade", response_model=CheckoutSessionResponse)
-async def create_upgrade_checkout(musician_id: str = Depends(get_current_musician)):
+async def create_upgrade_checkout(
+    request: UpgradeRequest,
+    musician_id: str = Depends(get_current_musician)
+):
     """Create Stripe checkout session for Pro subscription - Choose between monthly ($10) or annual ($60) plans"""
     if not STRIPE_API_KEY:
         raise HTTPException(status_code=500, detail="Stripe not configured")
