@@ -214,9 +214,9 @@ backend:
 
   - task: "Song Metadata Auto-fill Feature (Spotify Integration)"
     implemented: true
-    working: true
+    working: false
     file: "server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: false
     status_history:
