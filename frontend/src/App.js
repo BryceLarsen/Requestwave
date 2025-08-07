@@ -3899,7 +3899,9 @@ const MusicianDashboard = () => {
         {showUpgrade && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-gray-800 rounded-xl p-8 w-full max-w-md">
-              <h2 className="text-2xl font-bold text-center mb-6">Upgrade to RequestWave Pro</h2>
+              <h2 className="text-2xl font-bold text-center mb-6">
+                Upgrade to <span className="text-purple-400">Request</span><span className="text-green-400">Wave</span> Pro
+              </h2>
               
               <div className="text-center mb-6">
                 <div className="bg-green-600 text-white rounded-full px-6 py-3 text-3xl font-bold mb-4">
