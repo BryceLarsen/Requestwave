@@ -366,6 +366,26 @@ async def get_current_musician(credentials: HTTPAuthorizationCredentials = Depen
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+async def check_pro_access(musician_id: str) -> bool:
+    """Check if musician has Pro subscription access"""
+    try:
+        # Check if musician has active subscription
+        transaction = await db.payment_transactions.find_one({
+            "musician_id": musician_id,
+            "payment_status": "paid"
+        })
+        return transaction is not None
+    except:
+        return False
+
+async def require_pro_access(musician_id: str):
+    """Require Pro access for endpoint, raise exception if not Pro"""
+    if not await check_pro_access(musician_id):
+        raise HTTPException(
+            status_code=403, 
+            detail="This feature requires a Pro subscription. Please upgrade to access playlists."
+        )
+
 def parse_csv_content(content: bytes) -> List[Dict[str, Any]]:
     """Parse CSV content and return list of song dictionaries"""
     try:
