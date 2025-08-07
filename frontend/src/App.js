@@ -425,6 +425,9 @@ const MusicianDashboard = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestionError, setSuggestionError] = useState('');
   
+  // NEW: Post-request state for tracking clicks
+  const [currentRequestId, setCurrentRequestId] = useState(null);
+  
   // NEW: Tip functionality state
   const [showTipModal, setShowTipModal] = useState(false);
   const [tipAmount, setTipAmount] = useState('');
