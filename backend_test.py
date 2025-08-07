@@ -6107,6 +6107,22 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
         # Advanced filtering tests
         self.test_advanced_filtering()
         
+        # NEW: Song Suggestion Feature Tests (HIGH PRIORITY)
+        print("\n🎵 SONG SUGGESTION FEATURE TESTING")
+        print("=" * 50)
+        self.test_song_suggestion_creation_endpoint()
+        self.test_song_suggestion_required_fields_validation()
+        self.test_song_suggestion_email_validation()
+        self.test_song_suggestion_duplicate_prevention()
+        self.test_song_suggestion_pro_feature_access_control()
+        self.test_song_suggestion_invalid_musician_slug()
+        self.test_musician_song_suggestions_management()
+        self.test_song_suggestion_status_update_accept()
+        self.test_song_suggestion_status_update_reject()
+        self.test_song_suggestion_delete()
+        self.test_song_suggestion_authentication_required()
+        self.test_song_suggestion_duplicate_song_prevention()
+        
         # NEW: Audience Page Search Functionality tests (HIGH PRIORITY)
         print("\n🔍 AUDIENCE PAGE SEARCH FUNCTIONALITY TESTING")
         print("=" * 50)
