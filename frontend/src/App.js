@@ -1698,6 +1698,83 @@ const MusicianDashboard = () => {
     }
   };
 
+  // NEW: Playlist functions (Pro feature)
+  const fetchPlaylists = async () => {
+    try {
+      const response = await axios.get(`${API}/playlists`);
+      setPlaylists(response.data);
+      
+      // Find the active playlist
+      const activePlaylist = response.data.find(p => p.is_active);
+      setActivePlaylistId(activePlaylist ? activePlaylist.id : 'all_songs');
+    } catch (error) {
+      if (error.response?.status === 403) {
+        // User doesn't have Pro access, that's fine
+        setPlaylists([]);
+      } else {
+        console.error('Error fetching playlists:', error);
+      }
+    }
+  };
+
+  const createPlaylist = async () => {
+    if (!playlistName.trim()) {
+      setPlaylistManagementError('Please enter a playlist name');
+      return;
+    }
+
+    if (selectedSongs.size === 0) {
+      setPlaylistManagementError('Please select songs to add to the playlist');
+      return;
+    }
+
+    setPlaylistLoading(true);
+    setPlaylistManagementError('');
+
+    try {
+      await axios.post(`${API}/playlists`, {
+        name: playlistName,
+        song_ids: Array.from(selectedSongs)
+      });
+
+      setPlaylistName('');
+      setSelectedSongs(new Set());
+      setShowPlaylistModal(false);
+      fetchPlaylists();
+      alert('Playlist created successfully!');
+    } catch (error) {
+      if (error.response?.status === 403) {
+        setPlaylistManagementError('This feature requires a Pro subscription. Please upgrade to create playlists.');
+      } else {
+        setPlaylistManagementError(error.response?.data?.detail || 'Error creating playlist');
+      }
+    } finally {
+      setPlaylistLoading(false);
+    }
+  };
+
+  const activatePlaylist = async (playlistId) => {
+    try {
+      await axios.put(`${API}/playlists/${playlistId}/activate`);
+      setActivePlaylistId(playlistId);
+      fetchPlaylists();
+      
+      const playlist = playlists.find(p => p.id === playlistId);
+      const playlistName = playlist ? playlist.name : 'All Songs';
+      alert(`"${playlistName}" is now active for your audience!`);
+    } catch (error) {
+      console.error('Error activating playlist:', error);
+      alert('Error activating playlist');
+    }
+  };
+
+  // Fetch playlists on component mount
+  useEffect(() => {
+    if (musician) {
+      fetchPlaylists();
+    }
+  }, [musician]);
+
   const audienceUrl = `${window.location.origin}/musician/${musician.slug}`;
 
   if (loading) {
