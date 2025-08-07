@@ -1778,6 +1778,7 @@ const MusicianDashboard = () => {
       setSelectedSongs(new Set());
       setShowPlaylistModal(false);
       fetchPlaylists();
+      fetchFilterOptions(); // Refresh filter options when songs change
       alert('Playlist created successfully!');
     } catch (error) {
       if (error.response?.status === 403) {
