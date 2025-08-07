@@ -2734,6 +2734,7 @@ const MusicianDashboard = () => {
                       setMoodFilter('');
                       setYearFilter('');
                       setDecadeFilter('');
+                      setNotesFilter('');
                     }}
                     className="mt-2 text-purple-400 hover:text-purple-300 underline"
                   >
