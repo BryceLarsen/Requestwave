@@ -4308,6 +4308,11 @@ const AudienceInterface = () => {
               )}
             </div>
             <div className="flex items-center space-x-2">
+              <img
+                src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/9wbfmlsw_A_logo_for_%22RequestWave%22_features_a_purple_microph.png"
+                alt="RequestWave"
+                className="w-6 h-6 object-contain opacity-75"
+              />
               <button
                 onClick={() => setShowTipModal(true)}
                 className="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg font-medium transition duration-300 text-sm"
