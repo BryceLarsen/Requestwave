@@ -1363,6 +1363,22 @@ const MusicianDashboard = () => {
     }
   }, [sortBy, musician]);
 
+  useEffect(() => {
+    if (musician) {
+      fetchSongs();
+      fetchFilterOptions();
+      fetchRequests();
+      fetchDesignSettings();
+      
+      // Check if this is first login
+      const hasSeenQuickStart = localStorage.getItem(`quickstart_seen_${musician.id}`);
+      if (!hasSeenQuickStart) {
+        setIsFirstLogin(true);
+        setShowQuickStart(true);
+      }
+    }
+  }, [musician]);
+
   // NEW: Phase 3 - Analytics functions
   const fetchAnalytics = async () => {
     setAnalyticsLoading(true);
