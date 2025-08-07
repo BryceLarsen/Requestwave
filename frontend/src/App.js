@@ -5446,6 +5446,253 @@ const AudienceInterface = () => {
     </div>
   );
 };
+// NEW: On Stage Interface Component for Live Performances
+const OnStageInterface = () => {
+  const { slug } = useParams();
+  const [musician, setMusician] = useState(null);
+  const [requests, setRequests] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [newRequestCount, setNewRequestCount] = useState(0);
+  const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  
+  // Audio for notifications
+  const notificationSound = useRef(null);
+  
+  useEffect(() => {
+    // Create notification sound
+    notificationSound.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmUgBSuK1/LBayUHLIHO8tiJOQgZZrnr65lEFAxOo+H0v2EcBSuK2Oy1YSMGGHfh9LZoFwcKSY7Z6GROC9OgUBCFQxWFdTyqp+3tPnxH3b/7PKXw95cZggHfyOvkxFkcCzhPztuuaB0JLHTP8seKRAgUX7jr1qRUEg5Kme7xvWEaBiB8x/a7YCUJKnvH7daXOQgZZrfh9bpmFgkEUY3O8dGINQcUYbLL5ZdBBgpKgdFyMWMTOxbT7tqIMw0YXrLl1qBRDQdHg9PjkCQFMXXP8s2LOAwOYaWw4qlaUg4LZq7G9s2OSQMNYazJ6JNEAxOp+T+mVlwb9Uu12ddPKq1DzuaOc8QYXbTu');
+    
+    fetchMusician();
+    requestNotificationPermission();
+    
+    // Set up polling for real-time updates
+    const interval = setInterval(() => {
+      fetchUpdates();
+    }, 2000); // Poll every 2 seconds
+    
+    return () => clearInterval(interval);
+  }, [slug]);
+  
+  const fetchMusician = async () => {
+    try {
+      const response = await axios.get(`${API}/musicians/${slug}`);
+      setMusician(response.data);
+    } catch (error) {
+      console.error('Error fetching musician:', error);
+    }
+  };
+  
+  const fetchUpdates = async () => {
+    if (!musician) return;
+    
+    try {
+      const [requestsRes, suggestionsRes] = await Promise.all([
+        axios.get(`${API}/requests/musician/${musician.id}`),
+        axios.get(`${API}/song-suggestions?musician_id=${musician.id}`)
+      ]);
+      
+      const newRequests = requestsRes.data || [];
+      const newSuggestions = suggestionsRes.data?.filter(s => s.status === 'pending') || [];
+      
+      // Check for new items since last update
+      const currentTime = Date.now();
+      const newItemsSinceLastUpdate = [
+        ...newRequests.filter(r => new Date(r.created_at).getTime() > lastUpdateTime),
+        ...newSuggestions.filter(s => new Date(s.created_at).getTime() > lastUpdateTime)
+      ];
+      
+      if (newItemsSinceLastUpdate.length > 0 && !loading) {
+        setNewRequestCount(prev => prev + newItemsSinceLastUpdate.length);
+        showNotification(newItemsSinceLastUpdate);
+        playNotificationSound();
+      }
+      
+      setRequests(newRequests);
+      setSuggestions(newSuggestions);
+      setLastUpdateTime(currentTime);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching updates:', error);
+      setLoading(false);
+    }
+  };
+  
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window) {
+      const permission = await Notification.requestPermission();
+      setNotificationsEnabled(permission === 'granted');
+    }
+  };
+  
+  const showNotification = (newItems) => {
+    if (!notificationsEnabled) return;
+    
+    const title = `🎵 New ${newItems.length > 1 ? 'Requests' : 'Request'}!`;
+    const body = newItems.length === 1 
+      ? `${newItems[0].song_title || newItems[0].title} - ${newItems[0].requester_name || 'Anonymous'}`
+      : `${newItems.length} new requests received`;
+    
+    new Notification(title, {
+      body,
+      icon: 'https://customer-assets.emergentagent.com/job_bandbridge/artifacts/9wbfmlsw_A_logo_for_%22RequestWave%22_features_a_purple_microph.png',
+      badge: 'https://customer-assets.emergentagent.com/job_bandbridge/artifacts/9wbfmlsw_A_logo_for_%22RequestWave%22_features_a_purple_microph.png',
+      tag: 'new-request',
+      requireInteraction: true
+    });
+  };
+  
+  const playNotificationSound = () => {
+    if (notificationSound.current) {
+      notificationSound.current.play().catch(() => {
+        // Fallback: create a simple beep using Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+      });
+    }
+  };
+  
+  const clearNewCount = () => {
+    setNewRequestCount(0);
+  };
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
+  
+  if (!musician) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Musician not found</h1>
+          <p>Please check the URL and try again.</p>
+        </div>
+      </div>
+    );
+  }
+  
+  const allItems = [
+    ...requests.map(r => ({ ...r, type: 'request', time: new Date(r.created_at) })),
+    ...suggestions.map(s => ({ ...s, type: 'suggestion', time: new Date(s.created_at) }))
+  ].sort((a, b) => b.time - a.time);
+  
+  return (
+    <div className="min-h-screen bg-gray-900 text-white p-4">
+      {/* Header */}
+      <div className="bg-gray-800 rounded-xl p-4 mb-6 sticky top-4 z-10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <img
+              src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/9wbfmlsw_A_logo_for_%22RequestWave%22_features_a_purple_microph.png"
+              alt="RequestWave"
+              className="w-8 h-8 object-contain"
+            />
+            <div>
+              <h1 className="text-xl font-bold">🎤 On Stage</h1>
+              <p className="text-gray-400 text-sm">{musician.name}</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            {newRequestCount > 0 && (
+              <div 
+                onClick={clearNewCount}
+                className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold animate-pulse cursor-pointer"
+              >
+                +{newRequestCount} New!
+              </div>
+            )}
+            <div className={`w-3 h-3 rounded-full ${notificationsEnabled ? 'bg-green-500' : 'bg-red-500'}`}></div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Live Requests */}
+      <div className="space-y-4">
+        {allItems.length === 0 ? (
+          <div className="bg-gray-800 rounded-xl p-8 text-center">
+            <div className="text-6xl mb-4">🎵</div>
+            <h2 className="text-xl font-bold mb-2">Waiting for requests...</h2>
+            <p className="text-gray-400">New requests will appear here in real-time</p>
+          </div>
+        ) : (
+          allItems.map((item, index) => (
+            <div key={`${item.type}-${item.id}`} className={`bg-gray-800 rounded-xl p-6 border-l-4 ${
+              item.type === 'request' ? 'border-purple-500' : 'border-green-500'
+            }`}>
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex items-center space-x-2">
+                  <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                    item.type === 'request' ? 'bg-purple-600' : 'bg-green-600'
+                  }`}>
+                    {item.type === 'request' ? '🎵 REQUEST' : '💡 SUGGESTION'}
+                  </span>
+                  <span className="text-gray-400 text-sm">
+                    {item.time.toLocaleTimeString()}
+                  </span>
+                </div>
+                {index === 0 && (
+                  <span className="bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold animate-pulse">
+                    NEW
+                  </span>
+                )}
+              </div>
+              
+              <div className="mb-3">
+                <h3 className="text-xl font-bold mb-1">
+                  {item.song_title || item.title}
+                </h3>
+                <p className="text-gray-300">
+                  by {item.song_artist || item.artist}
+                </p>
+              </div>
+              
+              <div className="flex justify-between items-center text-sm">
+                <div className="text-gray-400">
+                  <span className="font-medium">From:</span> {item.requester_name || 'Anonymous'}
+                </div>
+                {item.dedication && (
+                  <div className="text-purple-300 max-w-xs truncate">
+                    💌 "{item.dedication}"
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+      
+      {/* Footer */}
+      <div className="mt-8 text-center text-gray-500 text-sm">
+        <p>Updates automatically • Keep this tab open during your performance</p>
+        {!notificationsEnabled && (
+          <button 
+            onClick={requestNotificationPermission}
+            className="mt-2 text-purple-400 hover:text-purple-300 underline"
+          >
+            Enable notifications for background alerts
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const LandingPage = () => {
   const [authMode, setAuthMode] = useState('login');
