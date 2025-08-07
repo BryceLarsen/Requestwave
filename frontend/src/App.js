@@ -187,7 +187,7 @@ const AuthForm = ({ mode, onSwitch }) => {
         {/* RequestWave Logo */}
         <div className="text-center mb-8">
           <img
-            src="https://customer-assets.emergentagent.com/job_requestwave-1/artifacts/fw848xgw_2E5CF5AB-AA0E-4457-A94A-4709CB4C4882.PNG"
+            src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/9wbfmlsw_A_logo_for_%22RequestWave%22_features_a_purple_microph.png"
             alt="RequestWave Logo"
             className="w-64 h-64 mx-auto mb-4 object-contain"
           />
