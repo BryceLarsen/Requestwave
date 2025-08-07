@@ -4628,6 +4628,111 @@ const AudienceInterface = () => {
             </div>
           </div>
         )}
+        
+        {/* NEW: Song Suggestion Modal */}
+        {showSuggestionModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <h2 className="text-xl font-bold mb-4 text-center">🎵 Suggest a Song</h2>
+              <p className="text-gray-400 text-sm mb-4 text-center">
+                Don't see the song you want? Let {musician?.name || 'the artist'} know about it!
+              </p>
+              
+              {suggestionError && (
+                <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200 text-sm">
+                  {suggestionError}
+                </div>
+              )}
+              
+              <form onSubmit={handleSuggestionSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Song Title *</label>
+                  <input
+                    type="text"
+                    placeholder="Enter song title..."
+                    value={suggestionForm.suggested_title}
+                    onChange={(e) => setSuggestionForm({...suggestionForm, suggested_title: e.target.value})}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Artist *</label>
+                  <input
+                    type="text"
+                    placeholder="Enter artist name..."
+                    value={suggestionForm.suggested_artist}
+                    onChange={(e) => setSuggestionForm({...suggestionForm, suggested_artist: e.target.value})}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Your Name *</label>
+                  <input
+                    type="text"
+                    placeholder="Enter your name..."
+                    value={suggestionForm.requester_name}
+                    onChange={(e) => setSuggestionForm({...suggestionForm, requester_name: e.target.value})}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Your Email *</label>
+                  <input
+                    type="email"
+                    placeholder="Enter your email..."
+                    value={suggestionForm.requester_email}
+                    onChange={(e) => setSuggestionForm({...suggestionForm, requester_email: e.target.value})}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Message (Optional)</label>
+                  <textarea
+                    placeholder="Why should they add this song?"
+                    value={suggestionForm.message}
+                    onChange={(e) => setSuggestionForm({...suggestionForm, message: e.target.value})}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400"
+                    rows="3"
+                  />
+                </div>
+                
+                <div className="flex space-x-3 pt-2">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-lg font-bold transition duration-300"
+                  >
+                    Send Suggestion
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowSuggestionModal(false);
+                      setSuggestionError('');
+                      setSuggestionForm({
+                        suggested_title: '',
+                        suggested_artist: '',
+                        requester_name: '',
+                        requester_email: '',
+                        message: ''
+                      });
+                    }}
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 py-2 rounded-lg font-bold transition duration-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
