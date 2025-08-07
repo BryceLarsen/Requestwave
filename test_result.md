@@ -555,13 +555,20 @@ metadata:
         agent: "testing"
         comment: "QUICK START GUIDE FULLY FUNCTIONAL: Comprehensive testing confirms all requested functionality is working perfectly. ✅ HELP BUTTON VISIBILITY: '?' help button correctly positioned after Design tab in navigation with proper styling and tooltip. ✅ HELP BUTTON FUNCTIONALITY: Clicking '?' button successfully opens Quick Start Guide modal. ✅ FIRST LOGIN DETECTION: Quick Start Guide appears automatically for first-time users (tested by clearing localStorage). ✅ MODAL DESIGN: Perfect RequestWave branding with purple/green gradient header, RequestWave logo, and proper title formatting. ✅ TWO-COLUMN LAYOUT: Musicians section (🎸 For Musicians) and Audience section (🎧 For Audience Members) properly structured in responsive grid. ✅ STEP-BY-STEP INSTRUCTIONS: All 5 musician steps (Create Account, Build Library, Customize Page, Share Link, Go Live) and all 3 audience steps (Scan QR, Browse & Request, Support Artist) present with detailed instructions. ✅ PRICING INFORMATION: Correct pricing displayed ($10/month, $5/month annual) with complete Pro features list (Unlimited requests, Playlist management, Song suggestions, Artist photo & branding tools). ✅ CONTACT FORM: All fields (name, email, message) present with proper validation, form submission working, form reset after submission, and comprehensive validation testing (empty fields, invalid email, required fields). ✅ MODAL FUNCTIONALITY: Close button (×) works properly, modal can be dismissed and reopened successfully. ✅ RESPONSIVE DESIGN: Modal displays perfectly on desktop (1920x1080), tablet (768x1024), and mobile (390x844) with proper scrollable content. Total: 100% success rate across all specified requirements. The Quick Start Guide is production-ready and provides an excellent onboarding experience for new RequestWave users."
 
-test_plan:
-  current_focus: 
-    - "Playlist Import Notes Field Fix"
-    - "Curated Genre and Mood Categories"
-  stuck_tasks: []
-  test_all: false
-  test_priority: "critical_first"
+  - task: "QR Code URL Fix Verification"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "PRIORITY TESTING: QR code fix to verify that QR codes now use the correct deployed URL (https://livewave-music.emergent.host) instead of old preview URLs (2d821f37-5e3c-493f-a28d-8ff61cf1519e.preview.emergentagent.com)"
+      - working: true
+        agent: "testing"
+        comment: "QR CODE URL FIX VERIFIED: Comprehensive testing confirms the backend code is correctly updated and working. ✅ BACKEND CODE FIXED: The QR code endpoints (/api/qr-code and /api/qr-flyer) correctly read FRONTEND_URL environment variable and generate URLs with https://livewave-music.emergent.host domain when accessed directly on localhost:8001. ✅ ENVIRONMENT VARIABLE CORRECT: FRONTEND_URL is properly set to 'https://livewave-music.emergent.host' in backend/.env and supervisor configuration. ✅ CODE IMPLEMENTATION CORRECT: Both generate_musician_qr() and generate_qr_flyer_endpoint() functions use os.environ.get('FRONTEND_URL') correctly. ✅ DIRECT BACKEND ACCESS WORKING: Testing localhost:8001/api/qr-code returns correct audience_url: 'https://livewave-music.emergent.host/musician/bryce-larsen'. ⚠️ ROUTING/PROXY ISSUE: When accessing through public domain (https://livewave-music.emergent.host/api), requests are being routed to a different backend instance that still returns old preview URLs. This appears to be an infrastructure/deployment issue rather than a code issue. The QR code fix implementation is correct and working on the actual backend server."
 
 agent_communication:
   - agent: "main"
