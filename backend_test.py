@@ -10913,29 +10913,25 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
         return self.results['failed'] == 0
 
 if __name__ == "__main__":
+    print("🚀 RequestWave Backend API Testing - QR Code URL Fix Verification")
+    print("=" * 100)
+    
     tester = RequestWaveAPITester()
     
-    # Run the specific DELETE playlist test as requested
-    print("🎯 SPECIFIC DELETE PLAYLIST ENDPOINT TEST")
-    print("=" * 60)
-    print("Testing DELETE /api/playlists/{id} endpoint for brycelarsenmusic@gmail.com")
-    print("Focus areas:")
-    print("1. Login with Pro account: brycelarsenmusic@gmail.com / RequestWave2024!")
-    print("2. Create a test playlist for deletion testing")
-    print("3. Test DELETE /api/playlists/{id} endpoint to verify it's working")
-    print("4. Check the exact response from the delete endpoint")
-    print("5. Verify playlist is actually removed from the database")
-    print("=" * 60)
+    # Run QR code URL fix tests as requested
+    tester.run_qr_code_url_fix_tests()
     
-    success = tester.test_delete_playlist_endpoint_specific()
+    # Print final results
+    print("\n" + "=" * 100)
+    print("📊 FINAL TEST RESULTS")
+    print("=" * 100)
+    print(f"✅ Passed: {tester.results['passed']}")
+    print(f"❌ Failed: {tester.results['failed']}")
+    print(f"📈 Success Rate: {tester.results['passed']/(tester.results['passed']+tester.results['failed'])*100:.1f}%")
     
-    if success:
-        print("\n🎉 DELETE playlist endpoint testing completed successfully!")
-        print("✅ DELETE /api/playlists/{id} endpoint working correctly")
-        print("✅ Playlist successfully removed from database")
-        print("✅ The delete buttons in playlist management popup should work")
-        exit(0)
-    else:
-        print(f"\n💥 DELETE PLAYLIST ISSUES FOUND!")
-        print("❌ The DELETE playlist endpoint needs attention")
-        exit(1)
+    if tester.results['errors']:
+        print("\n❌ FAILED TESTS:")
+        for error in tester.results['errors']:
+            print(f"   • {error}")
+    
+    print("=" * 100)
