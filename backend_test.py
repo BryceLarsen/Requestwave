@@ -8188,9 +8188,193 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
             if 'original_token' in locals():
                 self.auth_token = original_token
 
+    def test_user_data_loading_bug(self):
+        """URGENT: Test specific user data loading issue for brycelarsenmusic@gmail.com"""
+        print("\n🚨 URGENT BUG INVESTIGATION: Testing data loading for brycelarsenmusic@gmail.com")
+        print("=" * 80)
+        
+        try:
+            # Step 1: Test Authentication
+            print("📊 Step 1: Testing Authentication")
+            login_data = {
+                "email": "brycelarsenmusic@gmail.com",
+                "password": "RequestWave2024!"
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("CRITICAL BUG - Authentication", False, f"❌ LOGIN FAILED: Status {login_response.status_code}, Response: {login_response.text}")
+                print("🚨 CRITICAL: User cannot login - authentication system broken")
+                return
+            
+            login_data_response = login_response.json()
+            if "token" not in login_data_response or "musician" not in login_data_response:
+                self.log_result("CRITICAL BUG - Authentication", False, f"❌ INVALID LOGIN RESPONSE: Missing token or musician data: {login_data_response}")
+                return
+            
+            # Store user credentials
+            user_auth_token = login_data_response["token"]
+            user_musician_id = login_data_response["musician"]["id"]
+            user_musician_slug = login_data_response["musician"]["slug"]
+            user_musician_name = login_data_response["musician"]["name"]
+            
+            print(f"   ✅ Authentication SUCCESS: Logged in as {user_musician_name}")
+            print(f"   ✅ User ID: {user_musician_id}")
+            print(f"   ✅ User Slug: {user_musician_slug}")
+            self.log_result("CRITICAL BUG - Authentication", True, f"✅ User can login successfully as {user_musician_name}")
+            
+            # Save current auth token and use user's token
+            original_token = self.auth_token
+            self.auth_token = user_auth_token
+            
+            # Step 2: Test Profile Loading
+            print("\n📊 Step 2: Testing Profile Loading (GET /api/profile)")
+            profile_response = self.make_request("GET", "/profile")
+            
+            if profile_response.status_code != 200:
+                self.log_result("CRITICAL BUG - Profile Loading", False, f"❌ PROFILE LOADING FAILED: Status {profile_response.status_code}, Response: {profile_response.text}")
+                print("🚨 CRITICAL: Profile data not loading - API error")
+            else:
+                profile_data = profile_response.json()
+                print(f"   ✅ Profile loaded successfully")
+                print(f"   📊 Profile data: Name='{profile_data.get('name')}', Email='{profile_data.get('email')}'")
+                
+                # Check for essential profile fields
+                required_fields = ["name", "email"]
+                missing_fields = [field for field in required_fields if not profile_data.get(field)]
+                
+                if missing_fields:
+                    self.log_result("CRITICAL BUG - Profile Loading", False, f"❌ PROFILE MISSING FIELDS: {missing_fields}")
+                else:
+                    self.log_result("CRITICAL BUG - Profile Loading", True, f"✅ Profile data loads correctly with all required fields")
+            
+            # Step 3: Test Songs Loading
+            print("\n📊 Step 3: Testing Songs Loading (GET /api/songs)")
+            songs_response = self.make_request("GET", "/songs")
+            
+            if songs_response.status_code != 200:
+                self.log_result("CRITICAL BUG - Songs Loading", False, f"❌ SONGS LOADING FAILED: Status {songs_response.status_code}, Response: {songs_response.text}")
+                print("🚨 CRITICAL: Songs data not loading - API error")
+            else:
+                songs_data = songs_response.json()
+                if not isinstance(songs_data, list):
+                    self.log_result("CRITICAL BUG - Songs Loading", False, f"❌ SONGS INVALID FORMAT: Expected list, got {type(songs_data)}")
+                else:
+                    print(f"   ✅ Songs endpoint responds successfully")
+                    print(f"   📊 Songs count: {len(songs_data)}")
+                    
+                    if len(songs_data) == 0:
+                        print("   ⚠️  WARNING: User has no songs in database")
+                        self.log_result("CRITICAL BUG - Songs Loading", True, f"✅ Songs endpoint works but user has 0 songs (empty library)")
+                    else:
+                        # Show sample songs
+                        print(f"   📊 Sample songs:")
+                        for i, song in enumerate(songs_data[:3]):
+                            print(f"      {i+1}. '{song.get('title', 'N/A')}' by '{song.get('artist', 'N/A')}'")
+                        
+                        self.log_result("CRITICAL BUG - Songs Loading", True, f"✅ Songs data loads correctly with {len(songs_data)} songs")
+            
+            # Step 4: Test Database Connection and Data Existence
+            print("\n📊 Step 4: Testing Database Connection and Data Existence")
+            
+            # Test if we can access other endpoints that require database
+            design_response = self.make_request("GET", "/design/settings")
+            if design_response.status_code == 200:
+                print("   ✅ Database connection working (design settings accessible)")
+                self.log_result("CRITICAL BUG - Database Connection", True, "✅ Database connection is working")
+            else:
+                print(f"   ❌ Database connection issue: {design_response.status_code}")
+                self.log_result("CRITICAL BUG - Database Connection", False, f"❌ Database connection issue: {design_response.status_code}")
+            
+            # Step 5: Test JWT Token Validation
+            print("\n📊 Step 5: Testing JWT Token Validation")
+            
+            # Test with invalid token
+            invalid_token = self.auth_token
+            self.auth_token = "invalid_token_test"
+            
+            invalid_response = self.make_request("GET", "/profile")
+            if invalid_response.status_code in [401, 403]:
+                print("   ✅ JWT validation working (rejects invalid tokens)")
+                self.log_result("CRITICAL BUG - JWT Validation", True, "✅ JWT token validation is working correctly")
+            else:
+                print(f"   ❌ JWT validation issue: {invalid_response.status_code}")
+                self.log_result("CRITICAL BUG - JWT Validation", False, f"❌ JWT validation not working: {invalid_response.status_code}")
+            
+            # Restore valid token
+            self.auth_token = user_auth_token
+            
+            # Step 6: Test Public Musician Endpoint
+            print("\n📊 Step 6: Testing Public Musician Endpoint")
+            public_response = self.make_request("GET", f"/musicians/{user_musician_slug}")
+            
+            if public_response.status_code != 200:
+                self.log_result("CRITICAL BUG - Public Endpoint", False, f"❌ PUBLIC ENDPOINT FAILED: Status {public_response.status_code}")
+            else:
+                public_data = public_response.json()
+                print(f"   ✅ Public musician endpoint working")
+                print(f"   📊 Public data: Name='{public_data.get('name')}', Slug='{public_data.get('slug')}'")
+                self.log_result("CRITICAL BUG - Public Endpoint", True, "✅ Public musician endpoint is working")
+            
+            # Step 7: Test Songs for Public Endpoint
+            print("\n📊 Step 7: Testing Public Songs Endpoint")
+            public_songs_response = self.make_request("GET", f"/musicians/{user_musician_slug}/songs")
+            
+            if public_songs_response.status_code != 200:
+                self.log_result("CRITICAL BUG - Public Songs", False, f"❌ PUBLIC SONGS FAILED: Status {public_songs_response.status_code}")
+            else:
+                public_songs_data = public_songs_response.json()
+                if isinstance(public_songs_data, list):
+                    print(f"   ✅ Public songs endpoint working with {len(public_songs_data)} songs")
+                    self.log_result("CRITICAL BUG - Public Songs", True, f"✅ Public songs endpoint working with {len(public_songs_data)} songs")
+                else:
+                    self.log_result("CRITICAL BUG - Public Songs", False, f"❌ Invalid public songs format: {type(public_songs_data)}")
+            
+            # Restore original auth token
+            self.auth_token = original_token
+            
+            # Final Assessment
+            print("\n📊 FINAL ASSESSMENT:")
+            print("=" * 80)
+            
+            # Count successful tests
+            critical_tests = [
+                "CRITICAL BUG - Authentication",
+                "CRITICAL BUG - Profile Loading", 
+                "CRITICAL BUG - Songs Loading",
+                "CRITICAL BUG - Database Connection",
+                "CRITICAL BUG - JWT Validation",
+                "CRITICAL BUG - Public Endpoint",
+                "CRITICAL BUG - Public Songs"
+            ]
+            
+            failed_critical_tests = [error for error in self.results['errors'] if any(test in error for test in critical_tests)]
+            
+            if len(failed_critical_tests) == 0:
+                print("🎉 ALL CRITICAL SYSTEMS WORKING: No data loading issues found")
+                print("💡 DIAGNOSIS: Backend APIs are functioning correctly")
+                print("💡 LIKELY CAUSE: Frontend caching, browser issues, or network problems")
+                self.log_result("OVERALL DATA LOADING BUG", True, "✅ Backend systems working - issue likely frontend/browser related")
+            else:
+                print("🚨 CRITICAL ISSUES FOUND:")
+                for failed_test in failed_critical_tests:
+                    print(f"   • {failed_test}")
+                self.log_result("OVERALL DATA LOADING BUG", False, f"❌ Critical backend issues found: {len(failed_critical_tests)} failures")
+            
+        except Exception as e:
+            self.log_result("CRITICAL BUG - Exception", False, f"❌ TESTING EXCEPTION: {str(e)}")
+            print(f"🚨 CRITICAL EXCEPTION during testing: {str(e)}")
+            # Restore original auth token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
     def run_all_tests(self):
         """Run all tests in order"""
         print("=" * 50)
+        
+        # URGENT: Test specific user data loading bug FIRST
+        self.test_user_data_loading_bug()
         
         # PRIORITY: QR Flyer Generation Debugging - HIGHEST PRIORITY
         print("\n🔍 QR FLYER GENERATION DEBUGGING - HIGHEST PRIORITY")
