@@ -455,6 +455,10 @@ const MusicianDashboard = () => {
   const [activePlaylistId, setActivePlaylistId] = useState(null);
   const [playlistManagementError, setPlaylistManagementError] = useState('');
   const [playlistLoading, setPlaylistLoading] = useState(false);
+  const [showManagePlaylistsModal, setShowManagePlaylistsModal] = useState(false);
+  const [editingPlaylist, setEditingPlaylist] = useState(null);
+  const [playlistAction, setPlaylistAction] = useState('create'); // 'create' or 'add'
+  const [selectedExistingPlaylist, setSelectedExistingPlaylist] = useState('');
   
   // NEW: Tip functionality functions
   const handleTipButton = (songId = null) => {
