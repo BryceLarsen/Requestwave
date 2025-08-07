@@ -965,7 +965,7 @@ async def scrape_apple_music_playlist(playlist_url: str) -> List[Dict[str, Any]]
                     'genres': ['Pop'],
                     'moods': ['Energetic'],
                     'year': 2021,
-                    'notes': f'Sample from Apple Music playlist: {playlist_title}',
+                    'notes': '',  # Leave blank for user customization
                     'source': 'apple_music'
                 },
                 {
@@ -974,7 +974,7 @@ async def scrape_apple_music_playlist(playlist_url: str) -> List[Dict[str, Any]]
                     'genres': ['Pop'],
                     'moods': ['Upbeat'],
                     'year': 2020,
-                    'notes': f'Sample from Apple Music playlist: {playlist_title}',
+                    'notes': '',  # Leave blank for user customization
                     'source': 'apple_music'
                 }, 
                 {
@@ -983,7 +983,7 @@ async def scrape_apple_music_playlist(playlist_url: str) -> List[Dict[str, Any]]
                     'genres': ['Pop'],
                     'moods': ['Melancholy'],
                     'year': 2021,
-                    'notes': f'Sample from Apple Music playlist: {playlist_title}',
+                    'notes': '',  # Leave blank for user customization
                     'source': 'apple_music'
                 },
                 {
@@ -992,7 +992,7 @@ async def scrape_apple_music_playlist(playlist_url: str) -> List[Dict[str, Any]]
                     'genres': ['Pop'],
                     'moods': ['Chill'],
                     'year': 2021,
-                    'notes': f'Sample from Apple Music playlist: {playlist_title}',
+                    'notes': '',  # Leave blank for user customization
                     'source': 'apple_music'
                 }
             ]
