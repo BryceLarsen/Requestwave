@@ -821,21 +821,21 @@ def get_popular_songs_by_playlist_type(playlist_title: str) -> List[Dict[str, An
                 'title': 'Stay',
                 'artist': 'The Kid LAROI & Justin Bieber',
                 'genres': ['Pop'],
-                'moods': ['Upbeat'],
+                'moods': ['Feel Good'],
                 'year': 2021
             },
             {
                 'title': 'Industry Baby',
                 'artist': 'Lil Nas X & Jack Harlow',
-                'genres': ['Hip-Hop'],
-                'moods': ['Energetic'],
+                'genres': ['Hip Hop'],
+                'moods': ['Bar Anthems'],
                 'year': 2021
             },
             {
                 'title': 'Bad Habits',
                 'artist': 'Ed Sheeran',
                 'genres': ['Pop'],
-                'moods': ['Upbeat'],
+                'moods': ['Weekend Warm-Up'],
                 'year': 2021
             }
         ]
