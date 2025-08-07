@@ -4236,15 +4236,28 @@ const AudienceInterface = () => {
             )}
           </p>
           
-          {/* NEW: Random Song Button */}
+          {/* Random Song Button and Song Suggestion */}
           {filteredSongs.length > 0 && (
-            <button
-              onClick={handleRandomSong}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              <span>🎲</span>
-              <span>Random Song</span>
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={handleRandomSong}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <span>🎲</span>
+                <span>Random Song</span>
+              </button>
+              
+              {/* NEW: Song Suggestion Button - Only show if enabled by musician */}
+              {designSettings.allow_song_suggestions && (
+                <button
+                  onClick={() => setShowSuggestionModal(true)}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  <span>💡</span>
+                  <span>Suggest a Song</span>
+                </button>
+              )}
+            </div>
           )}
         </div>
 
