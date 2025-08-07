@@ -3912,27 +3912,57 @@ const MusicianDashboard = () => {
               <div className="text-center mb-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   {/* Monthly Plan */}
-                  <div className="bg-gray-700 rounded-lg p-4 border-2 border-gray-600">
+                  <div 
+                    className={`bg-gray-700 rounded-lg p-4 border-2 cursor-pointer transition duration-300 ${
+                      selectedPlan === 'monthly' ? 'border-purple-500 bg-purple-900/30' : 'border-gray-600 hover:border-gray-500'
+                    }`}
+                    onClick={() => setSelectedPlan('monthly')}
+                  >
                     <div className="text-center">
-                      <h3 className="text-lg font-bold mb-2">Monthly</h3>
+                      <div className="flex items-center justify-center mb-2">
+                        <input 
+                          type="radio" 
+                          name="plan" 
+                          checked={selectedPlan === 'monthly'}
+                          onChange={() => setSelectedPlan('monthly')}
+                          className="mr-2"
+                        />
+                        <h3 className="text-lg font-bold">Monthly</h3>
+                      </div>
                       <div className="bg-purple-600 text-white rounded-full px-4 py-2 text-2xl font-bold mb-2">
                         $10/month
                       </div>
                       <p className="text-gray-300 text-sm">Billed monthly</p>
+                      <p className="text-gray-400 text-xs mt-1">Cancel anytime</p>
                     </div>
                   </div>
                   
                   {/* Annual Plan - Recommended */}
-                  <div className="bg-gray-700 rounded-lg p-4 border-2 border-green-500 relative">
+                  <div 
+                    className={`bg-gray-700 rounded-lg p-4 border-2 cursor-pointer transition duration-300 relative ${
+                      selectedPlan === 'annual' ? 'border-green-500 bg-green-900/30' : 'border-green-500 hover:border-green-400'
+                    }`}
+                    onClick={() => setSelectedPlan('annual')}
+                  >
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">50% OFF</span>
+                      <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">SAVE 50%</span>
                     </div>
                     <div className="text-center">
-                      <h3 className="text-lg font-bold mb-2">Annual</h3>
+                      <div className="flex items-center justify-center mb-2">
+                        <input 
+                          type="radio" 
+                          name="plan" 
+                          checked={selectedPlan === 'annual'}
+                          onChange={() => setSelectedPlan('annual')}
+                          className="mr-2"
+                        />
+                        <h3 className="text-lg font-bold">Annual</h3>
+                      </div>
                       <div className="bg-green-600 text-white rounded-full px-4 py-2 text-2xl font-bold mb-2">
                         $5/month
                       </div>
                       <p className="text-gray-300 text-sm">Billed annually ($60)</p>
+                      <p className="text-gray-400 text-xs mt-1">2 months free!</p>
                     </div>
                   </div>
                 </div>
