@@ -8731,35 +8731,143 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
             for error in limit_tests:
                 print(f"   • {error}")
         
+    def test_delete_playlist_endpoint_specific(self):
+        """Test DELETE playlist endpoint specifically as requested by user"""
+        try:
+            print("🎯 SPECIFIC TEST: DELETE playlist endpoint for brycelarsenmusic@gmail.com")
+            
+            # Step 1: Login with Pro account
+            login_data = {
+                "email": "brycelarsenmusic@gmail.com",
+                "password": "RequestWave2024!"
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("DELETE Playlist - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            if "token" not in login_data_response:
+                self.log_result("DELETE Playlist - Pro Login", False, "No token in login response")
+                return
+            
+            # Set auth token for Pro account
+            self.auth_token = login_data_response["token"]
+            self.musician_id = login_data_response["musician"]["id"]
+            self.musician_slug = login_data_response["musician"]["slug"]
+            
+            self.log_result("DELETE Playlist - Pro Login", True, f"Logged in as {login_data_response['musician']['name']}")
+            
+            # Step 2: Create a test playlist for deletion testing
+            playlist_data = {
+                "name": "Test Playlist for Deletion",
+                "song_ids": []
+            }
+            
+            create_response = self.make_request("POST", "/playlists", playlist_data)
+            
+            if create_response.status_code != 200:
+                self.log_result("DELETE Playlist - Create Test Playlist", False, f"Failed to create playlist: {create_response.status_code}, Response: {create_response.text}")
+                return
+            
+            create_result = create_response.json()
+            if "id" not in create_result:
+                self.log_result("DELETE Playlist - Create Test Playlist", False, f"No playlist ID in response: {create_result}")
+                return
+            
+            playlist_id = create_result["id"]
+            self.log_result("DELETE Playlist - Create Test Playlist", True, f"Created test playlist with ID: {playlist_id}")
+            
+            # Step 3: Verify playlist exists before deletion
+            get_playlists_response = self.make_request("GET", "/playlists")
+            
+            if get_playlists_response.status_code == 200:
+                playlists_before = get_playlists_response.json()
+                playlist_exists_before = any(p["id"] == playlist_id for p in playlists_before)
+                self.log_result("DELETE Playlist - Pre-deletion Verification", playlist_exists_before, f"Playlist exists before deletion: {playlist_exists_before}")
+                
+                if not playlist_exists_before:
+                    self.log_result("DELETE Playlist - Pre-deletion Check", False, "Test playlist not found before deletion")
+                    return
+            else:
+                self.log_result("DELETE Playlist - Pre-deletion Check", False, f"Could not get playlists: {get_playlists_response.status_code}")
+                return
+            
+            # Step 4: Test DELETE /api/playlists/{id} endpoint
+            print(f"🔍 Testing DELETE /api/playlists/{playlist_id}")
+            delete_response = self.make_request("DELETE", f"/playlists/{playlist_id}")
+            
+            print(f"📊 DELETE Response Status: {delete_response.status_code}")
+            print(f"📊 DELETE Response Headers: {dict(delete_response.headers)}")
+            print(f"📊 DELETE Response Text: {delete_response.text}")
+            
+            # Step 5: Check the exact response from the delete endpoint
+            if delete_response.status_code == 200:
+                try:
+                    delete_result = delete_response.json()
+                    print(f"📊 DELETE Response JSON: {json.dumps(delete_result, indent=2)}")
+                    
+                    if delete_result.get("success"):
+                        self.log_result("DELETE Playlist - API Response", True, f"✅ DELETE endpoint returned success: {delete_result.get('message', 'No message')}")
+                    else:
+                        self.log_result("DELETE Playlist - API Response", False, f"❌ DELETE endpoint returned success=false: {delete_result}")
+                except json.JSONDecodeError:
+                    self.log_result("DELETE Playlist - API Response", False, f"❌ DELETE endpoint returned non-JSON response: {delete_response.text}")
+            else:
+                self.log_result("DELETE Playlist - API Response", False, f"❌ DELETE endpoint returned status {delete_response.status_code}: {delete_response.text}")
+            
+            # Step 6: Verify playlist is actually removed from the database
+            get_playlists_after_response = self.make_request("GET", "/playlists")
+            
+            if get_playlists_after_response.status_code == 200:
+                playlists_after = get_playlists_after_response.json()
+                playlist_exists_after = any(p["id"] == playlist_id for p in playlists_after)
+                
+                print(f"📊 Playlists count before deletion: {len(playlists_before)}")
+                print(f"📊 Playlists count after deletion: {len(playlists_after)}")
+                print(f"📊 Playlist exists after deletion: {playlist_exists_after}")
+                
+                if not playlist_exists_after:
+                    self.log_result("DELETE Playlist - Database Verification", True, f"✅ Playlist successfully removed from database")
+                    self.log_result("DELETE Playlist - Overall Test", True, f"✅ DELETE playlist endpoint working correctly")
+                else:
+                    self.log_result("DELETE Playlist - Database Verification", False, f"❌ CRITICAL BUG: Playlist still exists in database after deletion")
+                    self.log_result("DELETE Playlist - Overall Test", False, f"❌ CRITICAL BUG: DELETE endpoint not actually removing playlist from database")
+            else:
+                self.log_result("DELETE Playlist - Database Verification", False, f"Could not verify deletion: {get_playlists_after_response.status_code}")
+                self.log_result("DELETE Playlist - Overall Test", False, f"Could not verify playlist deletion from database")
+            
+        except Exception as e:
+            self.log_result("DELETE Playlist - Overall Test", False, f"❌ Exception: {str(e)}")
+
         return self.results['failed'] == 0
 
 if __name__ == "__main__":
     tester = RequestWaveAPITester()
     
-    # Run Batch Edit Functionality Tests as requested in the review
-    print("🚀 BATCH EDIT FUNCTIONALITY TESTING - CRITICAL [object Object] POPUP FIX")
-    print("=" * 80)
-    print("Testing the FIXED batch edit functionality for RequestWave songs")
+    # Run the specific DELETE playlist test as requested
+    print("🎯 SPECIFIC DELETE PLAYLIST ENDPOINT TEST")
+    print("=" * 60)
+    print("Testing DELETE /api/playlists/{id} endpoint for brycelarsenmusic@gmail.com")
     print("Focus areas:")
-    print("1. Backend Batch Edit Endpoint (PUT /api/songs/batch-edit)")
-    print("2. Response Format Debugging ([object Object] issue)")
-    print("3. Data Processing (genres/moods parsing)")
-    print("4. Edge Cases (empty updates, invalid IDs)")
-    print("5. Authentication & Authorization")
-    print("=" * 80)
+    print("1. Login with Pro account: brycelarsenmusic@gmail.com / RequestWave2024!")
+    print("2. Create a test playlist for deletion testing")
+    print("3. Test DELETE /api/playlists/{id} endpoint to verify it's working")
+    print("4. Check the exact response from the delete endpoint")
+    print("5. Verify playlist is actually removed from the database")
+    print("=" * 60)
     
-    success = tester.run_batch_edit_tests()
+    success = tester.test_delete_playlist_endpoint_specific()
     
     if success:
-        print("\n🎉 Batch edit functionality testing completed successfully!")
-        print("✅ PUT /api/songs/batch-edit endpoint working correctly")
-        print("✅ Response format is proper JSON (no [object Object] issues)")
-        print("✅ Data processing handles comma-separated values correctly")
-        print("✅ Edge cases handled appropriately")
-        print("✅ Authentication properly enforced")
-        print("✅ The [object Object] popup issue should be resolved")
+        print("\n🎉 DELETE playlist endpoint testing completed successfully!")
+        print("✅ DELETE /api/playlists/{id} endpoint working correctly")
+        print("✅ Playlist successfully removed from database")
+        print("✅ The delete buttons in playlist management popup should work")
         exit(0)
     else:
-        print(f"\n💥 BATCH EDIT ISSUES FOUND!")
-        print("❌ The batch edit functionality needs attention before the [object Object] popup will be fixed")
+        print(f"\n💥 DELETE PLAYLIST ISSUES FOUND!")
+        print("❌ The DELETE playlist endpoint needs attention")
         exit(1)
