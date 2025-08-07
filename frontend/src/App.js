@@ -3170,6 +3170,16 @@ const MusicianDashboard = () => {
                     QR Code
                   </button>
                   <button
+                    onClick={() => {
+                      const onStageUrl = `${window.location.origin}/on-stage/${musician.slug}`;
+                      window.open(onStageUrl, '_blank');
+                    }}
+                    className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-2"
+                  >
+                    <span>🎤</span>
+                    <span>On Stage</span>
+                  </button>
+                  <button
                     onClick={generateAndDownloadFlyer}
                     className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-medium transition duration-300"
                   >
