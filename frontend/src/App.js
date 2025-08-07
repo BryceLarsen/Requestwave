@@ -201,7 +201,11 @@ const AuthForm = ({ mode, onSwitch }) => {
           {!showForgotPassword ? (
             <>
               <h2 className="text-2xl font-bold text-white text-center mb-6">
-                {mode === 'login' ? 'Welcome Back' : 'Join RequestWave'}
+                {mode === 'login' ? 'Welcome Back' : (
+                  <>
+                    Join <span className="text-purple-400">Request</span><span className="text-green-400">Wave</span>
+                  </>
+                )}
               </h2>
 
               {error && (
