@@ -516,6 +516,203 @@ class RequestWaveAPITester:
         except Exception as e:
             self.log_result("Social Media Integration Flow", False, f"❌ Exception: {str(e)}")
 
+    def test_filter_options_endpoint_pro_account(self):
+        """Test filter options endpoint with Pro account - SPECIFIC TESTING FOCUS"""
+        try:
+            print("🔍 SPECIFIC TESTING FOCUS: Filter Options Endpoint with Pro Account")
+            print("=" * 80)
+            
+            # Step 1: Login with Pro account
+            print("📊 Step 1: Login with Pro account brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("Filter Options - Pro Account Login", False, f"Failed to login with Pro account: {login_response.status_code}, Response: {login_response.text}")
+                return
+            
+            login_data_response = login_response.json()
+            if "token" not in login_data_response or "musician" not in login_data_response:
+                self.log_result("Filter Options - Pro Account Login", False, f"Invalid login response structure: {login_data_response}")
+                return
+            
+            # Store Pro account credentials
+            pro_auth_token = login_data_response["token"]
+            pro_musician_id = login_data_response["musician"]["id"]
+            pro_musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            print(f"   ✅ Musician slug: {pro_musician_slug}")
+            
+            self.log_result("Filter Options - Pro Account Login", True, f"Successfully logged in as {login_data_response['musician']['name']} with slug: {pro_musician_slug}")
+            
+            # Step 2: Test GET /api/musicians/{slug}/filters endpoint
+            print(f"📊 Step 2: Testing GET /api/musicians/{pro_musician_slug}/filters endpoint")
+            
+            # Save current auth token and use Pro account token
+            original_token = self.auth_token
+            self.auth_token = pro_auth_token
+            
+            filter_response = self.make_request("GET", f"/musicians/{pro_musician_slug}/filters")
+            
+            if filter_response.status_code != 200:
+                self.log_result("Filter Options - Endpoint Response", False, f"Filter endpoint failed: {filter_response.status_code}, Response: {filter_response.text}")
+                self.auth_token = original_token
+                return
+            
+            filter_data = filter_response.json()
+            print(f"📊 Filter endpoint response: {json.dumps(filter_data, indent=2)}")
+            
+            self.log_result("Filter Options - Endpoint Response", True, f"Filter endpoint returned status 200")
+            
+            # Step 3: Verify response structure contains required arrays
+            print("📊 Step 3: Verify response structure contains arrays for genres, moods, years, decades")
+            
+            required_arrays = ["genres", "moods", "years", "decades"]
+            missing_arrays = []
+            present_arrays = []
+            array_details = {}
+            
+            for array_name in required_arrays:
+                if array_name in filter_data:
+                    if isinstance(filter_data[array_name], list):
+                        present_arrays.append(array_name)
+                        array_details[array_name] = {
+                            "type": "list",
+                            "length": len(filter_data[array_name]),
+                            "sample_data": filter_data[array_name][:5] if filter_data[array_name] else []
+                        }
+                        print(f"   ✅ {array_name}: {len(filter_data[array_name])} items - {filter_data[array_name][:3]}{'...' if len(filter_data[array_name]) > 3 else ''}")
+                    else:
+                        missing_arrays.append(f"{array_name} (not a list, got {type(filter_data[array_name])})")
+                        array_details[array_name] = {"type": type(filter_data[array_name]), "value": filter_data[array_name]}
+                else:
+                    missing_arrays.append(f"{array_name} (missing)")
+                    array_details[array_name] = {"type": "missing"}
+            
+            if len(missing_arrays) == 0:
+                self.log_result("Filter Options - Response Structure", True, f"✅ All required arrays present: {present_arrays}")
+            else:
+                self.log_result("Filter Options - Response Structure", False, f"❌ Missing or invalid arrays: {missing_arrays}")
+            
+            # Step 4: Check data population - arrays should contain actual data
+            print("📊 Step 4: Check data population - verify arrays contain actual data from user's songs")
+            
+            populated_arrays = []
+            empty_arrays = []
+            
+            for array_name in required_arrays:
+                if array_name in filter_data and isinstance(filter_data[array_name], list):
+                    if len(filter_data[array_name]) > 0:
+                        populated_arrays.append(f"{array_name} ({len(filter_data[array_name])} items)")
+                        print(f"   ✅ {array_name} populated: {filter_data[array_name]}")
+                    else:
+                        empty_arrays.append(array_name)
+                        print(f"   ⚠️  {array_name} empty: []")
+            
+            if len(populated_arrays) > 0:
+                self.log_result("Filter Options - Data Population", True, f"✅ Arrays with data: {populated_arrays}")
+                if len(empty_arrays) > 0:
+                    print(f"   ℹ️  Empty arrays (may be normal if no songs have this data): {empty_arrays}")
+            else:
+                self.log_result("Filter Options - Data Population", False, f"❌ All arrays are empty - no filter data available")
+            
+            # Step 5: Test with correct musician slug verification
+            print(f"📊 Step 5: Verify we're testing with correct musician slug for brycelarsenmusic@gmail.com")
+            
+            musician_response = self.make_request("GET", f"/musicians/{pro_musician_slug}")
+            if musician_response.status_code == 200:
+                musician_data = musician_response.json()
+                if musician_data.get("name") and PRO_MUSICIAN["email"].split("@")[0] in musician_data["name"].lower().replace(" ", ""):
+                    self.log_result("Filter Options - Correct Musician Slug", True, f"✅ Testing with correct slug for {musician_data['name']}")
+                else:
+                    self.log_result("Filter Options - Correct Musician Slug", False, f"❌ Slug mismatch - expected brycelarsenmusic, got musician: {musician_data.get('name')}")
+            else:
+                self.log_result("Filter Options - Correct Musician Slug", False, f"Could not verify musician: {musician_response.status_code}")
+            
+            # Step 6: Additional verification - check if user has songs that should populate filters
+            print("📊 Step 6: Check if user has songs that should populate the filters")
+            
+            songs_response = self.make_request("GET", "/songs")
+            if songs_response.status_code == 200:
+                songs = songs_response.json()
+                print(f"   📊 User has {len(songs)} songs total")
+                
+                if len(songs) > 0:
+                    # Analyze song data to see what should be in filters
+                    song_genres = set()
+                    song_moods = set()
+                    song_years = set()
+                    song_decades = set()
+                    
+                    for song in songs[:10]:  # Check first 10 songs
+                        if song.get("genres"):
+                            song_genres.update(song["genres"])
+                        if song.get("moods"):
+                            song_moods.update(song["moods"])
+                        if song.get("year"):
+                            song_years.add(song["year"])
+                        if song.get("decade"):
+                            song_decades.add(song["decade"])
+                    
+                    print(f"   📊 Songs contain genres: {list(song_genres)[:5]}{'...' if len(song_genres) > 5 else ''}")
+                    print(f"   📊 Songs contain moods: {list(song_moods)[:5]}{'...' if len(song_moods) > 5 else ''}")
+                    print(f"   📊 Songs contain years: {sorted(list(song_years))[:5]}{'...' if len(song_years) > 5 else ''}")
+                    print(f"   📊 Songs contain decades: {sorted(list(song_decades))}")
+                    
+                    # Compare with filter response
+                    filter_vs_songs = []
+                    if len(song_genres) > 0 and len(filter_data.get("genres", [])) == 0:
+                        filter_vs_songs.append("genres missing from filters but present in songs")
+                    if len(song_moods) > 0 and len(filter_data.get("moods", [])) == 0:
+                        filter_vs_songs.append("moods missing from filters but present in songs")
+                    if len(song_years) > 0 and len(filter_data.get("years", [])) == 0:
+                        filter_vs_songs.append("years missing from filters but present in songs")
+                    if len(song_decades) > 0 and len(filter_data.get("decades", [])) == 0:
+                        filter_vs_songs.append("decades missing from filters but present in songs")
+                    
+                    if len(filter_vs_songs) == 0:
+                        self.log_result("Filter Options - Data Consistency", True, "✅ Filter data is consistent with song data")
+                    else:
+                        self.log_result("Filter Options - Data Consistency", False, f"❌ Data inconsistencies: {filter_vs_songs}")
+                else:
+                    print("   ℹ️  User has no songs - empty filters are expected")
+                    self.log_result("Filter Options - No Songs", True, "User has no songs, empty filters are expected")
+            else:
+                print(f"   ⚠️  Could not retrieve user's songs: {songs_response.status_code}")
+            
+            # Restore original auth token
+            self.auth_token = original_token
+            
+            # Final assessment
+            success_conditions = [
+                len(missing_arrays) == 0,  # All required arrays present
+                len(populated_arrays) > 0 or len(songs) == 0  # Either has data or no songs to populate from
+            ]
+            
+            if all(success_conditions):
+                self.log_result("Filter Options Endpoint - Pro Account", True, "✅ FILTER OPTIONS ENDPOINT WORKING: All tests passed - endpoint returns correct structure and data")
+            else:
+                failed_conditions = []
+                if len(missing_arrays) > 0:
+                    failed_conditions.append(f"Missing arrays: {missing_arrays}")
+                if len(populated_arrays) == 0 and len(songs) > 0:
+                    failed_conditions.append("No filter data despite having songs")
+                
+                self.log_result("Filter Options Endpoint - Pro Account", False, f"❌ FILTER OPTIONS ENDPOINT ISSUES: {'; '.join(failed_conditions)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Filter Options Endpoint - Pro Account", False, f"❌ Exception: {str(e)}")
+            # Restore original auth token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
     def test_advanced_filtering(self):
         """Test advanced song filtering"""
         try:
