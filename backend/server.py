@@ -1791,11 +1791,12 @@ async def create_upgrade_checkout(
         transaction = {
             "id": str(uuid.uuid4()),
             "musician_id": musician_id,
-            "amount": MONTHLY_SUBSCRIPTION_PRICE,
+            "amount": amount,
             "currency": "usd",
             "session_id": session.session_id,
             "payment_status": "pending",
-            "subscription_type": "monthly_unlimited",
+            "subscription_type": subscription_type,
+            "plan": request.plan,
             "created_at": datetime.utcnow()
         }
         await db.payment_transactions.insert_one(transaction)
