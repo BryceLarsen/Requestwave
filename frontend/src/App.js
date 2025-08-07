@@ -2514,6 +2514,22 @@ const MusicianDashboard = () => {
               
               {/* Show Management Controls */}
               <div className="flex items-center space-x-3">
+                {/* NEW: Song Suggestions Button */}
+                <button
+                  onClick={() => setShowSuggestions(!showSuggestions)}
+                  className={`px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-2 ${
+                    showSuggestions ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
+                >
+                  <span>💡</span>
+                  <span>Song Suggestions</span>
+                  {songSuggestions.filter(s => s.status === 'pending').length > 0 && (
+                    <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                      {songSuggestions.filter(s => s.status === 'pending').length}
+                    </span>
+                  )}
+                </button>
+                
                 {currentShow ? (
                   <div className="flex items-center space-x-3">
                     <div className="bg-green-600 px-3 py-2 rounded-lg">
