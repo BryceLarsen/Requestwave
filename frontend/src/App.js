@@ -3612,6 +3612,17 @@ const AudienceInterface = () => {
   const [tipAmount, setTipAmount] = useState('');
   const [tipMessage, setTipMessage] = useState('');
   const [tipPlatform, setTipPlatform] = useState('paypal'); // 'paypal' or 'venmo'
+  
+  // NEW: Song suggestion states
+  const [showSuggestionModal, setShowSuggestionModal] = useState(false);
+  const [suggestionForm, setSuggestionForm] = useState({
+    suggested_title: '',
+    suggested_artist: '',
+    requester_name: '',
+    requester_email: '',
+    message: ''
+  });
+  const [suggestionError, setSuggestionError] = useState('');
 
   // NEW: Post-request click tracking
   const trackClick = async (type, platform) => {
