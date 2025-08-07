@@ -677,6 +677,49 @@ const MusicianDashboard = () => {
     }
   };
 
+  // NEW: Song suggestions management functions
+  const fetchSongSuggestions = async () => {
+    try {
+      const response = await axios.get(`${API}/song-suggestions`);
+      setSongSuggestions(response.data);
+    } catch (error) {
+      console.error('Error fetching song suggestions:', error);
+      setSuggestionError('Error fetching song suggestions');
+    }
+  };
+
+  const handleSuggestionAction = async (suggestionId, action, suggestionTitle) => {
+    const actionText = action === 'added' ? 'add to repertoire' : 'reject';
+    if (confirm(`${actionText.charAt(0).toUpperCase() + actionText.slice(1)} suggestion "${suggestionTitle}"?`)) {
+      try {
+        await axios.put(`${API}/song-suggestions/${suggestionId}/status`, { status: action });
+        fetchSongSuggestions(); // Refresh suggestions
+        if (action === 'added') {
+          fetchSongs(); // Refresh songs list if song was added
+          alert(`"${suggestionTitle}" has been added to your repertoire!`);
+        } else {
+          alert(`Suggestion "${suggestionTitle}" has been rejected.`);
+        }
+      } catch (error) {
+        console.error('Error updating suggestion:', error);
+        alert('Error processing suggestion. Please try again.');
+      }
+    }
+  };
+
+  const handleDeleteSuggestion = async (suggestionId, suggestionTitle) => {
+    if (confirm(`Permanently delete suggestion "${suggestionTitle}"?`)) {
+      try {
+        await axios.delete(`${API}/song-suggestions/${suggestionId}`);
+        fetchSongSuggestions();
+        alert('Suggestion deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting suggestion:', error);
+        alert('Error deleting suggestion. Please try again.');
+      }
+    }
+  };
+
   // NEW: Toggle song visibility function
   const handleToggleSongVisibility = async (songId) => {
     try {
