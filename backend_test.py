@@ -11,7 +11,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://2d821f37-5e3c-493f-a28d-8ff61cf1519e.preview.emergentagent.com/api"
+BASE_URL = "https://livewave-music.emergent.host/api"
 TEST_MUSICIAN = {
     "name": "Jazz Virtuoso",
     "email": "jazz.virtuoso@requestwave.com",
