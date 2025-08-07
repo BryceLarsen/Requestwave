@@ -837,6 +837,7 @@ const MusicianDashboard = () => {
   // Subscription management state
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState('annual'); // Default to annual (better value)
   const [upgrading, setUpgrading] = useState(false);
 
   // Design settings state
