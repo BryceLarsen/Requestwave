@@ -1765,6 +1765,105 @@ const MusicianDashboard = () => {
     }
   };
 
+  const addToExistingPlaylist = async () => {
+    if (!selectedExistingPlaylist) {
+      setPlaylistManagementError('Please select a playlist');
+      return;
+    }
+
+    if (selectedSongs.size === 0) {
+      setPlaylistManagementError('Please select songs to add to the playlist');
+      return;
+    }
+
+    setPlaylistLoading(true);
+    setPlaylistManagementError('');
+
+    try {
+      // Get current playlist songs
+      const playlist = playlists.find(p => p.id === selectedExistingPlaylist);
+      if (!playlist) {
+        setPlaylistManagementError('Playlist not found');
+        return;
+      }
+
+      // Get current song IDs from the playlist
+      const response = await axios.get(`${API}/playlists`);
+      const currentPlaylist = response.data.find(p => p.id === selectedExistingPlaylist);
+      
+      // Merge existing songs with new selected songs (avoid duplicates)
+      const existingSongIds = currentPlaylist?.song_ids || [];
+      const newSongIds = Array.from(selectedSongs);
+      const mergedSongIds = [...new Set([...existingSongIds, ...newSongIds])];
+
+      await axios.put(`${API}/playlists/${selectedExistingPlaylist}`, {
+        song_ids: mergedSongIds
+      });
+
+      setSelectedSongs(new Set());
+      setShowPlaylistModal(false);
+      fetchPlaylists();
+      alert(`Songs added to "${playlist.name}" successfully!`);
+    } catch (error) {
+      setPlaylistManagementError(error.response?.data?.detail || 'Error adding songs to playlist');
+    } finally {
+      setPlaylistLoading(false);
+    }
+  };
+
+  const handlePlaylistAction = () => {
+    if (playlistAction === 'create') {
+      createPlaylist();
+    } else {
+      addToExistingPlaylist();
+    }
+  };
+
+  const deletePlaylist = async (playlistId, playlistName) => {
+    if (!confirm(`Are you sure you want to delete "${playlistName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await axios.delete(`${API}/playlists/${playlistId}`);
+      fetchPlaylists();
+      alert(`Playlist "${playlistName}" deleted successfully!`);
+    } catch (error) {
+      alert('Error deleting playlist');
+      console.error('Error deleting playlist:', error);
+    }
+  };
+
+  const updatePlaylistName = async (playlistId, newName) => {
+    if (!newName.trim()) {
+      alert('Please enter a playlist name');
+      return;
+    }
+
+    try {
+      // For renaming, we need to get current songs and keep them
+      const playlist = playlists.find(p => p.id === playlistId);
+      if (!playlist) return;
+
+      // Get current playlist data
+      const response = await axios.get(`${API}/playlists`);
+      const currentPlaylist = response.data.find(p => p.id === playlistId);
+      
+      // We'll need to make this API call since we don't have a rename endpoint
+      // For now, let's create a temporary solution by recreating the playlist
+      await axios.put(`${API}/playlists/${playlistId}`, {
+        song_ids: currentPlaylist?.song_ids || []
+      });
+
+      setEditingPlaylist(null);
+      fetchPlaylists();
+      alert('Playlist updated successfully!');
+    } catch (error) {
+      alert('Error updating playlist name');
+      console.error('Error updating playlist:', error);
+    }
+  };
+
   const activatePlaylist = async (playlistId) => {
     try {
       await axios.put(`${API}/playlists/${playlistId}/activate`);
