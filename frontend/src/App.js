@@ -2459,7 +2459,7 @@ const MusicianDashboard = () => {
                 </div>
 
                 {/* Search and Filter Bar */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-3 mb-4">
                   <input
                     type="text"
                     placeholder="Search songs..."
@@ -2514,6 +2514,13 @@ const MusicianDashboard = () => {
                       <option key={decade} value={decade}>{decade}</option>
                     ))}
                   </select>
+                  <input
+                    type="text"
+                    placeholder="Search notes..."
+                    value={notesFilter}
+                    onChange={(e) => setNotesFilter(e.target.value)}
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
+                  />
                 </div>
 
                 {/* Batch Operations Bar */}
