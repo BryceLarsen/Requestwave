@@ -487,6 +487,72 @@ def validate_lst_file(file: UploadFile) -> None:
     if file.size > 10 * 1024 * 1024:  # 10MB limit
         raise HTTPException(status_code=400, detail="File size must be less than 10MB")
 
+def parse_lst_file(file: UploadFile) -> List[Dict[str, Any]]:
+    """Parse LST file with 'Song Title - Artist' format"""
+    try:
+        # Reset file pointer
+        file.file.seek(0)
+        content = file.file.read().decode('utf-8')
+        lines = content.strip().split('\n')
+        
+        songs = []
+        for line_num, line in enumerate(lines, 1):
+            line = line.strip()
+            
+            # Skip empty lines and headers
+            if not line or line.startswith('-') or line.startswith('#'):
+                continue
+                
+            # Parse "Song Title - Artist" format
+            if ' - ' in line:
+                parts = line.split(' - ', 1)  # Split only on first ' - '
+                title = parts[0].strip()
+                artist = parts[1].strip()
+                
+                if title and artist:
+                    # Use curated genre/mood assignment
+                    genre_mood_data = assign_genre_and_mood(title, artist)
+                    
+                    song_data = {
+                        "title": title,
+                        "artist": artist,
+                        "genres": [genre_mood_data["genre"]], 
+                        "moods": [genre_mood_data["mood"]],
+                        "year": None,  # Will be filled by auto-enrichment if enabled
+                        "notes": ""  # Leave blank for user customization
+                    }
+                    songs.append(song_data)
+            else:
+                # Handle lines without ' - ' separator (might be just song title)
+                title = line.strip()
+                if title:
+                    genre_mood_data = assign_genre_and_mood(title, "Unknown Artist")
+                    
+                    song_data = {
+                        "title": title,
+                        "artist": "Unknown Artist",
+                        "genres": [genre_mood_data["genre"]], 
+                        "moods": [genre_mood_data["mood"]],
+                        "year": None,
+                        "notes": ""
+                    }
+                    songs.append(song_data)
+        
+        return songs
+        
+    except Exception as e:
+        raise ValueError(f"Error parsing LST file: {str(e)}")
+
+class LSTUploadResponse(BaseModel):
+    success: bool
+    message: str
+    songs_added: int
+    
+class LSTPreviewResponse(BaseModel):
+    success: bool
+    songs: List[Dict[str, Any]]
+    total_songs: int
+
 async def get_subscription_status(musician_id: str) -> SubscriptionStatus:
     """Get current subscription status and request limits for a musician"""
     musician = await db.musicians.find_one({"id": musician_id})
