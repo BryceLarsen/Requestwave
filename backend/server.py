@@ -369,12 +369,9 @@ async def get_current_musician(credentials: HTTPAuthorizationCredentials = Depen
 async def check_pro_access(musician_id: str) -> bool:
     """Check if musician has Pro subscription access"""
     try:
-        # Check if musician has active subscription
-        transaction = await db.payment_transactions.find_one({
-            "musician_id": musician_id,
-            "payment_status": "paid"
-        })
-        return transaction is not None
+        # Use the same logic as get_subscription_status to determine Pro access
+        status = await get_subscription_status(musician_id)
+        return status.plan in ["trial", "pro"]
     except:
         return False
 
