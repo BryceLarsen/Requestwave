@@ -246,6 +246,7 @@ class DesignSettings(BaseModel):
     artist_photo: Optional[str] = None  # base64 image data
     show_year: bool = True
     show_notes: bool = True
+    allow_song_suggestions: bool = True  # NEW: Pro feature - allow audience to suggest songs not on the list
 
 class DesignUpdate(BaseModel):
     color_scheme: Optional[str] = None
