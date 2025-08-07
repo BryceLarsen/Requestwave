@@ -4001,7 +4001,7 @@ const MusicianDashboard = () => {
                   disabled={upgrading}
                   className="flex-1 bg-green-600 hover:bg-green-700 py-3 rounded-lg font-bold transition duration-300 disabled:opacity-50"
                 >
-                  {upgrading ? 'Processing...' : 'Upgrade Now'}
+                  {upgrading ? 'Processing...' : `Upgrade Now - ${selectedPlan === 'monthly' ? '$10/month' : '$5/month (Annual)'}`}
                 </button>
               </div>
             </div>
