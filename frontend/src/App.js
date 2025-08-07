@@ -5487,8 +5487,10 @@ const OnStageInterface = () => {
     try {
       const response = await axios.get(`${API}/musicians/${slug}`);
       setMusician(response.data);
+      setLoading(false); // Clear loading state once musician is fetched
     } catch (error) {
       console.error('Error fetching musician:', error);
+      setLoading(false); // Clear loading state even on error
     }
   };
   
