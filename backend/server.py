@@ -43,7 +43,8 @@ JWT_EXPIRATION_HOURS = 24
 
 # Stripe Configuration
 STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
-MONTHLY_SUBSCRIPTION_PRICE = 5.00  # $5/month
+MONTHLY_SUBSCRIPTION_PRICE = 10.00  # $10/month
+ANNUAL_SUBSCRIPTION_PRICE = 60.00   # $60/year ($5/month)
 
 # Free tier limits
 FREE_REQUESTS_LIMIT = 20
