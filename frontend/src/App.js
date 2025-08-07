@@ -977,6 +977,7 @@ const MusicianDashboard = () => {
         notes: ''
       });
       fetchSongs();
+      fetchFilterOptions(); // Refresh filter options when songs change
     } catch (error) {
       setSongError(error.response?.data?.detail || 'Error adding song');
     }
