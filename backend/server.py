@@ -847,7 +847,7 @@ def get_fallback_spotify_songs(playlist_id: str) -> List[Dict[str, Any]]:
             'title': 'Flowers',
             'artist': 'Miley Cyrus',
             'genres': ['Pop'],
-            'moods': ['Upbeat'],
+            'moods': ['Feel Good'],
             'year': 2023,
             'notes': '',  # Leave blank for user customization
             'source': 'spotify'
@@ -856,7 +856,7 @@ def get_fallback_spotify_songs(playlist_id: str) -> List[Dict[str, Any]]:
             'title': 'Anti-Hero',
             'artist': 'Taylor Swift',
             'genres': ['Pop'],
-            'moods': ['Chill'],
+            'moods': ['Chill Vibes'],
             'year': 2022,
             'notes': '',  # Leave blank for user customization
             'source': 'spotify'
@@ -865,7 +865,7 @@ def get_fallback_spotify_songs(playlist_id: str) -> List[Dict[str, Any]]:
             'title': 'Unholy',
             'artist': 'Sam Smith & Kim Petras',
             'genres': ['Pop'],
-            'moods': ['Energetic'],
+            'moods': ['Dance Party'],
             'year': 2022,
             'notes': '',  # Leave blank for user customization
             'source': 'spotify'
