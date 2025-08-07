@@ -9800,6 +9800,26 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
             if 'original_token' in locals():
                 self.auth_token = original_token
 
+    def run_qr_code_url_fix_tests(self):
+        """Run QR code URL fix tests as requested in review"""
+        print("🎯 RUNNING QR CODE URL FIX TESTS")
+        print("=" * 100)
+        
+        # Test authentication first
+        self.test_musician_registration()
+        if not self.auth_token:
+            print("❌ Cannot proceed with QR code tests - authentication failed")
+            return
+        
+        # Run QR code specific tests in priority order
+        self.test_qr_code_generation_url_fix()           # PRIORITY 1
+        self.test_qr_flyer_generation_url_fix()          # PRIORITY 2  
+        self.test_musician_profile_url_verification()    # PRIORITY 3
+        self.test_environment_variable_verification()    # PRIORITY 4
+        
+        print("=" * 100)
+        print("🎯 QR CODE URL FIX TESTS COMPLETED")
+        
     def run_all_tests(self):
         """Run all tests in order"""
         print("=" * 50)
