@@ -1648,7 +1648,7 @@ async def import_from_playlist(import_data: PlaylistImport, musician_id: str = D
                         'genres': ['Pop'],
                         'moods': ['Chill'],
                         'year': 2023,
-                        'notes': 'Demo song from Apple Music playlist',
+                        'notes': '',  # Leave blank for user customization
                         'source': 'apple_music'
                     },
                     {
@@ -1657,7 +1657,7 @@ async def import_from_playlist(import_data: PlaylistImport, musician_id: str = D
                         'genres': ['Alternative'],
                         'moods': ['Upbeat'],
                         'year': 2022,
-                        'notes': 'Demo song from Apple Music playlist',
+                        'notes': '',  # Leave blank for user customization
                         'source': 'apple_music'
                     }
                 ]
