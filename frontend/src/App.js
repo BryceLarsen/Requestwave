@@ -3047,8 +3047,172 @@ const MusicianDashboard = () => {
 
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <div className="bg-gray-800 rounded-xl p-6">
-            <h2 className="text-xl font-bold mb-4">Profile Settings</h2>
+          <div>
+            {/* Audience Link */}
+            <div className="bg-purple-800/50 rounded-xl p-6 mb-8">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h2 className="text-xl font-bold mb-2">Your Audience Link</h2>
+                  <p className="text-purple-200 mb-4">Share this link with your audience for song requests:</p>
+                </div>
+                {subscriptionStatus && (
+                  <div className="text-right">
+                    <div className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      subscriptionStatus.plan === 'trial' ? 'bg-blue-600' :
+                      subscriptionStatus.plan === 'pro' ? 'bg-green-600' : 'bg-orange-600'
+                    }`}>
+                      {subscriptionStatus.plan === 'trial' ? 'TRIAL' :
+                       subscriptionStatus.plan === 'pro' ? 'PRO' : 'FREE'}
+                    </div>
+                    <div className="text-purple-200 text-xs mt-1">
+                      {subscriptionStatus.plan === 'trial' ? 
+                        `Trial ends: ${new Date(subscriptionStatus.trial_ends_at).toLocaleDateString()}` :
+                        subscriptionStatus.plan === 'pro' ? 
+                        'Unlimited requests' :
+                        `${subscriptionStatus.requests_used}/${subscriptionStatus.requests_limit} requests used`
+                      }
+                    </div>
+                    {subscriptionStatus.plan === 'free' && subscriptionStatus.next_reset_date && (
+                      <div className="text-purple-300 text-xs">
+                        Resets: {new Date(subscriptionStatus.next_reset_date).toLocaleDateString()}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-4">
+                <div className="flex items-center space-x-4 flex-1">
+                  <input
+                    type="text"
+                    value={audienceUrl}
+                    readOnly
+                    className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  />
+                  <button
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(audienceUrl);
+                        // Provide visual feedback
+                        const button = event.target;
+                        const originalText = button.textContent;
+                        button.textContent = 'Copied!';
+                        button.style.backgroundColor = '#059669'; // green-600
+                        setTimeout(() => {
+                          button.textContent = originalText;
+                          button.style.backgroundColor = ''; // reset to original
+                        }, 2000);
+                      } catch (err) {
+                        console.error('Failed to copy text: ', err);
+                        // Fallback for browsers that don't support clipboard API
+                        const textArea = document.createElement('textarea');
+                        textArea.value = audienceUrl;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        
+                        // Provide visual feedback for fallback
+                        const button = event.target;
+                        const originalText = button.textContent;
+                        button.textContent = 'Copied!';
+                        button.style.backgroundColor = '#059669';
+                        setTimeout(() => {
+                          button.textContent = originalText;
+                          button.style.backgroundColor = '';
+                        }, 2000);
+                      }
+                    }}
+                    className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition duration-300"
+                  >
+                    Copy
+                  </button>
+                </div>
+                
+                {/* NEW: Active Playlist Selector (Pro Feature) */}
+                {subscriptionStatus && subscriptionStatus.plan === 'pro' && playlists.length > 0 && (
+                  <div className="flex items-center space-x-2">
+                    <span className="text-purple-200 text-sm font-medium">Active Playlist:</span>
+                    <select
+                      value={activePlaylistId || 'all_songs'}
+                      onChange={(e) => {
+                        if (e.target.value === 'manage_playlists') {
+                          setShowManagePlaylistsModal(true);
+                        } else {
+                          activatePlaylist(e.target.value);
+                        }
+                      }}
+                      className="bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-purple-500 focus:border-purple-500"
+                    >
+                      {playlists.map(playlist => (
+                        <option key={playlist.id} value={playlist.id}>
+                          {playlist.name} ({playlist.song_count} songs)
+                        </option>
+                      ))}
+                      <option value="manage_playlists" className="font-bold text-yellow-300">
+                        ⚙️ Manage Playlists
+                      </option>
+                    </select>
+                  </div>
+                )}
+                
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={generateQRCode}
+                    className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-medium transition duration-300"
+                  >
+                    QR Code
+                  </button>
+                  <button
+                    onClick={generateAndDownloadFlyer}
+                    className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-medium transition duration-300"
+                  >
+                    Print Flyer
+                  </button>
+                  {subscriptionStatus && subscriptionStatus.plan === 'free' && !subscriptionStatus.can_make_request && (
+                    <button
+                      onClick={() => setShowUpgrade(true)}
+                      className="bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-lg font-bold transition duration-300"
+                    >
+                      Upgrade
+                    </button>
+                  )}
+                  {/* NEW: Upgrade button for trial users */}
+                  {subscriptionStatus && subscriptionStatus.plan === 'trial' && (
+                    <button
+                      onClick={() => setShowUpgrade(true)}
+                      className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-bold transition duration-300 flex items-center space-x-2"
+                    >
+                      <span>⚡</span>
+                      <span>Upgrade Now</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              {/* NEW: Trial Upgrade Notice */}
+              {subscriptionStatus && subscriptionStatus.plan === 'trial' && (
+                <div className="mt-4 bg-blue-900/50 border border-blue-500/50 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-blue-200 font-bold text-sm">🚀 Enjoying your trial?</h3>
+                      <p className="text-blue-300 text-xs mt-1">
+                        Lock in unlimited requests for just $5/month
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowUpgrade(true)}
+                      className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg text-sm font-bold transition duration-300"
+                    >
+                      Upgrade Now
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="bg-gray-800 rounded-xl p-6">
+              <h2 className="text-xl font-bold mb-4">Profile Settings</h2>
             
             {profileError && (
               <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200">
