@@ -577,7 +577,8 @@ test_plan:
   current_focus: 
     - "QR Code URL Fix Verification"
     - "Curated Genre and Mood Categories"
-  stuck_tasks: []
+  stuck_tasks:
+    - "QR Code URL Fix Verification"
   test_all: false
   test_priority: "critical_first"
 
