@@ -1335,18 +1335,34 @@ const MusicianDashboard = () => {
     if (!confirmDelete) return;
 
     try {
-      const deletePromises = Array.from(selectedSongs).map(songId => 
-        axios.delete(`${API}/songs/${songId}`) // Removed manual headers - axios already has auth token set globally
+      const deleteResults = await Promise.allSettled(
+        Array.from(selectedSongs).map(async (songId) => {
+          try {
+            await axios.delete(`${API}/songs/${songId}`);
+            return { songId, success: true };
+          } catch (error) {
+            console.error(`Failed to delete song ${songId}:`, error);
+            return { songId, success: false, error: error.response?.data?.detail || error.message };
+          }
+        })
       );
 
-      await Promise.all(deletePromises);
+      const successful = deleteResults.filter(result => result.status === 'fulfilled' && result.value.success);
+      const failed = deleteResults.filter(result => result.status === 'rejected' || (result.status === 'fulfilled' && !result.value.success));
       
       fetchSongs();
       setSelectedSongs(new Set());
-      alert(`Successfully deleted ${selectedSongs.size} songs`);
+      
+      if (failed.length === 0) {
+        alert(`Successfully deleted ${successful.length} songs`);
+      } else if (successful.length === 0) {
+        alert(`Failed to delete all ${failed.length} songs. Please check your connection and try again.`);
+      } else {
+        alert(`Partially completed: ${successful.length} songs deleted successfully, ${failed.length} songs failed. Please try deleting the failed songs individually if needed.`);
+      }
     } catch (error) {
-      console.error('Error batch deleting songs:', error);
-      alert('Error deleting songs. Please try again.');
+      console.error('Error in batch deletion process:', error);
+      alert('Error processing song deletions. Please try again.');
     }
   };
 
