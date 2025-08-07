@@ -3408,6 +3408,7 @@ const MusicianDashboard = () => {
                 Update Profile
               </button>
             </form>
+            </div>
           </div>
         )}
 
