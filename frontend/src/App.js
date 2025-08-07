@@ -2199,6 +2199,12 @@ const MusicianDashboard = () => {
                 >
                   {showCsvUpload ? 'Hide CSV Upload' : 'Upload CSV'}
                 </button>
+                <button
+                  onClick={() => setShowLstUpload(!showLstUpload)}
+                  className="bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-lg font-bold transition duration-300 flex-shrink-0"
+                >
+                  {showLstUpload ? 'Hide LST Upload' : 'Upload LST'}
+                </button>
               </div>
             </div>
 
