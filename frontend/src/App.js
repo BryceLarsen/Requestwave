@@ -930,7 +930,7 @@ const MusicianDashboard = () => {
   // NEW: Fetch filter options for musician dashboard
   const fetchFilterOptions = async () => {
     try {
-      const response = await axios.get(`${API}/musicians/${musician.slug}/filter-options`);
+      const response = await axios.get(`${API}/musicians/${musician.slug}/filters`);
       setFilterOptions(response.data);
     } catch (error) {
       console.error('Error fetching filter options:', error);
