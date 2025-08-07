@@ -2436,22 +2436,22 @@ const MusicianDashboard = () => {
                     </div>
                     
                     {selectedSongs.size > 0 && (
-                      <div className="flex space-x-2">
+                      <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                         <button
                           onClick={() => setShowPlaylistModal(true)}
-                          className="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded text-sm font-medium transition duration-300"
+                          className="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded text-sm font-medium transition duration-300 flex-shrink-0"
                         >
                           Add to Playlist ({selectedSongs.size})
                         </button>
                         <button
                           onClick={() => setShowBatchEdit(!showBatchEdit)}
-                          className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm font-medium transition duration-300"
+                          className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm font-medium transition duration-300 flex-shrink-0"
                         >
                           Edit Selected ({selectedSongs.size})
                         </button>
                         <button
                           onClick={handleBatchDelete}
-                          className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm font-medium transition duration-300"
+                          className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm font-medium transition duration-300 flex-shrink-0"
                         >
                           Delete Selected
                         </button>
