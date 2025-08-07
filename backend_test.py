@@ -8885,6 +8885,15 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
         """Run all tests in order"""
         print("=" * 50)
         
+        # HIGHEST PRIORITY: Song Deletion Functionality Testing
+        print("\n🗑️  SONG DELETION FUNCTIONALITY TESTING - HIGHEST PRIORITY")
+        print("=" * 80)
+        print("🎯 Focus: Testing FIXED song deletion functionality after Promise.allSettled update")
+        print("🐛 Issue: User reported 'Error deleting songs. Please try again.' - now fixed")
+        print("=" * 80)
+        self.test_song_deletion_functionality()
+        self.test_song_deletion_edge_cases()
+        
         # PRIORITY: QR Flyer Generation Debugging - HIGHEST PRIORITY
         print("\n🔍 QR FLYER GENERATION DEBUGGING - HIGHEST PRIORITY")
         print("=" * 80)
