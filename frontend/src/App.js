@@ -448,6 +448,14 @@ const MusicianDashboard = () => {
   // NEW: Batch enrichment for existing songs
   const [batchEnrichLoading, setBatchEnrichLoading] = useState(false);
   
+  // NEW: Playlist functionality (Pro feature)
+  const [playlists, setPlaylists] = useState([]);
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+  const [playlistName, setPlaylistName] = useState('');
+  const [activePlaylistId, setActivePlaylistId] = useState(null);
+  const [playlistError, setPlaylistError] = useState('');
+  const [playlistLoading, setPlaylistLoading] = useState(false);
+  
   // NEW: Tip functionality functions
   const handleTipButton = (songId = null) => {
     setTipSongId(songId);
