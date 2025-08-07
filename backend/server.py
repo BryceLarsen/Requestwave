@@ -1961,8 +1961,11 @@ async def create_upgrade_checkout(
         raise HTTPException(status_code=500, detail="Stripe not configured")
     
     try:
-        # Initialize Stripe - use environment variable for base URL
-        base_url = os.environ.get('FRONTEND_URL', 'https://2d821f37-5e3c-493f-a28d-8ff61cf1519e.preview.emergentagent.com')
+        # Get base URL from environment variable
+        base_url = os.environ.get('FRONTEND_URL')
+        if not base_url:
+            raise HTTPException(status_code=500, detail="FRONTEND_URL environment variable not configured")
+        
         webhook_url = f"{base_url}/api/webhook/stripe"
         stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
         
