@@ -1986,11 +1986,11 @@ const MusicianDashboard = () => {
             {/* Song Management Header */}
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Song Management</h2>
-              <div className="flex space-x-3">
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={handleBatchEnrich}
                   disabled={batchEnrichLoading}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-bold transition duration-300 flex items-center space-x-2"
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-bold transition duration-300 flex items-center space-x-2 flex-shrink-0"
                 >
                   {batchEnrichLoading ? (
                     <>
@@ -2006,19 +2006,19 @@ const MusicianDashboard = () => {
                 </button>
                 <button
                   onClick={() => setShowAddSong(!showAddSong)}
-                  className="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg font-bold transition duration-300"
+                  className="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg font-bold transition duration-300 flex-shrink-0"
                 >
                   {showAddSong ? 'Hide Add Song' : 'Add New Song'}
                 </button>
                 <button
                   onClick={() => setShowPlaylistImport(!showPlaylistImport)}
-                  className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-bold transition duration-300"
+                  className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-bold transition duration-300 flex-shrink-0"
                 >
                   {showPlaylistImport ? 'Hide Playlist Import' : 'Import Playlist'}
                 </button>
                 <button
                   onClick={() => setShowCsvUpload(!showCsvUpload)}
-                  className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold transition duration-300"
+                  className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold transition duration-300 flex-shrink-0"
                 >
                   {showCsvUpload ? 'Hide CSV Upload' : 'Upload CSV'}
                 </button>
