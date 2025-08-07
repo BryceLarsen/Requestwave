@@ -4688,6 +4688,7 @@ const MusicianDashboard = () => {
                           </p>
                         </div>
                         <p className="text-gray-300 text-sm">• Click <span className="text-green-300">Upload CSV</span> if you have a list already.</p>
+                        <p className="text-gray-300 text-sm">• Click <span className="text-orange-300">Upload LST</span> for setlist files (Song - Artist format).</p>
                         <p className="text-gray-300 text-sm">• Use <span className="text-green-300">Import Playlist</span> to bring songs from Spotify or Apple Music.</p>
                         <p className="text-gray-300 text-sm">• Add songs one by one with <span className="text-green-300">Add New Song</span>.</p>
                         <p className="text-gray-300 text-sm">• Use <span className="text-green-300">Auto-Fill</span> to grab genre, mood, and year info automatically!</p>
