@@ -87,7 +87,30 @@ class DemoAccountCreator:
             self.demo_slug = register_data["musician"]["slug"]
             print(f"✅ Created new account for {demo_musician['email']}")
         elif register_response.status_code == 400:
-            # Account already exists, try to login
+            # Account already exists, try password reset first
+            print("🔄 Account exists, trying password reset...")
+            reset_data = {"email": demo_musician["email"]}
+            reset_response = self.make_request("POST", "/auth/forgot-password", reset_data)
+            
+            if reset_response.status_code == 200:
+                reset_result = reset_response.json()
+                reset_code = reset_result.get("reset_code")  # In dev, code is returned
+                print(f"✅ Got reset code: {reset_code}")
+                
+                # Reset password
+                confirm_data = {
+                    "email": demo_musician["email"],
+                    "reset_code": reset_code,
+                    "new_password": demo_musician["password"]
+                }
+                
+                confirm_response = self.make_request("POST", "/auth/reset-password", confirm_data)
+                if confirm_response.status_code == 200:
+                    print("✅ Password reset successful")
+                else:
+                    print(f"❌ Password reset failed: {confirm_response.status_code}")
+            
+            # Now try to login
             login_data = {
                 "email": demo_musician["email"],
                 "password": demo_musician["password"]
