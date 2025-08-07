@@ -1798,6 +1798,74 @@ const MusicianDashboard = () => {
     }
   };
 
+  // LST Upload functions
+  const handleLstFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.name.toLowerCase().endsWith('.lst')) {
+        setLstFile(file);
+        setLstError('');
+        setLstPreview(null);
+      } else {
+        setLstError('Please select a .lst file');
+        setLstFile(null);
+      }
+    }
+  };
+
+  const previewLst = async () => {
+    if (!lstFile) return;
+    
+    setLstUploading(true);
+    setLstError('');
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', lstFile);
+      
+      const response = await axios.post(`${API}/songs/lst/preview`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      setLstPreview(response.data);
+    } catch (error) {
+      setLstError(error.response?.data?.detail || 'Error previewing LST file');
+    } finally {
+      setLstUploading(false);
+    }
+  };
+
+  const uploadLst = async () => {
+    if (!lstFile) return;
+    
+    setLstUploading(true);
+    setLstError('');
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', lstFile);
+      
+      const response = await axios.post(`${API}/songs/lst/upload?auto_enrich=${lstAutoEnrich}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      // Reset form and refresh songs
+      setLstFile(null);
+      setLstPreview(null);
+      setShowLstUpload(false);
+      setLstAutoEnrich(false);
+      fetchSongs();
+      
+      // Show success message
+      alert(response.data.message || 'LST file uploaded successfully!');
+      
+    } catch (error) {
+      setLstError(error.response?.data?.detail || 'Error uploading LST file');
+    } finally {
+      setLstUploading(false);
+    }
+  };
+
   // NEW: Playlist functions (Pro feature)
   const fetchPlaylists = async () => {
     try {
