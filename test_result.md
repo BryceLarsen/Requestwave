@@ -1001,15 +1001,18 @@ agent_communication:
 
   - task: "Curated Genre and Mood Categories"
     implemented: true
-    working: "NA"
+    working: false
     file: "server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "User requested: 'how can we have the automatic data gathering fit songs into fewer categories? can we narrow down the automatic genre and mood options to the following 20 genres and 20 moods while still allowing musicians to add their own categories' - Implemented curated lists with performance-context specific categories instead of generic music metadata. Focused on live musician needs with categories like 'Bar Anthems', 'Campfire', 'Coffeehouse' for moods and better genre organization. Musicians can still add custom categories but auto-assignment uses these curated lists."
+      - working: false
+        agent: "testing"
+        comment: "CURATED CATEGORIES PARTIALLY IMPLEMENTED: Comprehensive testing reveals the curated categories system is only partially working. ✅ FUNCTION EXISTS: The assign_genre_and_mood() function is properly implemented with all 20 curated genres (Pop, Rock, Classic Rock, Folk, etc.) and 20 curated moods (Chill Vibes, Feel Good, Bar Anthems, etc.). ✅ SPOTIFY API WORKING: POST /api/songs/search-metadata endpoint works correctly and returns high-confidence Spotify data. ❌ INTEGRATION INCOMPLETE: The system is not properly using the curated categories in the Spotify metadata search workflow. ISSUES FOUND: 1) Spotify metadata search returns non-curated genres like 'Alternative Rock', 'Indie Folk', 'Soft Pop' instead of mapping to curated list, 2) Existing songs in database still use old mood categories like 'Melancholy', 'Upbeat', 'Energetic', 'Chill' instead of new curated moods, 3) Song suggestion system failed with 400 error during acceptance testing. ROOT CAUSE: The search_spotify_metadata() function uses Spotify's raw genre data directly instead of mapping it through assign_genre_and_mood(). The system needs to map Spotify's genres to curated categories before returning results."
 
   - task: "Playlist Import Notes Field Fix"
     implemented: true
