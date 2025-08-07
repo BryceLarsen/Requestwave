@@ -5464,16 +5464,24 @@ const OnStageInterface = () => {
     // Create notification sound
     notificationSound.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmUgBSuK1/LBayUHLIHO8tiJOQgZZrnr65lEFAxOo+H0v2EcBSuK2Oy1YSMGGHfh9LZoFwcKSY7Z6GROC9OgUBCFQxWFdTyqp+3tPnxH3b/7PKXw95cZggHfyOvkxFkcCzhPztuuaB0JLHTP8seKRAgUX7jr1qRUEg5Kme7xvWEaBiB8x/a7YCUJKnvH7daXOQgZZrfh9bpmFgkEUY3O8dGINQcUYbLL5ZdBBgpKgdFyMWMTOxbT7tqIMw0YXrLl1qBRDQdHg9PjkCQFMXXP8s2LOAwOYaWw4qlaUg4LZq7G9s2OSQMNYazJ6JNEAxOp+T+mVlwb9Uu12ddPKq1DzuaOc8QYXbTu');
     
+    // Start initialization
     fetchMusician();
     requestNotificationPermission();
     
-    // Set up polling for real-time updates
+    // Set up polling for real-time updates after initial load
     const interval = setInterval(() => {
       fetchUpdates();
-    }, 2000); // Poll every 2 seconds
+    }, 5000); // Poll every 5 seconds (slower for demo)
     
     return () => clearInterval(interval);
   }, [slug]);
+  
+  useEffect(() => {
+    // Once musician is loaded, start fetching updates
+    if (musician) {
+      fetchUpdates();
+    }
+  }, [musician]);
   
   const fetchMusician = async () => {
     try {
