@@ -3350,6 +3350,48 @@ const MusicianDashboard = () => {
                     <span className="text-gray-300">Show song notes</span>
                   </label>
                 </div>
+                
+                {/* NEW: Pro Feature - Song Suggestions Toggle */}
+                {subscriptionStatus && subscriptionStatus.plan === 'pro' && (
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      id="allow_song_suggestions"
+                      checked={designSettings.allow_song_suggestions}
+                      onChange={(e) => setDesignSettings({...designSettings, allow_song_suggestions: e.target.checked})}
+                      className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500 focus:ring-2"
+                    />
+                    <label htmlFor="allow_song_suggestions" className="text-white text-sm">
+                      Allow Song Suggestions 
+                      <span className="text-yellow-400 ml-2">✨ PRO</span>
+                    </label>
+                    <div className="group relative">
+                      <span className="text-gray-400 cursor-help">ℹ️</span>
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 w-48 text-center">
+                        Let your audience suggest songs that aren't in your current repertoire
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Show Pro upgrade notice for free users */}
+                {subscriptionStatus && subscriptionStatus.plan !== 'pro' && (
+                  <div className="bg-yellow-900/20 border border-yellow-500/50 rounded-lg p-3">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-yellow-400">✨</span>
+                      <span className="text-yellow-200 text-sm font-medium">Song Suggestions - Pro Feature</span>
+                    </div>
+                    <p className="text-yellow-300 text-xs mt-1">
+                      Upgrade to Pro to let your audience suggest songs that aren't in your repertoire
+                    </p>
+                    <button
+                      onClick={() => setShowUpgrade(true)}
+                      className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs px-3 py-1 rounded mt-2 transition duration-300"
+                    >
+                      Upgrade to Pro
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="flex space-x-4">
