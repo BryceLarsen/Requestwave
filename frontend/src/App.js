@@ -4106,6 +4106,111 @@ const MusicianDashboard = () => {
             </div>
           </div>
         )}
+
+        {/* NEW: Manage Playlists Modal */}
+        {showManagePlaylistsModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Manage Playlists</h2>
+                <button
+                  onClick={() => setShowManagePlaylistsModal(false)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {playlists.filter(p => p.id !== 'all_songs').length === 0 ? (
+                  <p className="text-gray-400 text-center py-8">No playlists created yet. Select some songs and click "Add to Playlist" to create your first playlist!</p>
+                ) : (
+                  playlists.filter(p => p.id !== 'all_songs').map(playlist => (
+                    <div key={playlist.id} className="bg-gray-700 rounded-lg p-4 flex items-center justify-between">
+                      <div className="flex-1">
+                        {editingPlaylist === playlist.id ? (
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="text"
+                              defaultValue={playlist.name}
+                              className="bg-gray-600 border border-gray-500 rounded px-3 py-1 text-white flex-1"
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  updatePlaylistName(playlist.id, e.target.value);
+                                }
+                              }}
+                              autoFocus
+                            />
+                            <button
+                              onClick={(e) => {
+                                const input = e.target.parentElement.querySelector('input');
+                                updatePlaylistName(playlist.id, input.value);
+                              }}
+                              className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setEditingPlaylist(null)}
+                              className="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-sm"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <div>
+                            <h3 className="font-medium">{playlist.name}</h3>
+                            <p className="text-gray-400 text-sm">
+                              {playlist.song_count} songs
+                              {playlist.is_active && <span className="ml-2 text-green-400">• Active</span>}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {editingPlaylist !== playlist.id && (
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => activatePlaylist(playlist.id)}
+                            disabled={playlist.is_active}
+                            className={`px-3 py-1 rounded text-sm font-medium transition duration-300 ${
+                              playlist.is_active
+                                ? 'bg-green-600 text-white cursor-default'
+                                : 'bg-purple-600 hover:bg-purple-700 text-white'
+                            }`}
+                          >
+                            {playlist.is_active ? 'Active' : 'Activate'}
+                          </button>
+                          <button
+                            onClick={() => setEditingPlaylist(playlist.id)}
+                            className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm"
+                          >
+                            Rename
+                          </button>
+                          <button
+                            onClick={() => deletePlaylist(playlist.id, playlist.name)}
+                            className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-gray-700">
+                <button
+                  onClick={() => setShowManagePlaylistsModal(false)}
+                  className="w-full bg-gray-600 hover:bg-gray-700 py-2 rounded-lg font-bold transition duration-300"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
