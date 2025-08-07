@@ -461,7 +461,15 @@ const MusicianDashboard = () => {
   // NEW: Batch enrichment for existing songs
   const [batchEnrichLoading, setBatchEnrichLoading] = useState(false);
   
-  // NEW: Playlist functionality (Pro feature)
+  // NEW: Quick Start Guide functionality
+  const [showQuickStart, setShowQuickStart] = useState(false);
+  const [isFirstLogin, setIsFirstLogin] = useState(false);
+  const [contactForm, setContactForm] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
+  const [contactLoading, setContactLoading] = useState(false);
   const [playlists, setPlaylists] = useState([]);
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [playlistName, setPlaylistName] = useState('');
