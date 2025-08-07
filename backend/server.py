@@ -1582,7 +1582,7 @@ async def import_from_playlist(import_data: PlaylistImport, musician_id: str = D
                             'genres': ['Pop'],
                             'moods': ['Upbeat'],
                             'year': 2022,
-                            'notes': f'Fallback song from Spotify playlist {playlist_id}',
+                            'notes': '',  # Leave blank for user customization
                             'source': 'spotify'
                         },
                         {
@@ -1591,7 +1591,7 @@ async def import_from_playlist(import_data: PlaylistImport, musician_id: str = D
                             'genres': ['Alternative'],
                             'moods': ['Chill'],
                             'year': 2020,
-                            'notes': f'Fallback song from Spotify playlist {playlist_id}',
+                            'notes': '',  # Leave blank for user customization
                             'source': 'spotify'
                         },
                         {
@@ -1600,7 +1600,7 @@ async def import_from_playlist(import_data: PlaylistImport, musician_id: str = D
                             'genres': ['Pop'],
                             'moods': ['Energetic'],
                             'year': 2019,
-                            'notes': f'Fallback song from Spotify playlist {playlist_id}',
+                            'notes': '',  # Leave blank for user customization
                             'source': 'spotify'
                         }
                     ]
