@@ -68,7 +68,7 @@ class DemoAccountCreator:
         demo_musician = {
             "name": "Bryce Larsen Music",
             "email": "brycelarsenmusic@gmail.com",
-            "password": "DemoProAccount2024!"
+            "password": "RequestWave2024!"  # Try different password
         }
         
         # Try to register the account
