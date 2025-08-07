@@ -398,6 +398,21 @@ backend:
         agent: "testing"
         comment: "STRIPE SUBSCRIPTION SYSTEM FULLY WORKING: Comprehensive testing confirms ALL critical routing conflicts have been resolved and the Stripe subscription system is now production-ready. ✅ CRITICAL ROUTING CONFLICTS FIXED: Both POST /api/subscription/upgrade and POST /api/webhook/stripe endpoints now work correctly without 422 validation errors. ✅ SUBSCRIPTION UPGRADE ENDPOINT: Successfully creates Stripe checkout sessions with valid URLs (https://checkout.stripe.com/c/pay/cs_live_*) and session IDs, returns proper CheckoutSessionResponse format with 'url' and 'session_id' fields. ✅ WEBHOOK ENDPOINT: Correctly processes webhook requests and returns {'status': 'success'} response. ✅ LIVE STRIPE INTEGRATION: Working with real Stripe API using live API key, creating actual checkout sessions with session IDs starting with 'cs_live_'. ✅ PAYMENT TRANSACTION CREATION: Database records are properly created with musician_id, session_id, amount ($5.00), and payment status tracking. ✅ AUTHENTICATION: All endpoints properly require JWT authentication and reject unauthorized requests (403/401). ✅ SUBSCRIPTION STATUS: GET /api/subscription/status correctly returns trial status with 7-day trial period and proper trial end dates. ✅ PRICING VERIFICATION: Subscription correctly set to $5.00/month as specified. ✅ COMPLETE SUBSCRIPTION FLOW: Trial users can successfully upgrade to paid subscriptions through the full Stripe checkout process. Total: 12/13 tests passed (92% success rate). The one minor issue is a test expectation about checkout URL format, but the actual Stripe integration is working perfectly. The Stripe subscription system is now ready for production and users can successfully pay $5/month for Pro accounts."
 
+  - task: "Song Suggestion Feature (Pro Feature)"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "NEW FEATURE: Implemented comprehensive song suggestion system allowing audiences to suggest songs not in musician's repertoire. Includes POST /song-suggestions for creation, GET /song-suggestions for musician management, PUT /song-suggestions/{id}/status for accept/reject, DELETE /song-suggestions/{id} for deletion. Pro feature controlled by allow_song_suggestions design setting."
+      - working: false
+        agent: "testing"
+        comment: "SONG SUGGESTION FEATURE MOSTLY WORKING WITH CRITICAL BUGS: Comprehensive testing reveals the song suggestion system is largely functional but has several critical issues. ✅ CORE FUNCTIONALITY: Song suggestion creation, management, and CRUD operations working correctly (17/22 tests passed). ✅ VALIDATION: Required field validation working properly - correctly rejects missing musician_slug, suggested_title, suggested_artist, requester_name, and requester_email. ✅ DUPLICATE PREVENTION: Successfully prevents duplicate suggestions for same title+artist combination. ✅ AUTHENTICATION: All management endpoints properly require JWT authentication (GET, PUT, DELETE return 403/401 without auth). ✅ STATUS UPDATES: Accept/reject functionality working - rejected suggestions don't create songs, accepted suggestions do create songs. ✅ DATABASE OPERATIONS: CRUD operations working correctly - suggestions are properly created, retrieved, updated, and deleted. ❌ CRITICAL BUG #1: Pro feature access control not working - design_settings lookup bug allows suggestions even when should be disabled (looks in separate collection instead of musicians.design_settings). ❌ CRITICAL BUG #2: Song creation from accepted suggestions uses enriched Spotify data instead of default values (Pop genre, Upbeat mood) as specified. ❌ MINOR: Email validation is working (contrary to expectation) - properly rejects malformed emails. The song suggestion system needs fixes for Pro feature control and default song values before production deployment."
+
 frontend:
   - task: "Musician Dashboard"
     implemented: true
