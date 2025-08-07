@@ -2251,7 +2251,7 @@ const MusicianDashboard = () => {
                     placeholder="Song Title"
                     value={songForm.title}
                     onChange={(e) => setSongForm({...songForm, title: e.target.value})}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 col-span-1 md:col-span-1"
                     required
                   />
                   <input
@@ -2259,17 +2259,17 @@ const MusicianDashboard = () => {
                     placeholder="Artist"
                     value={songForm.artist}
                     onChange={(e) => setSongForm({...songForm, artist: e.target.value})}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 col-span-1 md:col-span-1"
                     required
                   />
                   
                   {/* NEW: Auto-fill Metadata Button */}
-                  <div className="md:col-span-2 mb-4">
+                  <div className="col-span-1 md:col-span-2 mb-4">
                     <button
                       type="button"
                       onClick={handleAutoFillMetadata}
                       disabled={autoFillLoading || !songForm.title.trim() || !songForm.artist.trim()}
-                      className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-medium transition duration-300 disabled:cursor-not-allowed flex items-center space-x-2"
+                      className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-medium transition duration-300 disabled:cursor-not-allowed flex items-center justify-center sm:justify-start space-x-2"
                     >
                       {autoFillLoading ? (
                         <>
@@ -2293,30 +2293,30 @@ const MusicianDashboard = () => {
                     placeholder="Genres (comma separated)"
                     value={songForm.genres.join(', ')}
                     onChange={(e) => setSongForm({...songForm, genres: e.target.value.split(',').map(g => g.trim())})}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 col-span-1 md:col-span-1"
                   />
                   <input
                     type="text"
                     placeholder="Moods (comma separated)"
                     value={songForm.moods.join(', ')}
                     onChange={(e) => setSongForm({...songForm, moods: e.target.value.split(',').map(m => m.trim())})}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 col-span-1 md:col-span-1"
                   />
                   <input
                     type="number"
                     placeholder="Year"
                     value={songForm.year}
                     onChange={(e) => setSongForm({...songForm, year: e.target.value})}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 col-span-1 md:col-span-1"
                   />
                   <input
                     type="text"
                     placeholder="Notes (optional)"
                     value={songForm.notes}
                     onChange={(e) => setSongForm({...songForm, notes: e.target.value})}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 col-span-1 md:col-span-1"
                   />
-                  <div className="md:col-span-2">
+                  <div className="col-span-1 md:col-span-2">
                     <button
                       type="submit"
                       className="w-full bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300"
