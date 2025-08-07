@@ -383,6 +383,14 @@ const MusicianDashboard = () => {
   const [showAddSong, setShowAddSong] = useState(false); // NEW: Control Add Song form visibility
   const [csvAutoEnrich, setCsvAutoEnrich] = useState(false);  // NEW: Auto-enrichment option
 
+  // LST Upload state
+  const [lstFile, setLstFile] = useState(null);
+  const [lstPreview, setLstPreview] = useState(null);
+  const [lstUploading, setLstUploading] = useState(false);
+  const [lstError, setLstError] = useState('');
+  const [showLstUpload, setShowLstUpload] = useState(false);
+  const [lstAutoEnrich, setLstAutoEnrich] = useState(false);
+
   // Song form state
   const [songForm, setSongForm] = useState({
     title: '',
