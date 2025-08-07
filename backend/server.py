@@ -1792,7 +1792,7 @@ async def import_from_playlist(import_data: PlaylistImport, musician_id: str = D
                         'title': 'Sample Apple Song 2',
                         'artist': 'Demo Artist 2', 
                         'genres': ['Alternative'],
-                        'moods': ['Upbeat'],
+                        'moods': ['Feel Good'],
                         'year': 2022,
                         'notes': '',  # Leave blank for user customization
                         'source': 'apple_music'
