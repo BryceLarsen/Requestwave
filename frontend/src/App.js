@@ -3130,29 +3130,35 @@ const MusicianDashboard = () => {
                 </div>
                 
                 {/* NEW: Active Playlist Selector (Pro Feature) */}
-                {subscriptionStatus && subscriptionStatus.plan === 'pro' && playlists.length > 0 && (
+                {subscriptionStatus && subscriptionStatus.plan === 'pro' && (
                   <div className="flex items-center space-x-2">
                     <span className="text-purple-200 text-sm font-medium">Active Playlist:</span>
-                    <select
-                      value={activePlaylistId || 'all_songs'}
-                      onChange={(e) => {
-                        if (e.target.value === 'manage_playlists') {
-                          setShowManagePlaylistsModal(true);
-                        } else {
-                          activatePlaylist(e.target.value);
-                        }
-                      }}
-                      className="bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-purple-500 focus:border-purple-500"
-                    >
-                      {playlists.map(playlist => (
-                        <option key={playlist.id} value={playlist.id}>
-                          {playlist.name} ({playlist.song_count} songs)
+                    {playlists.length > 0 ? (
+                      <select
+                        value={activePlaylistId || 'all_songs'}
+                        onChange={(e) => {
+                          if (e.target.value === 'manage_playlists') {
+                            setShowManagePlaylistsModal(true);
+                          } else {
+                            activatePlaylist(e.target.value);
+                          }
+                        }}
+                        className="bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-purple-500 focus:border-purple-500"
+                      >
+                        {playlists.map(playlist => (
+                          <option key={playlist.id} value={playlist.id}>
+                            {playlist.name} ({playlist.song_count} songs)
+                          </option>
+                        ))}
+                        <option value="manage_playlists" className="font-bold text-yellow-300">
+                          ⚙️ Manage Playlists
                         </option>
-                      ))}
-                      <option value="manage_playlists" className="font-bold text-yellow-300">
-                        ⚙️ Manage Playlists
-                      </option>
-                    </select>
+                      </select>
+                    ) : (
+                      <span className="text-gray-400 text-sm">
+                        No playlists yet. Go to Songs tab → select songs → "Add to Playlist"
+                      </span>
+                    )}
                   </div>
                 )}
                 
