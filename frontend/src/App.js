@@ -3089,13 +3089,13 @@ const MusicianDashboard = () => {
                 )}
               </div>
               
-              <div className="flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-4">
-                <div className="flex items-center space-x-4 flex-1">
+              <div className="flex flex-col space-y-4 lg:space-y-0 lg:flex-row lg:items-center lg:space-x-4">
+                <div className="flex items-center space-x-2 sm:space-x-4 flex-1">
                   <input
                     type="text"
                     value={audienceUrl}
                     readOnly
-                    className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 sm:px-4 py-2 text-white text-sm sm:text-base"
                   />
                   <button
                     onClick={async () => {
@@ -3131,7 +3131,7 @@ const MusicianDashboard = () => {
                         }, 2000);
                       }
                     }}
-                    className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition duration-300"
+                    className="bg-purple-600 hover:bg-purple-700 px-3 sm:px-4 py-2 rounded-lg transition duration-300 text-sm sm:text-base flex-shrink-0"
                   >
                     Copy
                   </button>
@@ -3139,7 +3139,7 @@ const MusicianDashboard = () => {
                 
                 {/* NEW: Active Playlist Selector (Pro Feature) */}
                 {subscriptionStatus && subscriptionStatus.plan === 'pro' && (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                     <span className="text-purple-200 text-sm font-medium">Active Playlist:</span>
                     {playlists.length > 0 ? (
                       <select
@@ -3170,10 +3170,10 @@ const MusicianDashboard = () => {
                   </div>
                 )}
                 
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                   <button
                     onClick={generateQRCode}
-                    className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-medium transition duration-300"
+                    className="bg-blue-600 hover:bg-blue-700 px-3 sm:px-4 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0"
                   >
                     QR Code
                   </button>
@@ -3182,21 +3182,21 @@ const MusicianDashboard = () => {
                       const onStageUrl = `${window.location.origin}/on-stage/${musician.slug}`;
                       window.open(onStageUrl, '_blank');
                     }}
-                    className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-2"
+                    className="bg-red-600 hover:bg-red-700 px-3 sm:px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base flex-shrink-0"
                   >
                     <span>🎤</span>
                     <span>On Stage</span>
                   </button>
                   <button
                     onClick={generateAndDownloadFlyer}
-                    className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-medium transition duration-300"
+                    className="bg-green-600 hover:bg-green-700 px-3 sm:px-4 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0"
                   >
                     Print Flyer
                   </button>
                   {subscriptionStatus && subscriptionStatus.plan === 'free' && !subscriptionStatus.can_make_request && (
                     <button
                       onClick={() => setShowUpgrade(true)}
-                      className="bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-lg font-bold transition duration-300"
+                      className="bg-orange-600 hover:bg-orange-700 px-3 sm:px-4 py-2 rounded-lg font-bold transition duration-300 text-sm sm:text-base flex-shrink-0"
                     >
                       Upgrade
                     </button>
@@ -3205,7 +3205,7 @@ const MusicianDashboard = () => {
                   {subscriptionStatus && subscriptionStatus.plan === 'trial' && (
                     <button
                       onClick={() => setShowUpgrade(true)}
-                      className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-bold transition duration-300 flex items-center space-x-2"
+                      className="bg-blue-600 hover:bg-blue-700 px-3 sm:px-4 py-2 rounded-lg font-bold transition duration-300 flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base flex-shrink-0"
                     >
                       <span>⚡</span>
                       <span>Upgrade Now</span>
