@@ -191,6 +191,9 @@ const AuthForm = ({ mode, onSwitch }) => {
             alt="RequestWave Logo"
             className="w-64 h-64 mx-auto mb-4 object-contain"
           />
+          <h1 className="text-4xl font-bold mb-2">
+            <span className="text-purple-400">Request</span><span className="text-green-400">Wave</span>
+          </h1>
         </div>
         
         <div className="text-center">
