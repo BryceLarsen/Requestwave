@@ -987,6 +987,21 @@ agent_communication:
       - working: "NA"
         agent: "main"
         comment: "PLAYLIST IMPORT NOTES FIELD UPDATE: User requested to remove default 'Imported from [platform] playlist' messages from notes field. Modified server.py to set notes='' (blank) for all playlist import scenarios: Spotify imports, Apple Music imports, and fallback songs. This gives users flexibility to add their own relevant song notes instead of default import messages."
+      - working: "NA"
+        agent: "main"
+        comment: "CURATED GENRE/MOOD CATEGORIES IMPLEMENTED: Updated automatic genre and mood assignment system to use performance-optimized curated lists instead of generic categories. GENRES (20): Pop, Rock, Classic Rock, Folk, Country, Americana, Indie, Alternative, Singer-Songwriter, R&B, Soul, Funk, Blues, Jazz, Hip Hop, Reggae, Electronic, Dance, Latin, Acoustic. MOODS (20): Chill Vibes, Feel Good, Throwback, Romantic, Poolside, Island Vibes, Dance Party, Late Night, Road Trip, Sad Bangers, Coffeehouse, Campfire, Bar Anthems, Summer Vibes, Rainy Day, Feel It Live, Heartbreak, Fall Acoustic, Weekend Warm-Up, Groovy. Updated assign_genre_and_mood() function with artist-based and keyword-based detection logic. Updated get_mood_from_audio_features() to map Spotify audio features to curated moods. Updated all hardcoded sample songs to use new categories."
+
+  - task: "Curated Genre and Mood Categories"
+    implemented: true
+    working: "NA"
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "User requested: 'how can we have the automatic data gathering fit songs into fewer categories? can we narrow down the automatic genre and mood options to the following 20 genres and 20 moods while still allowing musicians to add their own categories' - Implemented curated lists with performance-context specific categories instead of generic music metadata. Focused on live musician needs with categories like 'Bar Anthems', 'Campfire', 'Coffeehouse' for moods and better genre organization. Musicians can still add custom categories but auto-assignment uses these curated lists."
 
   - task: "Playlist Import Notes Field Fix"
     implemented: true
