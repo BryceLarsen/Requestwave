@@ -1336,12 +1336,13 @@ const MusicianDashboard = () => {
     filterSongs();
   }, [songs, songFilter, genreFilter, artistFilter, moodFilter, yearFilter, decadeFilter]);
 
-  // NEW: Refetch songs when sort order changes
+  // NEW: Refetch songs and filter options when sort order changes
   React.useEffect(() => {
     if (musician) {
       fetchSongs();
+      fetchFilterOptions();
     }
-  }, [sortBy]);
+  }, [sortBy, musician]);
 
   // NEW: Phase 3 - Analytics functions
   const fetchAnalytics = async () => {
