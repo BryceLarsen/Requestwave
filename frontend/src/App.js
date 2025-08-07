@@ -830,6 +830,7 @@ const MusicianDashboard = () => {
     fetchSongs();
     fetchRequests();
     fetchSubscriptionStatus();
+    fetchSongSuggestions();
     // NEW: Fetch show-related data
     fetchCurrentShow();
     fetchShows();
