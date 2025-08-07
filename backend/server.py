@@ -3060,6 +3060,124 @@ async def upload_csv_songs(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
+# LST Upload endpoints  
+@api_router.post("/songs/lst/preview", response_model=LSTPreviewResponse)
+async def preview_lst_upload(
+    file: UploadFile = File(...),
+    musician_id: str = Depends(get_current_musician)
+):
+    """Preview LST upload without saving to database"""
+    validate_lst_file(file)
+    
+    try:
+        songs = parse_lst_file(file)
+        
+        return LSTPreviewResponse(
+            success=True,
+            songs=songs[:10],  # Show first 10 songs as preview
+            total_songs=len(songs)
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+
+@api_router.post("/songs/lst/upload", response_model=LSTUploadResponse)
+async def upload_lst_songs(
+    file: UploadFile = File(...),
+    auto_enrich: bool = False,  # Optional parameter for automatic metadata enrichment
+    musician_id: str = Depends(get_current_musician)
+):
+    """Upload and save songs from LST file with optional automatic metadata enrichment"""
+    validate_lst_file(file)
+    
+    try:
+        songs_data = parse_lst_file(file)
+        songs_added = 0
+        enriched_count = 0
+        enrichment_errors = []
+        
+        for song_data in songs_data:
+            try:
+                song_dict = {
+                    "id": str(uuid.uuid4()),
+                    "musician_id": musician_id,
+                    "title": song_data["title"],
+                    "artist": song_data["artist"],
+                    "genres": song_data["genres"],
+                    "moods": song_data["moods"],
+                    "year": song_data.get("year"),
+                    "decade": None,  # Will be calculated if year is available
+                    "notes": song_data.get("notes", ""),
+                    "request_count": 0,
+                    "hidden": False,
+                    "created_at": datetime.utcnow()
+                }
+                
+                # Calculate decade from year if available
+                if song_dict["year"]:
+                    song_dict["decade"] = calculate_decade(song_dict["year"])
+                
+                # Optional automatic metadata enrichment
+                if auto_enrich:
+                    try:
+                        # Search for metadata if fields are missing or empty
+                        needs_enrichment = (
+                            not song_dict['year']  # For LST files, mainly enrich year data
+                        )
+                        
+                        if needs_enrichment:
+                            logger.info(f"Auto-enriching metadata for '{song_dict['title']}' by '{song_dict['artist']}'")
+                            
+                            spotify_metadata = await search_spotify_metadata(
+                                song_dict['title'], 
+                                song_dict['artist']
+                            )
+                            
+                            if spotify_metadata:
+                                # Update year and recalculate decade
+                                if not song_dict['year'] and spotify_metadata.get('year'):
+                                    song_dict['year'] = spotify_metadata['year']
+                                    song_dict['decade'] = calculate_decade(spotify_metadata['year'])
+                                    enriched_count += 1
+                                    logger.info(f"Enriched '{song_dict['title']}' with year: {spotify_metadata['year']}")
+                                else:
+                                    logger.info(f"No additional metadata found for '{song_dict['title']}'")
+                            else:
+                                logger.info(f"No Spotify metadata found for '{song_dict['title']}'")
+                    except Exception as enrichment_error:
+                        error_msg = f"Enrichment failed for '{song_dict['title']}': {str(enrichment_error)}"
+                        enrichment_errors.append(error_msg)
+                        logger.warning(error_msg)
+                
+                # Insert song into database
+                await db.songs.insert_one(song_dict)
+                songs_added += 1
+                
+            except Exception as e:
+                logger.error(f"Error processing song '{song_data.get('title', 'unknown')}': {str(e)}")
+                continue
+        
+        # Create enrichment summary message
+        enrichment_message = ""
+        if auto_enrich:
+            enrichment_message = f", {enriched_count} songs auto-enriched with metadata"
+            if enrichment_errors:
+                enrichment_message += f" ({len(enrichment_errors)} enrichment warnings)"
+        
+        success_message = f"Successfully imported {songs_added} songs from LST file{enrichment_message}"
+        
+        return LSTUploadResponse(
+            success=True,
+            message=success_message,
+            songs_added=songs_added
+        )
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+
 # NEW: Batch metadata enrichment for existing songs
 @api_router.post("/songs/batch-enrich")
 async def batch_enrich_existing_songs(
