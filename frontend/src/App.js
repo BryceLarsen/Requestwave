@@ -448,6 +448,10 @@ const MusicianDashboard = () => {
   const [shows, setShows] = useState([]);
   const [groupedRequests, setGroupedRequests] = useState({ unassigned: [], shows: {} });
 
+  // Batch selection state for requests
+  const [selectedRequests, setSelectedRequests] = useState(new Set());
+  const [showAllRequests, setShowAllRequests] = useState(true); // For collapsible All Requests
+
   // NEW: Auto-fill metadata state
   const [autoFillLoading, setAutoFillLoading] = useState(false);
   
