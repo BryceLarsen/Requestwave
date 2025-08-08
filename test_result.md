@@ -555,6 +555,18 @@ metadata:
         agent: "testing"
         comment: "QUICK START GUIDE FULLY FUNCTIONAL: Comprehensive testing confirms all requested functionality is working perfectly. ✅ HELP BUTTON VISIBILITY: '?' help button correctly positioned after Design tab in navigation with proper styling and tooltip. ✅ HELP BUTTON FUNCTIONALITY: Clicking '?' button successfully opens Quick Start Guide modal. ✅ FIRST LOGIN DETECTION: Quick Start Guide appears automatically for first-time users (tested by clearing localStorage). ✅ MODAL DESIGN: Perfect RequestWave branding with purple/green gradient header, RequestWave logo, and proper title formatting. ✅ TWO-COLUMN LAYOUT: Musicians section (🎸 For Musicians) and Audience section (🎧 For Audience Members) properly structured in responsive grid. ✅ STEP-BY-STEP INSTRUCTIONS: All 5 musician steps (Create Account, Build Library, Customize Page, Share Link, Go Live) and all 3 audience steps (Scan QR, Browse & Request, Support Artist) present with detailed instructions. ✅ PRICING INFORMATION: Correct pricing displayed ($10/month, $5/month annual) with complete Pro features list (Unlimited requests, Playlist management, Song suggestions, Artist photo & branding tools). ✅ CONTACT FORM: All fields (name, email, message) present with proper validation, form submission working, form reset after submission, and comprehensive validation testing (empty fields, invalid email, required fields). ✅ MODAL FUNCTIONALITY: Close button (×) works properly, modal can be dismissed and reopened successfully. ✅ RESPONSIVE DESIGN: Modal displays perfectly on desktop (1920x1080), tablet (768x1024), and mobile (390x844) with proper scrollable content. Total: 100% success rate across all specified requirements. The Quick Start Guide is production-ready and provides an excellent onboarding experience for new RequestWave users."
 
+  - task: "On Stage Real-Time Updates Issue"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 1
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL POST-DEPLOYMENT TESTING REVEALS ON STAGE REAL-TIME UPDATES ISSUE: Comprehensive testing reveals critical issues with the On Stage functionality after fresh deployment. ❌ CRITICAL ISSUE #1: Audience request submission failing with 404 error when trying to submit requests through POST /musicians/{slug}/requests endpoint. ❌ CRITICAL ISSUE #2: End-to-end request flow broken - requests cannot be submitted from audience interface to musician dashboard. ❌ CRITICAL ISSUE #3: Real-time polling endpoint GET /requests/updates/{musician_id} cannot be tested because no requests can be created. ❌ ROOT CAUSE: The audience request submission endpoint is returning 404 Not Found, indicating either the endpoint doesn't exist or there's a routing issue. This completely blocks the On Stage real-time updates functionality because no requests can be created to test the polling mechanism. URGENT: Need to investigate why POST /musicians/{slug}/requests endpoint is returning 404 and fix the audience request submission functionality."
+
   - task: "QR Code URL Fix Verification"
     implemented: true
     working: false
