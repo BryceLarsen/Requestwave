@@ -6091,10 +6091,6 @@ const OnStageInterface = () => {
       }
     }
   };
-      console.error('Error fetching updates:', error);
-      setLoading(false);
-    }
-  };
   
   const requestNotificationPermission = async () => {
     if ('Notification' in window) {
