@@ -11632,32 +11632,57 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
         print("🏁 CRITICAL POST-DEPLOYMENT TESTING COMPLETE")
         print("=" * 100)
 
+    def run_critical_priority_tests(self):
+        """Run critical priority tests from review request"""
+        print("🚀 Starting CRITICAL PRIORITY Tests for RequestWave Backend")
+        print("=" * 80)
+        print("FOCUS: QR Code URL Fix and On Stage Real-Time Updates")
+        print("=" * 80)
+        
+        # Basic health check
+        self.test_health_check()
+        
+        # PRIORITY 1: Test QR Code Generation Fix
+        self.test_qr_code_generation_url_fix()
+        
+        # PRIORITY 2: Test New Audience Request Endpoint
+        self.test_new_audience_request_endpoint()
+        
+        # PRIORITY 3: Test On Stage Real-Time Updates
+        self.test_on_stage_real_time_updates()
+        
+        # PRIORITY 4: End-to-End Flow Verification
+        self.test_end_to_end_request_flow()
+        
+        # Environment Variable Verification
+        self.test_environment_variable_verification()
+        
+        # Print final results
+        print("\n" + "=" * 80)
+        print("🏁 CRITICAL PRIORITY TEST RESULTS")
+        print("=" * 80)
+        print(f"✅ PASSED: {self.results['passed']}")
+        print(f"❌ FAILED: {self.results['failed']}")
+        print(f"📊 SUCCESS RATE: {(self.results['passed'] / (self.results['passed'] + self.results['failed']) * 100):.1f}%")
+        
+        if self.results["errors"]:
+            print(f"\n❌ FAILED TESTS:")
+            for error in self.results["errors"]:
+                print(f"   • {error}")
+        
+        return self.results["failed"] == 0
+
 if __name__ == "__main__":
-    print("🚨 CRITICAL POST-DEPLOYMENT TESTING - RequestWave Backend API")
+    print("🚨 CRITICAL PRIORITY TESTING - RequestWave Backend API")
     print("=" * 100)
-    print("Testing both QR code generation and On Stage functionality after fresh deployment")
-    print("User confirmed new deployment URLs are working but reports two specific issues")
+    print("Testing QR Code URL Fix and On Stage Real-Time Updates after environment variable updates")
+    print("Focus: Verify both reported issues are resolved with new endpoint creation")
     print("=" * 100)
     
     tester = RequestWaveAPITester()
     
-    # Run critical post-deployment tests as requested
-    tester.run_critical_post_deployment_tests()
-    
-    # Print final results
-    print("\n" + "=" * 100)
-    print("📊 CRITICAL POST-DEPLOYMENT TEST RESULTS")
-    print("=" * 100)
-    print(f"✅ Passed: {tester.results['passed']}")
-    print(f"❌ Failed: {tester.results['failed']}")
-    print(f"📈 Success Rate: {tester.results['passed']/(tester.results['passed']+tester.results['failed'])*100:.1f}%")
-    
-    if tester.results['errors']:
-        print("\n❌ FAILED TESTS:")
-        for error in tester.results['errors']:
-            print(f"   • {error}")
-    
-    print("=" * 100)
+    # Run critical priority tests as requested
+    success = tester.run_critical_priority_tests()
     
     # Exit with appropriate code for automation
-    exit(0 if tester.results['failed'] == 0 else 1)
+    exit(0 if success else 1)
