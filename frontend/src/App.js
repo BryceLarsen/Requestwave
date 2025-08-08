@@ -6145,7 +6145,20 @@ const OnStageInterface = () => {
   // NEW: Request management functions
   const updateRequestStatus = async (requestId, status) => {
     try {
-      await axios.put(`${API}/requests/${requestId}/status`, { status });
+      // FIXED: Add explicit authentication headers for OnStageInterface
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please log in again to update request status');
+        return;
+      }
+      
+      await axios.put(`${API}/requests/${requestId}/status`, 
+        { status },
+        {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      );
+      
       // Update local state
       setRequests(prevRequests => 
         prevRequests.map(req => 
