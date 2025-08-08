@@ -2028,7 +2028,43 @@ class RequestWaveAPITester:
             if 'original_token' in locals():
                 self.auth_token = original_token
 
-    def test_environment_variable_verification(self):
+    def run_on_stage_tests(self):
+        """Run comprehensive On Stage functionality tests"""
+        print("🎯 FINAL VERIFICATION: On Stage Functionality Testing")
+        print("=" * 100)
+        print("Focus: Test the properly fixed On Stage functionality with two critical fixes:")
+        print("1. StatusUpdate Pydantic Model: Added proper model and fixed request status endpoint to accept JSON body")
+        print("2. Real-Time Polling: Fixed response format and error handling")
+        print("=" * 100)
+        
+        # Run the three priority tests
+        self.test_request_status_update_with_json_body()
+        self.test_fixed_real_time_polling_response()
+        self.test_end_to_end_on_stage_workflow()
+        
+        # Print final summary
+        print("\n" + "=" * 100)
+        print("🎯 FINAL VERIFICATION SUMMARY")
+        print("=" * 100)
+        
+        total_tests = self.results["passed"] + self.results["failed"]
+        success_rate = (self.results["passed"] / total_tests * 100) if total_tests > 0 else 0
+        
+        print(f"✅ Tests Passed: {self.results['passed']}")
+        print(f"❌ Tests Failed: {self.results['failed']}")
+        print(f"📊 Success Rate: {success_rate:.1f}%")
+        
+        if self.results["failed"] > 0:
+            print("\n❌ FAILED TESTS:")
+            for error in self.results["errors"]:
+                print(f"   • {error}")
+        
+        if success_rate >= 80:
+            print(f"\n🎉 ON STAGE FUNCTIONALITY: {'WORKING' if success_rate == 100 else 'MOSTLY WORKING'}")
+        else:
+            print(f"\n🚨 ON STAGE FUNCTIONALITY: CRITICAL ISSUES DETECTED")
+        
+        print("=" * 100)
         """Test backend reads updated FRONTEND_URL environment variable correctly - PRIORITY 4"""
         try:
             print("🔍 PRIORITY 4: Testing Environment Variable Verification")
