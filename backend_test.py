@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """
-CRITICAL ON STAGE FUNCTIONALITY TESTING
-Focus: Diagnose On Stage functionality issues after redeployment
-Priority Issues:
-1. "Error updating request status" when clicking Accept/Play/Reject buttons
-2. New requests are still not being pushed to the live mode page
+FINAL VERIFICATION: On Stage Functionality Testing
+Focus: Test the properly fixed On Stage functionality with two critical fixes:
+1. StatusUpdate Pydantic Model: Added proper model and fixed request status endpoint to accept JSON body
+2. Real-Time Polling: Fixed response format and error handling
+
+PRIORITY 1: Test Request Status Update with JSON Body
+PRIORITY 2: Test Fixed Real-Time Polling Response  
+PRIORITY 3: End-to-End On Stage Workflow
 """
 
 import requests
