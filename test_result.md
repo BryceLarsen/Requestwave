@@ -571,7 +571,7 @@ metadata:
     implemented: true
     working: false
     file: "server.py"
-    stuck_count: 2
+    stuck_count: 3
     priority: "critical"
     needs_retesting: false
     status_history:
@@ -587,6 +587,9 @@ metadata:
       - working: false
         agent: "testing"
         comment: "CRITICAL POST-DEPLOYMENT TESTING CONFIRMS QR CODE URL FIX STILL FAILING: Comprehensive testing reveals the QR code URL fix is STILL NOT WORKING after fresh deployment. ❌ CRITICAL ISSUES FOUND: 1) GET /api/qr-code returns audience_url with old preview domain (2d821f37-5e3c-493f-a28d-8ff61cf1519e.preview.emergentagent.com/musician/bryce-larsen) instead of correct deployed domain (https://livewave-music.emergent.host). 2) GET /api/qr-flyer also returns old preview domain. 3) Debug endpoint /api/debug/env shows FRONTEND_URL is still set to old preview domain instead of https://livewave-music.emergent.host. 4) All 3 backend instance tests return incorrect URLs consistently. ❌ ROOT CAUSE CONFIRMED: The backend environment variable FRONTEND_URL is not updated to the correct deployed domain across all backend instances. This is a critical infrastructure/deployment issue where the environment variables have not been properly updated in the production deployment. URGENT: Need infrastructure team to update FRONTEND_URL environment variable to https://livewave-music.emergent.host across all backend instances."
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL PRIORITY TESTING AFTER ENVIRONMENT VARIABLE UPDATES STILL FAILING: Comprehensive testing confirms BOTH critical issues remain unresolved despite reported fixes. ❌ QR CODE URL FIX STILL BROKEN: GET /api/qr-code returns audience_url with old preview domain (2d821f37-5e3c-493f-a28d-8ff61cf1519e.preview.emergentagent.com/musician/bryce-larsen) instead of correct deployed domain. Debug endpoint /api/debug/env shows FRONTEND_URL is still set to old preview domain. All 3 backend instance tests consistently return incorrect URLs. ❌ ENVIRONMENT VARIABLE NOT UPDATED: Despite claims of updating FRONTEND_URL to https://livewave-music.emergent.host, the backend is still reading the old preview domain from environment variables. ❌ INFRASTRUCTURE DEPLOYMENT ISSUE: The environment variable updates have not been properly applied to the production backend instances. This is a critical infrastructure problem requiring immediate attention from deployment/DevOps team."
 
 test_plan:
   current_focus: 
