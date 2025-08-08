@@ -609,9 +609,11 @@ metadata:
 test_plan:
   current_focus: 
     - "QR Code URL Fix Verification"
+    - "Missing Audience Request Endpoint"
     - "On Stage Real-Time Updates Issue"
   stuck_tasks:
     - "QR Code URL Fix Verification"
+    - "Missing Audience Request Endpoint"
     - "On Stage Real-Time Updates Issue"
   test_all: false
   test_priority: "critical_first"
