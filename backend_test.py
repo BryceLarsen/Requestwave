@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Comprehensive Backend API Tests for RequestWave
-Tests authentication, song management, requests, CSV upload, and filtering
+CRITICAL ON STAGE FUNCTIONALITY TESTING
+Focus: Diagnose On Stage functionality issues after redeployment
+Priority Issues:
+1. "Error updating request status" when clicking Accept/Play/Reject buttons
+2. New requests are still not being pushed to the live mode page
 """
 
 import requests
@@ -18,7 +21,7 @@ TEST_MUSICIAN = {
     "password": "SecurePassword123!"
 }
 
-# Pro account for batch edit testing
+# Pro account for On Stage testing
 PRO_MUSICIAN = {
     "email": "brycelarsenmusic@gmail.com",
     "password": "RequestWave2024!"
