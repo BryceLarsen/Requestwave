@@ -1040,6 +1040,213 @@ class RequestWaveAPITester:
             if 'original_token' in locals():
                 self.auth_token = original_token
 
+    def test_new_audience_request_endpoint(self):
+        """Test the new POST /api/musicians/{musician_slug}/requests endpoint - PRIORITY 2"""
+        try:
+            print("🔍 PRIORITY 2: Testing New Audience Request Endpoint")
+            print("=" * 80)
+            
+            # Login with Pro account to get musician details
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("New Audience Request Endpoint - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            pro_musician_id = login_data_response["musician"]["id"]
+            pro_musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            print(f"   ✅ Musician slug: {pro_musician_slug}")
+            
+            # Step 2: Get available songs for request
+            print("📊 Step 2: Get available songs for test request")
+            
+            songs_response = self.make_request("GET", "/songs")
+            
+            if songs_response.status_code != 200:
+                self.log_result("New Audience Request Endpoint - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            songs = songs_response.json()
+            if len(songs) == 0:
+                # Create a test song first
+                test_song_data = {
+                    "title": "Test Song for Audience Request",
+                    "artist": "Test Artist",
+                    "genres": ["Pop"],
+                    "moods": ["Feel Good"],
+                    "year": 2024,
+                    "notes": "Test song for audience request endpoint"
+                }
+                
+                create_song_response = self.make_request("POST", "/songs", test_song_data)
+                if create_song_response.status_code == 200:
+                    songs = [create_song_response.json()]
+                    print(f"   ✅ Created test song: {songs[0]['title']}")
+                else:
+                    self.log_result("New Audience Request Endpoint - Create Test Song", False, f"Failed to create test song: {create_song_response.status_code}")
+                    self.auth_token = original_token
+                    return
+            
+            test_song = songs[0]
+            print(f"   ✅ Using song for test: '{test_song['title']}' by {test_song['artist']}")
+            
+            # Step 3: Test the new audience request endpoint (without authentication)
+            print("📊 Step 3: Test POST /api/musicians/{slug}/requests endpoint")
+            
+            # Clear auth token for public request creation
+            self.auth_token = None
+            
+            request_data = {
+                "song_id": test_song["id"],
+                "requester_name": "Audience Test User",
+                "requester_email": "audience.test@requestwave.com",
+                "dedication": "Testing the new audience request endpoint functionality"
+            }
+            
+            # Submit request to the new musician-specific endpoint
+            request_response = self.make_request("POST", f"/musicians/{pro_musician_slug}/requests", request_data)
+            
+            if request_response.status_code != 200:
+                self.log_result("New Audience Request Endpoint - Submit Request", False, f"❌ CRITICAL: New audience request endpoint failed: {request_response.status_code}, Response: {request_response.text}")
+                self.auth_token = original_token
+                return
+            
+            request_result = request_response.json()
+            test_request_id = request_result.get("id")
+            
+            print(f"   ✅ Successfully submitted request with ID: {test_request_id}")
+            print(f"   ✅ Request details: '{request_result.get('song_title')}' by {request_result.get('song_artist')}")
+            print(f"   ✅ From: {request_result.get('requester_name')} ({request_result.get('requester_email')})")
+            
+            # Step 4: Verify request data structure
+            print("📊 Step 4: Verify request response structure")
+            
+            required_fields = ["id", "musician_id", "song_id", "song_title", "song_artist", 
+                             "requester_name", "requester_email", "dedication", "status", "created_at"]
+            missing_fields = [field for field in required_fields if field not in request_result]
+            
+            if len(missing_fields) == 0:
+                print(f"   ✅ All required fields present: {required_fields}")
+                structure_valid = True
+            else:
+                print(f"   ❌ Missing fields: {missing_fields}")
+                structure_valid = False
+            
+            # Step 5: Verify musician slug validation
+            print("📊 Step 5: Test musician slug validation")
+            
+            # Test with invalid slug
+            invalid_request_response = self.make_request("POST", "/musicians/invalid-slug-12345/requests", request_data)
+            
+            if invalid_request_response.status_code == 404:
+                print(f"   ✅ Correctly rejected invalid musician slug (404)")
+                slug_validation_working = True
+            else:
+                print(f"   ❌ Should have rejected invalid slug, got: {invalid_request_response.status_code}")
+                slug_validation_working = False
+            
+            # Step 6: Restore auth token and verify request appears in dashboard
+            print("📊 Step 6: Verify request appears in musician dashboard")
+            
+            self.auth_token = original_token
+            
+            dashboard_requests_response = self.make_request("GET", "/requests")
+            
+            if dashboard_requests_response.status_code != 200:
+                self.log_result("New Audience Request Endpoint - Dashboard Verification", False, f"Failed to get dashboard requests: {dashboard_requests_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            dashboard_requests = dashboard_requests_response.json()
+            
+            # Find our test request
+            test_request_in_dashboard = None
+            for req in dashboard_requests:
+                if req.get("id") == test_request_id:
+                    test_request_in_dashboard = req
+                    break
+            
+            if test_request_in_dashboard:
+                print(f"   ✅ Request appears in musician dashboard")
+                dashboard_integration_working = True
+            else:
+                print(f"   ❌ Request NOT found in dashboard (checked {len(dashboard_requests)} requests)")
+                dashboard_integration_working = False
+            
+            # Step 7: Test request data integrity
+            print("📊 Step 7: Test request data integrity")
+            
+            data_integrity_good = True
+            if test_request_in_dashboard:
+                # Verify key fields match
+                expected_values = {
+                    "requester_name": "Audience Test User",
+                    "requester_email": "audience.test@requestwave.com",
+                    "song_title": test_song["title"],
+                    "song_artist": test_song["artist"],
+                    "dedication": "Testing the new audience request endpoint functionality"
+                }
+                
+                for field, expected_value in expected_values.items():
+                    actual_value = test_request_in_dashboard.get(field)
+                    if actual_value != expected_value:
+                        print(f"   ❌ Data mismatch in {field}: expected '{expected_value}', got '{actual_value}'")
+                        data_integrity_good = False
+                    else:
+                        print(f"   ✅ Data correct in {field}: '{actual_value}'")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            core_functionality_working = (request_response.status_code == 200 and 
+                                        test_request_id is not None and 
+                                        structure_valid)
+            
+            if (core_functionality_working and slug_validation_working and 
+                dashboard_integration_working and data_integrity_good):
+                self.log_result("New Audience Request Endpoint", True, f"✅ PRIORITY 2 COMPLETE: New audience request endpoint POST /musicians/{{slug}}/requests working perfectly - requests created successfully and appear in dashboard with correct data")
+            elif core_functionality_working:
+                issues = []
+                if not slug_validation_working:
+                    issues.append("slug validation not working")
+                if not dashboard_integration_working:
+                    issues.append("dashboard integration not working")
+                if not data_integrity_good:
+                    issues.append("data integrity issues")
+                
+                self.log_result("New Audience Request Endpoint", True, f"✅ CORE FUNCTIONALITY WORKING: New endpoint creates requests successfully, minor issues: {', '.join(issues)}")
+            else:
+                issues = []
+                if request_response.status_code != 200:
+                    issues.append(f"endpoint returns {request_response.status_code}")
+                if test_request_id is None:
+                    issues.append("no request ID returned")
+                if not structure_valid:
+                    issues.append(f"missing fields: {missing_fields}")
+                
+                self.log_result("New Audience Request Endpoint", False, f"❌ CRITICAL NEW AUDIENCE REQUEST ENDPOINT ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("New Audience Request Endpoint", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
     def test_environment_variable_verification(self):
         """Test backend reads updated FRONTEND_URL environment variable correctly - PRIORITY 4"""
         try:
