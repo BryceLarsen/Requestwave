@@ -11401,17 +11401,20 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
         return self.results['failed'] == 0
 
 if __name__ == "__main__":
-    print("🚀 RequestWave Backend API Testing - QR Code URL Fix Verification")
+    print("🚨 CRITICAL POST-DEPLOYMENT TESTING - RequestWave Backend API")
+    print("=" * 100)
+    print("Testing both QR code generation and On Stage functionality after fresh deployment")
+    print("User confirmed new deployment URLs are working but reports two specific issues")
     print("=" * 100)
     
     tester = RequestWaveAPITester()
     
-    # Run QR code URL fix tests as requested
-    tester.run_qr_code_url_fix_tests()
+    # Run critical post-deployment tests as requested
+    tester.run_critical_post_deployment_tests()
     
     # Print final results
     print("\n" + "=" * 100)
-    print("📊 FINAL TEST RESULTS")
+    print("📊 CRITICAL POST-DEPLOYMENT TEST RESULTS")
     print("=" * 100)
     print(f"✅ Passed: {tester.results['passed']}")
     print(f"❌ Failed: {tester.results['failed']}")
@@ -11423,3 +11426,6 @@ if __name__ == "__main__":
             print(f"   • {error}")
     
     print("=" * 100)
+    
+    # Exit with appropriate code for automation
+    exit(0 if tester.results['failed'] == 0 else 1)
