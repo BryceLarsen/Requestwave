@@ -559,7 +559,7 @@ metadata:
     implemented: true
     working: false
     file: "server.py"
-    stuck_count: 1
+    stuck_count: 2
     priority: "critical"
     needs_retesting: false
     status_history:
@@ -572,6 +572,9 @@ metadata:
       - working: false
         agent: "testing"
         comment: "CRITICAL QR CODE URL FIX STILL FAILING AFTER ROLLING RESTART: Comprehensive testing through public domain (https://livewave-music.emergent.host/api) confirms the QR code URL fix is NOT working despite rolling restart. ❌ PRIORITY 1 FAILED: GET /api/qr-code endpoint returns audience_url with old preview domain (2d821f37-5e3c-493f-a28d-8ff61cf1519e.preview.emergentagent.com/musician/bryce-larsen) instead of correct deployed domain (https://livewave-music.emergent.host). ❌ PRIORITY 2 FAILED: GET /api/qr-flyer endpoint also returns old preview domain in audience_url field. ✅ ENVIRONMENT VARIABLES CORRECT: Backend/.env contains FRONTEND_URL=https://livewave-music.emergent.host. ✅ CURATED CATEGORIES WORKING: Spotify metadata search correctly returns curated genres/moods (4/4 test songs passed). ❌ INFRASTRUCTURE ISSUE CONFIRMED: The rolling restart did not resolve the routing issue - public domain requests are still hitting an old backend instance that hasn't been updated with the new environment variables. This is a critical deployment/infrastructure problem preventing QR codes from working correctly for users."
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL POST-DEPLOYMENT TESTING CONFIRMS QR CODE URL FIX STILL FAILING: Comprehensive testing reveals the QR code URL fix is STILL NOT WORKING after fresh deployment. ❌ CRITICAL ISSUES FOUND: 1) GET /api/qr-code returns audience_url with old preview domain (2d821f37-5e3c-493f-a28d-8ff61cf1519e.preview.emergentagent.com/musician/bryce-larsen) instead of correct deployed domain (https://livewave-music.emergent.host). 2) GET /api/qr-flyer also returns old preview domain. 3) Debug endpoint /api/debug/env shows FRONTEND_URL is still set to old preview domain instead of https://livewave-music.emergent.host. 4) All 3 backend instance tests return incorrect URLs consistently. ❌ ROOT CAUSE CONFIRMED: The backend environment variable FRONTEND_URL is not updated to the correct deployed domain across all backend instances. This is a critical infrastructure/deployment issue where the environment variables have not been properly updated in the production deployment. URGENT: Need infrastructure team to update FRONTEND_URL environment variable to https://livewave-music.emergent.host across all backend instances."
 
 test_plan:
   current_focus: 
