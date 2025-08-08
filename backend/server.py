@@ -2908,12 +2908,13 @@ async def search_song_metadata(
 @api_router.put("/requests/{request_id}/status")
 async def update_request_status(
     request_id: str, 
-    status: str, 
+    status_data: dict,  # {"status": "pending|accepted|played|rejected"}
     musician_id: str = Depends(get_current_musician)
 ):
     """Update request status (pending, accepted, played, rejected)"""
-    if status not in ["pending", "accepted", "played", "rejected"]:
-        raise HTTPException(status_code=400, detail="Invalid status")
+    status = status_data.get("status")
+    if not status or status not in ["pending", "accepted", "played", "rejected"]:
+        raise HTTPException(status_code=400, detail="Invalid status. Must be: pending, accepted, played, or rejected")
     
     # Verify request belongs to musician
     result = await db.requests.update_one(
@@ -2924,15 +2925,21 @@ async def update_request_status(
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Request not found")
     
-    return {"message": "Request status updated"}
+    return {"message": "Request status updated successfully", "new_status": status}
 
 @api_router.get("/requests/updates/{musician_id}")
 async def get_request_updates(musician_id: str):
-    """Polling endpoint for real-time updates (can be upgraded to WebSocket later)"""
-    requests = await db.requests.find({"musician_id": musician_id}).sort("created_at", DESCENDING).limit(50).to_list(50)
+    """Polling endpoint for real-time updates (used by On Stage interface)"""
+    # Get active requests (not archived) for On Stage mode
+    requests = await db.requests.find({
+        "musician_id": musician_id,
+        "status": {"$ne": "archived"}  # Exclude archived requests
+    }).sort("created_at", DESCENDING).limit(50).to_list(50)
+    
     return {
         "requests": [Request(**request) for request in requests],
-        "timestamp": datetime.utcnow().isoformat()
+        "total_requests": len(requests),
+        "last_updated": datetime.utcnow().isoformat()
     }
 
 # Get available filter options for a musician
