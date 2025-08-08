@@ -559,13 +559,16 @@ metadata:
     implemented: true
     working: false
     file: "server.py"
-    stuck_count: 1
+    stuck_count: 2
     priority: "critical"
     needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "CRITICAL POST-DEPLOYMENT TESTING REVEALS ON STAGE REAL-TIME UPDATES ISSUE: Comprehensive testing reveals critical issues with the On Stage functionality after fresh deployment. ❌ CRITICAL ISSUE #1: Audience request submission failing with 404 error when trying to submit requests through POST /musicians/{slug}/requests endpoint. ❌ CRITICAL ISSUE #2: End-to-end request flow broken - requests cannot be submitted from audience interface to musician dashboard. ❌ CRITICAL ISSUE #3: Real-time polling endpoint GET /requests/updates/{musician_id} cannot be tested because no requests can be created. ❌ ROOT CAUSE: The audience request submission endpoint is returning 404 Not Found, indicating either the endpoint doesn't exist or there's a routing issue. This completely blocks the On Stage real-time updates functionality because no requests can be created to test the polling mechanism. URGENT: Need to investigate why POST /musicians/{slug}/requests endpoint is returning 404 and fix the audience request submission functionality."
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL PRIORITY TESTING AFTER NEW ENDPOINT CREATION STILL FAILING: Comprehensive testing confirms the On Stage real-time updates remain completely broken despite reported creation of new POST /api/musicians/{musician_slug}/requests endpoint. ❌ NEW AUDIENCE REQUEST ENDPOINT MISSING: POST /api/musicians/bryce-larsen/requests returns 404 Not Found, indicating the new endpoint was not successfully created or deployed. ❌ ON STAGE POLLING BROKEN: Cannot test real-time updates because audience request submission is impossible due to missing endpoint. ❌ END-TO-END FLOW COMPLETELY BROKEN: The entire audience-to-musician request flow is non-functional. ❌ ROOT CAUSE CONFIRMED: The new audience request endpoint that should handle public request submissions without authentication is either not implemented, not properly routed, or not deployed to production. This is a critical missing functionality that prevents the core feature from working."
 
   - task: "QR Code URL Fix Verification"
     implemented: true
