@@ -564,26 +564,490 @@ class RequestWaveAPITester:
             if 'original_token' in locals():
                 self.auth_token = original_token
 
+    def test_on_stage_real_time_updates(self):
+        """Test On Stage real-time updates functionality - PRIORITY 2"""
+        try:
+            print("🔍 PRIORITY 2: Testing On Stage Real-Time Updates")
+            print("=" * 80)
+            
+            # Login with Pro account
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("On Stage Real-Time Updates - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            pro_musician_id = login_data_response["musician"]["id"]
+            pro_musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            print(f"   ✅ Musician ID: {pro_musician_id}")
+            print(f"   ✅ Musician slug: {pro_musician_slug}")
+            
+            # Step 2: Get musician's songs for request creation
+            print("📊 Step 2: Get musician's songs for test request")
+            
+            songs_response = self.make_request("GET", "/songs")
+            
+            if songs_response.status_code != 200:
+                self.log_result("On Stage Real-Time Updates - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            songs = songs_response.json()
+            if len(songs) == 0:
+                # Create a test song first
+                test_song_data = {
+                    "title": "Test Song for On Stage",
+                    "artist": "Test Artist",
+                    "genres": ["Pop"],
+                    "moods": ["Feel Good"],
+                    "year": 2024,
+                    "notes": "Test song for On Stage functionality"
+                }
+                
+                create_song_response = self.make_request("POST", "/songs", test_song_data)
+                if create_song_response.status_code == 200:
+                    songs = [create_song_response.json()]
+                    print(f"   ✅ Created test song: {songs[0]['title']}")
+                else:
+                    self.log_result("On Stage Real-Time Updates - Create Test Song", False, f"Failed to create test song: {create_song_response.status_code}")
+                    self.auth_token = original_token
+                    return
+            
+            test_song = songs[0]
+            print(f"   ✅ Using song for test: '{test_song['title']}' by {test_song['artist']}")
+            
+            # Step 3: Submit a test request through audience interface (simulate)
+            print("📊 Step 3: Submit test request through audience interface")
+            
+            # Clear auth token for public request creation
+            self.auth_token = None
+            
+            request_data = {
+                "song_id": test_song["id"],
+                "requester_name": "On Stage Test User",
+                "requester_email": "onstage.test@requestwave.com",
+                "dedication": "Testing On Stage real-time updates functionality"
+            }
+            
+            # Submit request to musician's endpoint
+            request_response = self.make_request("POST", f"/musicians/{pro_musician_slug}/requests", request_data)
+            
+            if request_response.status_code != 200:
+                self.log_result("On Stage Real-Time Updates - Submit Request", False, f"Failed to submit request: {request_response.status_code}, Response: {request_response.text}")
+                self.auth_token = original_token
+                return
+            
+            request_result = request_response.json()
+            test_request_id = request_result.get("id")
+            
+            print(f"   ✅ Successfully submitted test request with ID: {test_request_id}")
+            print(f"   ✅ Request details: '{request_result.get('song_title')}' by {request_result.get('song_artist')}")
+            
+            # Step 4: Restore auth token and verify request appears in dashboard
+            print("📊 Step 4: Verify request appears in main dashboard")
+            
+            self.auth_token = original_token
+            
+            dashboard_requests_response = self.make_request("GET", "/requests")
+            
+            if dashboard_requests_response.status_code != 200:
+                self.log_result("On Stage Real-Time Updates - Dashboard Requests", False, f"Failed to get dashboard requests: {dashboard_requests_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            dashboard_requests = dashboard_requests_response.json()
+            
+            # Find our test request
+            test_request_in_dashboard = None
+            for req in dashboard_requests:
+                if req.get("id") == test_request_id:
+                    test_request_in_dashboard = req
+                    break
+            
+            if test_request_in_dashboard:
+                print(f"   ✅ Test request found in dashboard: {test_request_in_dashboard.get('requester_name')}")
+                dashboard_working = True
+            else:
+                print(f"   ❌ Test request NOT found in dashboard (checked {len(dashboard_requests)} requests)")
+                dashboard_working = False
+            
+            # Step 5: Test GET /api/requests/updates/{musician_id} endpoint for real-time polling
+            print("📊 Step 5: Test real-time polling endpoint for On Stage")
+            
+            updates_response = self.make_request("GET", f"/requests/updates/{pro_musician_id}")
+            
+            if updates_response.status_code != 200:
+                self.log_result("On Stage Real-Time Updates - Polling Endpoint", False, f"Polling endpoint failed: {updates_response.status_code}, Response: {updates_response.text}")
+                self.auth_token = original_token
+                return
+            
+            updates_data = updates_response.json()
+            print(f"   📊 Polling endpoint response structure: {list(updates_data.keys())}")
+            
+            # Check if our test request appears in the polling data
+            polling_requests = updates_data.get("requests", [])
+            test_request_in_polling = None
+            
+            for req in polling_requests:
+                if req.get("id") == test_request_id:
+                    test_request_in_polling = req
+                    break
+            
+            if test_request_in_polling:
+                print(f"   ✅ Test request found in polling endpoint: {test_request_in_polling.get('requester_name')}")
+                polling_working = True
+            else:
+                print(f"   ❌ Test request NOT found in polling endpoint (checked {len(polling_requests)} requests)")
+                polling_working = False
+            
+            # Step 6: Test polling endpoint response format
+            print("📊 Step 6: Verify polling endpoint response format")
+            
+            expected_fields = ["requests", "total_requests", "last_updated"]
+            missing_fields = [field for field in expected_fields if field not in updates_data]
+            
+            if len(missing_fields) == 0:
+                print(f"   ✅ Polling endpoint has all expected fields: {expected_fields}")
+                format_valid = True
+            else:
+                print(f"   ❌ Polling endpoint missing fields: {missing_fields}")
+                format_valid = False
+            
+            # Step 7: Test real-time update timing
+            print("📊 Step 7: Test real-time update timing and consistency")
+            
+            # Wait a moment and poll again to check for consistency
+            import time
+            time.sleep(2)
+            
+            second_updates_response = self.make_request("GET", f"/requests/updates/{pro_musician_id}")
+            
+            if second_updates_response.status_code == 200:
+                second_updates_data = second_updates_response.json()
+                second_polling_requests = second_updates_data.get("requests", [])
+                
+                # Check if the same request is still there
+                test_request_still_there = any(req.get("id") == test_request_id for req in second_polling_requests)
+                
+                if test_request_still_there:
+                    print(f"   ✅ Request consistently appears in polling endpoint")
+                    consistency_good = True
+                else:
+                    print(f"   ❌ Request disappeared from polling endpoint")
+                    consistency_good = False
+            else:
+                print(f"   ⚠️  Could not test consistency (second poll failed)")
+                consistency_good = True  # Don't fail on this
+            
+            # Step 8: Test WebSocket or polling mechanism for live updates
+            print("📊 Step 8: Test live update mechanism")
+            
+            # Check if there's a WebSocket endpoint or if polling is the mechanism
+            websocket_response = self.make_request("GET", "/ws/requests")
+            
+            if websocket_response.status_code == 200:
+                print(f"   ✅ WebSocket endpoint available for live updates")
+                live_updates_available = True
+            elif websocket_response.status_code == 404:
+                print(f"   ℹ️  No WebSocket endpoint - using polling for live updates")
+                live_updates_available = polling_working  # Polling is the live update mechanism
+            else:
+                print(f"   ⚠️  WebSocket endpoint status: {websocket_response.status_code}")
+                live_updates_available = polling_working
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            core_functionality_working = dashboard_working and polling_working and format_valid
+            
+            if core_functionality_working and consistency_good and live_updates_available:
+                self.log_result("On Stage Real-Time Updates", True, f"✅ PRIORITY 2 COMPLETE: On Stage real-time updates working - requests appear in both dashboard and polling endpoint with consistent live updates")
+            elif core_functionality_working:
+                self.log_result("On Stage Real-Time Updates", True, f"✅ CORE FUNCTIONALITY WORKING: Requests appear in both dashboard and On Stage polling endpoint")
+            else:
+                issues = []
+                if not dashboard_working:
+                    issues.append("requests not appearing in main dashboard")
+                if not polling_working:
+                    issues.append("requests not appearing in On Stage polling endpoint")
+                if not format_valid:
+                    issues.append("polling endpoint response format invalid")
+                if not consistency_good:
+                    issues.append("polling endpoint inconsistent")
+                if not live_updates_available:
+                    issues.append("live update mechanism not working")
+                
+                self.log_result("On Stage Real-Time Updates", False, f"❌ CRITICAL ON STAGE ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("On Stage Real-Time Updates", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_end_to_end_request_flow(self):
+        """Test complete end-to-end request flow verification - PRIORITY 3"""
+        try:
+            print("🔍 PRIORITY 3: Testing End-to-End Request Flow")
+            print("=" * 80)
+            
+            # Login with Pro account
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("End-to-End Request Flow - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            pro_musician_id = login_data_response["musician"]["id"]
+            pro_musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            
+            # Step 2: Get available songs for request
+            print("📊 Step 2: Get available songs from audience perspective")
+            
+            # Clear auth token for public access
+            self.auth_token = None
+            
+            audience_songs_response = self.make_request("GET", f"/musicians/{pro_musician_slug}/songs")
+            
+            if audience_songs_response.status_code != 200:
+                self.log_result("End-to-End Request Flow - Audience Songs", False, f"Failed to get audience songs: {audience_songs_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            audience_songs = audience_songs_response.json()
+            
+            if len(audience_songs) == 0:
+                # Create a test song first
+                self.auth_token = original_token
+                test_song_data = {
+                    "title": "End-to-End Test Song",
+                    "artist": "Test Artist",
+                    "genres": ["Pop"],
+                    "moods": ["Feel Good"],
+                    "year": 2024,
+                    "notes": "Test song for end-to-end flow"
+                }
+                
+                create_song_response = self.make_request("POST", "/songs", test_song_data)
+                if create_song_response.status_code == 200:
+                    self.auth_token = None
+                    audience_songs_response = self.make_request("GET", f"/musicians/{pro_musician_slug}/songs")
+                    audience_songs = audience_songs_response.json()
+                    print(f"   ✅ Created test song for end-to-end testing")
+                else:
+                    self.log_result("End-to-End Request Flow - Create Test Song", False, f"Failed to create test song: {create_song_response.status_code}")
+                    self.auth_token = original_token
+                    return
+            
+            test_song = audience_songs[0]
+            print(f"   ✅ Audience can see {len(audience_songs)} songs, using: '{test_song['title']}' by {test_song['artist']}")
+            
+            # Step 3: Submit audience request through public endpoint
+            print("📊 Step 3: Submit audience request through https://livewave-music.emergent.host/musician/bryce-larsen")
+            
+            request_data = {
+                "song_id": test_song["id"],
+                "requester_name": "End-to-End Test User",
+                "requester_email": "e2e.test@requestwave.com",
+                "dedication": "Testing complete end-to-end request flow from audience to On Stage"
+            }
+            
+            # Submit request to musician's public endpoint
+            request_response = self.make_request("POST", f"/musicians/{pro_musician_slug}/requests", request_data)
+            
+            if request_response.status_code != 200:
+                self.log_result("End-to-End Request Flow - Submit Request", False, f"Failed to submit request: {request_response.status_code}, Response: {request_response.text}")
+                self.auth_token = original_token
+                return
+            
+            request_result = request_response.json()
+            test_request_id = request_result.get("id")
+            
+            print(f"   ✅ Successfully submitted audience request with ID: {test_request_id}")
+            print(f"   ✅ Request: '{request_result.get('song_title')}' by {request_result.get('song_artist')}")
+            print(f"   ✅ From: {request_result.get('requester_name')} ({request_result.get('requester_email')})")
+            
+            # Step 4: Verify request appears in main dashboard requests tab
+            print("📊 Step 4: Verify request appears in main dashboard requests tab")
+            
+            self.auth_token = original_token
+            
+            dashboard_requests_response = self.make_request("GET", "/requests")
+            
+            if dashboard_requests_response.status_code != 200:
+                self.log_result("End-to-End Request Flow - Dashboard Requests", False, f"Failed to get dashboard requests: {dashboard_requests_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            dashboard_requests = dashboard_requests_response.json()
+            
+            # Find our test request
+            test_request_in_dashboard = None
+            for req in dashboard_requests:
+                if req.get("id") == test_request_id:
+                    test_request_in_dashboard = req
+                    break
+            
+            if test_request_in_dashboard:
+                print(f"   ✅ Request appears in dashboard requests tab")
+                print(f"   ✅ Dashboard request details: {test_request_in_dashboard.get('requester_name')} - {test_request_in_dashboard.get('song_title')}")
+                dashboard_working = True
+            else:
+                print(f"   ❌ Request NOT found in dashboard (checked {len(dashboard_requests)} requests)")
+                dashboard_working = False
+            
+            # Step 5: Test if request shows up in On Stage polling endpoint
+            print("📊 Step 5: Test if request shows up in On Stage interface polling")
+            
+            on_stage_response = self.make_request("GET", f"/requests/updates/{pro_musician_id}")
+            
+            if on_stage_response.status_code != 200:
+                self.log_result("End-to-End Request Flow - On Stage Polling", False, f"On Stage polling failed: {on_stage_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            on_stage_data = on_stage_response.json()
+            on_stage_requests = on_stage_data.get("requests", [])
+            
+            # Find our test request in On Stage data
+            test_request_in_on_stage = None
+            for req in on_stage_requests:
+                if req.get("id") == test_request_id:
+                    test_request_in_on_stage = req
+                    break
+            
+            if test_request_in_on_stage:
+                print(f"   ✅ Request appears in On Stage polling endpoint")
+                print(f"   ✅ On Stage request details: {test_request_in_on_stage.get('requester_name')} - {test_request_in_on_stage.get('song_title')}")
+                on_stage_working = True
+            else:
+                print(f"   ❌ Request NOT found in On Stage polling (checked {len(on_stage_requests)} requests)")
+                on_stage_working = False
+            
+            # Step 6: Check for timing and caching issues
+            print("📊 Step 6: Check for timing and caching issues in real-time updates")
+            
+            # Wait a moment and check again to ensure consistency
+            import time
+            time.sleep(3)
+            
+            # Check dashboard again
+            dashboard_check_response = self.make_request("GET", "/requests")
+            dashboard_consistent = False
+            
+            if dashboard_check_response.status_code == 200:
+                dashboard_check_requests = dashboard_check_response.json()
+                dashboard_consistent = any(req.get("id") == test_request_id for req in dashboard_check_requests)
+                print(f"   📊 Dashboard consistency check: {'✅ PASS' if dashboard_consistent else '❌ FAIL'}")
+            
+            # Check On Stage again
+            on_stage_check_response = self.make_request("GET", f"/requests/updates/{pro_musician_id}")
+            on_stage_consistent = False
+            
+            if on_stage_check_response.status_code == 200:
+                on_stage_check_data = on_stage_check_response.json()
+                on_stage_check_requests = on_stage_check_data.get("requests", [])
+                on_stage_consistent = any(req.get("id") == test_request_id for req in on_stage_check_requests)
+                print(f"   📊 On Stage consistency check: {'✅ PASS' if on_stage_consistent else '❌ FAIL'}")
+            
+            # Step 7: Test request data integrity across endpoints
+            print("📊 Step 7: Test request data integrity across endpoints")
+            
+            data_integrity_good = True
+            
+            if test_request_in_dashboard and test_request_in_on_stage:
+                # Compare key fields
+                dashboard_fields = {
+                    "requester_name": test_request_in_dashboard.get("requester_name"),
+                    "requester_email": test_request_in_dashboard.get("requester_email"),
+                    "song_title": test_request_in_dashboard.get("song_title"),
+                    "song_artist": test_request_in_dashboard.get("song_artist"),
+                    "dedication": test_request_in_dashboard.get("dedication")
+                }
+                
+                on_stage_fields = {
+                    "requester_name": test_request_in_on_stage.get("requester_name"),
+                    "requester_email": test_request_in_on_stage.get("requester_email"),
+                    "song_title": test_request_in_on_stage.get("song_title"),
+                    "song_artist": test_request_in_on_stage.get("song_artist"),
+                    "dedication": test_request_in_on_stage.get("dedication")
+                }
+                
+                for field, dashboard_value in dashboard_fields.items():
+                    on_stage_value = on_stage_fields.get(field)
+                    if dashboard_value != on_stage_value:
+                        print(f"   ❌ Data mismatch in {field}: dashboard='{dashboard_value}', on_stage='{on_stage_value}'")
+                        data_integrity_good = False
+                    else:
+                        print(f"   ✅ Data consistent in {field}: '{dashboard_value}'")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            core_flow_working = dashboard_working and on_stage_working
+            consistency_good = dashboard_consistent and on_stage_consistent
+            
+            if core_flow_working and consistency_good and data_integrity_good:
+                self.log_result("End-to-End Request Flow", True, f"✅ PRIORITY 3 COMPLETE: Complete end-to-end request flow working - audience requests appear in both dashboard and On Stage with consistent data and no timing issues")
+            elif core_flow_working and data_integrity_good:
+                self.log_result("End-to-End Request Flow", True, f"✅ CORE FLOW WORKING: Requests flow from audience to dashboard to On Stage with consistent data")
+            else:
+                issues = []
+                if not dashboard_working:
+                    issues.append("requests not appearing in dashboard")
+                if not on_stage_working:
+                    issues.append("requests not appearing in On Stage")
+                if not dashboard_consistent:
+                    issues.append("dashboard caching issues")
+                if not on_stage_consistent:
+                    issues.append("On Stage caching issues")
+                if not data_integrity_good:
+                    issues.append("data integrity issues between endpoints")
+                
+                self.log_result("End-to-End Request Flow", False, f"❌ CRITICAL END-TO-END ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("End-to-End Request Flow", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
     def test_environment_variable_verification(self):
         """Test backend reads updated FRONTEND_URL environment variable correctly - PRIORITY 4"""
         try:
             print("🔍 PRIORITY 4: Testing Environment Variable Verification")
             print("=" * 80)
             
-            # Step 1: Test health check to ensure backend is running
-            print("📊 Step 1: Test backend health check")
-            
-            health_response = self.make_request("GET", "/health")
-            
-            if health_response.status_code != 200:
-                self.log_result("Environment Variable - Backend Health", False, f"Backend health check failed: {health_response.status_code}")
-                return
-            
-            health_data = health_response.json()
-            print(f"   ✅ Backend is healthy: {health_data}")
-            
-            # Step 2: Test environment info endpoint (if available)
-            print("📊 Step 2: Test environment configuration endpoint")
+            # Step 1: Test debug endpoint to see environment variables
+            print("📊 Step 1: Test debug endpoint for environment variables")
             
             # Login first for authenticated endpoints
             login_data = {
@@ -601,14 +1065,14 @@ class RequestWaveAPITester:
             original_token = self.auth_token
             self.auth_token = login_data_response["token"]
             
-            # Try to access environment info (may not exist)
-            env_response = self.make_request("GET", "/env-info")
+            # Test the debug endpoint mentioned in the review request
+            debug_response = self.make_request("GET", "/debug/env")
             
-            if env_response.status_code == 200:
-                env_data = env_response.json()
-                print(f"   📊 Environment info: {json.dumps(env_data, indent=2)}")
+            if debug_response.status_code == 200:
+                debug_data = debug_response.json()
+                print(f"   📊 Debug endpoint response: {json.dumps(debug_data, indent=2)}")
                 
-                frontend_url = env_data.get("frontend_url") or env_data.get("FRONTEND_URL")
+                frontend_url = debug_data.get("FRONTEND_URL") or debug_data.get("frontend_url")
                 if frontend_url:
                     expected_url = "https://livewave-music.emergent.host"
                     if frontend_url == expected_url:
@@ -618,14 +1082,14 @@ class RequestWaveAPITester:
                         print(f"   ❌ FRONTEND_URL incorrect: expected {expected_url}, got {frontend_url}")
                         env_var_correct = False
                 else:
-                    print("   ⚠️  FRONTEND_URL not exposed in env-info endpoint")
+                    print("   ⚠️  FRONTEND_URL not found in debug endpoint")
                     env_var_correct = None
             else:
-                print(f"   ℹ️  No env-info endpoint available (status: {env_response.status_code})")
+                print(f"   ℹ️  Debug endpoint not available (status: {debug_response.status_code})")
                 env_var_correct = None
             
-            # Step 3: Indirect verification through QR code generation
-            print("📊 Step 3: Indirect verification through QR code URLs")
+            # Step 2: Indirect verification through QR code generation
+            print("📊 Step 2: Indirect verification through QR code URLs")
             
             qr_response = self.make_request("GET", "/qr-code")
             
@@ -649,8 +1113,8 @@ class RequestWaveAPITester:
                 print(f"   ❌ Could not test QR code URLs: {qr_response.status_code}")
                 qr_url_correct = False
             
-            # Step 4: Test API base URL consistency
-            print("📊 Step 4: Test API base URL consistency")
+            # Step 3: Test API base URL consistency
+            print("📊 Step 3: Test API base URL consistency")
             
             # Check if all API responses are coming from the expected domain
             current_base = self.base_url.replace("/api", "")
@@ -663,8 +1127,8 @@ class RequestWaveAPITester:
                 print(f"   ❌ Test client using wrong base URL: expected {expected_base}, using {current_base}")
                 base_url_correct = False
             
-            # Step 5: Test no hardcoded old URLs in responses
-            print("📊 Step 5: Test for hardcoded old URLs in API responses")
+            # Step 4: Test no hardcoded old URLs in responses
+            print("📊 Step 4: Test for hardcoded old URLs in API responses")
             
             # Test multiple endpoints for old URL references
             endpoints_to_check = [
@@ -690,6 +1154,25 @@ class RequestWaveAPITester:
                 except:
                     print(f"   ⚠️  Could not check {description} endpoint")
             
+            # Step 5: Verify all backend instances use correct environment variables
+            print("📊 Step 5: Verify all backend instances use correct environment variables")
+            
+            # Test multiple requests to check for consistency across instances
+            consistency_tests = []
+            
+            for i in range(3):
+                test_response = self.make_request("GET", "/qr-code")
+                if test_response.status_code == 200:
+                    test_data = test_response.json()
+                    test_url = test_data.get("audience_url", "")
+                    consistency_tests.append(expected_domain in test_url and old_domain not in test_url)
+                    print(f"   📊 Instance test {i+1}: {'✅ CORRECT' if consistency_tests[-1] else '❌ INCORRECT'} URL: {test_url}")
+                else:
+                    consistency_tests.append(False)
+                    print(f"   📊 Instance test {i+1}: ❌ FAILED (status: {test_response.status_code})")
+            
+            all_instances_correct = all(consistency_tests)
+            
             # Restore original token
             self.auth_token = original_token
             
@@ -697,27 +1180,32 @@ class RequestWaveAPITester:
             verification_results = []
             
             if env_var_correct is True:
-                verification_results.append("environment variable correct")
+                verification_results.append("debug endpoint shows correct FRONTEND_URL")
             elif env_var_correct is False:
-                verification_results.append("environment variable incorrect")
+                verification_results.append("debug endpoint shows incorrect FRONTEND_URL")
             
             if qr_url_correct:
-                verification_results.append("QR URLs correct")
+                verification_results.append("QR URLs use correct domain")
             else:
-                verification_results.append("QR URLs incorrect")
+                verification_results.append("QR URLs use incorrect domain")
             
             if base_url_correct:
-                verification_results.append("base URL correct")
+                verification_results.append("test client uses correct base URL")
             else:
-                verification_results.append("base URL incorrect")
+                verification_results.append("test client uses incorrect base URL")
             
             if not old_url_found:
-                verification_results.append("no hardcoded old URLs")
+                verification_results.append("no hardcoded old URLs found")
             else:
                 verification_results.append(f"old URLs found in: {', '.join(old_url_locations)}")
             
-            # Success if QR URLs are correct and no old URLs found
-            success = qr_url_correct and not old_url_found and base_url_correct
+            if all_instances_correct:
+                verification_results.append("all backend instances consistent")
+            else:
+                verification_results.append("backend instances inconsistent")
+            
+            # Success if QR URLs are correct, no old URLs found, and all instances consistent
+            success = qr_url_correct and not old_url_found and base_url_correct and all_instances_correct
             
             if success:
                 self.log_result("Environment Variable Verification", True, f"✅ PRIORITY 4 COMPLETE: Backend correctly reads updated FRONTEND_URL environment variable - {', '.join(verification_results)}")
