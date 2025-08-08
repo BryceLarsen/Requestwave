@@ -591,9 +591,10 @@ metadata:
 test_plan:
   current_focus: 
     - "QR Code URL Fix Verification"
-    - "Curated Genre and Mood Categories"
+    - "On Stage Real-Time Updates Issue"
   stuck_tasks:
     - "QR Code URL Fix Verification"
+    - "On Stage Real-Time Updates Issue"
   test_all: false
   test_priority: "critical_first"
 
