@@ -6043,41 +6043,54 @@ const OnStageInterface = () => {
     if (!musician) return;
     
     try {
-      // For now, use a simpler approach - just show that the interface is working
-      // In production, you would need public endpoints for requests
+      // FIXED: Use real API endpoint instead of demo data
+      const response = await axios.get(`${API}/requests/updates/${musician.id}`);
+      const data = response.data;
+      
+      // Update requests with real data from backend
+      if (data.requests) {
+        // Keep existing request statuses if they were updated locally
+        setRequests(prevRequests => {
+          const updatedRequests = data.requests.map(apiRequest => {
+            const existingReq = prevRequests.find(req => req.id === apiRequest.id);
+            // Preserve local status changes, otherwise use API status
+            return existingReq && existingReq.status !== apiRequest.status
+              ? { ...apiRequest, status: existingReq.status }
+              : apiRequest;
+          });
+          return updatedRequests;
+        });
+      }
+      
+      // Update suggestions if available
+      if (data.suggestions) {
+        setSuggestions(data.suggestions);
+      }
+      
       setLoading(false);
       
-      // Simulate some requests for demo (with proper status management)
-      const demoRequests = [
-        {
-          id: 'demo-1',
-          song_title: 'Wonderwall',
-          song_artist: 'Oasis',
-          requester_name: 'Sarah',
-          dedication: 'Happy birthday mom!',
-          created_at: new Date().toISOString(),
-          status: 'pending'
-        },
-        {
-          id: 'demo-2', 
-          song_title: 'Sweet Caroline',
-          song_artist: 'Neil Diamond',
-          requester_name: 'Mike',
-          created_at: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
-          status: 'pending'
-        }
-      ];
-      
-      // Keep existing request statuses if they exist
-      setRequests(prevRequests => {
-        const updatedRequests = demoRequests.map(demoReq => {
-          const existingReq = prevRequests.find(req => req.id === demoReq.id);
-          return existingReq ? { ...demoReq, status: existingReq.status } : demoReq;
-        });
-        return updatedRequests;
-      });
-      
     } catch (error) {
+      console.error('Error fetching real-time updates:', error);
+      setLoading(false);
+      
+      // Only show demo data if API completely fails
+      if (error.response?.status === 404 || error.code === 'NETWORK_ERROR') {
+        console.warn('Using demo data due to API failure');
+        const demoRequests = [
+          {
+            id: 'demo-1',
+            song_title: 'Wonderwall',
+            song_artist: 'Oasis',
+            requester_name: 'Demo User',
+            dedication: 'Demo request - API unavailable',
+            created_at: new Date().toISOString(),
+            status: 'pending'
+          }
+        ];
+        setRequests(demoRequests);
+      }
+    }
+  };
       console.error('Error fetching updates:', error);
       setLoading(false);
     }
