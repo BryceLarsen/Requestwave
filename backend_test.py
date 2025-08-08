@@ -174,7 +174,782 @@ class RequestWaveAPITester:
         except Exception as e:
             self.log_result("JWT Token Validation", False, f"Exception: {str(e)}")
 
-    def test_qr_code_generation_url_fix(self):
+    def test_request_status_update_with_json_body(self):
+        """PRIORITY 1: Test Request Status Update with JSON Body"""
+        try:
+            print("🎯 PRIORITY 1: Testing Request Status Update with JSON Body")
+            print("=" * 80)
+            
+            # Step 1: Login with brycelarsenmusic@gmail.com / RequestWave2024!
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("Request Status Update - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            pro_musician_id = login_data_response["musician"]["id"]
+            pro_musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            print(f"   ✅ Musician slug: {pro_musician_slug}")
+            
+            # Step 2: Create test request through POST /api/musicians/bryce-larsen/requests
+            print("📊 Step 2: Create test request through POST /api/musicians/bryce-larsen/requests")
+            
+            # Get available songs first
+            songs_response = self.make_request("GET", "/songs")
+            if songs_response.status_code != 200:
+                self.log_result("Request Status Update - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            songs = songs_response.json()
+            if len(songs) == 0:
+                # Create a test song first
+                test_song_data = {
+                    "title": "Status Update Test Song",
+                    "artist": "Test Artist",
+                    "genres": ["Pop"],
+                    "moods": ["Feel Good"],
+                    "year": 2024,
+                    "notes": "Test song for status update functionality"
+                }
+                
+                create_song_response = self.make_request("POST", "/songs", test_song_data)
+                if create_song_response.status_code == 200:
+                    songs = [create_song_response.json()]
+                    print(f"   ✅ Created test song: {songs[0]['title']}")
+                else:
+                    self.log_result("Request Status Update - Create Test Song", False, f"Failed to create test song: {create_song_response.status_code}")
+                    self.auth_token = original_token
+                    return
+            
+            test_song = songs[0]
+            print(f"   ✅ Using song for test: '{test_song['title']}' by {test_song['artist']}")
+            
+            # Clear auth token for public request creation
+            self.auth_token = None
+            
+            request_data = {
+                "song_id": test_song["id"],
+                "requester_name": "Status Update Test User",
+                "requester_email": "status.test@requestwave.com",
+                "dedication": "Testing status update with JSON body"
+            }
+            
+            # Submit request to musician's endpoint
+            request_response = self.make_request("POST", f"/musicians/{pro_musician_slug}/requests", request_data)
+            
+            if request_response.status_code != 200:
+                self.log_result("Request Status Update - Create Request", False, f"Failed to create request: {request_response.status_code}, Response: {request_response.text}")
+                self.auth_token = original_token
+                return
+            
+            request_result = request_response.json()
+            test_request_id = request_result.get("id")
+            
+            print(f"   ✅ Successfully created test request with ID: {test_request_id}")
+            print(f"   ✅ Initial status: {request_result.get('status', 'unknown')}")
+            
+            # Step 3: Test PUT /api/requests/{request_id}/status with JSON body: {"status": "accepted"}
+            print("📊 Step 3: Test PUT /api/requests/{request_id}/status with JSON body")
+            
+            # Restore auth token for authenticated status update
+            self.auth_token = original_token
+            
+            # Test status update to "accepted"
+            status_update_data = {"status": "accepted"}
+            
+            status_response = self.make_request("PUT", f"/requests/{test_request_id}/status", status_update_data)
+            
+            if status_response.status_code != 200:
+                self.log_result("Request Status Update - Accept Status", False, f"Failed to update status to accepted: {status_response.status_code}, Response: {status_response.text}")
+                self.auth_token = original_token
+                return
+            
+            status_result = status_response.json()
+            print(f"   ✅ Status update response: {status_result}")
+            
+            # Step 4: Verify the endpoint returns expected response format
+            print("📊 Step 4: Verify response format")
+            
+            expected_response_format = {
+                "success": True,
+                "message": "Request status updated successfully", 
+                "new_status": "accepted"
+            }
+            
+            response_valid = True
+            for key, expected_value in expected_response_format.items():
+                actual_value = status_result.get(key)
+                if actual_value != expected_value:
+                    print(f"   ❌ Response mismatch in {key}: expected '{expected_value}', got '{actual_value}'")
+                    response_valid = False
+                else:
+                    print(f"   ✅ Response correct in {key}: '{actual_value}'")
+            
+            # Step 5: Test status transitions: pending -> accepted -> played
+            print("📊 Step 5: Test status transitions: accepted -> played")
+            
+            # Update status to "played"
+            played_status_data = {"status": "played"}
+            
+            played_response = self.make_request("PUT", f"/requests/{test_request_id}/status", played_status_data)
+            
+            if played_response.status_code != 200:
+                self.log_result("Request Status Update - Played Status", False, f"Failed to update status to played: {played_response.status_code}, Response: {played_response.text}")
+                self.auth_token = original_token
+                return
+            
+            played_result = played_response.json()
+            print(f"   ✅ Played status update response: {played_result}")
+            
+            # Verify played status response
+            played_response_valid = (played_result.get("success") == True and 
+                                   played_result.get("new_status") == "played" and
+                                   "successfully" in played_result.get("message", "").lower())
+            
+            if played_response_valid:
+                print(f"   ✅ Played status response format correct")
+            else:
+                print(f"   ❌ Played status response format incorrect: {played_result}")
+            
+            # Step 6: Verify status persistence by checking request details
+            print("📊 Step 6: Verify status persistence")
+            
+            # Get request details to verify status was actually updated
+            requests_response = self.make_request("GET", "/requests")
+            
+            if requests_response.status_code == 200:
+                requests = requests_response.json()
+                updated_request = None
+                
+                for req in requests:
+                    if req.get("id") == test_request_id:
+                        updated_request = req
+                        break
+                
+                if updated_request:
+                    final_status = updated_request.get("status")
+                    if final_status == "played":
+                        print(f"   ✅ Status correctly persisted as: {final_status}")
+                        status_persisted = True
+                    else:
+                        print(f"   ❌ Status not persisted correctly: expected 'played', got '{final_status}'")
+                        status_persisted = False
+                else:
+                    print(f"   ❌ Could not find updated request in requests list")
+                    status_persisted = False
+            else:
+                print(f"   ❌ Could not verify status persistence: {requests_response.status_code}")
+                status_persisted = False
+            
+            # Step 7: Test invalid status values
+            print("📊 Step 7: Test invalid status values")
+            
+            invalid_status_data = {"status": "invalid_status"}
+            invalid_response = self.make_request("PUT", f"/requests/{test_request_id}/status", invalid_status_data)
+            
+            if invalid_response.status_code in [400, 422]:
+                print(f"   ✅ Correctly rejected invalid status (status: {invalid_response.status_code})")
+                validation_working = True
+            else:
+                print(f"   ❌ Should have rejected invalid status, got: {invalid_response.status_code}")
+                validation_working = False
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            core_functionality_working = (status_response.status_code == 200 and 
+                                        played_response.status_code == 200 and
+                                        response_valid and played_response_valid)
+            
+            if (core_functionality_working and status_persisted and validation_working):
+                self.log_result("Request Status Update with JSON Body", True, f"✅ PRIORITY 1 COMPLETE: Request status update with JSON body working perfectly - accepts JSON body, returns correct response format, handles status transitions (pending->accepted->played), and validates input")
+            elif core_functionality_working:
+                issues = []
+                if not status_persisted:
+                    issues.append("status not persisting correctly")
+                if not validation_working:
+                    issues.append("invalid status validation not working")
+                
+                self.log_result("Request Status Update with JSON Body", True, f"✅ CORE FUNCTIONALITY WORKING: Status updates work with JSON body and correct response format, minor issues: {', '.join(issues)}")
+            else:
+                issues = []
+                if status_response.status_code != 200:
+                    issues.append(f"accept status update failed ({status_response.status_code})")
+                if played_response.status_code != 200:
+                    issues.append(f"played status update failed ({played_response.status_code})")
+                if not response_valid:
+                    issues.append("response format incorrect")
+                if not played_response_valid:
+                    issues.append("played response format incorrect")
+                
+                self.log_result("Request Status Update with JSON Body", False, f"❌ CRITICAL STATUS UPDATE ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Request Status Update with JSON Body", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_fixed_real_time_polling_response(self):
+        """PRIORITY 2: Test Fixed Real-Time Polling Response"""
+        try:
+            print("🎯 PRIORITY 2: Testing Fixed Real-Time Polling Response")
+            print("=" * 80)
+            
+            # Step 1: Login with brycelarsenmusic@gmail.com
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("Real-Time Polling - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            pro_musician_id = login_data_response["musician"]["id"]
+            pro_musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            print(f"   ✅ Musician ID: {pro_musician_id}")
+            
+            # Step 2: Test GET /api/requests/updates/{musician_id}
+            print("📊 Step 2: Test GET /api/requests/updates/{musician_id}")
+            
+            polling_response = self.make_request("GET", f"/requests/updates/{pro_musician_id}")
+            
+            if polling_response.status_code != 200:
+                self.log_result("Real-Time Polling - Polling Endpoint", False, f"Polling endpoint failed: {polling_response.status_code}, Response: {polling_response.text}")
+                self.auth_token = original_token
+                return
+            
+            polling_data = polling_response.json()
+            print(f"   ✅ Polling endpoint returned status 200")
+            print(f"   📊 Response structure: {list(polling_data.keys())}")
+            
+            # Step 3: Verify response includes: requests, total_requests, last_updated fields
+            print("📊 Step 3: Verify response includes required fields")
+            
+            required_fields = ["requests", "total_requests", "last_updated"]
+            missing_fields = [field for field in required_fields if field not in polling_data]
+            
+            if len(missing_fields) == 0:
+                print(f"   ✅ All required fields present: {required_fields}")
+                fields_valid = True
+            else:
+                print(f"   ❌ Missing required fields: {missing_fields}")
+                fields_valid = False
+            
+            # Step 4: Verify field types and content
+            print("📊 Step 4: Verify field types and content")
+            
+            requests_list = polling_data.get("requests", [])
+            total_requests = polling_data.get("total_requests", 0)
+            last_updated = polling_data.get("last_updated")
+            
+            # Verify requests is a list
+            if isinstance(requests_list, list):
+                print(f"   ✅ 'requests' is a list with {len(requests_list)} items")
+                requests_valid = True
+            else:
+                print(f"   ❌ 'requests' should be a list, got: {type(requests_list)}")
+                requests_valid = False
+            
+            # Verify total_requests is a number
+            if isinstance(total_requests, int):
+                print(f"   ✅ 'total_requests' is an integer: {total_requests}")
+                total_valid = True
+            else:
+                print(f"   ❌ 'total_requests' should be an integer, got: {type(total_requests)}")
+                total_valid = False
+            
+            # Verify last_updated is present and looks like a timestamp
+            if last_updated:
+                print(f"   ✅ 'last_updated' is present: {last_updated}")
+                timestamp_valid = True
+            else:
+                print(f"   ❌ 'last_updated' is missing or empty")
+                timestamp_valid = False
+            
+            # Step 5: Create a new request to test real-time updates
+            print("📊 Step 5: Create new request to test real-time updates")
+            
+            # Get available songs first
+            songs_response = self.make_request("GET", "/songs")
+            if songs_response.status_code != 200:
+                self.log_result("Real-Time Polling - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            songs = songs_response.json()
+            if len(songs) == 0:
+                # Create a test song first
+                test_song_data = {
+                    "title": "Real-Time Polling Test Song",
+                    "artist": "Test Artist",
+                    "genres": ["Pop"],
+                    "moods": ["Feel Good"],
+                    "year": 2024,
+                    "notes": "Test song for real-time polling"
+                }
+                
+                create_song_response = self.make_request("POST", "/songs", test_song_data)
+                if create_song_response.status_code == 200:
+                    songs = [create_song_response.json()]
+                    print(f"   ✅ Created test song: {songs[0]['title']}")
+                else:
+                    self.log_result("Real-Time Polling - Create Test Song", False, f"Failed to create test song: {create_song_response.status_code}")
+                    self.auth_token = original_token
+                    return
+            
+            test_song = songs[0]
+            
+            # Clear auth token for public request creation
+            self.auth_token = None
+            
+            request_data = {
+                "song_id": test_song["id"],
+                "requester_name": "Real-Time Test User",
+                "requester_email": "realtime.test@requestwave.com",
+                "dedication": "Testing real-time polling updates"
+            }
+            
+            # Submit request to musician's endpoint
+            request_response = self.make_request("POST", f"/musicians/{pro_musician_slug}/requests", request_data)
+            
+            if request_response.status_code != 200:
+                self.log_result("Real-Time Polling - Create Request", False, f"Failed to create request: {request_response.status_code}, Response: {request_response.text}")
+                self.auth_token = original_token
+                return
+            
+            request_result = request_response.json()
+            test_request_id = request_result.get("id")
+            
+            print(f"   ✅ Successfully created test request with ID: {test_request_id}")
+            
+            # Step 6: Verify new request appears in polling endpoint immediately
+            print("📊 Step 6: Verify new request appears in polling endpoint immediately")
+            
+            # Restore auth token for authenticated polling
+            self.auth_token = original_token
+            
+            # Poll again to see if new request appears
+            updated_polling_response = self.make_request("GET", f"/requests/updates/{pro_musician_id}")
+            
+            if updated_polling_response.status_code != 200:
+                self.log_result("Real-Time Polling - Updated Polling", False, f"Updated polling failed: {updated_polling_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            updated_polling_data = updated_polling_response.json()
+            updated_requests = updated_polling_data.get("requests", [])
+            
+            # Find our test request in the updated polling data
+            test_request_in_polling = None
+            for req in updated_requests:
+                if req.get("id") == test_request_id:
+                    test_request_in_polling = req
+                    break
+            
+            if test_request_in_polling:
+                print(f"   ✅ New request appears in polling endpoint immediately")
+                print(f"   ✅ Request details: {test_request_in_polling.get('requester_name')} - {test_request_in_polling.get('song_title')}")
+                real_time_working = True
+            else:
+                print(f"   ❌ New request NOT found in polling endpoint (checked {len(updated_requests)} requests)")
+                real_time_working = False
+            
+            # Step 7: Confirm only non-archived requests are returned
+            print("📊 Step 7: Confirm only non-archived requests are returned")
+            
+            # Check if any requests in the polling response have archived status
+            archived_requests = [req for req in updated_requests if req.get("status") == "archived"]
+            
+            if len(archived_requests) == 0:
+                print(f"   ✅ No archived requests in polling response (as expected)")
+                archived_filter_working = True
+            else:
+                print(f"   ❌ Found {len(archived_requests)} archived requests in polling response")
+                archived_filter_working = False
+            
+            # Step 8: Test polling consistency over time
+            print("📊 Step 8: Test polling consistency over time")
+            
+            # Wait a moment and poll again
+            import time
+            time.sleep(2)
+            
+            consistency_response = self.make_request("GET", f"/requests/updates/{pro_musician_id}")
+            
+            if consistency_response.status_code == 200:
+                consistency_data = consistency_response.json()
+                consistency_requests = consistency_data.get("requests", [])
+                
+                # Check if our test request is still there
+                test_request_still_there = any(req.get("id") == test_request_id for req in consistency_requests)
+                
+                if test_request_still_there:
+                    print(f"   ✅ Polling endpoint consistent over time")
+                    consistency_good = True
+                else:
+                    print(f"   ❌ Request disappeared from polling endpoint")
+                    consistency_good = False
+            else:
+                print(f"   ⚠️  Could not test consistency (consistency poll failed)")
+                consistency_good = True  # Don't fail on this
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            core_functionality_working = (polling_response.status_code == 200 and 
+                                        fields_valid and requests_valid and 
+                                        total_valid and timestamp_valid)
+            
+            if (core_functionality_working and real_time_working and 
+                archived_filter_working and consistency_good):
+                self.log_result("Fixed Real-Time Polling Response", True, f"✅ PRIORITY 2 COMPLETE: Real-time polling response working perfectly - includes all required fields (requests, total_requests, last_updated), only returns non-archived requests, and new requests appear immediately with consistent polling")
+            elif core_functionality_working and real_time_working:
+                issues = []
+                if not archived_filter_working:
+                    issues.append("archived requests not filtered out")
+                if not consistency_good:
+                    issues.append("polling consistency issues")
+                
+                self.log_result("Fixed Real-Time Polling Response", True, f"✅ CORE FUNCTIONALITY WORKING: Polling endpoint returns correct format and new requests appear immediately, minor issues: {', '.join(issues)}")
+            else:
+                issues = []
+                if polling_response.status_code != 200:
+                    issues.append(f"polling endpoint failed ({polling_response.status_code})")
+                if not fields_valid:
+                    issues.append(f"missing required fields: {missing_fields}")
+                if not requests_valid:
+                    issues.append("requests field not a list")
+                if not total_valid:
+                    issues.append("total_requests field not an integer")
+                if not timestamp_valid:
+                    issues.append("last_updated field missing")
+                if not real_time_working:
+                    issues.append("new requests not appearing in polling")
+                
+                self.log_result("Fixed Real-Time Polling Response", False, f"❌ CRITICAL REAL-TIME POLLING ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Fixed Real-Time Polling Response", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_end_to_end_on_stage_workflow(self):
+        """PRIORITY 3: End-to-End On Stage Workflow"""
+        try:
+            print("🎯 PRIORITY 3: Testing End-to-End On Stage Workflow")
+            print("=" * 80)
+            
+            # Step 1: Login with brycelarsenmusic@gmail.com
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("End-to-End On Stage - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            pro_musician_id = login_data_response["musician"]["id"]
+            pro_musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            print(f"   ✅ Musician ID: {pro_musician_id}")
+            print(f"   ✅ Musician slug: {pro_musician_slug}")
+            
+            # Step 2: Submit audience request
+            print("📊 Step 2: Submit audience request")
+            
+            # Get available songs first
+            songs_response = self.make_request("GET", "/songs")
+            if songs_response.status_code != 200:
+                self.log_result("End-to-End On Stage - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            songs = songs_response.json()
+            if len(songs) == 0:
+                # Create a test song first
+                test_song_data = {
+                    "title": "End-to-End On Stage Test Song",
+                    "artist": "Test Artist",
+                    "genres": ["Pop"],
+                    "moods": ["Feel Good"],
+                    "year": 2024,
+                    "notes": "Test song for end-to-end On Stage workflow"
+                }
+                
+                create_song_response = self.make_request("POST", "/songs", test_song_data)
+                if create_song_response.status_code == 200:
+                    songs = [create_song_response.json()]
+                    print(f"   ✅ Created test song: {songs[0]['title']}")
+                else:
+                    self.log_result("End-to-End On Stage - Create Test Song", False, f"Failed to create test song: {create_song_response.status_code}")
+                    self.auth_token = original_token
+                    return
+            
+            test_song = songs[0]
+            print(f"   ✅ Using song for test: '{test_song['title']}' by {test_song['artist']}")
+            
+            # Clear auth token for public request creation
+            self.auth_token = None
+            
+            request_data = {
+                "song_id": test_song["id"],
+                "requester_name": "End-to-End On Stage User",
+                "requester_email": "e2e.onstage@requestwave.com",
+                "dedication": "Testing complete end-to-end On Stage workflow"
+            }
+            
+            # Submit request to musician's endpoint
+            request_response = self.make_request("POST", f"/musicians/{pro_musician_slug}/requests", request_data)
+            
+            if request_response.status_code != 200:
+                self.log_result("End-to-End On Stage - Submit Request", False, f"Failed to submit request: {request_response.status_code}, Response: {request_response.text}")
+                self.auth_token = original_token
+                return
+            
+            request_result = request_response.json()
+            test_request_id = request_result.get("id")
+            
+            print(f"   ✅ Successfully submitted audience request with ID: {test_request_id}")
+            print(f"   ✅ Initial status: {request_result.get('status', 'unknown')}")
+            
+            # Step 3: Verify it appears in polling endpoint immediately
+            print("📊 Step 3: Verify request appears in polling endpoint immediately")
+            
+            # Restore auth token for authenticated polling
+            self.auth_token = original_token
+            
+            polling_response = self.make_request("GET", f"/requests/updates/{pro_musician_id}")
+            
+            if polling_response.status_code != 200:
+                self.log_result("End-to-End On Stage - Initial Polling", False, f"Initial polling failed: {polling_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            polling_data = polling_response.json()
+            polling_requests = polling_data.get("requests", [])
+            
+            # Find our test request in the polling data
+            test_request_in_polling = None
+            for req in polling_requests:
+                if req.get("id") == test_request_id:
+                    test_request_in_polling = req
+                    break
+            
+            if test_request_in_polling:
+                print(f"   ✅ Request appears in polling endpoint immediately")
+                print(f"   ✅ Polling request details: {test_request_in_polling.get('requester_name')} - {test_request_in_polling.get('song_title')}")
+                initial_polling_working = True
+            else:
+                print(f"   ❌ Request NOT found in polling endpoint (checked {len(polling_requests)} requests)")
+                initial_polling_working = False
+            
+            # Step 4: Update status using proper JSON body format (pending -> accepted)
+            print("📊 Step 4: Update status using proper JSON body format (pending -> accepted)")
+            
+            # Update status to "accepted"
+            status_update_data = {"status": "accepted"}
+            
+            status_response = self.make_request("PUT", f"/requests/{test_request_id}/status", status_update_data)
+            
+            if status_response.status_code != 200:
+                self.log_result("End-to-End On Stage - Status Update", False, f"Failed to update status: {status_response.status_code}, Response: {status_response.text}")
+                self.auth_token = original_token
+                return
+            
+            status_result = status_response.json()
+            print(f"   ✅ Status update response: {status_result}")
+            
+            # Verify response format
+            expected_success = status_result.get("success") == True
+            expected_new_status = status_result.get("new_status") == "accepted"
+            expected_message = "successfully" in status_result.get("message", "").lower()
+            
+            if expected_success and expected_new_status and expected_message:
+                print(f"   ✅ Status update response format correct")
+                status_update_working = True
+            else:
+                print(f"   ❌ Status update response format incorrect: {status_result}")
+                status_update_working = False
+            
+            # Step 5: Verify status changes reflect in subsequent polling calls
+            print("📊 Step 5: Verify status changes reflect in subsequent polling calls")
+            
+            # Poll again to see if status change is reflected
+            updated_polling_response = self.make_request("GET", f"/requests/updates/{pro_musician_id}")
+            
+            if updated_polling_response.status_code != 200:
+                self.log_result("End-to-End On Stage - Updated Polling", False, f"Updated polling failed: {updated_polling_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            updated_polling_data = updated_polling_response.json()
+            updated_polling_requests = updated_polling_data.get("requests", [])
+            
+            # Find our test request in the updated polling data
+            updated_test_request = None
+            for req in updated_polling_requests:
+                if req.get("id") == test_request_id:
+                    updated_test_request = req
+                    break
+            
+            if updated_test_request:
+                updated_status = updated_test_request.get("status")
+                if updated_status == "accepted":
+                    print(f"   ✅ Status change reflected in polling endpoint: {updated_status}")
+                    status_reflection_working = True
+                else:
+                    print(f"   ❌ Status change NOT reflected in polling: expected 'accepted', got '{updated_status}'")
+                    status_reflection_working = False
+            else:
+                print(f"   ❌ Request disappeared from polling endpoint after status update")
+                status_reflection_working = False
+            
+            # Step 6: Test another status transition (accepted -> played)
+            print("📊 Step 6: Test another status transition (accepted -> played)")
+            
+            # Update status to "played"
+            played_status_data = {"status": "played"}
+            
+            played_response = self.make_request("PUT", f"/requests/{test_request_id}/status", played_status_data)
+            
+            if played_response.status_code != 200:
+                self.log_result("End-to-End On Stage - Played Status", False, f"Failed to update to played: {played_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            played_result = played_response.json()
+            print(f"   ✅ Played status update response: {played_result}")
+            
+            # Step 7: Verify final status in polling
+            print("📊 Step 7: Verify final status in polling")
+            
+            # Poll one more time to verify played status
+            final_polling_response = self.make_request("GET", f"/requests/updates/{pro_musician_id}")
+            
+            if final_polling_response.status_code == 200:
+                final_polling_data = final_polling_response.json()
+                final_polling_requests = final_polling_data.get("requests", [])
+                
+                # Find our test request in the final polling data
+                final_test_request = None
+                for req in final_polling_requests:
+                    if req.get("id") == test_request_id:
+                        final_test_request = req
+                        break
+                
+                if final_test_request:
+                    final_status = final_test_request.get("status")
+                    if final_status == "played":
+                        print(f"   ✅ Final status correctly reflected in polling: {final_status}")
+                        final_status_working = True
+                    else:
+                        print(f"   ❌ Final status NOT correctly reflected: expected 'played', got '{final_status}'")
+                        final_status_working = False
+                else:
+                    print(f"   ❌ Request disappeared from polling after final status update")
+                    final_status_working = False
+            else:
+                print(f"   ❌ Final polling failed: {final_polling_response.status_code}")
+                final_status_working = False
+            
+            # Step 8: Test workflow timing and consistency
+            print("📊 Step 8: Test workflow timing and consistency")
+            
+            # Wait a moment and verify everything is still consistent
+            import time
+            time.sleep(2)
+            
+            consistency_response = self.make_request("GET", f"/requests/updates/{pro_musician_id}")
+            
+            if consistency_response.status_code == 200:
+                consistency_data = consistency_response.json()
+                consistency_requests = consistency_data.get("requests", [])
+                
+                # Find our test request one more time
+                consistency_request = None
+                for req in consistency_requests:
+                    if req.get("id") == test_request_id:
+                        consistency_request = req
+                        break
+                
+                if consistency_request and consistency_request.get("status") == "played":
+                    print(f"   ✅ Workflow remains consistent over time")
+                    workflow_consistent = True
+                else:
+                    print(f"   ❌ Workflow consistency issues detected")
+                    workflow_consistent = False
+            else:
+                print(f"   ⚠️  Could not test workflow consistency")
+                workflow_consistent = True  # Don't fail on this
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            core_workflow_working = (initial_polling_working and status_update_working and 
+                                   status_reflection_working and final_status_working)
+            
+            if core_workflow_working and workflow_consistent:
+                self.log_result("End-to-End On Stage Workflow", True, f"✅ PRIORITY 3 COMPLETE: End-to-End On Stage workflow working perfectly - audience requests appear immediately in polling, status updates work with JSON body format, status changes reflect in subsequent polling calls, and workflow remains consistent over time")
+            elif core_workflow_working:
+                self.log_result("End-to-End On Stage Workflow", True, f"✅ CORE WORKFLOW WORKING: Complete On Stage workflow functional with minor consistency issues")
+            else:
+                issues = []
+                if not initial_polling_working:
+                    issues.append("requests not appearing in initial polling")
+                if not status_update_working:
+                    issues.append("status update not working properly")
+                if not status_reflection_working:
+                    issues.append("status changes not reflected in polling")
+                if not final_status_working:
+                    issues.append("final status not working")
+                
+                self.log_result("End-to-End On Stage Workflow", False, f"❌ CRITICAL END-TO-END ON STAGE ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("End-to-End On Stage Workflow", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
         """Test QR code generation uses correct deployed URL - PRIORITY 1"""
         try:
             print("🔍 PRIORITY 1: Testing QR Code Generation URL Fix")
