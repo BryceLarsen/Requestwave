@@ -2630,6 +2630,67 @@ async def create_request(request_data: RequestCreate):
     
     return Request(**request_dict)
 
+# NEW: Musician-specific request endpoint for audience interface
+@api_router.post("/musicians/{musician_slug}/requests", response_model=Request)
+async def create_musician_request(
+    musician_slug: str,
+    request_data: RequestCreate
+):
+    """Create a request for a specific musician via their slug (used by audience interface)"""
+    # Get musician by slug
+    musician = await db.musicians.find_one({"slug": musician_slug})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    musician_id = musician["id"]
+    
+    # Get song details and verify it belongs to this musician
+    song = await db.songs.find_one({"id": request_data.song_id, "musician_id": musician_id})
+    if not song:
+        raise HTTPException(status_code=404, detail="Song not found for this musician")
+    
+    # Check if musician can receive more requests based on subscription
+    if not await check_request_allowed(musician_id):
+        subscription_status = await get_subscription_status(musician_id)
+        raise HTTPException(
+            status_code=402, 
+            detail={
+                "message": "Request limit reached. Musician needs to upgrade to Pro plan.",
+                "subscription_status": subscription_status.dict()
+            }
+        )
+    
+    # Create request
+    request_dict = request_data.dict()
+    current_show_name = musician.get("current_show_name")
+    
+    request_dict.update({
+        "id": str(uuid.uuid4()),
+        "musician_id": musician_id,
+        "song_title": song["title"],
+        "song_artist": song["artist"],
+        "status": "pending",
+        "show_name": current_show_name,
+        "tip_clicked": False,
+        "social_clicks": [],
+        "created_at": datetime.utcnow()
+    })
+    
+    # Update song request count
+    await db.songs.update_one(
+        {"id": request_data.song_id},
+        {"$inc": {"request_count": 1}}
+    )
+    
+    # Insert request
+    await db.requests.insert_one(request_dict)
+    
+    # Add musician info for response
+    request_dict["musician_name"] = musician["name"]
+    request_dict["musician_slug"] = musician["slug"]
+    
+    return Request(**request_dict)
+
 @api_router.get("/requests/musician/{musician_id}", response_model=List[Request])
 async def get_musician_requests(musician_id: str = Depends(get_current_musician)):
     """Get all requests for the authenticated musician"""
