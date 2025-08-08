@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-FINAL VERIFICATION: On Stage Functionality Testing
-Focus: Test the properly fixed On Stage functionality with two critical fixes:
-1. StatusUpdate Pydantic Model: Added proper model and fixed request status endpoint to accept JSON body
-2. Real-Time Polling: Fixed response format and error handling
+CRITICAL DEBUGGING: On Stage Functionality Issues
+Focus: Debug the specific issues identified in the review request:
+1. Authentication Issue: PUT /api/requests/{request_id}/status returns 403 "Not authenticated" despite valid JWT token
+2. Response Format Mismatch: Polling endpoint returns "timestamp" instead of expected "total_requests" and "last_updated"
+3. Environment Variables: FRONTEND_URL still using old preview URLs
 
-PRIORITY 1: Test Request Status Update with JSON Body
-PRIORITY 2: Test Fixed Real-Time Polling Response  
-PRIORITY 3: End-to-End On Stage Workflow
+PRIORITY 1: Debug Authentication Issue for Status Updates
+PRIORITY 2: Debug Response Format Mismatch
+PRIORITY 3: Test Basic Request Flow
 """
 
 import requests
