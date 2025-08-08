@@ -11400,6 +11400,31 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
 
         return self.results['failed'] == 0
 
+    def run_critical_post_deployment_tests(self):
+        """Run critical post-deployment tests based on review request priorities"""
+        print("🚨 CRITICAL POST-DEPLOYMENT TESTING")
+        print("=" * 100)
+        print("Testing both QR code generation and On Stage functionality after fresh deployment")
+        print("User confirmed new deployment URLs are working but reports two specific issues")
+        print("=" * 100)
+        
+        # PRIORITY 1: Test QR Code Generation with New Deployment
+        self.test_qr_code_generation_url_fix()
+        self.test_qr_flyer_generation_url_fix()
+        
+        # PRIORITY 2: Test On Stage Real-Time Updates Issue
+        self.test_on_stage_real_time_updates()
+        
+        # PRIORITY 3: End-to-End Request Flow Verification
+        self.test_end_to_end_request_flow()
+        
+        # PRIORITY 4: Environment Variable Verification
+        self.test_environment_variable_verification()
+        
+        print("\n" + "=" * 100)
+        print("🏁 CRITICAL POST-DEPLOYMENT TESTING COMPLETE")
+        print("=" * 100)
+
 if __name__ == "__main__":
     print("🚨 CRITICAL POST-DEPLOYMENT TESTING - RequestWave Backend API")
     print("=" * 100)
