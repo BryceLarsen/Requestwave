@@ -2933,16 +2933,25 @@ async def update_request_status(
 
 @api_router.get("/requests/updates/{musician_id}")
 async def get_request_updates(musician_id: str):
-    """Polling endpoint for real-time updates (used by On Stage interface)"""
+    """Polling endpoint for real-time updates (used by On Stage interface) - FIXED: Better response format"""
     # Get active requests (not archived) for On Stage mode
     requests = await db.requests.find({
         "musician_id": musician_id,
         "status": {"$ne": "archived"}  # Exclude archived requests
     }).sort("created_at", DESCENDING).limit(50).to_list(50)
     
+    # Convert to Request objects for proper serialization
+    request_objects = []
+    for request in requests:
+        try:
+            request_objects.append(Request(**request))
+        except Exception as e:
+            logger.warning(f"Error converting request {request.get('id', 'unknown')}: {str(e)}")
+            continue
+    
     return {
-        "requests": [Request(**request) for request in requests],
-        "total_requests": len(requests),
+        "requests": request_objects,
+        "total_requests": len(request_objects),
         "last_updated": datetime.utcnow().isoformat()
     }
 
