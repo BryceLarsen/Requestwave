@@ -12242,17 +12242,52 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
         return self.results["failed"] == 0
 
 if __name__ == "__main__":
-    print("🎯 FINAL VERIFICATION: On Stage Functionality Testing")
+    print("🚨 CRITICAL DEBUGGING: On Stage Functionality Issues")
     print("=" * 100)
-    print("Testing the properly fixed On Stage functionality:")
-    print("✅ StatusUpdate Pydantic Model: Added proper model and fixed request status endpoint to accept JSON body")
-    print("✅ Real-Time Polling: Fixed response format and error handling")
+    print("Focus: Debug specific issues identified in review request:")
+    print("1. Authentication Issue: PUT /api/requests/{request_id}/status returns 403 'Not authenticated' despite valid JWT token")
+    print("2. Response Format Mismatch: Polling endpoint returns 'timestamp' instead of expected 'total_requests' and 'last_updated'")
+    print("3. Environment Variables: FRONTEND_URL still using old preview URLs")
     print("=" * 100)
     
     tester = RequestWaveAPITester()
     
-    # Run focused On Stage tests
-    tester.run_on_stage_tests()
+    # Health check first
+    print("🔍 PRELIMINARY: Health Check")
+    tester.test_health_check()
+    print()
+    
+    # Run the three critical debugging tests
+    print("🚨 RUNNING CRITICAL DEBUGGING TESTS")
+    print("=" * 100)
+    
+    # PRIORITY 1: Debug Authentication Issue for Status Updates
+    tester.debug_authentication_issue()
+    print()
+    
+    # PRIORITY 2: Debug Response Format Mismatch  
+    tester.debug_response_format_mismatch()
+    print()
+    
+    # PRIORITY 3: Test Basic Request Flow
+    tester.test_basic_request_flow()
+    print()
+    
+    # Print final results
+    print("🚨 CRITICAL DEBUGGING RESULTS")
+    print("=" * 100)
+    print(f"✅ Tests Passed: {tester.results['passed']}")
+    print(f"❌ Tests Failed: {tester.results['failed']}")
+    print(f"📊 Total Tests: {tester.results['passed'] + tester.results['failed']}")
+    
+    if tester.results['failed'] > 0:
+        print("\n🚨 CRITICAL ISSUES FOUND:")
+        for error in tester.results['errors']:
+            print(f"   ❌ {error}")
+    else:
+        print("\n✅ ALL CRITICAL DEBUGGING TESTS PASSED!")
+    
+    print("=" * 100)
     
     # Exit with appropriate code for automation
     total_tests = tester.results["passed"] + tester.results["failed"]
