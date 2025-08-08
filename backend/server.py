@@ -2905,15 +2905,19 @@ async def search_song_metadata(
         logger.error(f"Error searching song metadata: {str(e)}")
         raise HTTPException(status_code=500, detail="Error searching for song metadata")
 
+# Status update model for request status changes
+class StatusUpdate(BaseModel):
+    status: str
+
 @api_router.put("/requests/{request_id}/status")
 async def update_request_status(
     request_id: str, 
-    status_data: dict,  # {"status": "pending|accepted|played|rejected"}
+    status_data: StatusUpdate,
     musician_id: str = Depends(get_current_musician)
 ):
-    """Update request status (pending, accepted, played, rejected)"""
-    status = status_data.get("status")
-    if not status or status not in ["pending", "accepted", "played", "rejected"]:
+    """Update request status (pending, accepted, played, rejected) - FIXED: Now accepts JSON body"""
+    status = status_data.status
+    if status not in ["pending", "accepted", "played", "rejected"]:
         raise HTTPException(status_code=400, detail="Invalid status. Must be: pending, accepted, played, or rejected")
     
     # Verify request belongs to musician
@@ -2925,7 +2929,7 @@ async def update_request_status(
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Request not found")
     
-    return {"message": "Request status updated successfully", "new_status": status}
+    return {"success": True, "message": "Request status updated successfully", "new_status": status}
 
 @api_router.get("/requests/updates/{musician_id}")
 async def get_request_updates(musician_id: str):
