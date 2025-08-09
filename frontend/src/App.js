@@ -3275,6 +3275,43 @@ const MusicianDashboard = () => {
               </button>
             </div>
 
+            {/* Batch Actions Bar for Suggestions */}
+            {selectedSuggestions.size > 0 && (
+              <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-green-200 font-medium">
+                    {selectedSuggestions.size} suggestion(s) selected
+                  </span>
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => batchSuggestionAction('added')}
+                      className="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
+                    >
+                      ✓ Add to Repertoire
+                    </button>
+                    <button
+                      onClick={() => batchSuggestionAction('rejected')}
+                      className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
+                    >
+                      ❌ Reject All
+                    </button>
+                    <button
+                      onClick={batchDeleteSuggestions}
+                      className="bg-gray-600 hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
+                    >
+                      🗑️ Delete Selected
+                    </button>
+                    <button
+                      onClick={clearSuggestionSelection}
+                      className="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
+                    >
+                      Clear Selection
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {suggestionError && (
               <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200">
                 {suggestionError}
@@ -3288,58 +3325,90 @@ const MusicianDashboard = () => {
               </div>
             ) : (
               <div className="space-y-3">
+                {/* Select All Header */}
+                <div className="flex items-center space-x-3 p-3 bg-gray-600 rounded-lg">
+                  <input
+                    type="checkbox"
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        selectAllSuggestions(songSuggestions.filter(s => s.status === 'pending'));
+                      } else {
+                        clearSuggestionSelection();
+                      }
+                    }}
+                    className="rounded bg-gray-600 border-gray-500 text-green-600 focus:ring-green-500 focus:ring-offset-0"
+                    title="Select all pending suggestions"
+                  />
+                  <span className="text-green-300 font-medium">
+                    Select All Pending ({songSuggestions.filter(s => s.status === 'pending').length} suggestions)
+                  </span>
+                </div>
+
                 {songSuggestions.map((suggestion) => (
-                  <div key={suggestion.id} className="bg-gray-600 p-4 rounded-lg">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <span className="font-medium text-blue-400">{suggestion.suggested_title}</span>
-                          <span className="text-gray-400">by {suggestion.suggested_artist}</span>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            suggestion.status === 'pending' ? 'bg-yellow-600/20 text-yellow-400' :
-                            suggestion.status === 'added' ? 'bg-green-600/20 text-green-400' :
-                            'bg-red-600/20 text-red-400'
-                          }`}>
-                            {suggestion.status}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-300">
-                          Suggested by: <span className="text-white">{suggestion.requester_name}</span>
-                          {suggestion.message && (
-                            <span className="italic ml-2">"{suggestion.message}"</span>
-                          )}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {new Date(suggestion.created_at).toLocaleDateString()} at {new Date(suggestion.created_at).toLocaleTimeString()}
-                        </p>
+                  <div key={suggestion.id} className="bg-gray-600 p-4 rounded-lg flex items-center space-x-3">
+                    {/* Selection Checkbox */}
+                    <input
+                      type="checkbox"
+                      checked={selectedSuggestions.has(suggestion.id)}
+                      onChange={() => toggleSuggestionSelection(suggestion.id)}
+                      className="rounded bg-gray-600 border-gray-500 text-green-600 focus:ring-green-500 focus:ring-offset-0"
+                      disabled={suggestion.status !== 'pending'}
+                      title={suggestion.status === 'pending' ? 'Select suggestion' : 'Cannot select processed suggestions'}
+                    />
+                    
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <span className="font-medium text-blue-400">{suggestion.suggested_title}</span>
+                        <span className="text-gray-400">by {suggestion.suggested_artist}</span>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          suggestion.status === 'pending' ? 'bg-yellow-600/20 text-yellow-400' :
+                          suggestion.status === 'added' ? 'bg-green-600/20 text-green-400' :
+                          'bg-red-600/20 text-red-400'
+                        }`}>
+                          {suggestion.status}
+                        </span>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        {suggestion.status === 'pending' && (
-                          <div className="flex space-x-1">
-                            <button
-                              onClick={() => handleSuggestionAction(suggestion.id, 'added', suggestion.suggested_title)}
-                              className="bg-green-600 hover:bg-green-700 text-xs px-3 py-1 rounded transition duration-300"
-                              title="Add to your repertoire"
-                            >
-                              ✓ Add
-                            </button>
-                            <button
-                              onClick={() => handleSuggestionAction(suggestion.id, 'rejected', suggestion.suggested_title)}
-                              className="bg-red-600 hover:bg-red-700 text-xs px-3 py-1 rounded transition duration-300"
-                              title="Reject suggestion"
-                            >
-                              ✗ Reject
-                            </button>
-                          </div>
+                      <p className="text-sm text-gray-300">
+                        Suggested by: <span className="text-white">{suggestion.requester_name}</span>
+                        {suggestion.message && (
+                          <span className="italic ml-2">"{suggestion.message}"</span>
                         )}
-                        <button
-                          onClick={() => handleDeleteSuggestion(suggestion.id, suggestion.suggested_title)}
-                          className="bg-gray-600 hover:bg-red-600 text-white text-xs px-2 py-1 rounded transition duration-300"
-                          title="Delete suggestion permanently"
-                        >
-                          🗑️
-                        </button>
-                      </div>
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(suggestion.created_at).toLocaleDateString()} at {new Date(suggestion.created_at).toLocaleTimeString()}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      {suggestion.status === 'pending' && (
+                        <div className="flex space-x-1">
+                          <button
+                            onClick={() => handleSuggestionAction(suggestion.id, 'added', suggestion.suggested_title)}
+                            className="bg-green-600 hover:bg-green-700 text-xs px-3 py-1 rounded transition duration-300"
+                            title="Add to your repertoire"
+                          >
+                            ✓ Add
+                          </button>
+                          <button
+                            onClick={() => handleSuggestionAction(suggestion.id, 'rejected', suggestion.suggested_title)}
+                            className="bg-red-600 hover:bg-red-700 text-xs px-3 py-1 rounded transition duration-300"
+                            title="Reject suggestion"
+                          >
+                            ❌ Reject
+                          </button>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => {
+                          if (confirm(`Delete suggestion "${suggestion.suggested_title}" permanently?`)) {
+                            batchDeleteSuggestions([suggestion.id]);
+                          }
+                        }}
+                        className="bg-gray-600 hover:bg-red-600 text-white text-xs px-2 py-1 rounded transition duration-300"
+                        title="Delete this suggestion permanently"
+                      >
+                        🗑️
+                      </button>
                     </div>
                   </div>
                 ))}
