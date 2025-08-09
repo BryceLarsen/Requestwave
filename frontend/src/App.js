@@ -3399,11 +3399,7 @@ const MusicianDashboard = () => {
                         </div>
                       )}
                       <button
-                        onClick={() => {
-                          if (confirm(`Delete suggestion "${suggestion.suggested_title}" permanently?`)) {
-                            batchDeleteSuggestions([suggestion.id]);
-                          }
-                        }}
+                        onClick={() => handleDeleteSuggestion(suggestion.id, suggestion.suggested_title)}
                         className="bg-gray-600 hover:bg-red-600 text-white text-xs px-2 py-1 rounded transition duration-300"
                         title="Delete this suggestion permanently"
                       >
