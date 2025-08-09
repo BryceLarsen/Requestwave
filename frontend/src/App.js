@@ -452,6 +452,9 @@ const MusicianDashboard = () => {
   const [selectedRequests, setSelectedRequests] = useState(new Set());
   const [showAllRequests, setShowAllRequests] = useState(true); // For collapsible All Requests
 
+  // Batch selection state for song suggestions
+  const [selectedSuggestions, setSelectedSuggestions] = useState(new Set());
+  
   // NEW: Auto-fill metadata state
   const [autoFillLoading, setAutoFillLoading] = useState(false);
   
