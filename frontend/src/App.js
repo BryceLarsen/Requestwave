@@ -6170,12 +6170,17 @@ const OnStageInterface = () => {
   };
   
   const fetchUpdates = async () => {
-    if (!musician) return;
+    if (!musician) {
+      console.log('No musician loaded yet, skipping update');
+      return;
+    }
     
     try {
       // FIXED: Use real API endpoint instead of demo data
       const response = await axios.get(`${API}/requests/updates/${musician.id}`);
       const data = response.data;
+      
+      console.log('On Stage update received:', data);
       
       // Update requests with real data from backend
       if (data.requests) {
@@ -6188,6 +6193,20 @@ const OnStageInterface = () => {
               ? { ...apiRequest, status: existingReq.status }
               : apiRequest;
           });
+          
+          // Check for new requests and show notifications
+          if (prevRequests.length > 0) {
+            const newRequests = updatedRequests.filter(newReq => 
+              !prevRequests.find(existingReq => existingReq.id === newReq.id)
+            );
+            
+            if (newRequests.length > 0) {
+              console.log('New requests detected:', newRequests);
+              showNotification(newRequests);
+              playNotificationSound();
+            }
+          }
+          
           return updatedRequests;
         });
       }
@@ -6201,10 +6220,10 @@ const OnStageInterface = () => {
       
     } catch (error) {
       console.error('Error fetching real-time updates:', error);
-      setLoading(false);
       
-      // Only show demo data if API completely fails
-      if (error.response?.status === 404 || error.code === 'NETWORK_ERROR') {
+      // DON'T set loading to false on error - let polling continue
+      // Only fall back to demo data if this is a complete API failure
+      if (error.response?.status >= 500 || error.code === 'NETWORK_ERROR') {
         console.warn('Using demo data due to API failure');
         const demoRequests = [
           {
@@ -6218,7 +6237,9 @@ const OnStageInterface = () => {
           }
         ];
         setRequests(demoRequests);
+        setLoading(false);
       }
+      // For other errors (like 404, 401), continue polling without updating data
     }
   };
   
