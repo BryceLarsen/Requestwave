@@ -6135,21 +6135,28 @@ const OnStageInterface = () => {
     // Start initialization
     fetchMusician();
     requestNotificationPermission();
-    
-    // Set up polling for real-time updates after initial load
-    const interval = setInterval(() => {
-      fetchUpdates();
-    }, 5000); // Poll every 5 seconds (slower for demo)
-    
-    return () => clearInterval(interval);
   }, [slug]);
   
   useEffect(() => {
-    // Once musician is loaded, start fetching updates
+    // FIXED: Set up polling only after musician is loaded
     if (musician) {
+      console.log('Starting On Stage polling for musician:', musician.name);
+      
+      // Initial fetch
       fetchUpdates();
+      
+      // Set up continuous polling
+      const interval = setInterval(() => {
+        console.log('On Stage polling tick...');
+        fetchUpdates();
+      }, 5000); // Poll every 5 seconds
+      
+      return () => {
+        console.log('Stopping On Stage polling');
+        clearInterval(interval);
+      };
     }
-  }, [musician]);
+  }, [musician]); // Depend on musician, not slug
   
   const fetchMusician = async () => {
     try {
