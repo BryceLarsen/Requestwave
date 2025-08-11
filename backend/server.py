@@ -75,10 +75,6 @@ FREE_REQUESTS_LIMIT = 20  # Legacy - will be removed in freemium model
 MONTHLY_SUBSCRIPTION_PRICE = MONTHLY_PLAN_FEE  # Legacy compatibility
 ANNUAL_SUBSCRIPTION_PRICE = ANNUAL_PLAN_FEE  # Legacy compatibility
 
-# Initialize app
-app = FastAPI(title="RequestWave API", description="Live music request platform")
-freemium_router = APIRouter(prefix="/api")
-
 # Custom route class for tracing handler execution
 class CustomAPIRoute(APIRoute):
     def get_route_handler(self) -> Callable:
@@ -99,6 +95,10 @@ class CustomAPIRoute(APIRoute):
             return response
         
         return custom_route_handler
+
+# Initialize app
+app = FastAPI(title="RequestWave API", description="Live music request platform")
+freemium_router = APIRouter(prefix="/api", route_class=CustomAPIRoute)
 api_router = APIRouter(prefix="/api")
 
 # Security
