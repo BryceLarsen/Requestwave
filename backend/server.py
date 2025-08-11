@@ -4255,8 +4255,8 @@ async def get_freemium_subscription_status_endpoint(musician_id: str = Depends(g
 @api_router.post("/v2/subscription/checkout")
 async def create_freemium_checkout_session(
     checkout_request: V2CheckoutRequest,
-    request: Request,
-    musician_id: str = Depends(get_current_musician)
+    musician_id: str = Depends(get_current_musician),
+    request: Request = None
 ):
     """Create Stripe checkout session for freemium subscription with startup fee + trial"""
     try:
@@ -4288,6 +4288,25 @@ async def create_freemium_checkout_session(
         # Check if this is first-time subscription
         has_had_trial = musician.get("has_had_trial", False)
         is_reactivation = has_had_trial and not musician.get("audience_link_active", False)
+        
+        # Initialize stripe checkout with dummy request if needed
+        if not request:
+            # Create a dummy request for stripe initialization
+            from starlette.requests import Request as StarletteRequest
+            from starlette.datastructures import URL, Headers
+            
+            # Use environment variable for base URL
+            base_url = os.environ.get('FRONTEND_URL', 'https://livewave-music.emergent.host')
+            scope = {
+                "type": "http",
+                "method": "POST", 
+                "scheme": "https",
+                "path": "/api/v2/subscription/checkout",
+                "headers": [],
+                "query_string": b""
+            }
+            request = StarletteRequest(scope)
+            request._url = URL(base_url)
         
         stripe_checkout = init_stripe_checkout(request)
         
