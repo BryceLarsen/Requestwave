@@ -1604,8 +1604,10 @@ async def register_musician(musician_data: MusicianRegister):
         slug = f"{base_slug}-{counter}"
         counter += 1
     
-    # Create musician
+    # Create musician with freemium model fields
     hashed_password = hash_password(musician_data.password)
+    trial_end = datetime.utcnow() + timedelta(days=TRIAL_DAYS)
+    
     musician_dict = {
         "id": str(uuid.uuid4()),
         "name": musician_data.name,
@@ -1615,8 +1617,17 @@ async def register_musician(musician_data: MusicianRegister):
         "venmo_link": "",
         "bio": "",
         "website": "",
-        "subscription_ends_at": None,
+        # NEW: Freemium model fields
+        "audience_link_active": True,  # Start with 30-day trial
+        "has_had_trial": True,
+        "trial_end": trial_end,
         "stripe_customer_id": None,
+        "stripe_subscription_id": None,
+        "subscription_status": None,
+        "subscription_current_period_end": None,
+        "payment_grace_period_end": None,
+        # Legacy fields for backward compatibility
+        "subscription_ends_at": None,
         "design_settings": {
             "color_scheme": "purple",
             "layout_mode": "grid",
@@ -1628,6 +1639,15 @@ async def register_musician(musician_data: MusicianRegister):
     }
     
     await db.musicians.insert_one(musician_dict)
+    
+    # Log trial start
+    await db.subscription_events.insert_one({
+        "musician_id": musician_dict["id"],
+        "event_type": "trial_started",
+        "reason": "new_registration",
+        "trial_end": trial_end,
+        "timestamp": datetime.utcnow()
+    })
     
     # Create JWT token
     token = create_jwt_token(musician_dict["id"])
