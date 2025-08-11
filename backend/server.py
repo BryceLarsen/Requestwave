@@ -4238,7 +4238,7 @@ async def activate_playlist(
 
 # NEW: Freemium model endpoints (temporary v2 path to avoid conflicts)
 
-@api_router.get("/subscription/status")
+@api_router.get("/subscription/new-freemium-status")
 async def freemium_subscription_status_endpoint_unique(musician_id: str = Depends(get_current_musician)):
     """Get current subscription status for authenticated musician"""
     print(f"🔥🔥🔥 FREEMIUM ENDPOINT CALLED! musician_id: {musician_id}")
