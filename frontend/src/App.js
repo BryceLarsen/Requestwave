@@ -920,11 +920,14 @@ const MusicianDashboard = () => {
   });
   const [profileError, setProfileError] = useState('');
 
-  // Subscription management state
+  // Subscription management state (Freemium model)
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('annual'); // Default to annual (better value)
   const [upgrading, setUpgrading] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   // Design settings state
   const [designSettings, setDesignSettings] = useState({
