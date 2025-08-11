@@ -2238,7 +2238,7 @@ const MusicianDashboard = () => {
 
         {/* Tabs */}
         <div className="flex flex-wrap gap-1 bg-gray-800 rounded-lg p-1 mb-8">
-          {['songs', 'requests', 'analytics', 'profile', 'design'].map((tab) => (
+          {['songs', 'requests', 'analytics', 'profile', 'subscription', 'design'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
