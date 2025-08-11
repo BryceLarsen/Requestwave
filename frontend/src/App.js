@@ -1205,29 +1205,74 @@ const MusicianDashboard = () => {
   const handleUpgrade = async () => {
     setUpgrading(true);
     try {
-      const response = await axios.post(`${API}/subscription/upgrade`, {
-        plan: selectedPlan // Send selected plan (monthly or annual)
+      const packageId = selectedPlan === 'monthly' ? 'monthly_plan' : 'annual_plan';
+      const response = await axios.post(`${API}/subscription/checkout`, {
+        package_id: packageId,
+        origin_url: window.location.origin
       });
-      if (response.data.url) {
-        window.location.href = response.data.url;
+      
+      if (response.data.checkout_url) {
+        window.location.href = response.data.checkout_url;
       }
     } catch (error) {
-      console.error('Error creating upgrade session:', error);
-      alert('Error processing upgrade. Please try again.');
+      console.error('Error creating checkout session:', error);
+      alert('Error processing subscription. Please try again.');
     } finally {
       setUpgrading(false);
     }
   };
 
+  const handleCancelSubscription = async () => {
+    if (window.confirm('Are you sure you want to cancel your subscription? Your audience link will be deactivated, but your songs and request history will remain saved.')) {
+      try {
+        await axios.post(`${API}/subscription/cancel`);
+        alert('Subscription canceled. Your audience link has been deactivated.');
+        fetchSubscriptionStatus();
+      } catch (error) {
+        console.error('Error canceling subscription:', error);
+        alert('Error canceling subscription. Please try again.');
+      }
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmationText !== 'DELETE') {
+      alert('Please type "DELETE" to confirm account deletion.');
+      return;
+    }
+
+    setDeletingAccount(true);
+    try {
+      await axios.delete(`${API}/account/delete`, {
+        data: { confirmation_text: deleteConfirmationText }
+      });
+      alert('Account deleted successfully. You will be logged out.');
+      logout();
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      alert('Error deleting account. Please try again.');
+    } finally {
+      setDeletingAccount(false);
+      setShowDeleteConfirmation(false);
+      setDeleteConfirmationText('');
+    }
+  };
+
   const checkPaymentStatus = async (sessionId) => {
     try {
-      const response = await axios.get(`${API}/subscription/payment-status/${sessionId}`);
+      const response = await axios.get(`${API}/subscription/checkout/status/${sessionId}`);
       if (response.data.payment_status === 'paid') {
-        alert('Subscription activated! You now have unlimited requests.');
+        alert('Payment successful! Your audience link is now active.');
         fetchSubscriptionStatus();
         // Remove session_id from URL
         window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (response.data.status === 'expired') {
+        alert('Payment session expired. Please try again.');
       }
+    } catch (error) {
+      console.error('Error checking payment status:', error);
+    }
+  };
     } catch (error) {
       console.error('Error checking payment status:', error);
     }
