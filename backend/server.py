@@ -4249,8 +4249,8 @@ async def get_subscription_status_endpoint(musician_id: str = Depends(get_curren
 
 @api_router.post("/subscription/checkout")
 async def create_checkout_session(
-    request: Request,
     checkout_request: CheckoutRequest,
+    request: Request,
     musician_id: str = Depends(get_current_musician)
 ):
     """Create Stripe checkout session for subscription with startup fee"""
