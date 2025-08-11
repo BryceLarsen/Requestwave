@@ -786,6 +786,7 @@ test_plan:
     - "QR Code URL Fix Verification"
     - "Missing Audience Request Endpoint"
     - "On Stage Real-Time Updates Issue"
+    - "Freemium Model - Stripe Payment Integration"
   test_all: false
   test_priority: "critical_first"
 
