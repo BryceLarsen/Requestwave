@@ -2719,6 +2719,18 @@ async def get_musician_songs(
     if not musician:
         raise HTTPException(status_code=404, detail="Musician not found")
     
+    # NEW: Check audience link access for freemium model
+    audience_link_active = await check_audience_link_access(musician["id"])
+    if not audience_link_active:
+        raise HTTPException(
+            status_code=402, 
+            detail={
+                "error": "audience_link_paused",
+                "message": "This artist's request page is paused",
+                "musician_name": musician["name"]
+            }
+        )
+    
     # Base query for musician's songs - exclude hidden songs from audience view
     query = {
         "musician_id": musician["id"],
