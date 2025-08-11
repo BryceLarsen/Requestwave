@@ -5708,7 +5708,9 @@ const AudienceInterface = () => {
                   )}
                   {musician?.facebook_username && (
                     <a
-                      href={musician.facebook_username.startsWith('http') ? musician.facebook_username : `https://facebook.com/${musician.facebook_username}`}
+                      href={musician.facebook_username.includes('facebook.com') ? 
+                        (musician.facebook_username.startsWith('http') ? musician.facebook_username : `https://${musician.facebook_username}`) :
+                        `https://facebook.com/${musician.facebook_username}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-xs font-medium transition duration-300 flex items-center space-x-1"
