@@ -5692,10 +5692,10 @@ const AudienceInterface = () => {
                 </div>
               )}
               
-              {/* Social Media Links - Only show if they exist */}
-              {musician && (musician?.instagram_username || musician?.facebook_username || musician?.tiktok_username || musician?.spotify_artist_url || musician?.apple_music_artist_url) && (
+              {/* Social Media Links - Only show if they exist and musician data is loaded */}
+              {musician && (
                 <div className="flex items-center space-x-1 mt-2 flex-wrap">
-                  {musician?.instagram_username && (
+                  {musician.instagram_username && (
                     <a
                       href={`https://instagram.com/${musician.instagram_username}`}
                       target="_blank"
@@ -5706,7 +5706,7 @@ const AudienceInterface = () => {
                       <span className="hidden sm:inline">IG</span>
                     </a>
                   )}
-                  {musician?.facebook_username && (
+                  {musician.facebook_username && (
                     <a
                       href={musician.facebook_username.includes('facebook.com') ? 
                         (musician.facebook_username.startsWith('http') ? musician.facebook_username : `https://${musician.facebook_username}`) :
@@ -5719,7 +5719,7 @@ const AudienceInterface = () => {
                       <span className="hidden sm:inline">FB</span>
                     </a>
                   )}
-                  {musician?.tiktok_username && (
+                  {musician.tiktok_username && (
                     <a
                       href={`https://tiktok.com/@${musician.tiktok_username}`}
                       target="_blank"
@@ -5730,7 +5730,7 @@ const AudienceInterface = () => {
                       <span className="hidden sm:inline">TT</span>
                     </a>
                   )}
-                  {musician?.spotify_artist_url && (
+                  {musician.spotify_artist_url && (
                     <a
                       href={musician.spotify_artist_url}
                       target="_blank"
@@ -5741,7 +5741,7 @@ const AudienceInterface = () => {
                       <span className="hidden sm:inline">Spotify</span>
                     </a>
                   )}
-                  {musician?.apple_music_artist_url && (
+                  {musician.apple_music_artist_url && (
                     <a
                       href={musician.apple_music_artist_url}
                       target="_blank"
