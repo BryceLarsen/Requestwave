@@ -1,19 +1,25 @@
 <analysis>
-The AI engineer systematically addressed critical bugs and implemented significant feature enhancements for the RequestWave application. The trajectory began by resolving a reported login issue and then moved into core application improvements. Key feature additions included a Quick Start Guide with a downloadable CSV starter setlist, refined playlist import logic to remove extraneous notes, and the implementation of a curated genre/mood categorization system. Crucial bug fixes involved robust error handling for batch song deletion, ensuring  file uploads are supported, and, most notably, persistent debugging of deployment-related routing issues affecting QR codes and the On Stage mode. The engineer identified hardcoded preview URLs and resolved frontend polling and authentication issues, leading to functional real-time updates and interactive buttons in On Stage mode. Finally, the engineer overhauled the Requests page with a folder-like layout, collapsible sections, batch operations (play, reject, delete), and fixed timestamp display across the application to automatically adapt to local timezones. The work demonstrates strong problem-solving skills, utilizing various diagnostic tools and a methodical approach to complex full-stack issues.
+The AI engineer's work trajectory encompassed two major phases. Initially, attempts were made to enhance the audience search page by integrating artist social media links as buttons and making the artist's bio collapsible. This phase encountered significant technical challenges, including persistent lint errors, UI rendering issues, and failed attempts at debugging component loading states, ultimately remaining unresolved. Subsequently, the focus shifted entirely to implementing a comprehensive freemium subscription model with Stripe integration. This involved extensive backend modifications to  (adding new models, payment endpoints, webhook handlers, and access control logic) and corresponding frontend updates in  (UI for subscription management, state handling, and access gating). The primary challenge in this phase has been resolving complex backend routing conflicts and endpoint registration issues, compounded by persistent 404/500 errors and parameter injection problems, with the current issue being the incorrect usage of  in FastAPI. The engineer has methodically attempted to debug these, including adding route logging and temporarily re-pathing endpoints.
 </analysis>
 
 <product_requirements>
-The RequestWave application enables musicians to manage their song repertoire and interact with audiences for real-time song requests and tips. It supports multiple import methods (CSV, manual, Spotify/Apple Music) and offers flexible song filtering by genre, artist, mood, year, and decade. The app features a freemium model with trial periods and Pro plan subscriptions via Stripe. Recent enhancements include comprehensive song management capabilities like batch editing, popularity tracking, analytics integration, and show management. A Pro song suggestion system allows audiences to suggest songs. User experience has been continuously refined through improvements like a Quick Start Guide, a mobile-optimized On Stage mode for real-time request display, and intuitive UI updates for managing requests and song suggestions. The overarching goal is to provide a robust, responsive, and efficient platform for musicians to engage their audience and monetize their performances, with a focus on real-time functionality and ease of use.
+The RequestWave application empowers musicians to manage their song repertoire, engage audiences with real-time song requests and tips, and monetize performances. It supports diverse song import methods (CSV, manual, Spotify/Apple Music) and offers flexible filtering. The application features a freemium model with trial periods and Stripe-based Pro plan subscriptions, focusing on efficient engagement and monetization through real-time functionality.
+
+Recent requirements added during this trajectory include:
+1.  **Audience Interface Enhancement**: On the audience search page, display artist social media links as buttons and make the artist's bio collapsible with a dropdown, all while maintaining the existing header bar size.
+2.  **Comprehensive Freemium Model**: Implement a Stripe-integrated freemium model where the artist dashboard remains free, but audience links and QR codes are paywalled. This includes a one-time startup fee (5) and recurring monthly () or annual (4) subscriptions with a 30-day free trial for first-time subscribers. The system must minimize Stripe transactions, re-charge the startup fee for reactivations, manage  status via webhooks (, , ), provide a graceful payment failure grace period, and enforce access by showing a page paused screen if the link is inactive. Account deletion requires explicit confirmation.
 </product_requirements>
 
 <key_technical_concepts>
-- **Full-stack Architecture**: React frontend, FastAPI backend, MongoDB.
-- **Authentication**: JWT token-based.
-- **API Integration**: Stripe, Spotify API, PayPal/Venmo deep linking.
-- **Data Processing**: Pandas for CSV, web scraping (BeautifulSoup, lxml).
-- **Frontend State Management**: React Context, , .
-- **UI/UX**: Tailwind CSS, responsive design, modals, collapsible sections.
-- **Service Management**: Supervisor for process control and service restarts.
+-   **Full-stack Architecture**: React frontend, FastAPI backend, MongoDB.
+-   **Authentication**: JWT token-based.
+-   **API Integration**: Stripe, Spotify API, PayPal/Venmo deep linking.
+-   **Data Processing**: Pandas for CSV, web scraping.
+-   **Frontend State Management**: React Context, , .
+-   **UI/UX**: Tailwind CSS, responsive design.
+-   **Service Management**: Supervisor for process control.
+-   **Backend Routing**: FastAPI .
+-   **Data Validation**: Pydantic models.
 </key_technical_concepts>
 
 <code_architecture>
@@ -21,49 +27,53 @@ The application follows a standard full-stack structure.
 
 
 
-- **/app/backend/server.py**: Core FastAPI backend.
-  - **Importance**: Centralizes API endpoints for authentication, song/playlist management, request queue, profile updates, and payment integrations. Interacts with MongoDB.
-  - **Changes Made**:
-    - **Playlist Import Notes**: Modified , , and  to leave the  field blank for imported songs (Chat 56, 58, 66).
-    - **Curated Genre/Moods**: Updated , , , and various hardcoded sample/default songs/suggestions to use a predefined list of 20 genres and 20 moods (Chat 107, 109, 113, 117, 121, 125, 127, 141, 147, 151, 155, 159, 161, 165, 169, 173, 183).
-    - **LST File Upload**: Added new functions like  and new FastAPI endpoints (, ) to support importing songs from  files with Song Title - Artist format (Chat 251, 253, 261).
-    - **QR Code/On Stage URL Fix**: Corrected hardcoded preview URLs in  environment variable (through ) and a fallback URL in  to point to the deployed production URL (Chat 301, 311).
-    - **Missing Audience Request Endpoint**: Added a new FastAPI endpoint  to allow audience members to submit requests specific to a musician's slug, integrating it with the existing request creation logic (Chat 369).
-    - **On Stage Request Status Update**: Modified  to properly accept status in a JSON body via a Pydantic model, rather than query parameters, and fixed the real-time polling endpoint to filter out archived requests (Chat 396, 401).
+-   **/app/backend/server.py**: Core FastAPI backend.
+    -   **Importance**: Centralizes API endpoints for authentication, song/playlist management, request queue, profile updates, and payment integrations, interacting with MongoDB. It is the heart of the application's business logic.
+    -   **Changes Made**:
+        -   **Playlist Import Notes, Curated Genre/Moods, LST File Upload, QR Code/On Stage URL Fix, Missing Audience Request Endpoint, On Stage Request Status Update**: These changes were described in the initial  provided.
+        -   **Freemium Model Implementation**: Added Pydantic models (, , ), updated  model with subscription fields. Configured Stripe product/price IDs. Implemented helper functions (, ). Added new FastAPI endpoints: , , , . Modified  for trial start. Added access checks to  and . Removed old, conflicting subscription-related endpoints and models (e.g., ). Added diagnostic endpoints , , . Introduced  to trace handler execution (though incorrectly applied initially).
 
-- **/app/frontend/src/App.js**: Main React component.
-  - **Importance**: Manages routing, global state, UI for musician/audience dashboards, and all frontend logic for backend interaction.
-  - **Changes Made**:
-    - **Quick Start Guide**: Added a prominent download button for a starter CSV setlist within the Quick Start Guide modal (Chat 25).
-    - **Batch Song Deletion**: Modified batch song deletion logic () to handle partial failures gracefully, instead of failing entirely on a single error (Chat 199).
-    - **Notes Tab Search**: Added  state, updated  logic to include notes search, added a new notes search input field to the UI, adjusted the grid layout from 6 to 7 columns, and updated  to include notes (Chat 220, 222, 224, 230, 236).
-    - **LST File Upload UI**: Added UI elements (state variables, handling functions, buttons, section) for  file uploads, mirroring the CSV upload functionality (Chat 265, 267, 273, 279). Also updated Quick Start Guide to mention  files (Chat 281).
-    - **On Stage Mode Polling/Buttons**: Fixed  to fetch real requests from the backend API instead of hardcoded demo data (Chat 425, 429). Added explicit authentication headers to the  function within  to enable Accept/Play/Reject buttons (Chat 450). Restructured polling logic to start only after musician data is loaded and enhanced error handling to prevent polling from stopping (Chat 479, 485).
-    - **Requests Page Layout & Batch Edit**: Rearranged the Requests tab to show show folders above All Requests and made All Requests collapsible. Removed the Accept button. Implemented batch selection checkboxes and a batch action bar for Mark all as Played, Mark all as Rejected, and Delete all selected for requests (Chat 464, 466, 468).
-    - **Batch Edit/Delete Song Suggestions**: Added batch selection state, batch action functions (, , ), and updated the song suggestions UI with checkboxes and a batch actions bar (Chat 495, 497, 501).
-    - **Timestamp Localization**: Created  and  utility functions to display timestamps in the user's local timezone automatically. Applied these functions across all relevant timestamp displays on the Requests page, Song Suggestions, On Stage interface, Analytics tab, and Subscription info (Chat 510, 512, 514, 516, 518, 520, 522).
+-   **/app/frontend/src/App.js**: Main React component.
+    -   **Importance**: Manages routing, global state, UI for musician/audience dashboards, and all frontend logic for backend interaction.
+    -   **Changes Made**:
+        -   **Quick Start Guide, Batch Song Deletion, Notes Tab Search, LST File Upload UI, On Stage Mode Polling/Buttons, Requests Page Layout & Batch Edit, Batch Edit/Delete Song Suggestions, Timestamp Localization**: These changes were described in the initial  provided.
+        -   **Audience Interface UI (Attempted)**: Added state for  and attempted to render social media buttons and a collapsible bio, but this was not successfully completed.
+        -   **Freemium Model Implementation**: Added new React state variables (, , , ). Updated  and created . Introduced a Subscription tab to the Musician Dashboard navigation. Implemented an Access Denied screen for the . Modified API calls to use  paths temporarily, then reverted to .
 
-- **/app/backend/.env**: Backend environment variables.
-  - **Changes Made**: Updated  to the correct deployed production URL (e.g., ) (Chat 311).
-- **/app/frontend/.env**: Frontend environment variables.
-  - **Changes Made**: Updated  to the correct deployed production URL (e.g., ) (Chat 313).
+-   **/app/backend/.env**: Backend environment variables.
+    -   **Changes Made**: Updated . Added , , , , .
+
+-   **/app/frontend/.env**: Frontend environment variables.
+    -   **Changes Made**: Updated .
 </code_architecture>
 
 <pending_tasks>
-- Frontend testing for the Phase 3 Analytics Dashboard.
-- Adding a prominent green tip button on the audience song search page, leading to tipping functionality (distinct from the post-request modal).
+-   Frontend testing for the Phase 3 Analytics Dashboard.
+-   Adding a prominent green tip button on the audience song search page (distinct from the post-request modal).
+-   Completing the Audience Interface UI enhancements: integrating social media buttons and implementing a collapsible bio.
 </pending_tasks>
 
 <current_work>
-The AI engineer has successfully implemented automatic timezone detection and display across the entire application. Previously, timestamps were likely showing in UTC, leading to confusion. The engineer addressed this by:
+The AI engineer is currently in the advanced stages of implementing a comprehensive freemium subscription model with Stripe integration. This work has involved significant modifications across both the backend () and frontend ().
 
-1.  **Creating Utility Functions**: Introduced  for full date/time and  for time-only display. These functions leverage  for automatic device timezone detection.
-2.  **Global Integration**: Applied these new formatting functions to all timestamps displayed on the Requests page, Song Suggestions section, On Stage interface, Analytics tab, and Subscription information.
-3.  **Refining On Stage Sorting**: Updated the sorting logic in the On Stage interface to directly use the formatted timestamp for consistency.
+On the **backend**, the engineer has:
+1.  Defined new Pydantic models for subscription plans and statuses.
+2.  Updated the  model to include critical fields like  and .
+3.  Implemented new FastAPI endpoints for Stripe checkout, subscription cancellation, webhook handling, and fetching subscription status.
+4.  Integrated audience access checks into existing song and request endpoints, ensuring paywall enforcement.
+5.  Removed old, conflicting subscription models and endpoints to streamline the system.
+6.  Added extensive diagnostic routes (, , ) and a  for debugging persistent routing issues.
 
-This ensures that all time-related data is now accurately presented in the user's local timezone, enhancing the user experience, especially for musicians managing live performances where precise timing of requests and suggestions is crucial. The last action was a frontend restart to apply these changes, and the engineer has confirmed the successful resolution of the timezone issue.
+On the **frontend**, the engineer has:
+1.  Added new React state variables to manage subscription status and trial information.
+2.  Updated existing functions () and created new ones () to interact with the new Stripe-integrated backend.
+3.  Introduced a dedicated Subscription tab in the musician dashboard UI.
+4.  Implemented an Access Denied screen for audience members who attempt to access a paywalled musician's page without an active subscription.
+5.  Temporarily adjusted API call paths to  for debugging routing issues, then reverted to .
+
+The most recent work has been focused on debugging critical backend routing conflicts and endpoint registration failures. The  and diagnostic endpoints were introduced to pinpoint why the newly defined freemium endpoints were consistently returning 404 Not Found errors, even after confirming their correct placement and syntax. The immediate last identified issue (Chat 564) was an incorrect usage of  on individual  decorators instead of on the  instance itself. This fix has just been applied. The application is currently in a state where the core freemium logic is largely coded, but its backend API endpoints are not yet reliably accessible due to these persistent routing/registration challenges.
 </current_work>
 
 <optional_next_step>
-Awaiting further instructions from the user regarding new features or enhancements.
+Test the backend again to verify that fixing the  error resolves the endpoint registration issues for the freemium APIs.
 </optional_next_step>
