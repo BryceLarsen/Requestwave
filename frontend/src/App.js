@@ -5972,6 +5972,26 @@ const AudienceInterface = () => {
     );
   }
 
+  // NEW: Access denied screen for paused audience links
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-gray-800 rounded-xl p-8 text-center">
+          <div className="text-6xl mb-4">😔</div>
+          <h1 className="text-2xl font-bold text-white mb-4">Request Page Paused</h1>
+          <p className="text-gray-300 mb-6">
+            {accessMessage || "This artist's request page is currently paused"}
+          </p>
+          <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+            <p className="text-blue-300 text-sm">
+              <strong>For the artist:</strong> Visit your dashboard's Subscription tab to reactivate your audience link.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!musician) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
