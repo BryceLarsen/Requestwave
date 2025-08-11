@@ -292,15 +292,54 @@ class SubscriptionStatus(BaseModel):
     next_reset_date: Optional[datetime] = None
     can_make_request: bool
 
+# NEW: Freemium model specific models
 class PaymentTransaction(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     musician_id: str
+    session_id: str
     amount: float
     currency: str = "usd"
-    session_id: str
-    payment_status: str = "pending"
-    subscription_type: str = "monthly_unlimited"
+    payment_status: str = "pending"  # pending, paid, failed, expired
+    transaction_type: str  # startup_fee, subscription, reactivation
+    subscription_plan: Optional[str] = None  # monthly, annual
+    metadata: Optional[Dict[str, Any]] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class SubscriptionPackage(BaseModel):
+    package_id: str
+    name: str
+    startup_fee: float
+    subscription_fee: float
+    billing_period: str  # monthly, annual
+    trial_days: int
+
+class CheckoutRequest(BaseModel):
+    package_id: str  # monthly_plan or annual_plan
+    origin_url: str
+
+class SubscriptionStatus(BaseModel):
+    plan: str  # "trial", "free", "active", "canceled", "expired"
+    audience_link_active: bool
+    trial_active: bool
+    trial_ends_at: Optional[datetime] = None
+    subscription_ends_at: Optional[datetime] = None
+    days_remaining: Optional[int] = None
+    can_reactivate: bool = False
+    grace_period_active: bool = False
+    grace_period_ends_at: Optional[datetime] = None
+
+class AccountDeletionRequest(BaseModel):
+    confirmation_text: str  # Must be "DELETE"
+
+class WebhookEvent(BaseModel):
+    event_type: str
+    event_id: str
+    session_id: Optional[str] = None
+    customer_id: Optional[str] = None
+    subscription_id: Optional[str] = None
+    payment_status: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
 
 class CSVUploadResponse(BaseModel):
     success: bool
