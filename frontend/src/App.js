@@ -5672,8 +5672,74 @@ const AudienceInterface = () => {
                 {designSettings.musician_name}
               </h1>
               {designSettings.bio && (
-                <p className="text-gray-300 text-sm md:text-base truncate">{designSettings.bio}</p>
+                <div className="flex items-center space-x-2">
+                  <p className={`text-gray-300 text-sm md:text-base ${bioExpanded ? '' : 'truncate'}`}>
+                    {bioExpanded ? designSettings.bio : designSettings.bio}
+                  </p>
+                  {designSettings.bio.length > 50 && (
+                    <button
+                      onClick={() => setBioExpanded(!bioExpanded)}
+                      className="text-gray-400 hover:text-white transition duration-300 text-sm"
+                    >
+                      {bioExpanded ? '▲' : '▼'}
+                    </button>
+                  )}
+                </div>
               )}
+              
+              {/* Social Media Links - Only show if they exist */}
+              <div className="flex items-center space-x-2 mt-2">
+                {musician?.instagram_username && (
+                  <a
+                    href={`https://instagram.com/${musician.instagram_username}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-pink-600 hover:bg-pink-700 px-2 py-1 rounded text-xs font-medium transition duration-300"
+                  >
+                    📸 IG
+                  </a>
+                )}
+                {musician?.facebook_username && (
+                  <a
+                    href={`https://facebook.com/${musician.facebook_username}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-xs font-medium transition duration-300"
+                  >
+                    📘 FB
+                  </a>
+                )}
+                {musician?.tiktok_username && (
+                  <a
+                    href={`https://tiktok.com/@${musician.tiktok_username}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-black hover:bg-gray-800 px-2 py-1 rounded text-xs font-medium transition duration-300"
+                  >
+                    🎵 TikTok
+                  </a>
+                )}
+                {musician?.spotify_artist_url && (
+                  <a
+                    href={musician.spotify_artist_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-green-600 hover:bg-green-700 px-2 py-1 rounded text-xs font-medium transition duration-300"
+                  >
+                    🎶 Spotify
+                  </a>
+                )}
+                {musician?.apple_music_artist_url && (
+                  <a
+                    href={musician.apple_music_artist_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-xs font-medium transition duration-300"
+                  >
+                    🍎 Apple
+                  </a>
+                )}
+              </div>
             </div>
             <div className="flex items-center space-x-2">
               <img
