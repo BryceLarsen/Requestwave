@@ -11,7 +11,7 @@ import concurrent.futures
 from typing import Dict, Any, List
 
 # Configuration
-BASE_URL = "https://2d821f37-5e3c-493f-a28d-8ff61cf1519e.preview.emergentagent.com/api"
+BASE_URL = "https://02097561-4318-47d1-b18b-ed57f34042df.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
     "name": "Focused Deletion Tester",
     "email": "focused.deletion@requestwave.com", 
