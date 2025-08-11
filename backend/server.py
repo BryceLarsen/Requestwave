@@ -4241,6 +4241,7 @@ async def activate_playlist(
 @api_router.get("/subscription/status")
 async def get_freemium_subscription_status_endpoint(musician_id: str = Depends(get_current_musician)):
     """Get current subscription status for authenticated musician"""
+    print(f"🔥🔥🔥 FREEMIUM ENDPOINT CALLED! musician_id: {musician_id}")
     try:
         print(f"🎯 DEBUG: get_freemium_subscription_status_endpoint called with musician_id: {musician_id}")
         status = await get_freemium_subscription_status(musician_id)
