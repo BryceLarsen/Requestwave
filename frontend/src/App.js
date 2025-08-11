@@ -1265,7 +1265,8 @@ const MusicianDashboard = () => {
 
   const checkPaymentStatus = async (sessionId) => {
     try {
-      const response = await axios.get(`${API}/subscription/checkout/status/${sessionId}`);
+      // Use v2 endpoint temporarily
+      const response = await axios.get(`${API}/v2/subscription/checkout/status/${sessionId}`);
       if (response.data.payment_status === 'paid') {
         alert('Payment successful! Your audience link is now active.');
         fetchSubscriptionStatus();
