@@ -5046,6 +5046,17 @@ const AudienceInterface = () => {
   // NEW: Bio expansion state
   const [bioExpanded, setBioExpanded] = useState(false);
 
+  // Debug musician data
+  useEffect(() => {
+    if (musician) {
+      console.log('Musician data loaded:', musician);
+      console.log('Has Instagram:', !!musician.instagram_username);
+      console.log('Has Facebook:', !!musician.facebook_username);
+      console.log('Has Spotify:', !!musician.spotify_artist_url);
+      console.log('Has Apple Music:', !!musician.apple_music_artist_url);
+    }
+  }, [musician]);
+
   // NEW: Post-request click tracking
   const trackClick = async (type, platform) => {
     if (!currentRequestId) return;
