@@ -4342,14 +4342,17 @@ async def create_freemium_checkout_session(
 @api_router.get("/v2/subscription/checkout/status/{session_id}")
 async def get_freemium_checkout_status(
     session_id: str,
-    request: Request,
     musician_id: str = Depends(get_current_musician)
 ):
     """Get checkout session status and update musician's subscription if paid"""
     try:
         print(f"🎯 DEBUG: get_freemium_checkout_status called for session: {session_id}")
         
-        stripe_checkout = init_stripe_checkout(request)
+        # Initialize stripe checkout using environment URL
+        base_url = os.environ.get('FRONTEND_URL', 'https://livewave-music.emergent.host')
+        webhook_url = f"{base_url}/api/webhook/stripe"
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+        
         status = await stripe_checkout.get_checkout_status(session_id)
         print(f"🎯 DEBUG: Stripe status: {status.payment_status}")
         
