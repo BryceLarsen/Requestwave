@@ -43,12 +43,36 @@ JWT_EXPIRATION_HOURS = 24
 
 # Stripe Configuration
 STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
-MONTHLY_SUBSCRIPTION_PRICE = 10.00  # $10/month
-ANNUAL_SUBSCRIPTION_PRICE = 60.00   # $60/year ($5/month)
 
-# Free tier limits
-FREE_REQUESTS_LIMIT = 20
-TRIAL_DAYS = 7
+# Freemium Model Configuration
+STARTUP_FEE = 15.00  # One-time startup fee
+MONTHLY_PLAN_FEE = 5.00  # Monthly subscription
+ANNUAL_PLAN_FEE = 24.00  # Annual subscription (equivalent to $2/month)
+TRIAL_DAYS = 30  # 30-day free trial
+GRACE_PERIOD_DAYS = 3  # Grace period for failed payments
+
+# Subscription packages - prevent frontend price manipulation
+SUBSCRIPTION_PACKAGES = {
+    "monthly_plan": {
+        "name": "RequestWave Audience Access - Monthly",
+        "startup_fee": STARTUP_FEE,
+        "subscription_fee": MONTHLY_PLAN_FEE,
+        "billing_period": "monthly",
+        "trial_days": TRIAL_DAYS
+    },
+    "annual_plan": {
+        "name": "RequestWave Audience Access - Annual",
+        "startup_fee": STARTUP_FEE,
+        "subscription_fee": ANNUAL_PLAN_FEE,
+        "billing_period": "annual",
+        "trial_days": TRIAL_DAYS
+    }
+}
+
+# Backward compatibility - TODO: Remove these after refactoring dependent code
+FREE_REQUESTS_LIMIT = 20  # Legacy - will be removed in freemium model
+MONTHLY_SUBSCRIPTION_PRICE = MONTHLY_PLAN_FEE  # Legacy compatibility
+ANNUAL_SUBSCRIPTION_PRICE = ANNUAL_PLAN_FEE  # Legacy compatibility
 
 # Create the main app
 app = FastAPI(title="RequestWave API", description="Live music request platform")
