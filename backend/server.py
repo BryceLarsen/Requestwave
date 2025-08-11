@@ -52,6 +52,12 @@ ANNUAL_PLAN_FEE = 24.00  # Annual subscription (equivalent to $2/month)
 TRIAL_DAYS = 30  # 30-day free trial
 GRACE_PERIOD_DAYS = 3  # Grace period for failed payments
 
+# Stripe Price IDs from environment
+PRICE_STARTUP_15 = os.environ.get('PRICE_STARTUP_15')
+PRICE_MONTHLY_5 = os.environ.get('PRICE_MONTHLY_5')
+PRICE_ANNUAL_24 = os.environ.get('PRICE_ANNUAL_24')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
+
 # Subscription packages - prevent frontend price manipulation
 SUBSCRIPTION_PACKAGES = {
     "monthly_plan": {
