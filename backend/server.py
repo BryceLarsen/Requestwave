@@ -4329,6 +4329,282 @@ async def activate_playlist(
         logger.error(f"Error activating playlist: {str(e)}")
         raise HTTPException(status_code=500, detail="Error activating playlist")
 
+# NEW: Freemium model endpoints
+
+@api_router.get("/subscription/status")
+async def get_subscription_status_endpoint(musician_id: str = Depends(get_current_musician)):
+    """Get current subscription status for authenticated musician"""
+    try:
+        status = await get_freemium_subscription_status(musician_id)
+        return status
+    except Exception as e:
+        logger.error(f"Error getting subscription status: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error getting subscription status")
+
+@api_router.post("/subscription/checkout")
+async def create_checkout_session(
+    request: Request,
+    checkout_request: CheckoutRequest,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Create Stripe checkout session for subscription with startup fee"""
+    try:
+        # Validate package
+        if checkout_request.package_id not in SUBSCRIPTION_PACKAGES:
+            raise HTTPException(status_code=400, detail="Invalid subscription package")
+        
+        package = SUBSCRIPTION_PACKAGES[checkout_request.package_id]
+        stripe_checkout = init_stripe_checkout(request)
+        
+        # Get musician info
+        musician = await db.musicians.find_one({"id": musician_id})
+        if not musician:
+            raise HTTPException(status_code=404, detail="Musician not found")
+        
+        # Determine if this is a new subscription or reactivation
+        has_had_trial = musician.get("has_had_trial", False)
+        is_reactivation = has_had_trial and not musician.get("audience_link_active", False)
+        
+        # Build URLs from frontend origin
+        success_url = f"{checkout_request.origin_url}/dashboard?tab=subscription&session_id={{CHECKOUT_SESSION_ID}}"
+        cancel_url = f"{checkout_request.origin_url}/dashboard?tab=subscription"
+        
+        # Create metadata
+        metadata = {
+            "musician_id": musician_id,
+            "package_id": checkout_request.package_id,
+            "transaction_type": "reactivation" if is_reactivation else "new_subscription",
+            "startup_fee": str(package["startup_fee"]),
+            "subscription_fee": str(package["subscription_fee"]),
+            "billing_period": package["billing_period"]
+        }
+        
+        # For now, create a simple checkout with startup fee only
+        # In production, you would create a more complex checkout with subscription
+        checkout_request_data = CheckoutSessionRequest(
+            amount=package["startup_fee"],
+            currency="usd",
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata=metadata
+        )
+        
+        session = await stripe_checkout.create_checkout_session(checkout_request_data)
+        
+        # Store payment transaction
+        transaction = PaymentTransaction(
+            musician_id=musician_id,
+            session_id=session.session_id,
+            amount=package["startup_fee"],
+            currency="usd",
+            payment_status="pending",
+            transaction_type="reactivation" if is_reactivation else "new_subscription",
+            subscription_plan=checkout_request.package_id,
+            metadata=metadata
+        )
+        
+        await db.payment_transactions.insert_one(transaction.dict())
+        
+        return {"checkout_url": session.url, "session_id": session.session_id}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating checkout session: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error creating checkout session")
+
+@api_router.get("/subscription/checkout/status/{session_id}")
+async def get_checkout_status(
+    session_id: str,
+    request: Request,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Get checkout session status and update musician's subscription if paid"""
+    try:
+        stripe_checkout = init_stripe_checkout(request)
+        status = await stripe_checkout.get_checkout_status(session_id)
+        
+        # Update payment transaction
+        await db.payment_transactions.update_one(
+            {"session_id": session_id, "musician_id": musician_id},
+            {
+                "$set": {
+                    "payment_status": status.payment_status,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        # If payment successful, activate audience link
+        if status.payment_status == "paid":
+            transaction = await db.payment_transactions.find_one({"session_id": session_id})
+            if transaction and transaction.get("payment_status") != "paid":  # Avoid duplicate processing
+                
+                # Start trial for new users, immediate activation for reactivation
+                if transaction.get("transaction_type") == "new_subscription":
+                    await start_trial_for_musician(musician_id)
+                else:
+                    await activate_audience_link(musician_id, "reactivation_payment")
+                
+                logger.info(f"Activated audience link for musician {musician_id} after payment")
+        
+        return {
+            "status": status.status,
+            "payment_status": status.payment_status,
+            "amount_total": status.amount_total,
+            "currency": status.currency
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting checkout status: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error getting checkout status")
+
+@api_router.post("/subscription/cancel")
+async def cancel_subscription(musician_id: str = Depends(get_current_musician)):
+    """Cancel current subscription (deactivate audience link at period end)"""
+    try:
+        musician = await db.musicians.find_one({"id": musician_id})
+        if not musician:
+            raise HTTPException(status_code=404, detail="Musician not found")
+        
+        # For now, immediately deactivate (in production would be at period end)
+        await deactivate_audience_link(musician_id, "user_cancellation")
+        
+        # Update subscription status
+        await db.musicians.update_one(
+            {"id": musician_id},
+            {
+                "$set": {
+                    "subscription_status": "canceled",
+                    "audience_link_active": False
+                }
+            }
+        )
+        
+        return {"success": True, "message": "Subscription canceled. Audience link deactivated."}
+        
+    except Exception as e:
+        logger.error(f"Error canceling subscription: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error canceling subscription")
+
+@api_router.delete("/account/delete")
+async def delete_account(
+    deletion_request: AccountDeletionRequest,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Delete musician account and all associated data"""
+    try:
+        # Verify confirmation text
+        if deletion_request.confirmation_text != "DELETE":
+            raise HTTPException(status_code=400, detail="Invalid confirmation text. Must type 'DELETE'")
+        
+        # Delete all musician data
+        await db.musicians.delete_one({"id": musician_id})
+        await db.songs.delete_many({"musician_id": musician_id})
+        await db.requests.delete_many({"musician_id": musician_id})
+        await db.playlists.delete_many({"musician_id": musician_id})
+        await db.shows.delete_many({"musician_id": musician_id})
+        await db.payment_transactions.delete_many({"musician_id": musician_id})
+        await db.subscription_events.delete_many({"musician_id": musician_id})
+        await db.design_settings.delete_many({"musician_id": musician_id})
+        await db.song_suggestions.delete_many({"musician_id": musician_id})
+        
+        logger.info(f"Deleted account and all data for musician {musician_id}")
+        
+        return {"success": True, "message": "Account and all data permanently deleted"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting account: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error deleting account")
+
+@api_router.post("/webhook/stripe")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhooks for subscription lifecycle events"""
+    try:
+        # Get the raw body and signature
+        body = await request.body()
+        signature = request.headers.get("Stripe-Signature")
+        
+        if not signature:
+            raise HTTPException(status_code=400, detail="Missing Stripe signature")
+        
+        stripe_checkout = init_stripe_checkout(request)
+        webhook_response = await stripe_checkout.handle_webhook(body, signature)
+        
+        # Process webhook event
+        event_type = webhook_response.event_type
+        session_id = webhook_response.session_id
+        payment_status = webhook_response.payment_status
+        metadata = webhook_response.metadata or {}
+        
+        logger.info(f"Received Stripe webhook: {event_type} for session {session_id}")
+        
+        # Find associated transaction and musician
+        if session_id and metadata.get("musician_id"):
+            musician_id = metadata["musician_id"]
+            
+            # Update transaction status
+            await db.payment_transactions.update_one(
+                {"session_id": session_id, "musician_id": musician_id},
+                {
+                    "$set": {
+                        "payment_status": payment_status,
+                        "updated_at": datetime.utcnow()
+                    }
+                }
+            )
+            
+            # Handle specific webhook events
+            if event_type == "checkout.session.completed" and payment_status == "paid":
+                transaction = await db.payment_transactions.find_one({"session_id": session_id})
+                if transaction:
+                    if transaction.get("transaction_type") == "new_subscription":
+                        await start_trial_for_musician(musician_id)
+                    else:
+                        await activate_audience_link(musician_id, "webhook_activation")
+            
+            elif event_type in ["invoice.payment_failed", "charge.failed"]:
+                # Start grace period
+                grace_end = datetime.utcnow() + timedelta(days=GRACE_PERIOD_DAYS)
+                await db.musicians.update_one(
+                    {"id": musician_id},
+                    {"$set": {"payment_grace_period_end": grace_end}}
+                )
+        
+        return {"received": True}
+        
+    except Exception as e:
+        logger.error(f"Error processing Stripe webhook: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error processing webhook")
+
+# Check audience link access middleware endpoint
+@api_router.get("/musicians/{musician_slug}/access-check")
+async def check_musician_audience_access(musician_slug: str):
+    """Check if musician's audience link is active"""
+    try:
+        musician = await db.musicians.find_one({"slug": musician_slug})
+        if not musician:
+            raise HTTPException(status_code=404, detail="Musician not found")
+        
+        audience_link_active = await check_audience_link_access(musician["id"])
+        
+        if not audience_link_active:
+            return {
+                "access_granted": False,
+                "message": "This artist's request page is paused",
+                "musician_name": musician["name"]
+            }
+        
+        return {"access_granted": True}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error checking audience access: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error checking access")
+
 # Health check
 @api_router.get("/health")
 async def health_check():
