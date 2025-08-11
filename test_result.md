@@ -487,15 +487,18 @@ backend:
 
   - task: "Freemium Model - Audience Link Access Control"
     implemented: true
-    working: false
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "critical"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Added access control to audience-facing endpoints (GET /musicians/{slug}/songs and POST /musicians/{musician_slug}/requests) - returns 402 error with user-friendly message when audience_link_active=false, separate access check endpoint GET /musicians/{slug}/access-check for frontend validation"
+      - working: true
+        agent: "testing"
+        comment: "AUDIENCE ACCESS CONTROL FULLY WORKING: Comprehensive testing confirms access control system is correctly implemented and enforcing freemium restrictions. ✅ ACCESS CHECK ENDPOINT: GET /musicians/{slug}/access-check returns proper JSON response with access_granted=false and user-friendly message 'This artist's request page is paused' when audience_link_active=false. ✅ SONGS ACCESS CONTROL: GET /musicians/{slug}/songs correctly returns 402 Payment Required when access is denied, preventing unauthorized song browsing. ✅ REQUEST ACCESS CONTROL: POST /musicians/{slug}/requests correctly returns 402 Payment Required when access is denied, preventing unauthorized request submissions. ✅ PROPER HTTP STATUS CODES: Uses 402 Payment Required (not 403 Forbidden) to indicate subscription-related access restrictions, following freemium model conventions. ✅ USER-FRIENDLY MESSAGING: Access denied responses include helpful messages explaining the restriction and how to reactivate. ✅ SECURITY: Access control properly enforced at API level, preventing bypass attempts. The audience link access control is production-ready and correctly implements freemium model restrictions."
 
   - task: "Freemium Model - Webhook Integration"
     implemented: true
