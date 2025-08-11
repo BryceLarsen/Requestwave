@@ -4541,6 +4541,12 @@ async def check_musician_audience_access(musician_slug: str):
         logger.error(f"Error checking audience access: {str(e)}")
         raise HTTPException(status_code=500, detail="Error checking access")
 
+# Simple test endpoint to verify v2 routing
+@api_router.get("/v2/test")
+async def test_v2_routing():
+    """Simple test endpoint to verify v2 routing works"""
+    return {"message": "v2 routing is working", "timestamp": datetime.utcnow().isoformat()}
+
 # Health check
 @api_router.get("/health")
 async def health_check():
