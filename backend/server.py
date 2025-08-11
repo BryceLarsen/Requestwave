@@ -4609,57 +4609,6 @@ async def test_upgrade_endpoint(request: Request, musician_id: str = Depends(get
 
 # NEW: Freemium model endpoints (v2 to avoid conflicts) - MOVED BEFORE ROUTER INCLUSION
 
-@api_router.get("/v2/subscription/checkout/status/{session_id}")
-async def get_freemium_checkout_status(
-    session_id: str,
-    request: Request,
-    musician_id: str = Depends(get_current_musician)
-):
-    """Get checkout session status and update musician's subscription if paid"""
-    try:
-        print(f"🎯 DEBUG: get_freemium_checkout_status called for session: {session_id}")
-        
-        stripe_checkout = init_stripe_checkout(request)
-        status = await stripe_checkout.get_checkout_status(session_id)
-        print(f"🎯 DEBUG: Stripe status: {status.payment_status}")
-        
-        # Update payment transaction
-        await db.payment_transactions.update_one(
-            {"session_id": session_id, "musician_id": musician_id},
-            {
-                "$set": {
-                    "payment_status": status.payment_status,
-                    "updated_at": datetime.utcnow()
-                }
-            }
-        )
-        
-        # If payment successful, activate audience link
-        if status.payment_status == "paid":
-            transaction = await db.payment_transactions.find_one({"session_id": session_id})
-            if transaction and transaction.get("payment_status") != "paid":  # Avoid duplicate processing
-                
-                if transaction.get("transaction_type") == "new_subscription_with_trial":
-                    # Start 30-day trial
-                    await start_trial_for_musician(musician_id)
-                    print(f"🎯 DEBUG: Started trial for musician {musician_id}")
-                else:
-                    # Immediate activation for reactivation
-                    await activate_audience_link(musician_id, "reactivation_payment")
-                    print(f"🎯 DEBUG: Reactivated audience link for musician {musician_id}")
-        
-        return {
-            "status": status.status,
-            "payment_status": status.payment_status,
-            "amount_total": status.amount_total,
-            "currency": status.currency
-        }
-        
-    except Exception as e:
-        print(f"🎯 DEBUG: Exception in get_freemium_checkout_status: {str(e)}")
-        logger.error(f"Error getting checkout status: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error getting checkout status")
-
 @api_router.post("/v2/subscription/cancel")
 async def cancel_freemium_subscription(musician_id: str = Depends(get_current_musician)):
     """Cancel current subscription (deactivate audience link)"""
