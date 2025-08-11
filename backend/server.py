@@ -75,8 +75,30 @@ FREE_REQUESTS_LIMIT = 20  # Legacy - will be removed in freemium model
 MONTHLY_SUBSCRIPTION_PRICE = MONTHLY_PLAN_FEE  # Legacy compatibility
 ANNUAL_SUBSCRIPTION_PRICE = ANNUAL_PLAN_FEE  # Legacy compatibility
 
-# Create the main app
+# Initialize app
 app = FastAPI(title="RequestWave API", description="Live music request platform")
+freemium_router = APIRouter(prefix="/api")
+
+# Custom route class for tracing handler execution
+class CustomAPIRoute(APIRoute):
+    def get_route_handler(self) -> Callable:
+        original_route_handler = super().get_route_handler()
+        
+        async def custom_route_handler(request: Request) -> Response:
+            # Log which handler is being called
+            endpoint_name = self.endpoint.__name__ if self.endpoint else "unknown"
+            print(f"🚀 HANDLER_CALLED path={request.url.path} endpoint={endpoint_name}")
+            
+            # Call original handler
+            response = await original_route_handler(request)
+            
+            # Add header to identify which handler ran
+            if hasattr(response, 'headers'):
+                response.headers["X-Handler"] = endpoint_name
+            
+            return response
+        
+        return custom_route_handler
 api_router = APIRouter(prefix="/api")
 
 # Security
