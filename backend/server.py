@@ -88,6 +88,15 @@ class Musician(BaseModel):
     current_show_name: Optional[str] = None
     # NEW: Active playlist for Pro feature (None = All Songs)
     active_playlist_id: Optional[str] = None
+    # NEW: Freemium model fields
+    audience_link_active: bool = False
+    has_had_trial: bool = False
+    trial_end: Optional[datetime] = None
+    stripe_customer_id: Optional[str] = None
+    stripe_subscription_id: Optional[str] = None
+    subscription_status: Optional[str] = None  # active, canceled, incomplete_expired, etc.
+    subscription_current_period_end: Optional[datetime] = None
+    payment_grace_period_end: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Song(BaseModel):
