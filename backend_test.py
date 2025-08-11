@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 """
-CRITICAL DEBUGGING: On Stage Functionality Issues
-Focus: Debug the specific issues identified in the review request:
-1. Authentication Issue: PUT /api/requests/{request_id}/status returns 403 "Not authenticated" despite valid JWT token
-2. Response Format Mismatch: Polling endpoint returns "timestamp" instead of expected "total_requests" and "last_updated"
-3. Environment Variables: FRONTEND_URL still using old preview URLs
+PRIORITY TESTING: NEW v2 Freemium Subscription Endpoints
+Focus: Test the NEW v2 freemium subscription endpoints to verify they work correctly:
 
-PRIORITY 1: Debug Authentication Issue for Status Updates
-PRIORITY 2: Debug Response Format Mismatch
-PRIORITY 3: Test Basic Request Flow
+PRIORITY 1 - Test v2 Endpoints:
+- GET /api/v2/subscription/status - Should return freemium model with audience_link_active, trial_active, etc.
+- POST /api/v2/subscription/checkout - Test with JSON body for plan selection
+- GET /api/v2/subscription/checkout/status/{session_id} - Test payment status checking
+- POST /api/v2/subscription/cancel - Test subscription cancellation
+
+Test with existing credentials: brycelarsenmusic@gmail.com / RequestWave2024!
+
+Expected Results:
+- No more routing conflicts (v2 endpoints should be isolated from legacy ones)
+- No more 422 errors on checkout
+- Freemium subscription status format returned
+- Debug logs should show "🎯 DEBUG:" messages proving the right endpoints are being called
 """
 
 import requests
