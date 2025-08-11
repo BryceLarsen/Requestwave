@@ -459,7 +459,7 @@ backend:
     implemented: true
     working: false
     file: "server.py"
-    stuck_count: 1
+    stuck_count: 2
     priority: "critical"
     needs_retesting: false
     status_history:
@@ -469,6 +469,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "STRIPE INTEGRATION BLOCKED BY ROUTING ISSUES: Testing reveals Stripe integration is implemented but inaccessible due to endpoint conflicts. ❌ CHECKOUT ENDPOINT BROKEN: POST /subscription/checkout returns 422 validation errors expecting both 'request' and 'checkout_request' in body due to incorrect FastAPI parameter injection (endpoint signature has both Request object and CheckoutRequest model). ✅ OLD UPGRADE ENDPOINT WORKING: POST /subscription/upgrade works correctly and creates valid Stripe checkout sessions with proper URLs (https://checkout.stripe.com/c/pay/cs_*), proving Stripe integration itself is functional. ✅ PAYMENT TRANSACTION MODEL: PaymentTransaction model correctly implemented with all required fields (musician_id, session_id, amount, payment_status, transaction_type, subscription_plan, metadata). ✅ SUBSCRIPTION PACKAGES: SUBSCRIPTION_PACKAGES configuration correctly defines monthly_plan ($5 + $15 startup) and annual_plan ($24 + $15 startup) with proper validation. The Stripe integration logic is sound but the new checkout endpoint needs parameter injection fix to be accessible."
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL V2 ROUTING CONFLICTS CONFIRMED: Comprehensive testing of v2 endpoints reveals major routing issues preventing freemium subscription functionality. ❌ POST /api/v2/subscription/checkout: Returns 422 validation errors expecting 'checkout_data' and 'request' fields in body - FastAPI parameter injection issue with both dict and Request parameters. ❌ GET /api/v2/subscription/checkout/status/{session_id}: Returns 422 validation errors expecting 'body' field - routing conflict detected. ✅ POST /api/v2/subscription/cancel: Working correctly, returns proper success response. ❌ DUPLICATE ENDPOINT DEFINITIONS: Found duplicate v2 endpoint definitions at lines 4254 and 4623 causing routing conflicts. ❌ PARAMETER INJECTION ISSUE: Endpoints use 'checkout_data: dict' + 'request: Request' parameters causing FastAPI to expect both in request body instead of proper model injection. The v2 endpoints need proper Pydantic model definitions and removal of duplicate endpoints to resolve routing conflicts."
 
   - task: "Freemium Model - Trial Management"
     implemented: true
