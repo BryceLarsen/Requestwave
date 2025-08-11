@@ -5497,6 +5497,16 @@ const AudienceInterface = () => {
 
   const fetchSongs = async () => {
     try {
+      // First check if access is granted
+      const accessResponse = await axios.get(`${API}/musicians/${slug}/access-check`);
+      
+      if (!accessResponse.data.access_granted) {
+        setAccessDenied(true);
+        setAccessMessage(accessResponse.data.message || 'This artist\'s request page is paused');
+        setLoading(false);
+        return;
+      }
+
       // Build query parameters for API call
       const params = new URLSearchParams();
       
