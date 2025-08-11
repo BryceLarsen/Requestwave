@@ -3945,6 +3945,266 @@ const MusicianDashboard = () => {
           </div>
         )}
 
+        {/* Subscription Tab - NEW: Freemium Model */}
+        {activeTab === 'subscription' && (
+          <div className="space-y-6">
+            {/* Subscription Status Card */}
+            <div className="bg-gray-800 rounded-xl p-6">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-xl font-bold">Subscription & Billing</h2>
+                  <p className="text-gray-300 text-sm">Manage your RequestWave subscription</p>
+                </div>
+              </div>
+
+              {subscriptionStatus && (
+                <div className="space-y-6">
+                  {/* Current Status */}
+                  <div className={`p-4 rounded-lg border ${
+                    subscriptionStatus.audience_link_active 
+                      ? 'bg-green-900/20 border-green-500/30' 
+                      : 'bg-red-900/20 border-red-500/30'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className={`font-bold ${
+                          subscriptionStatus.audience_link_active ? 'text-green-300' : 'text-red-300'
+                        }`}>
+                          {subscriptionStatus.plan === 'trial' && 'Free Trial Active'}
+                          {subscriptionStatus.plan === 'active' && 'Subscription Active'}
+                          {subscriptionStatus.plan === 'canceled' && 'Subscription Canceled'}
+                          {subscriptionStatus.plan === 'free' && 'Free Plan'}
+                        </h3>
+                        <p className="text-gray-300 text-sm">
+                          {subscriptionStatus.audience_link_active 
+                            ? 'Your audience link is active and receiving requests'
+                            : 'Your audience link is paused - upgrade to reactivate'
+                          }
+                        </p>
+                      </div>
+                      <div className={`w-4 h-4 rounded-full ${
+                        subscriptionStatus.audience_link_active ? 'bg-green-500' : 'bg-red-500'
+                      }`} />
+                    </div>
+
+                    {/* Trial Information */}
+                    {subscriptionStatus.trial_active && (
+                      <div className="mt-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded">
+                        <p className="text-blue-300 font-medium">
+                          🎉 Your 30-day free trial is live!
+                        </p>
+                        <p className="text-gray-300 text-sm mt-1">
+                          Trial ends on {subscriptionStatus.trial_ends_at ? 
+                            new Date(subscriptionStatus.trial_ends_at).toLocaleDateString() : 
+                            'Unknown'}
+                          {subscriptionStatus.days_remaining && ` (${subscriptionStatus.days_remaining} days remaining)`}
+                        </p>
+                        <p className="text-gray-300 text-sm">
+                          Your audience link is active. You won't be charged until your trial ends.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Grace Period Warning */}
+                    {subscriptionStatus.grace_period_active && (
+                      <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-500/30 rounded">
+                        <p className="text-yellow-300 font-medium">
+                          ⚠️ Payment Issue - Grace Period Active
+                        </p>
+                        <p className="text-gray-300 text-sm mt-1">
+                          Your payment failed, but your audience link is still active until{' '}
+                          {subscriptionStatus.grace_period_ends_at ? 
+                            new Date(subscriptionStatus.grace_period_ends_at).toLocaleDateString() : 
+                            'soon'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Upgrade/Reactivate Section */}
+                  {(!subscriptionStatus.audience_link_active || subscriptionStatus.plan === 'free') && (
+                    <div className="bg-gradient-to-r from-purple-900/50 to-green-900/50 rounded-lg p-6">
+                      <h3 className="text-xl font-bold text-white mb-4">
+                        {subscriptionStatus.can_reactivate ? 'Reactivate Your Audience Link' : 'Activate Your Audience Link'}
+                      </h3>
+                      <p className="text-gray-300 mb-6">
+                        {subscriptionStatus.can_reactivate 
+                          ? 'Welcome back! Reactivate your audience link to start receiving requests again.'
+                          : 'Get unlimited song requests with a low monthly fee and 30-day free trial.'
+                        }
+                      </p>
+
+                      {/* Plan Selection */}
+                      <div className="grid md:grid-cols-2 gap-4 mb-6">
+                        <div 
+                          className={`p-4 rounded-lg border cursor-pointer transition ${
+                            selectedPlan === 'annual' 
+                              ? 'border-green-500 bg-green-900/20' 
+                              : 'border-gray-600 bg-gray-700/50'
+                          }`}
+                          onClick={() => setSelectedPlan('annual')}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-bold text-green-300">Annual Plan</h4>
+                            <span className="bg-green-600 text-white px-2 py-1 rounded text-xs font-bold">
+                              BEST VALUE
+                            </span>
+                          </div>
+                          <p className="text-2xl font-bold text-white">
+                            $24<span className="text-sm text-gray-400">/year</span>
+                          </p>
+                          <p className="text-gray-300 text-sm">Equivalent to $2/month</p>
+                          <p className="text-gray-400 text-sm mt-2">
+                            + $15 one-time startup fee
+                          </p>
+                        </div>
+
+                        <div 
+                          className={`p-4 rounded-lg border cursor-pointer transition ${
+                            selectedPlan === 'monthly' 
+                              ? 'border-purple-500 bg-purple-900/20' 
+                              : 'border-gray-600 bg-gray-700/50'
+                          }`}
+                          onClick={() => setSelectedPlan('monthly')}
+                        >
+                          <h4 className="font-bold text-purple-300">Monthly Plan</h4>
+                          <p className="text-2xl font-bold text-white">
+                            $5<span className="text-sm text-gray-400">/month</span>
+                          </p>
+                          <p className="text-gray-300 text-sm">Billed monthly</p>
+                          <p className="text-gray-400 text-sm mt-2">
+                            + $15 one-time startup fee
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="text-center">
+                        <button
+                          onClick={handleUpgrade}
+                          disabled={upgrading}
+                          className="bg-gradient-to-r from-purple-600 to-green-600 hover:from-purple-700 hover:to-green-700 px-8 py-3 rounded-lg font-bold text-white transition duration-300 disabled:opacity-50"
+                        >
+                          {upgrading ? 'Processing...' : 
+                            `${subscriptionStatus.can_reactivate ? 'Reactivate' : 'Start'} - ${
+                              selectedPlan === 'monthly' ? '$20 today' : '$39 today'
+                            }`
+                          }
+                        </button>
+                        <p className="text-gray-400 text-sm mt-2">
+                          {subscriptionStatus.can_reactivate 
+                            ? 'Immediate activation after payment'
+                            : '30-day free trial, then subscription begins'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Active Subscription Management */}
+                  {subscriptionStatus.audience_link_active && subscriptionStatus.plan === 'active' && (
+                    <div className="bg-gray-700/50 rounded-lg p-6">
+                      <h3 className="text-lg font-bold text-white mb-4">Manage Subscription</h3>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-gray-300">
+                            Next billing: {subscriptionStatus.subscription_ends_at ? 
+                              new Date(subscriptionStatus.subscription_ends_at).toLocaleDateString() : 
+                              'Unknown'}
+                          </p>
+                          <p className="text-gray-400 text-sm">
+                            You can cancel anytime. Your data will remain saved.
+                          </p>
+                        </div>
+                        <button
+                          onClick={handleCancelSubscription}
+                          className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-medium text-white transition duration-300"
+                        >
+                          Cancel Subscription
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Plan Benefits */}
+                  <div className="bg-gray-700/50 rounded-lg p-6">
+                    <h3 className="text-lg font-bold text-white mb-4">What's Included</h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="font-medium text-green-300 mb-2">✅ Always Free</h4>
+                        <ul className="text-gray-300 text-sm space-y-1">
+                          <li>• Full musician dashboard</li>
+                          <li>• Song management</li>
+                          <li>• Request history</li>
+                          <li>• Analytics & insights</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-purple-300 mb-2">🎵 Paid Subscription</h4>
+                        <ul className="text-gray-300 text-sm space-y-1">
+                          <li>• Active audience link</li>
+                          <li>• QR code access</li>
+                          <li>• Unlimited song requests</li>
+                          <li>• Real-time request notifications</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Account Deletion Section */}
+            <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-6">
+              <h3 className="text-lg font-bold text-red-300 mb-4">⚠️ Danger Zone</h3>
+              <p className="text-gray-300 text-sm mb-4">
+                Permanently delete your account and all associated data. This action cannot be undone.
+              </p>
+              
+              {!showDeleteConfirmation ? (
+                <button
+                  onClick={() => setShowDeleteConfirmation(true)}
+                  className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-medium text-white transition duration-300"
+                >
+                  Delete Account
+                </button>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-gray-300 text-sm font-bold mb-2">
+                      Type "DELETE" to confirm account deletion:
+                    </label>
+                    <input
+                      type="text"
+                      value={deleteConfirmationText}
+                      onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                      className="w-full max-w-xs bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                      placeholder="DELETE"
+                    />
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={handleDeleteAccount}
+                      disabled={deletingAccount || deleteConfirmationText !== 'DELETE'}
+                      className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-medium text-white transition duration-300 disabled:opacity-50"
+                    >
+                      {deletingAccount ? 'Deleting...' : 'Permanently Delete Account'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowDeleteConfirmation(false);
+                        setDeleteConfirmationText('');
+                      }}
+                      className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg font-medium text-white transition duration-300"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* NEW: Phase 3 - Analytics Tab */}
         {activeTab === 'analytics' && (
           <div className="space-y-6">
