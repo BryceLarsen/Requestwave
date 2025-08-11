@@ -4235,64 +4235,78 @@ async def activate_playlist(
         logger.error(f"Error activating playlist: {str(e)}")
         raise HTTPException(status_code=500, detail="Error activating playlist")
 
-# NEW: Freemium model endpoints
+# NEW: Freemium model endpoints (temporary v2 path to avoid conflicts)
 
-@api_router.get("/subscription/status")
-async def get_subscription_status_endpoint(musician_id: str = Depends(get_current_musician)):
+@api_router.get("/v2/subscription/status")
+async def get_freemium_subscription_status_endpoint(musician_id: str = Depends(get_current_musician)):
     """Get current subscription status for authenticated musician"""
     try:
-        print(f"DEBUG: get_subscription_status_endpoint called with musician_id: {musician_id}")
+        print(f"🎯 DEBUG: get_freemium_subscription_status_endpoint called with musician_id: {musician_id}")
         status = await get_freemium_subscription_status(musician_id)
-        print(f"DEBUG: get_freemium_subscription_status returned: {status}")
-        print(f"DEBUG: status type: {type(status)}")
+        print(f"🎯 DEBUG: get_freemium_subscription_status returned: {status}")
+        print(f"🎯 DEBUG: status type: {type(status)}")
         return status
     except Exception as e:
-        print(f"DEBUG: Exception in get_subscription_status_endpoint: {str(e)}")
+        print(f"🎯 DEBUG: Exception in get_freemium_subscription_status_endpoint: {str(e)}")
         logger.error(f"Error getting subscription status: {str(e)}")
         raise HTTPException(status_code=500, detail="Error getting subscription status")
 
-@api_router.post("/subscription/checkout")
-async def create_checkout_session(
-    checkout_request: CheckoutRequest,
+@api_router.post("/v2/subscription/checkout")
+async def create_freemium_checkout_session(
+    checkout_data: dict,
     request: Request,
     musician_id: str = Depends(get_current_musician)
 ):
-    """Create Stripe checkout session for subscription with startup fee"""
+    """Create Stripe checkout session for freemium subscription with startup fee + trial"""
     try:
-        # Validate package
-        if checkout_request.package_id not in SUBSCRIPTION_PACKAGES:
-            raise HTTPException(status_code=400, detail="Invalid subscription package")
+        print(f"🎯 DEBUG: create_freemium_checkout_session called")
+        print(f"🎯 DEBUG: checkout_data: {checkout_data}")
+        print(f"🎯 DEBUG: musician_id: {musician_id}")
         
-        package = SUBSCRIPTION_PACKAGES[checkout_request.package_id]
-        stripe_checkout = init_stripe_checkout(request)
+        # Extract required fields
+        plan = checkout_data.get('plan')  # 'monthly' or 'annual'
+        success_url = checkout_data.get('success_url')
+        cancel_url = checkout_data.get('cancel_url')
         
+        if not plan or plan not in ['monthly', 'annual']:
+            raise HTTPException(status_code=400, detail="Invalid plan. Must be 'monthly' or 'annual'")
+        
+        if not success_url or not cancel_url:
+            raise HTTPException(status_code=400, detail="success_url and cancel_url are required")
+            
         # Get musician info
         musician = await db.musicians.find_one({"id": musician_id})
         if not musician:
             raise HTTPException(status_code=404, detail="Musician not found")
         
-        # Determine if this is a new subscription or reactivation
+        # Determine pricing and package
+        if plan == 'monthly':
+            package = SUBSCRIPTION_PACKAGES['monthly_plan']
+            total_amount = STARTUP_FEE  # Only charge startup fee initially
+        else:  # annual
+            package = SUBSCRIPTION_PACKAGES['annual_plan'] 
+            total_amount = STARTUP_FEE  # Only charge startup fee initially
+        
+        # Check if this is first-time subscription
         has_had_trial = musician.get("has_had_trial", False)
         is_reactivation = has_had_trial and not musician.get("audience_link_active", False)
         
-        # Build URLs from frontend origin
-        success_url = f"{checkout_request.origin_url}/dashboard?tab=subscription&session_id={{CHECKOUT_SESSION_ID}}"
-        cancel_url = f"{checkout_request.origin_url}/dashboard?tab=subscription"
+        stripe_checkout = init_stripe_checkout(request)
         
         # Create metadata
         metadata = {
             "musician_id": musician_id,
-            "package_id": checkout_request.package_id,
-            "transaction_type": "reactivation" if is_reactivation else "new_subscription",
-            "startup_fee": str(package["startup_fee"]),
+            "plan": plan,
+            "transaction_type": "reactivation" if is_reactivation else "new_subscription_with_trial",
+            "startup_fee": str(STARTUP_FEE),
             "subscription_fee": str(package["subscription_fee"]),
             "billing_period": package["billing_period"]
         }
         
-        # For now, create a simple checkout with startup fee only
-        # In production, you would create a more complex checkout with subscription
+        # For now, create simple checkout with startup fee only
+        # In production, this would be a more complex setup with subscription
         checkout_request_data = CheckoutSessionRequest(
-            amount=package["startup_fee"],
+            amount=total_amount,
             currency="usd",
             success_url=success_url,
             cancel_url=cancel_url,
@@ -4300,39 +4314,45 @@ async def create_checkout_session(
         )
         
         session = await stripe_checkout.create_checkout_session(checkout_request_data)
+        print(f"🎯 DEBUG: Stripe session created: {session.session_id}")
         
         # Store payment transaction
         transaction = PaymentTransaction(
             musician_id=musician_id,
             session_id=session.session_id,
-            amount=package["startup_fee"],
+            amount=total_amount,
             currency="usd",
             payment_status="pending",
-            transaction_type="reactivation" if is_reactivation else "new_subscription",
-            subscription_plan=checkout_request.package_id,
+            transaction_type="reactivation" if is_reactivation else "new_subscription_with_trial",
+            subscription_plan=plan,
             metadata=metadata
         )
         
         await db.payment_transactions.insert_one(transaction.dict())
+        print(f"🎯 DEBUG: Transaction stored: {transaction.session_id}")
         
         return {"checkout_url": session.url, "session_id": session.session_id}
         
     except HTTPException:
         raise
     except Exception as e:
+        print(f"🎯 DEBUG: Exception in create_freemium_checkout_session: {str(e)}")
         logger.error(f"Error creating checkout session: {str(e)}")
         raise HTTPException(status_code=500, detail="Error creating checkout session")
 
-@api_router.get("/subscription/checkout/status/{session_id}")
-async def get_checkout_status(
+@api_router.get("/v2/subscription/checkout/status/{session_id}")
+async def get_freemium_checkout_status(
     session_id: str,
     request: Request,
     musician_id: str = Depends(get_current_musician)
 ):
     """Get checkout session status and update musician's subscription if paid"""
     try:
+        print(f"🎯 DEBUG: get_freemium_checkout_status called for session: {session_id}")
+        
         stripe_checkout = init_stripe_checkout(request)
         status = await stripe_checkout.get_checkout_status(session_id)
+        print(f"🎯 DEBUG: Stripe status: {status.payment_status}")
         
         # Update payment transaction
         await db.payment_transactions.update_one(
@@ -4350,13 +4370,14 @@ async def get_checkout_status(
             transaction = await db.payment_transactions.find_one({"session_id": session_id})
             if transaction and transaction.get("payment_status") != "paid":  # Avoid duplicate processing
                 
-                # Start trial for new users, immediate activation for reactivation
-                if transaction.get("transaction_type") == "new_subscription":
+                if transaction.get("transaction_type") == "new_subscription_with_trial":
+                    # Start 30-day trial
                     await start_trial_for_musician(musician_id)
+                    print(f"🎯 DEBUG: Started trial for musician {musician_id}")
                 else:
+                    # Immediate activation for reactivation
                     await activate_audience_link(musician_id, "reactivation_payment")
-                
-                logger.info(f"Activated audience link for musician {musician_id} after payment")
+                    print(f"🎯 DEBUG: Reactivated audience link for musician {musician_id}")
         
         return {
             "status": status.status,
@@ -4366,18 +4387,21 @@ async def get_checkout_status(
         }
         
     except Exception as e:
+        print(f"🎯 DEBUG: Exception in get_freemium_checkout_status: {str(e)}")
         logger.error(f"Error getting checkout status: {str(e)}")
         raise HTTPException(status_code=500, detail="Error getting checkout status")
 
-@api_router.post("/subscription/cancel")
-async def cancel_subscription(musician_id: str = Depends(get_current_musician)):
-    """Cancel current subscription (deactivate audience link at period end)"""
+@api_router.post("/v2/subscription/cancel")
+async def cancel_freemium_subscription(musician_id: str = Depends(get_current_musician)):
+    """Cancel current subscription (deactivate audience link)"""
     try:
+        print(f"🎯 DEBUG: cancel_freemium_subscription called for musician: {musician_id}")
+        
         musician = await db.musicians.find_one({"id": musician_id})
         if not musician:
             raise HTTPException(status_code=404, detail="Musician not found")
         
-        # For now, immediately deactivate (in production would be at period end)
+        # Deactivate audience link
         await deactivate_audience_link(musician_id, "user_cancellation")
         
         # Update subscription status
@@ -4391,9 +4415,11 @@ async def cancel_subscription(musician_id: str = Depends(get_current_musician)):
             }
         )
         
+        print(f"🎯 DEBUG: Subscription canceled for musician {musician_id}")
         return {"success": True, "message": "Subscription canceled. Audience link deactivated."}
         
     except Exception as e:
+        print(f"🎯 DEBUG: Exception in cancel_freemium_subscription: {str(e)}")
         logger.error(f"Error canceling subscription: {str(e)}")
         raise HTTPException(status_code=500, detail="Error canceling subscription")
 
