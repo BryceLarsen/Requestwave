@@ -4576,6 +4576,27 @@ async def test_upgrade_endpoint(request: Request, musician_id: str = Depends(get
 # Include the router
 app.include_router(api_router)
 
+# Route logging startup hook
+@app.on_event("startup")
+async def log_routes():
+    """Log all registered routes to debug routing conflicts"""
+    print("\n" + "="*80)
+    print("🔍 REGISTERED ROUTES DEBUG:")
+    print("="*80)
+    for route in app.routes:
+        if hasattr(route, 'methods') and hasattr(route, 'path'):
+            methods = ', '.join(route.methods) if route.methods else 'N/A'
+            path = route.path
+            name = getattr(route, 'name', 'N/A')
+            endpoint = getattr(route, 'endpoint', None)
+            endpoint_name = endpoint.__name__ if endpoint and hasattr(endpoint, '__name__') else 'N/A'
+            print(f"  {methods:10} {path:40} -> {endpoint_name}")
+            
+            # Highlight subscription routes
+            if 'subscription' in path.lower():
+                print(f"    🎯 SUBSCRIPTION ROUTE: {methods} {path} -> {endpoint_name}")
+    print("="*80 + "\n")
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
