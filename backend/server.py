@@ -448,6 +448,129 @@ async def check_pro_access(musician_id: str) -> bool:
     except:
         return False
 
+# NEW: Freemium model helper functions
+async def check_audience_link_access(musician_id: str) -> bool:
+    """Check if musician's audience link should be active"""
+    musician = await db.musicians.find_one({"id": musician_id})
+    if not musician:
+        return False
+    
+    # Always return True for now during development - will be updated after implementing subscription logic
+    return musician.get("audience_link_active", False)
+
+async def get_freemium_subscription_status(musician_id: str) -> SubscriptionStatus:
+    """Get comprehensive subscription status for freemium model"""
+    musician = await db.musicians.find_one({"id": musician_id})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    now = datetime.utcnow()
+    
+    # Check if in trial period
+    trial_end = musician.get("trial_end")
+    trial_active = False
+    trial_ends_at = None
+    days_remaining = None
+    
+    if trial_end and now < trial_end and not musician.get("has_had_trial", False):
+        trial_active = True
+        trial_ends_at = trial_end
+        days_remaining = (trial_end - now).days
+    
+    # Check subscription status
+    subscription_status = musician.get("subscription_status")
+    subscription_ends_at = musician.get("subscription_current_period_end")
+    audience_link_active = musician.get("audience_link_active", False)
+    
+    # Check grace period
+    grace_period_end = musician.get("payment_grace_period_end")
+    grace_period_active = grace_period_end and now < grace_period_end
+    
+    # Determine plan status
+    if trial_active:
+        plan = "trial"
+    elif subscription_status == "active":
+        plan = "active"
+    elif subscription_status in ["canceled", "incomplete_expired"]:
+        plan = "canceled"
+    else:
+        plan = "free"
+    
+    # Can reactivate if not currently active and has had a subscription before
+    can_reactivate = (not audience_link_active and 
+                     (musician.get("has_had_trial", False) or 
+                      musician.get("stripe_customer_id") is not None))
+    
+    return SubscriptionStatus(
+        plan=plan,
+        audience_link_active=audience_link_active,
+        trial_active=trial_active,
+        trial_ends_at=trial_ends_at,
+        subscription_ends_at=subscription_ends_at,
+        days_remaining=days_remaining,
+        can_reactivate=can_reactivate,
+        grace_period_active=grace_period_active,
+        grace_period_ends_at=grace_period_end
+    )
+
+async def start_trial_for_musician(musician_id: str):
+    """Start 30-day trial for new musician"""
+    trial_end = datetime.utcnow() + timedelta(days=TRIAL_DAYS)
+    await db.musicians.update_one(
+        {"id": musician_id},
+        {
+            "$set": {
+                "audience_link_active": True,
+                "trial_end": trial_end,
+                "has_had_trial": True
+            }
+        }
+    )
+
+async def deactivate_audience_link(musician_id: str, reason: str = "subscription_ended"):
+    """Deactivate audience link but keep all data"""
+    await db.musicians.update_one(
+        {"id": musician_id},
+        {
+            "$set": {
+                "audience_link_active": False
+            }
+        }
+    )
+    
+    # Log the deactivation
+    await db.subscription_events.insert_one({
+        "musician_id": musician_id,
+        "event_type": "audience_link_deactivated",
+        "reason": reason,
+        "timestamp": datetime.utcnow()
+    })
+
+async def activate_audience_link(musician_id: str, reason: str = "subscription_activated"):
+    """Activate audience link"""
+    await db.musicians.update_one(
+        {"id": musician_id},
+        {
+            "$set": {
+                "audience_link_active": True
+            }
+        }
+    )
+    
+    # Log the activation
+    await db.subscription_events.insert_one({
+        "musician_id": musician_id,
+        "event_type": "audience_link_activated",
+        "reason": reason,
+        "timestamp": datetime.utcnow()
+    })
+
+def init_stripe_checkout(request: Request) -> StripeCheckout:
+    """Initialize Stripe checkout with webhook URL"""
+    host_url = str(request.base_url).rstrip('/')
+    webhook_url = f"{host_url}/api/webhook/stripe"
+    return StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+
 async def require_pro_access(musician_id: str):
     """Require Pro access for endpoint, raise exception if not Pro"""
     if not await check_pro_access(musician_id):
