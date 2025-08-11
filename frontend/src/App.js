@@ -5693,8 +5693,8 @@ const AudienceInterface = () => {
               )}
               
               {/* Social Media Links - Only show if they exist */}
-              {(musician?.instagram_username || musician?.facebook_username || musician?.tiktok_username || musician?.spotify_artist_url || musician?.apple_music_artist_url) && (
-                <div className="flex items-center space-x-2 mt-2 flex-wrap">
+              {musician && (musician?.instagram_username || musician?.facebook_username || musician?.tiktok_username || musician?.spotify_artist_url || musician?.apple_music_artist_url) && (
+                <div className="flex items-center space-x-1 mt-2 flex-wrap">
                   {musician?.instagram_username && (
                     <a
                       href={`https://instagram.com/${musician.instagram_username}`}
@@ -5703,7 +5703,7 @@ const AudienceInterface = () => {
                       className="bg-pink-600 hover:bg-pink-700 px-2 py-1 rounded text-xs font-medium transition duration-300 flex items-center space-x-1"
                     >
                       <span>📸</span>
-                      <span>IG</span>
+                      <span className="hidden sm:inline">IG</span>
                     </a>
                   )}
                   {musician?.facebook_username && (
@@ -5714,7 +5714,7 @@ const AudienceInterface = () => {
                       className="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-xs font-medium transition duration-300 flex items-center space-x-1"
                     >
                       <span>📘</span>
-                      <span>FB</span>
+                      <span className="hidden sm:inline">FB</span>
                     </a>
                   )}
                   {musician?.tiktok_username && (
@@ -5725,7 +5725,7 @@ const AudienceInterface = () => {
                       className="bg-black hover:bg-gray-800 px-2 py-1 rounded text-xs font-medium transition duration-300 flex items-center space-x-1"
                     >
                       <span>🎵</span>
-                      <span>TikTok</span>
+                      <span className="hidden sm:inline">TT</span>
                     </a>
                   )}
                   {musician?.spotify_artist_url && (
@@ -5736,7 +5736,7 @@ const AudienceInterface = () => {
                       className="bg-green-600 hover:bg-green-700 px-2 py-1 rounded text-xs font-medium transition duration-300 flex items-center space-x-1"
                     >
                       <span>🎶</span>
-                      <span>Spotify</span>
+                      <span className="hidden sm:inline">Spotify</span>
                     </a>
                   )}
                   {musician?.apple_music_artist_url && (
@@ -5747,7 +5747,7 @@ const AudienceInterface = () => {
                       className="bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-xs font-medium transition duration-300 flex items-center space-x-1"
                     >
                       <span>🍎</span>
-                      <span>Apple</span>
+                      <span className="hidden sm:inline">Apple</span>
                     </a>
                   )}
                 </div>
