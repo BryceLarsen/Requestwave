@@ -3437,7 +3437,7 @@ const MusicianDashboard = () => {
                         )}
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
-                        {new Date(suggestion.created_at).toLocaleDateString()} at {new Date(suggestion.created_at).toLocaleTimeString()}
+                        {formatTimestamp(suggestion.created_at)}
                       </p>
                     </div>
                     
