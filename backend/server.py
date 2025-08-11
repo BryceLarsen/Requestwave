@@ -4259,10 +4259,9 @@ async def activate_playlist(
         logger.error(f"Error activating playlist: {str(e)}")
         raise HTTPException(status_code=500, detail="Error activating playlist")
 
-# NEW: Freemium model endpoints (temporary v2 path to avoid conflicts)
+# NEW: Freemium model endpoints - moved to api_router for production paths
 
-# Define freemium subscription endpoints with custom route class for tracing
-@freemium_router.get("/subscription/status")
+@api_router.get("/subscription/status")
 async def freemium_subscription_status_endpoint(musician_id: str = Depends(get_current_musician)):
     """Get current subscription status for authenticated musician"""
     try:
@@ -4272,7 +4271,7 @@ async def freemium_subscription_status_endpoint(musician_id: str = Depends(get_c
         logger.error(f"Error getting subscription status: {str(e)}")
         raise HTTPException(status_code=500, detail="Error getting subscription status")
 
-@freemium_router.post("/subscription/checkout")
+@api_router.post("/subscription/checkout")
 async def create_freemium_checkout_session(
     checkout_request: V2CheckoutRequest,
     musician_id: str = Depends(get_current_musician)
@@ -4290,56 +4289,87 @@ async def create_freemium_checkout_session(
         if not musician:
             raise HTTPException(status_code=404, detail="Musician not found")
         
+        # Get subscription package details
         if plan == 'monthly':
             package = SUBSCRIPTION_PACKAGES['monthly_plan']
-            total_amount = STARTUP_FEE
-        else:
+            startup_fee = STARTUP_FEE
+            subscription_fee = MONTHLY_PLAN_FEE
+        else:  # annual
             package = SUBSCRIPTION_PACKAGES['annual_plan'] 
-            total_amount = STARTUP_FEE
+            startup_fee = STARTUP_FEE
+            subscription_fee = ANNUAL_PLAN_FEE
         
         has_had_trial = musician.get("has_had_trial", False)
-        is_reactivation = has_had_trial and not musician.get("audience_link_active", False)
         
+        # Single checkout session combining startup fee + subscription with 30-day trial
         base_url = os.environ.get('FRONTEND_URL', 'https://livewave-music.emergent.host')
         webhook_url = f"{base_url}/api/webhook/stripe"
         stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
         
+        # Create line items: startup fee + subscription (with trial if eligible)
+        line_items = [
+            {
+                "price_data": {
+                    "currency": "usd",
+                    "product_data": {"name": "RequestWave Startup Fee"},
+                    "unit_amount": int(startup_fee * 100),  # Convert to cents
+                },
+                "quantity": 1
+            },
+            {
+                "price_data": {
+                    "currency": "usd",
+                    "product_data": {"name": f"RequestWave Pro - {plan.title()}"},
+                    "unit_amount": int(subscription_fee * 100),  # Convert to cents
+                    "recurring": {
+                        "interval": "month" if plan == "monthly" else "year",
+                        "trial_period_days": 30 if not has_had_trial else 0
+                    }
+                },
+                "quantity": 1
+            }
+        ]
+        
         metadata = {
             "musician_id": musician_id,
             "plan": plan,
-            "transaction_type": "reactivation" if is_reactivation else "new_subscription_with_trial",
-            "startup_fee": str(STARTUP_FEE),
-            "subscription_fee": str(package["subscription_fee"]),
-            "billing_period": package["billing_period"]
+            "transaction_type": "freemium_subscription",
+            "startup_fee": str(startup_fee),
+            "subscription_fee": str(subscription_fee),
+            "billing_period": package["billing_period"],
+            "trial_eligible": str(not has_had_trial)
         }
         
-        checkout_request_data = CheckoutSessionRequest(
-            amount=total_amount,
-            currency="usd",
-            success_url=success_url,
-            cancel_url=cancel_url,
-            metadata=metadata
-        )
+        # Create checkout session with multiple line items
+        checkout_data = {
+            "payment_method_types": ["card"],
+            "line_items": line_items,
+            "mode": "subscription",
+            "success_url": success_url,
+            "cancel_url": cancel_url,
+            "metadata": metadata,
+            "automatic_tax": {"enabled": False},
+            "billing_address_collection": "auto"
+        }
         
-        session = await stripe_checkout.create_checkout_session(checkout_request_data)
+        session = await stripe_checkout.create_custom_checkout_session(checkout_data)
         
+        # Record transaction in database
         transaction = PaymentTransaction(
             musician_id=musician_id,
-            session_id=session.session_id,
-            amount=total_amount,
+            session_id=session.get("id", "unknown"),
+            amount=startup_fee + subscription_fee,  # Total expected amount
             currency="usd",
             payment_status="pending",
-            transaction_type="reactivation" if is_reactivation else "new_subscription_with_trial",
+            transaction_type="freemium_subscription",
             subscription_plan=plan,
             metadata=metadata
         )
         
         await db.payment_transactions.insert_one(transaction.dict())
         
-        return {"checkout_url": session.url, "session_id": session.session_id}
+        return {"checkout_url": session.get("url"), "session_id": session.get("id")}
         
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Error creating checkout session: {str(e)}")
         raise HTTPException(status_code=500, detail="Error creating checkout session")
