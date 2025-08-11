@@ -798,7 +798,7 @@ async def get_subscription_status(musician_id: str) -> SubscriptionStatus:
     
     can_make_request = requests_in_period < FREE_REQUESTS_LIMIT
     
-    return SubscriptionStatus(
+    return LegacySubscriptionStatus(
         plan="free",
         requests_used=requests_in_period,
         requests_limit=FREE_REQUESTS_LIMIT,
