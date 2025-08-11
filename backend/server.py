@@ -4659,6 +4659,12 @@ async def test_v2_routing():
     """Simple test endpoint to verify v2 routing works"""
     return {"message": "v2 routing is working", "timestamp": datetime.utcnow().isoformat()}
 
+# Simple test endpoint before router inclusion
+@api_router.get("/test-endpoint-before-inclusion")
+async def test_endpoint_before_inclusion():
+    """Simple test to verify endpoint registration works"""
+    return {"message": "test endpoint before inclusion works", "timestamp": datetime.utcnow().isoformat()}
+
 # Include the router
 app.include_router(api_router)
 
