@@ -4253,6 +4253,17 @@ async def freemium_subscription_status_endpoint_unique(musician_id: str = Depend
         logger.error(f"Error getting subscription status: {str(e)}")
         raise HTTPException(status_code=500, detail="Error getting subscription status")
 
+# Test endpoint to verify function is accessible
+@api_router.get("/subscription/freemium-status-test")
+async def test_freemium_status(musician_id: str = Depends(get_current_musician)):
+    """Test endpoint to verify freemium status function works"""
+    print(f"🔥🔥🔥 TEST ENDPOINT CALLED! musician_id: {musician_id}")
+    try:
+        status = await get_freemium_subscription_status(musician_id)
+        return {"test": "success", "freemium_status": status}
+    except Exception as e:
+        return {"test": "failed", "error": str(e)}
+
 @api_router.post("/subscription/checkout")
 async def create_freemium_checkout_session(
     checkout_request: V2CheckoutRequest,
