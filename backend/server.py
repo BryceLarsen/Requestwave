@@ -2871,6 +2871,18 @@ async def create_musician_request(
     
     musician_id = musician["id"]
     
+    # NEW: Check audience link access for freemium model
+    audience_link_active = await check_audience_link_access(musician_id)
+    if not audience_link_active:
+        raise HTTPException(
+            status_code=402, 
+            detail={
+                "error": "audience_link_paused",
+                "message": "This artist's request page is paused",
+                "musician_name": musician["name"]
+            }
+        )
+    
     # Get song details and verify it belongs to this musician
     song = await db.songs.find_one({"id": request_data.song_id, "musician_id": musician_id})
     if not song:
