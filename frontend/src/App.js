@@ -6638,7 +6638,7 @@ const OnStageInterface = () => {
                     {item.type === 'request' ? '🎵 REQUEST' : '💡 SUGGESTION'}
                   </span>
                   <span className="text-gray-400 text-sm">
-                    {item.time.toLocaleTimeString()}
+                    {formatTime(item.created_at)}
                   </span>
                 </div>
                 {index === 0 && (
