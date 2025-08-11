@@ -4374,6 +4374,34 @@ async def create_freemium_checkout_session(
         logger.error(f"Error creating checkout session: {str(e)}")
         raise HTTPException(status_code=500, detail="Error creating checkout session")
 
+@api_router.post("/subscription/cancel")
+async def cancel_freemium_subscription(musician_id: str = Depends(get_current_musician)):
+    """Cancel current subscription (deactivate audience link)"""
+    try:
+        musician = await db.musicians.find_one({"id": musician_id})
+        if not musician:
+            raise HTTPException(status_code=404, detail="Musician not found")
+        
+        # Deactivate audience link
+        await deactivate_audience_link(musician_id, "user_cancellation")
+        
+        # Update subscription status
+        await db.musicians.update_one(
+            {"id": musician_id},
+            {
+                "$set": {
+                    "subscription_status": "canceled",
+                    "audience_link_active": False
+                }
+            }
+        )
+        
+        return {"success": True, "message": "Subscription canceled. Audience link deactivated."}
+        
+    except Exception as e:
+        logger.error(f"Error canceling subscription: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error canceling subscription")
+
 @freemium_router.get("/subscription/checkout/status/{session_id}")
 async def get_freemium_checkout_status(
     session_id: str,
