@@ -3982,7 +3982,7 @@ const MusicianDashboard = () => {
                           </span>
                         </td>
                         <td className="py-2 text-gray-400 text-xs">
-                          {new Date(requester.latest_request).toLocaleDateString()}
+                          {formatTimestamp(requester.latest_request).split(' at ')[0]}
                         </td>
                       </tr>
                     ))}
