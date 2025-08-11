@@ -5349,6 +5349,10 @@ const AudienceInterface = () => {
 
   // NEW: Bio expansion state
   const [bioExpanded, setBioExpanded] = useState(false);
+  
+  // NEW: Access control state
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [accessMessage, setAccessMessage] = useState('');
 
   // Debug musician data
   useEffect(() => {
