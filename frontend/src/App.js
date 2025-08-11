@@ -1195,8 +1195,7 @@ const MusicianDashboard = () => {
 
   const fetchSubscriptionStatus = async () => {
     try {
-      // Use v2 endpoint temporarily to avoid routing conflicts
-      const response = await axios.get(`${API}/v2/subscription/status`);
+      const response = await axios.get(`${API}/subscription/status`);
       setSubscriptionStatus(response.data);
     } catch (error) {
       console.error('Error fetching subscription status:', error);
@@ -1208,8 +1207,7 @@ const MusicianDashboard = () => {
     try {
       const plan = selectedPlan; // 'monthly' or 'annual'
       
-      // Use v2 endpoint temporarily
-      const response = await axios.post(`${API}/v2/subscription/checkout`, {
+      const response = await axios.post(`${API}/subscription/checkout`, {
         plan: plan,
         success_url: `${window.location.origin}/dashboard?tab=subscription&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${window.location.origin}/dashboard?tab=subscription`
@@ -1229,8 +1227,7 @@ const MusicianDashboard = () => {
   const handleCancelSubscription = async () => {
     if (window.confirm('Are you sure you want to cancel your subscription? Your audience link will be deactivated, but your songs and request history will remain saved.')) {
       try {
-        // Use v2 endpoint temporarily
-        await axios.post(`${API}/v2/subscription/cancel`);
+        await axios.post(`${API}/subscription/cancel`);
         alert('Subscription canceled. Your audience link has been deactivated.');
         fetchSubscriptionStatus();
       } catch (error) {
@@ -1265,8 +1262,7 @@ const MusicianDashboard = () => {
 
   const checkPaymentStatus = async (sessionId) => {
     try {
-      // Use v2 endpoint temporarily
-      const response = await axios.get(`${API}/v2/subscription/checkout/status/${sessionId}`);
+      const response = await axios.get(`${API}/subscription/checkout/status/${sessionId}`);
       if (response.data.payment_status === 'paid') {
         alert('Payment successful! Your audience link is now active.');
         fetchSubscriptionStatus();
