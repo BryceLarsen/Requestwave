@@ -4254,26 +4254,23 @@ async def get_freemium_subscription_status_endpoint(musician_id: str = Depends(g
 
 @api_router.post("/v2/subscription/checkout")
 async def create_freemium_checkout_session(
-    checkout_data: dict,
+    checkout_request: V2CheckoutRequest,
     request: Request,
     musician_id: str = Depends(get_current_musician)
 ):
     """Create Stripe checkout session for freemium subscription with startup fee + trial"""
     try:
         print(f"🎯 DEBUG: create_freemium_checkout_session called")
-        print(f"🎯 DEBUG: checkout_data: {checkout_data}")
+        print(f"🎯 DEBUG: checkout_request: {checkout_request}")
         print(f"🎯 DEBUG: musician_id: {musician_id}")
         
-        # Extract required fields
-        plan = checkout_data.get('plan')  # 'monthly' or 'annual'
-        success_url = checkout_data.get('success_url')
-        cancel_url = checkout_data.get('cancel_url')
+        # Extract required fields from Pydantic model
+        plan = checkout_request.plan
+        success_url = checkout_request.success_url
+        cancel_url = checkout_request.cancel_url
         
         if not plan or plan not in ['monthly', 'annual']:
             raise HTTPException(status_code=400, detail="Invalid plan. Must be 'monthly' or 'annual'")
-        
-        if not success_url or not cancel_url:
-            raise HTTPException(status_code=400, detail="success_url and cancel_url are required")
             
         # Get musician info
         musician = await db.musicians.find_one({"id": musician_id})
