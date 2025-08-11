@@ -5043,6 +5043,9 @@ const AudienceInterface = () => {
   });
   const [suggestionError, setSuggestionError] = useState('');
 
+  // NEW: Bio expansion state
+  const [bioExpanded, setBioExpanded] = useState(false);
+
   // NEW: Post-request click tracking
   const trackClick = async (type, platform) => {
     if (!currentRequestId) return;
