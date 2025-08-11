@@ -771,7 +771,7 @@ async def get_subscription_status(musician_id: str) -> SubscriptionStatus:
     # Check if has active subscription
     subscription_end = musician.get("subscription_ends_at")
     if subscription_end and now < subscription_end:
-        return SubscriptionStatus(
+        return LegacySubscriptionStatus(
             plan="pro",
             requests_used=0,  # Unlimited with subscription
             requests_limit=None,
