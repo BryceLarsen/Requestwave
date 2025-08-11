@@ -4262,7 +4262,7 @@ async def activate_playlist(
 # NEW: Freemium model endpoints (temporary v2 path to avoid conflicts)
 
 # Define freemium subscription endpoints with custom route class for tracing
-@freemium_router.get("/subscription/status", route_class=CustomAPIRoute)
+@freemium_router.get("/subscription/status")
 async def freemium_subscription_status_endpoint(musician_id: str = Depends(get_current_musician)):
     """Get current subscription status for authenticated musician"""
     try:
@@ -4272,7 +4272,7 @@ async def freemium_subscription_status_endpoint(musician_id: str = Depends(get_c
         logger.error(f"Error getting subscription status: {str(e)}")
         raise HTTPException(status_code=500, detail="Error getting subscription status")
 
-@freemium_router.post("/subscription/checkout", route_class=CustomAPIRoute)
+@freemium_router.post("/subscription/checkout")
 async def create_freemium_checkout_session(
     checkout_request: V2CheckoutRequest,
     musician_id: str = Depends(get_current_musician)
@@ -4344,7 +4344,7 @@ async def create_freemium_checkout_session(
         logger.error(f"Error creating checkout session: {str(e)}")
         raise HTTPException(status_code=500, detail="Error creating checkout session")
 
-@freemium_router.get("/subscription/checkout/status/{session_id}", route_class=CustomAPIRoute)
+@freemium_router.get("/subscription/checkout/status/{session_id}")
 async def get_freemium_checkout_status(
     session_id: str,
     musician_id: str = Depends(get_current_musician)
@@ -4387,7 +4387,7 @@ async def get_freemium_checkout_status(
         logger.error(f"Error getting checkout status: {str(e)}")
         raise HTTPException(status_code=500, detail="Error getting checkout status")
 
-@freemium_router.post("/subscription/cancel", route_class=CustomAPIRoute)
+@freemium_router.post("/subscription/cancel")
 async def cancel_freemium_subscription(musician_id: str = Depends(get_current_musician)):
     """Cancel current subscription (deactivate audience link)"""
     try:
