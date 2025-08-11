@@ -459,13 +459,16 @@ backend:
     implemented: true
     working: false
     file: "server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "critical"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Integrated Stripe checkout using emergentintegrations library, POST /api/subscription/checkout creates single checkout session combining startup fee + subscription plan, GET /api/subscription/checkout/status/{session_id} for payment verification with polling support, payment transaction recording in database"
+      - working: false
+        agent: "testing"
+        comment: "STRIPE INTEGRATION BLOCKED BY ROUTING ISSUES: Testing reveals Stripe integration is implemented but inaccessible due to endpoint conflicts. ❌ CHECKOUT ENDPOINT BROKEN: POST /subscription/checkout returns 422 validation errors expecting both 'request' and 'checkout_request' in body due to incorrect FastAPI parameter injection (endpoint signature has both Request object and CheckoutRequest model). ✅ OLD UPGRADE ENDPOINT WORKING: POST /subscription/upgrade works correctly and creates valid Stripe checkout sessions with proper URLs (https://checkout.stripe.com/c/pay/cs_*), proving Stripe integration itself is functional. ✅ PAYMENT TRANSACTION MODEL: PaymentTransaction model correctly implemented with all required fields (musician_id, session_id, amount, payment_status, transaction_type, subscription_plan, metadata). ✅ SUBSCRIPTION PACKAGES: SUBSCRIPTION_PACKAGES configuration correctly defines monthly_plan ($5 + $15 startup) and annual_plan ($24 + $15 startup) with proper validation. The Stripe integration logic is sound but the new checkout endpoint needs parameter injection fix to be accessible."
 
   - task: "Freemium Model - Trial Management"
     implemented: true
