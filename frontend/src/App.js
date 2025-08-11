@@ -3258,7 +3258,7 @@ const MusicianDashboard = () => {
                           )}
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
-                          {new Date(request.created_at).toLocaleDateString()} at {new Date(request.created_at).toLocaleTimeString()}
+                          {formatTimestamp(request.created_at)}
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">
