@@ -4241,9 +4241,13 @@ async def activate_playlist(
 async def get_subscription_status_endpoint(musician_id: str = Depends(get_current_musician)):
     """Get current subscription status for authenticated musician"""
     try:
+        print(f"DEBUG: get_subscription_status_endpoint called with musician_id: {musician_id}")
         status = await get_freemium_subscription_status(musician_id)
+        print(f"DEBUG: get_freemium_subscription_status returned: {status}")
+        print(f"DEBUG: status type: {type(status)}")
         return status
     except Exception as e:
+        print(f"DEBUG: Exception in get_subscription_status_endpoint: {str(e)}")
         logger.error(f"Error getting subscription status: {str(e)}")
         raise HTTPException(status_code=500, detail="Error getting subscription status")
 
