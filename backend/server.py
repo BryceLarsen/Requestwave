@@ -4636,7 +4636,7 @@ async def test_v2_routing():
     return {"message": "v2 routing is working", "timestamp": datetime.utcnow().isoformat()}
 
 # Diagnostic endpoints
-@app.get("/__health")
+@api_router.get("/__health")
 async def health_check():
     """Prove which FastAPI app is running"""
     return {
@@ -4645,7 +4645,7 @@ async def health_check():
         "timestamp": datetime.utcnow().isoformat()
     }
 
-@app.get("/__routes")
+@api_router.get("/__routes")
 async def list_routes():
     """List routes from the running app"""
     routes = []
@@ -4661,7 +4661,7 @@ async def list_routes():
             })
     return routes
 
-@app.get("/__route_audit")
+@api_router.get("/__route_audit")
 async def route_audit():
     """Detect invisible characters in route paths and prefixes"""
     invisible_chars = {0x200B, 0x200C, 0x200D, 0xFEFF}  # Zero-width chars
