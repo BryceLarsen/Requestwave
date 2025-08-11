@@ -1195,7 +1195,8 @@ const MusicianDashboard = () => {
 
   const fetchSubscriptionStatus = async () => {
     try {
-      const response = await axios.get(`${API}/subscription/status`);
+      // Use v2 endpoint temporarily to avoid routing conflicts
+      const response = await axios.get(`${API}/v2/subscription/status`);
       setSubscriptionStatus(response.data);
     } catch (error) {
       console.error('Error fetching subscription status:', error);
@@ -1205,10 +1206,13 @@ const MusicianDashboard = () => {
   const handleUpgrade = async () => {
     setUpgrading(true);
     try {
-      const packageId = selectedPlan === 'monthly' ? 'monthly_plan' : 'annual_plan';
-      const response = await axios.post(`${API}/subscription/checkout`, {
-        package_id: packageId,
-        origin_url: window.location.origin
+      const plan = selectedPlan; // 'monthly' or 'annual'
+      
+      // Use v2 endpoint temporarily
+      const response = await axios.post(`${API}/v2/subscription/checkout`, {
+        plan: plan,
+        success_url: `${window.location.origin}/dashboard?tab=subscription&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${window.location.origin}/dashboard?tab=subscription`
       });
       
       if (response.data.checkout_url) {
@@ -1225,7 +1229,8 @@ const MusicianDashboard = () => {
   const handleCancelSubscription = async () => {
     if (window.confirm('Are you sure you want to cancel your subscription? Your audience link will be deactivated, but your songs and request history will remain saved.')) {
       try {
-        await axios.post(`${API}/subscription/cancel`);
+        // Use v2 endpoint temporarily
+        await axios.post(`${API}/v2/subscription/cancel`);
         alert('Subscription canceled. Your audience link has been deactivated.');
         fetchSubscriptionStatus();
       } catch (error) {
