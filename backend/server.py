@@ -307,7 +307,7 @@ class PasswordResetConfirm(BaseModel):
     reset_code: str
     new_password: str
 
-class SubscriptionStatus(BaseModel):
+class LegacySubscriptionStatus(BaseModel):
     plan: str  # "trial", "free", "pro"
     requests_used: int
     requests_limit: Optional[int]  # None for unlimited
