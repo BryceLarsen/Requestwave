@@ -4239,17 +4239,17 @@ async def activate_playlist(
 # NEW: Freemium model endpoints (temporary v2 path to avoid conflicts)
 
 @api_router.get("/subscription/status")
-async def get_freemium_subscription_status_endpoint(musician_id: str = Depends(get_current_musician)):
+async def freemium_subscription_status_endpoint_unique(musician_id: str = Depends(get_current_musician)):
     """Get current subscription status for authenticated musician"""
     print(f"🔥🔥🔥 FREEMIUM ENDPOINT CALLED! musician_id: {musician_id}")
     try:
-        print(f"🎯 DEBUG: get_freemium_subscription_status_endpoint called with musician_id: {musician_id}")
+        print(f"🎯 DEBUG: freemium_subscription_status_endpoint_unique called with musician_id: {musician_id}")
         status = await get_freemium_subscription_status(musician_id)
         print(f"🎯 DEBUG: get_freemium_subscription_status returned: {status}")
         print(f"🎯 DEBUG: status type: {type(status)}")
         return status
     except Exception as e:
-        print(f"🎯 DEBUG: Exception in get_freemium_subscription_status_endpoint: {str(e)}")
+        print(f"🎯 DEBUG: Exception in freemium_subscription_status_endpoint_unique: {str(e)}")
         logger.error(f"Error getting subscription status: {str(e)}")
         raise HTTPException(status_code=500, detail="Error getting subscription status")
 
