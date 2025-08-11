@@ -5692,8 +5692,8 @@ const AudienceInterface = () => {
                 </div>
               )}
               
-              {/* Social Media Links - Debug: musician data availability */}
-              {musician && console.log('Musician data:', musician) && (
+              {/* Social Media Links - Show when musician data is loaded and has social links */}
+              {musician && (musician.instagram_username || musician.facebook_username || musician.tiktok_username || musician.spotify_artist_url || musician.apple_music_artist_url) && (
                 <div className="flex items-center space-x-1 mt-2 flex-wrap">
                   {musician.instagram_username && (
                     <a
@@ -5719,7 +5719,7 @@ const AudienceInterface = () => {
                       <span className="hidden sm:inline">FB</span>
                     </a>
                   )}
-                  {musician.tiktok_username && (
+                  {musician.tiktok_username && musician.tiktok_username.trim() !== '' && (
                     <a
                       href={`https://tiktok.com/@${musician.tiktok_username}`}
                       target="_blank"
