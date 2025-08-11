@@ -6583,9 +6583,9 @@ const OnStageInterface = () => {
   }
   
   const allItems = [
-    ...requests.map(r => ({ ...r, type: 'request', time: new Date(r.created_at) })),
-    ...suggestions.map(s => ({ ...s, type: 'suggestion', time: new Date(s.created_at) }))
-  ].sort((a, b) => b.time - a.time);
+    ...requests.map(r => ({ ...r, type: 'request' })),
+    ...suggestions.map(s => ({ ...s, type: 'suggestion' }))
+  ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
