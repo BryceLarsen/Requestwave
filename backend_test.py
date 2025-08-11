@@ -12276,12 +12276,15 @@ Song Without Year,Unknown Artist,Pop,Neutral,,No year provided"""
         return self.results["failed"] == 0
 
 if __name__ == "__main__":
-    print("🚨 CRITICAL DEBUGGING: On Stage Functionality Issues")
+    print("🎯 PRIORITY TESTING: NEW v2 Freemium Subscription Endpoints")
     print("=" * 100)
-    print("Focus: Debug specific issues identified in review request:")
-    print("1. Authentication Issue: PUT /api/requests/{request_id}/status returns 403 'Not authenticated' despite valid JWT token")
-    print("2. Response Format Mismatch: Polling endpoint returns 'timestamp' instead of expected 'total_requests' and 'last_updated'")
-    print("3. Environment Variables: FRONTEND_URL still using old preview URLs")
+    print("Focus: Test the NEW v2 freemium subscription endpoints to verify they work correctly:")
+    print("- GET /api/v2/subscription/status - Should return freemium model with audience_link_active, trial_active, etc.")
+    print("- POST /api/v2/subscription/checkout - Test with JSON body for plan selection")
+    print("- GET /api/v2/subscription/checkout/status/{session_id} - Test payment status checking")
+    print("- POST /api/v2/subscription/cancel - Test subscription cancellation")
+    print("Test with existing credentials: brycelarsenmusic@gmail.com / RequestWave2024!")
+    print("Expected: No routing conflicts, proper freemium model responses, debug logs with '🎯 DEBUG:' messages")
     print("=" * 100)
     
     tester = RequestWaveAPITester()
@@ -12291,35 +12294,28 @@ if __name__ == "__main__":
     tester.test_health_check()
     print()
     
-    # Run the three critical debugging tests
-    print("🚨 RUNNING CRITICAL DEBUGGING TESTS")
+    # Run the v2 subscription endpoints test
+    print("🎯 RUNNING v2 SUBSCRIPTION ENDPOINTS TEST")
     print("=" * 100)
     
-    # PRIORITY 1: Debug Authentication Issue for Status Updates
-    tester.debug_authentication_issue()
-    print()
-    
-    # PRIORITY 2: Debug Response Format Mismatch  
-    tester.debug_response_format_mismatch()
-    print()
-    
-    # PRIORITY 3: Test Basic Request Flow
-    tester.test_basic_request_flow()
+    tester.test_v2_subscription_endpoints()
     print()
     
     # Print final results
-    print("🚨 CRITICAL DEBUGGING RESULTS")
+    print("🎯 v2 SUBSCRIPTION ENDPOINTS TEST RESULTS")
     print("=" * 100)
     print(f"✅ Tests Passed: {tester.results['passed']}")
     print(f"❌ Tests Failed: {tester.results['failed']}")
     print(f"📊 Total Tests: {tester.results['passed'] + tester.results['failed']}")
     
     if tester.results['failed'] > 0:
-        print("\n🚨 CRITICAL ISSUES FOUND:")
+        print("\n🚨 v2 ENDPOINT ISSUES FOUND:")
         for error in tester.results['errors']:
             print(f"   ❌ {error}")
     else:
-        print("\n✅ ALL CRITICAL DEBUGGING TESTS PASSED!")
+        print("\n✅ ALL v2 SUBSCRIPTION ENDPOINT TESTS PASSED!")
+        print("🎉 No routing conflicts detected!")
+        print("🎉 Freemium model working correctly!")
     
     print("=" * 100)
     
