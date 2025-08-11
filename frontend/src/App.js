@@ -1273,10 +1273,6 @@ const MusicianDashboard = () => {
       console.error('Error checking payment status:', error);
     }
   };
-    } catch (error) {
-      console.error('Error checking payment status:', error);
-    }
-  };
 
   // NEW: Batch editing and filtering functions
   const filterSongs = () => {
