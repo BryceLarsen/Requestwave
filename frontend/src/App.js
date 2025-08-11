@@ -498,13 +498,6 @@ const MusicianDashboard = () => {
 
   // NEW: Phase 3 - Analytics state
   const [analyticsData, setAnalyticsData] = useState(null);
-
-  // NEW: Freemium model - Subscription state
-  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
-  const [loadingSubscription, setLoadingSubscription] = useState(false);
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
-  const [deletingAccount, setDeletingAccount] = useState(false);
   const [analyticsTimeframe, setAnalyticsTimeframe] = useState('daily'); // 'daily', 'weekly', 'monthly'
   const [analyticsDays, setAnalyticsDays] = useState(7);
   const [requestersData, setRequestersData] = useState([]);
