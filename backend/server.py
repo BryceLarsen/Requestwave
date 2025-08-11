@@ -338,9 +338,10 @@ class SubscriptionPackage(BaseModel):
     billing_period: str  # monthly, annual
     trial_days: int
 
-class CheckoutRequest(BaseModel):
-    package_id: str  # monthly_plan or annual_plan
-    origin_url: str
+class V2CheckoutRequest(BaseModel):
+    plan: str  # 'monthly' or 'annual'
+    success_url: str
+    cancel_url: str
 
 class SubscriptionStatus(BaseModel):
     plan: str  # "trial", "free", "active", "canceled", "expired"
