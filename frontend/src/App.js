@@ -3539,7 +3539,7 @@ const MusicianDashboard = () => {
                     </div>
                     <div className="text-purple-200 text-xs mt-1">
                       {subscriptionStatus.plan === 'trial' ? 
-                        `Trial ends: ${new Date(subscriptionStatus.trial_ends_at).toLocaleDateString()}` :
+                        `Trial ends: ${formatTimestamp(subscriptionStatus.trial_ends_at).split(' at ')[0]}` :
                         subscriptionStatus.plan === 'pro' ? 
                         'Unlimited requests' :
                         `${subscriptionStatus.requests_used}/${subscriptionStatus.requests_limit} requests used`
@@ -3547,7 +3547,7 @@ const MusicianDashboard = () => {
                     </div>
                     {subscriptionStatus.plan === 'free' && subscriptionStatus.next_reset_date && (
                       <div className="text-purple-300 text-xs">
-                        Resets: {new Date(subscriptionStatus.next_reset_date).toLocaleDateString()}
+                        Resets: {formatTimestamp(subscriptionStatus.next_reset_date).split(' at ')[0]}
                       </div>
                     )}
                   </div>
