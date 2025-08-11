@@ -5692,13 +5692,13 @@ const AudienceInterface = () => {
                 </div>
               )}
               
-              {/* Social Media Links - Only show if they exist and musician data is loaded */}
-              {musician && (
+              {/* Social Media Links - Debug: musician data availability */}
+              {musician && console.log('Musician data:', musician) && (
                 <div className="flex items-center space-x-1 mt-2 flex-wrap">
                   {musician.instagram_username && (
                     <a
                       href={`https://instagram.com/${musician.instagram_username}`}
-                      target="_blank"
+                      target="_blank" 
                       rel="noopener noreferrer"
                       className="bg-pink-600 hover:bg-pink-700 px-2 py-1 rounded text-xs font-medium transition duration-300 flex items-center space-x-1"
                     >
