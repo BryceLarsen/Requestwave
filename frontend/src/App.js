@@ -366,6 +366,68 @@ const AuthForm = ({ mode, onSwitch }) => {
   );
 };
 
+// Utility function for consistent timezone-aware timestamp formatting
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return 'Unknown time';
+  
+  try {
+    const date = new Date(timestamp);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid timestamp:', timestamp);
+      return 'Invalid date';
+    }
+    
+    // Get user's timezone for consistent display
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    
+    // Format date and time in user's local timezone
+    const dateOptions = {
+      timeZone,
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    };
+    
+    const timeOptions = {
+      timeZone,
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    };
+    
+    const localDate = date.toLocaleDateString('en-US', dateOptions);
+    const localTime = date.toLocaleTimeString('en-US', timeOptions);
+    
+    return `${localDate} at ${localTime}`;
+  } catch (error) {
+    console.error('Error formatting timestamp:', error, 'Original:', timestamp);
+    return 'Error formatting date';
+  }
+};
+
+// Utility function for just time (used in On Stage interface)
+const formatTime = (timestamp) => {
+  if (!timestamp) return 'Unknown';
+  
+  try {
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return 'Invalid';
+    
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return date.toLocaleTimeString('en-US', {
+      timeZone,
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  } catch (error) {
+    console.error('Error formatting time:', error);
+    return 'Error';
+  }
+};
+
 const MusicianDashboard = () => {
   const { musician, token, logout, setMusician } = useAuth();
   const [activeTab, setActiveTab] = useState('songs');
