@@ -444,13 +444,16 @@ backend:
     implemented: true
     working: false
     file: "server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "critical"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented comprehensive freemium model with subscription status tracking (audience_link_active, has_had_trial, trial_end, stripe_customer_id, stripe_subscription_id), subscription packages (monthly $5/annual $24 + $15 startup fee), status endpoint, and helper functions for managing subscription lifecycle"
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL ROUTING CONFLICTS IDENTIFIED: Comprehensive testing reveals major issues preventing freemium model functionality. ❌ SUBSCRIPTION STATUS ENDPOINT CONFLICT: Duplicate /subscription/status endpoints at lines 2177 and 4378 cause routing conflicts - the old endpoint (line 2177) is matched first but uses outdated SubscriptionStatus model missing required freemium fields (audience_link_active, trial_active), causing 500 errors with ValidationError. ❌ CHECKOUT ENDPOINT PARAMETER ISSUE: POST /subscription/checkout endpoint has incorrect FastAPI parameter injection - expects both 'request: Request' and 'checkout_request: CheckoutRequest' but FastAPI interprets this as requiring both in request body, causing 422 validation errors. ✅ TRIAL REGISTRATION WORKING: New user registration correctly starts 30-day trial with audience_link_active=true, has_had_trial=true, and proper trial_end date (~30 days). ✅ ACCESS CONTROL WORKING: Audience access control functions correctly - returns 402 for songs/requests when audience_link_active=false. ✅ ACCOUNT DELETION WORKING: DELETE /account/delete works correctly with confirmation_text='DELETE' and properly cleans up all data. ✅ WEBHOOK HANDLING WORKING: POST /webhook/stripe handles all event types correctly (checkout.session.completed, customer.subscription.*, invoice.payment_*). The core freemium logic is implemented but blocked by routing conflicts that prevent API access."
 
   - task: "Freemium Model - Stripe Payment Integration"
     implemented: true
