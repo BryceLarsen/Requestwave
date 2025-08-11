@@ -4635,22 +4635,94 @@ async def test_v2_routing():
     """Simple test endpoint to verify v2 routing works"""
     return {"message": "v2 routing is working", "timestamp": datetime.utcnow().isoformat()}
 
+# Diagnostic endpoints
+@app.get("/__health")
+async def health_check():
+    """Prove which FastAPI app is running"""
+    return {
+        "app_id": id(app),
+        "module": __name__,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+@app.get("/__routes")
+async def list_routes():
+    """List routes from the running app"""
+    routes = []
+    for route in app.routes:
+        if hasattr(route, 'methods') and hasattr(route, 'path'):
+            methods = list(route.methods) if route.methods else []
+            path = route.path
+            endpoint_name = getattr(route.endpoint, '__name__', 'unknown') if hasattr(route, 'endpoint') else 'unknown'
+            routes.append({
+                "methods": methods,
+                "path": path,
+                "endpoint": endpoint_name
+            })
+    return routes
+
+@app.get("/__route_audit")
+async def route_audit():
+    """Detect invisible characters in route paths and prefixes"""
+    invisible_chars = {0x200B, 0x200C, 0x200D, 0xFEFF}  # Zero-width chars
+    offending_items = []
+    
+    # Check all routes
+    for route in app.routes:
+        if hasattr(route, 'path'):
+            path = route.path
+            for i, ch in enumerate(path):
+                if ord(ch) < 32 or ord(ch) in invisible_chars:
+                    offending_items.append({
+                        "type": "route_path",
+                        "path": path,
+                        "position": i,
+                        "character_code": ord(ch),
+                        "repr": repr(path)
+                    })
+    
+    # Check router prefixes (if any routers have been included)
+    for router_item in [api_router, freemium_router]:
+        if hasattr(router_item, 'prefix') and router_item.prefix:
+            prefix = router_item.prefix
+            for i, ch in enumerate(prefix):
+                if ord(ch) < 32 or ord(ch) in invisible_chars:
+                    offending_items.append({
+                        "type": "router_prefix", 
+                        "prefix": prefix,
+                        "position": i,
+                        "character_code": ord(ch),
+                        "repr": repr(prefix)
+                    })
+    
+    return {
+        "has_invisible_chars": len(offending_items) > 0,
+        "offending_items": offending_items
+    }
+
 # Simple test endpoint before router inclusion
 @api_router.get("/test-endpoint-before-inclusion")
 async def test_endpoint_before_inclusion():
     """Simple test to verify endpoint registration works"""
     return {"message": "test endpoint before inclusion works", "timestamp": datetime.utcnow().isoformat()}
 
-# Include the router
+# Include the main router
 app.include_router(api_router)
+
+# Mount freemium router at v2 path for testing
+app.include_router(freemium_router, prefix="/v2")
 
 # Route logging startup hook
 @app.on_event("startup")
 async def log_routes():
-    """Log all registered routes to debug routing conflicts"""
+    """Log all registered routes to debug routing conflicts and detect invisible chars"""
     print("\n" + "="*80)
     print("🔍 REGISTERED ROUTES DEBUG:")
     print("="*80)
+    
+    # Check for invisible characters and log warnings
+    invisible_chars = {0x200B, 0x200C, 0x200D, 0xFEFF}
+    
     for route in app.routes:
         if hasattr(route, 'methods') and hasattr(route, 'path'):
             methods = ', '.join(route.methods) if route.methods else 'N/A'
@@ -4660,9 +4732,25 @@ async def log_routes():
             endpoint_name = endpoint.__name__ if endpoint and hasattr(endpoint, '__name__') else 'N/A'
             print(f"  {methods:10} {path:40} -> {endpoint_name}")
             
+            # Check for invisible characters
+            for i, ch in enumerate(path):
+                if ord(ch) < 32 or ord(ch) in invisible_chars:
+                    print(f"    ⚠️  WARNING: Invisible character found in path at position {i}")
+                    print(f"       Character code: {ord(ch)}, repr: {repr(path)}")
+            
             # Highlight subscription routes
             if 'subscription' in path.lower():
                 print(f"    🎯 SUBSCRIPTION ROUTE: {methods} {path} -> {endpoint_name}")
+    
+    # Check router prefixes
+    for router_name, router_obj in [("api_router", api_router), ("freemium_router", freemium_router)]:
+        if hasattr(router_obj, 'prefix') and router_obj.prefix:
+            prefix = router_obj.prefix
+            for i, ch in enumerate(prefix):
+                if ord(ch) < 32 or ord(ch) in invisible_chars:
+                    print(f"    ⚠️  WARNING: Invisible character in {router_name} prefix at position {i}")
+                    print(f"       Character code: {ord(ch)}, repr: {repr(prefix)}")
+    
     print("="*80 + "\n")
 
 # CORS middleware
