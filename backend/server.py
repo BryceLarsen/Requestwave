@@ -484,7 +484,7 @@ async def get_freemium_subscription_status(musician_id: str) -> SubscriptionStat
     
     # Check grace period
     grace_period_end = musician.get("payment_grace_period_end")
-    grace_period_active = grace_period_end and now < grace_period_end
+    grace_period_active = bool(grace_period_end and now < grace_period_end)
     
     # Determine plan status
     if trial_active:
