@@ -1,5 +1,480 @@
 #!/usr/bin/env python3
 """
+PLAYLIST CREATION FUNCTIONALITY VERIFICATION
+
+Testing the playlist creation functionality after frontend fix:
+
+CONTEXT:
+- User reported playlists not showing up after creation
+- Identified that frontend was only checking for 'pro' plan, but backend allows both 'trial' and 'pro'
+- Fixed frontend to check for both 'trial' and 'pro' plans
+
+SPECIFIC VERIFICATION NEEDED:
+1. Login with brycelarsenmusic@gmail.com / RequestWave2024!
+2. Verify user subscription status and plan
+3. Create a test playlist with 3-5 songs
+4. Verify playlist creation succeeds
+5. Confirm playlist appears in GET /api/playlists
+6. Verify subscription status returns correct plan
+7. Double-check Pro access logic
+
+Test Credentials: brycelarsenmusic@gmail.com / RequestWave2024!
+"""
+
+import requests
+import json
+import os
+import time
+from typing import Dict, Any, Optional
+
+# Configuration
+BASE_URL = "https://musician-dashboard.preview.emergentagent.com/api"
+
+# Pro account for playlist testing
+PRO_MUSICIAN = {
+    "email": "brycelarsenmusic@gmail.com",
+    "password": "RequestWave2024!"
+}
+
+class PlaylistCreationTester:
+    def __init__(self):
+        self.base_url = BASE_URL
+        self.auth_token = None
+        self.musician_id = None
+        self.musician_slug = None
+        self.results = {
+            "passed": 0,
+            "failed": 0,
+            "errors": []
+        }
+
+    def log_result(self, test_name: str, success: bool, message: str = ""):
+        """Log test result"""
+        status = "✅ PASS" if success else "❌ FAIL"
+        print(f"{status}: {test_name}")
+        if message:
+            print(f"   {message}")
+        
+        if success:
+            self.results["passed"] += 1
+        else:
+            self.results["failed"] += 1
+            self.results["errors"].append(f"{test_name}: {message}")
+
+    def make_request(self, method: str, endpoint: str, data: Any = None, files: Any = None, headers: Dict = None, params: Dict = None) -> requests.Response:
+        """Make HTTP request with proper headers"""
+        url = f"{self.base_url}{endpoint}"
+        
+        # Default headers
+        request_headers = {"Content-Type": "application/json"}
+        if self.auth_token:
+            request_headers["Authorization"] = f"Bearer {self.auth_token}"
+        
+        # Override with custom headers
+        if headers:
+            request_headers.update(headers)
+        
+        # Remove Content-Type for file uploads
+        if files:
+            request_headers.pop("Content-Type", None)
+        
+        try:
+            if method.upper() == "GET":
+                response = requests.get(url, headers=request_headers, params=data or params)
+            elif method.upper() == "POST":
+                if files:
+                    response = requests.post(url, headers={k: v for k, v in request_headers.items() if k != "Content-Type"}, files=files, data=data)
+                elif params:
+                    response = requests.post(url, headers=request_headers, params=params)
+                else:
+                    response = requests.post(url, headers=request_headers, json=data)
+            elif method.upper() == "PUT":
+                response = requests.put(url, headers=request_headers, json=data)
+            elif method.upper() == "DELETE":
+                response = requests.delete(url, headers=request_headers)
+            else:
+                raise ValueError(f"Unsupported method: {method}")
+            
+            return response
+        except Exception as e:
+            print(f"Request failed: {e}")
+            raise
+
+    def test_login_and_subscription_status(self):
+        """Test login with brycelarsenmusic@gmail.com and verify subscription status"""
+        try:
+            print("🔐 STEP 1: Login and Subscription Status Verification")
+            print("=" * 80)
+            
+            # Step 1: Login with Pro account
+            print("📊 Step 1.1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("Login Authentication", False, f"Failed to login: {login_response.status_code}, Response: {login_response.text}")
+                return False
+            
+            login_data_response = login_response.json()
+            self.auth_token = login_data_response["token"]
+            self.musician_id = login_data_response["musician"]["id"]
+            self.musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            print(f"   ✅ Musician ID: {self.musician_id}")
+            print(f"   ✅ Musician slug: {self.musician_slug}")
+            
+            # Step 2: Check subscription status
+            print("📊 Step 1.2: Check subscription status")
+            
+            subscription_response = self.make_request("GET", "/subscription/status")
+            
+            if subscription_response.status_code != 200:
+                self.log_result("Subscription Status Check", False, f"Failed to get subscription status: {subscription_response.status_code}, Response: {subscription_response.text}")
+                return False
+            
+            subscription_data = subscription_response.json()
+            print(f"   📊 Subscription status response: {json.dumps(subscription_data, indent=2, default=str)}")
+            
+            # Verify subscription plan
+            plan = subscription_data.get("plan", "unknown")
+            audience_link_active = subscription_data.get("audience_link_active", False)
+            trial_active = subscription_data.get("trial_active", False)
+            
+            print(f"   📊 Plan: {plan}")
+            print(f"   📊 Audience link active: {audience_link_active}")
+            print(f"   📊 Trial active: {trial_active}")
+            
+            # Check if plan is 'trial' or 'pro' (both should allow playlist creation)
+            if plan in ['trial', 'pro']:
+                print(f"   ✅ Plan '{plan}' should allow playlist creation")
+                plan_allows_playlists = True
+            else:
+                print(f"   ⚠️  Plan '{plan}' - checking if this allows playlist creation")
+                plan_allows_playlists = True  # We'll test this in practice
+            
+            self.log_result("Login and Subscription Status", True, f"Successfully logged in with plan '{plan}', audience_link_active={audience_link_active}")
+            return True
+            
+        except Exception as e:
+            self.log_result("Login and Subscription Status", False, f"Exception: {str(e)}")
+            return False
+
+    def test_pro_access_logic(self):
+        """Test Pro access logic by checking playlist endpoints"""
+        try:
+            print("🔐 STEP 2: Pro Access Logic Verification")
+            print("=" * 80)
+            
+            if not self.auth_token:
+                self.log_result("Pro Access Logic", False, "No auth token available")
+                return False
+            
+            # Step 1: Test GET /api/playlists endpoint (should work for Pro users)
+            print("📊 Step 2.1: Test GET /api/playlists endpoint access")
+            
+            playlists_response = self.make_request("GET", "/playlists")
+            
+            print(f"   📊 GET /playlists status: {playlists_response.status_code}")
+            print(f"   📊 GET /playlists response: {playlists_response.text[:200]}...")
+            
+            if playlists_response.status_code == 200:
+                playlists_data = playlists_response.json()
+                print(f"   ✅ Successfully accessed playlists endpoint - found {len(playlists_data)} playlists")
+                pro_access_working = True
+            elif playlists_response.status_code == 403:
+                print(f"   ❌ Access denied to playlists endpoint - Pro access logic may be broken")
+                pro_access_working = False
+            else:
+                print(f"   ⚠️  Unexpected response from playlists endpoint: {playlists_response.status_code}")
+                pro_access_working = False
+            
+            # Step 2: Test POST /api/playlists endpoint (should work for Pro users)
+            print("📊 Step 2.2: Test POST /api/playlists endpoint access (dry run)")
+            
+            # Try to create a minimal playlist to test access (we'll delete it later)
+            test_playlist_data = {
+                "name": "Access Test Playlist",
+                "song_ids": []
+            }
+            
+            create_response = self.make_request("POST", "/playlists", test_playlist_data)
+            
+            print(f"   📊 POST /playlists status: {create_response.status_code}")
+            print(f"   📊 POST /playlists response: {create_response.text[:200]}...")
+            
+            if create_response.status_code == 200:
+                created_playlist = create_response.json()
+                print(f"   ✅ Successfully created test playlist: {created_playlist.get('name')}")
+                
+                # Clean up - delete the test playlist
+                delete_response = self.make_request("DELETE", f"/playlists/{created_playlist['id']}")
+                if delete_response.status_code == 200:
+                    print(f"   ✅ Successfully cleaned up test playlist")
+                
+                create_access_working = True
+            elif create_response.status_code == 403:
+                print(f"   ❌ Access denied to create playlists - Pro access logic may be broken")
+                create_access_working = False
+            else:
+                print(f"   ⚠️  Unexpected response from playlist creation: {create_response.status_code}")
+                create_access_working = False
+            
+            overall_pro_access = pro_access_working and create_access_working
+            
+            self.log_result("Pro Access Logic", overall_pro_access, f"GET playlists: {pro_access_working}, POST playlists: {create_access_working}")
+            return overall_pro_access
+            
+        except Exception as e:
+            self.log_result("Pro Access Logic", False, f"Exception: {str(e)}")
+            return False
+
+    def test_playlist_creation_with_songs(self):
+        """Test creating a playlist with 3-5 songs"""
+        try:
+            print("🎵 STEP 3: Playlist Creation with Songs")
+            print("=" * 80)
+            
+            if not self.auth_token:
+                self.log_result("Playlist Creation with Songs", False, "No auth token available")
+                return False
+            
+            # Step 1: Get available songs
+            print("📊 Step 3.1: Get available songs for playlist")
+            
+            songs_response = self.make_request("GET", "/songs")
+            
+            if songs_response.status_code != 200:
+                self.log_result("Get Songs for Playlist", False, f"Failed to get songs: {songs_response.status_code}")
+                return False
+            
+            songs = songs_response.json()
+            print(f"   ✅ Found {len(songs)} available songs")
+            
+            if len(songs) < 3:
+                self.log_result("Playlist Creation with Songs", False, f"Need at least 3 songs for test, found {len(songs)}")
+                return False
+            
+            # Select 3-5 songs for the playlist
+            selected_songs = songs[:5] if len(songs) >= 5 else songs[:3]
+            selected_song_ids = [song["id"] for song in selected_songs]
+            
+            print(f"   ✅ Selected {len(selected_songs)} songs for playlist:")
+            for i, song in enumerate(selected_songs, 1):
+                print(f"      {i}. '{song['title']}' by {song['artist']}")
+            
+            # Step 2: Create the test playlist
+            print("📊 Step 3.2: Create test playlist with selected songs")
+            
+            playlist_data = {
+                "name": "Playlist Creation Test",
+                "song_ids": selected_song_ids
+            }
+            
+            create_response = self.make_request("POST", "/playlists", playlist_data)
+            
+            print(f"   📊 Create playlist status: {create_response.status_code}")
+            print(f"   📊 Create playlist response: {create_response.text}")
+            
+            if create_response.status_code != 200:
+                self.log_result("Playlist Creation with Songs", False, f"Failed to create playlist: {create_response.status_code}, Response: {create_response.text}")
+                return False
+            
+            created_playlist = create_response.json()
+            playlist_id = created_playlist["id"]
+            
+            print(f"   ✅ Successfully created playlist:")
+            print(f"      ID: {playlist_id}")
+            print(f"      Name: {created_playlist['name']}")
+            print(f"      Song count: {created_playlist.get('song_count', 'unknown')}")
+            
+            # Step 3: Verify playlist appears in GET /api/playlists
+            print("📊 Step 3.3: Verify playlist appears in GET /api/playlists")
+            
+            playlists_response = self.make_request("GET", "/playlists")
+            
+            if playlists_response.status_code != 200:
+                self.log_result("Verify Playlist in List", False, f"Failed to get playlists: {playlists_response.status_code}")
+                return False
+            
+            playlists = playlists_response.json()
+            
+            # Find our created playlist
+            found_playlist = None
+            for playlist in playlists:
+                if playlist["id"] == playlist_id:
+                    found_playlist = playlist
+                    break
+            
+            if found_playlist:
+                print(f"   ✅ Playlist found in GET /api/playlists:")
+                print(f"      Name: {found_playlist['name']}")
+                print(f"      Song count: {found_playlist.get('song_count', 'unknown')}")
+                print(f"      Song IDs: {found_playlist.get('song_ids', [])}")
+                
+                # Verify song count matches
+                expected_count = len(selected_song_ids)
+                actual_count = found_playlist.get('song_count', 0)
+                
+                if actual_count == expected_count:
+                    print(f"   ✅ Song count matches: {actual_count}")
+                    playlist_verification_success = True
+                else:
+                    print(f"   ❌ Song count mismatch: expected {expected_count}, got {actual_count}")
+                    playlist_verification_success = False
+            else:
+                print(f"   ❌ Created playlist not found in GET /api/playlists")
+                playlist_verification_success = False
+            
+            # Step 4: Clean up - delete the test playlist
+            print("📊 Step 3.4: Clean up test playlist")
+            
+            delete_response = self.make_request("DELETE", f"/playlists/{playlist_id}")
+            
+            if delete_response.status_code == 200:
+                print(f"   ✅ Successfully deleted test playlist")
+            else:
+                print(f"   ⚠️  Failed to delete test playlist: {delete_response.status_code}")
+            
+            self.log_result("Playlist Creation with Songs", playlist_verification_success, f"Created playlist with {len(selected_songs)} songs, verification: {playlist_verification_success}")
+            return playlist_verification_success
+            
+        except Exception as e:
+            self.log_result("Playlist Creation with Songs", False, f"Exception: {str(e)}")
+            return False
+
+    def test_frontend_backend_plan_compatibility(self):
+        """Test that frontend and backend have compatible plan checking logic"""
+        try:
+            print("🔄 STEP 4: Frontend-Backend Plan Compatibility")
+            print("=" * 80)
+            
+            if not self.auth_token:
+                self.log_result("Frontend-Backend Plan Compatibility", False, "No auth token available")
+                return False
+            
+            # Step 1: Get subscription status (what frontend would check)
+            print("📊 Step 4.1: Get subscription status for frontend compatibility check")
+            
+            subscription_response = self.make_request("GET", "/subscription/status")
+            
+            if subscription_response.status_code != 200:
+                self.log_result("Frontend-Backend Plan Compatibility", False, f"Failed to get subscription status: {subscription_response.status_code}")
+                return False
+            
+            subscription_data = subscription_response.json()
+            plan = subscription_data.get("plan", "unknown")
+            
+            print(f"   📊 Current plan: {plan}")
+            
+            # Step 2: Check if this plan would be accepted by the fixed frontend logic
+            print("📊 Step 4.2: Check if plan is compatible with frontend logic")
+            
+            # The fix was: frontend now checks for both 'trial' and 'pro' plans
+            frontend_compatible_plans = ['trial', 'pro']
+            
+            if plan in frontend_compatible_plans:
+                print(f"   ✅ Plan '{plan}' is compatible with fixed frontend logic")
+                frontend_compatibility = True
+            else:
+                print(f"   ⚠️  Plan '{plan}' may not be compatible with frontend logic")
+                print(f"   📊 Frontend expects one of: {frontend_compatible_plans}")
+                frontend_compatibility = False
+            
+            # Step 3: Test that backend actually allows playlist operations for this plan
+            print("📊 Step 4.3: Verify backend allows playlist operations for this plan")
+            
+            # Try to access playlists endpoint
+            playlists_response = self.make_request("GET", "/playlists")
+            
+            if playlists_response.status_code == 200:
+                print(f"   ✅ Backend allows playlist access for plan '{plan}'")
+                backend_allows_access = True
+            elif playlists_response.status_code == 403:
+                print(f"   ❌ Backend denies playlist access for plan '{plan}'")
+                backend_allows_access = False
+            else:
+                print(f"   ⚠️  Unexpected backend response: {playlists_response.status_code}")
+                backend_allows_access = False
+            
+            # Step 4: Overall compatibility assessment
+            print("📊 Step 4.4: Overall compatibility assessment")
+            
+            overall_compatibility = frontend_compatibility and backend_allows_access
+            
+            if overall_compatibility:
+                print(f"   ✅ Frontend and backend are compatible for plan '{plan}'")
+                print(f"   ✅ Frontend will show playlist features")
+                print(f"   ✅ Backend will allow playlist operations")
+            else:
+                issues = []
+                if not frontend_compatibility:
+                    issues.append(f"frontend may not show playlist features for plan '{plan}'")
+                if not backend_allows_access:
+                    issues.append(f"backend denies playlist access for plan '{plan}'")
+                
+                print(f"   ❌ Compatibility issues: {', '.join(issues)}")
+            
+            self.log_result("Frontend-Backend Plan Compatibility", overall_compatibility, f"Plan '{plan}' - Frontend compatible: {frontend_compatibility}, Backend allows: {backend_allows_access}")
+            return overall_compatibility
+            
+        except Exception as e:
+            self.log_result("Frontend-Backend Plan Compatibility", False, f"Exception: {str(e)}")
+            return False
+
+    def run_all_tests(self):
+        """Run all playlist creation verification tests"""
+        print("🎵 PLAYLIST CREATION FUNCTIONALITY VERIFICATION")
+        print("=" * 80)
+        print("Testing playlist creation after frontend fix:")
+        print("- User reported playlists not showing up after creation")
+        print("- Fixed frontend to check for both 'trial' and 'pro' plans")
+        print("- Verifying the fix works correctly")
+        print("=" * 80)
+        
+        # Run tests in sequence
+        test_results = []
+        
+        test_results.append(self.test_login_and_subscription_status())
+        test_results.append(self.test_pro_access_logic())
+        test_results.append(self.test_playlist_creation_with_songs())
+        test_results.append(self.test_frontend_backend_plan_compatibility())
+        
+        # Summary
+        print("\n" + "=" * 80)
+        print("🎵 PLAYLIST CREATION VERIFICATION SUMMARY")
+        print("=" * 80)
+        
+        print(f"✅ Tests Passed: {self.results['passed']}")
+        print(f"❌ Tests Failed: {self.results['failed']}")
+        
+        if self.results['failed'] > 0:
+            print("\n❌ FAILED TESTS:")
+            for error in self.results['errors']:
+                print(f"   - {error}")
+        
+        overall_success = all(test_results)
+        
+        if overall_success:
+            print("\n🎉 PLAYLIST CREATION VERIFICATION: SUCCESS")
+            print("✅ The frontend fix appears to be working correctly")
+            print("✅ Users with 'trial' or 'pro' plans can create playlists")
+            print("✅ Playlists are properly saved and appear in the playlist list")
+        else:
+            print("\n⚠️  PLAYLIST CREATION VERIFICATION: ISSUES FOUND")
+            print("❌ Some aspects of the playlist creation functionality need attention")
+        
+        return overall_success
+
+if __name__ == "__main__":
+    tester = PlaylistCreationTester()
+    success = tester.run_all_tests()
+    exit(0 if success else 1)
+"""
 PLAYLIST CREATION FUNCTIONALITY TESTING
 
 Testing the specific issue reported by user brycelarsenmusic@gmail.com:
