@@ -1838,6 +1838,41 @@ const MusicianDashboard = () => {
     }
   };
 
+  const clearRequestSelection = () => {
+    setSelectedRequests(new Set());
+  };
+
+  const batchUpdateRequestStatus = async (status) => {
+    if (selectedRequests.size === 0) {
+      alert('Please select requests to update');
+      return;
+    }
+
+    const confirmMessage = `Mark ${selectedRequests.size} selected request(s) as ${status}?`;
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const updatePromises = Array.from(selectedRequests).map(requestId =>
+        axios.put(`${API}/requests/${requestId}/status`, 
+          { status },
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        )
+      );
+
+      await Promise.all(updatePromises);
+      
+      // Clear selection and refresh
+      clearRequestSelection();
+      fetchRequests();
+      
+      alert(`Successfully updated ${selectedRequests.size} request(s) to ${status}`);
+    } catch (error) {
+      console.error('Error batch updating requests:', error);
+      alert('Error updating requests. Please try again.');
+    }
+  };
+
   // CSV Upload functions
   const handleCsvFileSelect = (e) => {
     const file = e.target.files[0];
