@@ -2769,7 +2769,8 @@ async def get_musician_songs(
     artist: Optional[str] = None,
     mood: Optional[str] = None,
     year: Optional[int] = None,
-    decade: Optional[str] = None  # NEW: Add decade filter parameter
+    decade: Optional[str] = None,  # NEW: Add decade filter parameter
+    playlist: Optional[str] = None  # NEW: Add playlist filter parameter
 ):
     """Get songs for a musician with filtering and search support, filtered by active playlist"""
     # Get musician
