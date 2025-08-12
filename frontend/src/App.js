@@ -1018,6 +1018,20 @@ const MusicianDashboard = () => {
     }
   }, [activeTab]);
 
+  // Close song management dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showSongManagementDropdown && !event.target.closest('.relative')) {
+        setShowSongManagementDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSongManagementDropdown]);
+
   const fetchSongs = async () => {
     try {
       const response = await axios.get(`${API}/songs?sort_by=${sortBy}`);
