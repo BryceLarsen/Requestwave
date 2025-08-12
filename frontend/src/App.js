@@ -2235,7 +2235,8 @@ const MusicianDashboard = () => {
       {/* Header */}
       <header className="bg-gray-800 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+          {/* Desktop Layout */}
+          <div className="hidden md:flex justify-between items-center py-4">
             <div className="flex items-center space-x-3">
               <img
                 src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png"
@@ -2251,6 +2252,34 @@ const MusicianDashboard = () => {
               <button
                 onClick={logout}
                 className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition duration-300"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile Layout */}
+          <div className="md:hidden py-4">
+            <div className="flex justify-between items-start">
+              {/* Left side: Logo and Welcome */}
+              <div className="flex flex-col space-y-2">
+                <div className="flex items-center space-x-3">
+                  <img
+                    src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png"
+                    alt="RequestWave"
+                    className="w-8 h-8 object-contain"
+                  />
+                  <h1 className="text-xl font-bold">
+                    <span className="text-purple-400">Request</span><span className="text-green-400">Wave</span>
+                  </h1>
+                </div>
+                <span className="text-gray-300 text-sm ml-1">Welcome, {musician.name}</span>
+              </div>
+
+              {/* Right side: Logout */}
+              <button
+                onClick={logout}
+                className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg transition duration-300 text-sm"
               >
                 Logout
               </button>
