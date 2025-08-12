@@ -2501,7 +2501,13 @@ const MusicianDashboard = () => {
 
     } catch (error) {
       console.error('Error renaming playlist:', error);
-      alert(error.response?.data?.detail || 'Error renaming playlist');
+      if (error.response?.status === 403) {
+        showPlaylistToastWithMessage('You can only rename your own playlists');
+      } else if (error.response?.status === 404) {
+        showPlaylistToastWithMessage('Playlist not found');
+      } else {
+        showPlaylistToastWithMessage(error.response?.data?.detail || 'Error renaming playlist');
+      }
     }
   };
 
