@@ -5670,6 +5670,140 @@ const MusicianDashboard = () => {
           </div>
         )}
 
+        {/* NEW: Edit Playlist Songs Modal */}
+        {showEditPlaylistSongsModal && editingSongsPlaylist && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+              {/* Modal Header */}
+              <div className="px-6 py-4 border-b border-gray-700 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-white">✏️ Edit Playlist</h2>
+                  <div className="text-gray-400 text-sm mt-1">
+                    {editingSongsPlaylist.name} • {editPlaylistSongs.length} songs
+                  </div>
+                </div>
+                <button
+                  onClick={closeEditPlaylistSongsModal}
+                  className="text-gray-400 hover:text-white text-2xl"
+                  disabled={editPlaylistLoading}
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="px-6 py-4 max-h-[60vh] overflow-y-auto">
+                {editPlaylistError && (
+                  <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3 mb-4">
+                    <p className="text-red-300 text-sm">{editPlaylistError}</p>
+                  </div>
+                )}
+
+                {editPlaylistSongs.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">🎵</div>
+                    <h3 className="text-xl font-bold text-gray-300 mb-2">Empty Playlist</h3>
+                    <p className="text-gray-400 mb-4">This playlist doesn't have any songs yet.</p>
+                    <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium">
+                      Add Songs (Coming Soon)
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {editPlaylistSongs.map((song, index) => (
+                      <div
+                        key={song.id}
+                        className="bg-gray-700 rounded-lg p-3 flex items-center space-x-3 hover:bg-gray-600 transition duration-200"
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('text/plain', index.toString());
+                          e.currentTarget.style.opacity = '0.5';
+                        }}
+                        onDragEnd={(e) => {
+                          e.currentTarget.style.opacity = '1';
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const dragIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                          const hoverIndex = index;
+                          if (dragIndex !== hoverIndex) {
+                            reorderPlaylistSongs(dragIndex, hoverIndex);
+                          }
+                        }}
+                      >
+                        {/* Drag Handle */}
+                        <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-white">
+                          <span className="text-lg select-none">⋮⋮</span>
+                        </div>
+                        
+                        {/* Song Number */}
+                        <div className="text-gray-400 text-sm font-mono w-8 text-center">
+                          {index + 1}
+                        </div>
+                        
+                        {/* Song Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-white truncate">{song.title}</div>
+                          <div className="text-gray-400 text-sm truncate">{song.artist}</div>
+                        </div>
+                        
+                        {/* Remove Button */}
+                        <button
+                          onClick={() => removeSongFromEditPlaylist(song.id)}
+                          className="bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white px-3 py-1 rounded text-sm transition duration-200 flex items-center space-x-1"
+                          title="Remove from playlist"
+                        >
+                          <span>❌</span>
+                          <span className="hidden sm:inline">Remove</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {hasUnsavedChanges && (
+                  <div className="mt-4 bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-3">
+                    <p className="text-yellow-300 text-sm">
+                      ⚠️ You have unsaved changes. Don't forget to save!
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-6 py-4 border-t border-gray-700 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={closeEditPlaylistSongsModal}
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition duration-300"
+                    disabled={editPlaylistLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button className="bg-gray-500 text-gray-300 px-4 py-2 rounded-lg font-medium cursor-not-allowed">
+                    Add Songs (Coming Soon)
+                  </button>
+                </div>
+                
+                <button
+                  onClick={savePlaylistSongs}
+                  disabled={editPlaylistLoading || !hasUnsavedChanges}
+                  className={`px-6 py-2 rounded-lg font-medium transition duration-300 ${
+                    hasUnsavedChanges && !editPlaylistLoading
+                      ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                      : 'bg-gray-500 text-gray-300 cursor-not-allowed'
+                  }`}
+                >
+                  {editPlaylistLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
