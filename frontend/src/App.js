@@ -5762,6 +5762,16 @@ const AudienceInterface = () => {
     }
   };
 
+  const fetchPlaylists = async () => {
+    try {
+      const response = await axios.get(`${API}/musicians/${slug}/playlists`);
+      setPlaylists(response.data);
+    } catch (error) {
+      console.error('Error fetching playlists:', error);
+      setPlaylists([]); // Set empty array on error
+    }
+  };
+
   const fetchSongs = async () => {
     try {
       // First check if access is granted
