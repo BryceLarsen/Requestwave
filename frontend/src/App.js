@@ -580,6 +580,7 @@ const MusicianDashboard = () => {
   const [showPlaylistToast, setShowPlaylistToast] = useState(false);
   const [playlistToastMessage, setPlaylistToastMessage] = useState('');
   const [openDropdownId, setOpenDropdownId] = useState(null); // NEW: Track which dropdown is open
+  const [playlistsExpanded, setPlaylistsExpanded] = useState(false); // NEW: Track if playlists section is expanded
   
   // NEW: Tip functionality functions
   const handleTipButton = (songId = null) => {
