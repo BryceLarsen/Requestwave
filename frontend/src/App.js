@@ -2266,48 +2266,96 @@ const MusicianDashboard = () => {
             {/* Song Management Header */}
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Song Management</h2>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={handleBatchEnrich}
-                  disabled={batchEnrichLoading}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-bold transition duration-300 flex items-center space-x-2 flex-shrink-0"
-                >
-                  {batchEnrichLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>Enriching...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>🔍</span>
-                      <span>Auto-fill All</span>
-                    </>
+              <div className="flex gap-2">
+                {/* Song Management Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowSongManagementDropdown(!showSongManagementDropdown)}
+                    className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-bold transition duration-300 flex items-center space-x-2"
+                  >
+                    <span>⚙️ Manage Songs</span>
+                    <svg className={`w-4 h-4 transition-transform ${showSongManagementDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {/* Dropdown Menu */}
+                  {showSongManagementDropdown && (
+                    <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50">
+                      <div className="py-2">
+                        {/* Auto-fill All */}
+                        <button
+                          onClick={() => {
+                            handleBatchEnrich();
+                            setShowSongManagementDropdown(false);
+                          }}
+                          disabled={batchEnrichLoading}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-700 disabled:bg-gray-600 disabled:opacity-50 flex items-center space-x-3"
+                        >
+                          {batchEnrichLoading ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                              <span>Enriching...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-blue-400">🔍</span>
+                              <span>Auto-fill All</span>
+                            </>
+                          )}
+                        </button>
+                        
+                        {/* Add New Song */}
+                        <button
+                          onClick={() => {
+                            setShowAddSong(!showAddSong);
+                            setShowSongManagementDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
+                        >
+                          <span className="text-yellow-400">➕</span>
+                          <span>{showAddSong ? 'Hide Add Song' : 'Add New Song'}</span>
+                        </button>
+                        
+                        {/* Import Playlist */}
+                        <button
+                          onClick={() => {
+                            setShowPlaylistImport(!showPlaylistImport);
+                            setShowSongManagementDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
+                        >
+                          <span className="text-purple-400">📋</span>
+                          <span>{showPlaylistImport ? 'Hide Playlist Import' : 'Import Playlist'}</span>
+                        </button>
+                        
+                        {/* Upload CSV */}
+                        <button
+                          onClick={() => {
+                            setShowCsvUpload(!showCsvUpload);
+                            setShowSongManagementDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
+                        >
+                          <span className="text-green-400">📄</span>
+                          <span>{showCsvUpload ? 'Hide CSV Upload' : 'Upload CSV'}</span>
+                        </button>
+                        
+                        {/* Upload LST */}
+                        <button
+                          onClick={() => {
+                            setShowLstUpload(!showLstUpload);
+                            setShowSongManagementDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
+                        >
+                          <span className="text-orange-400">📝</span>
+                          <span>{showLstUpload ? 'Hide LST Upload' : 'Upload LST'}</span>
+                        </button>
+                      </div>
+                    </div>
                   )}
-                </button>
-                <button
-                  onClick={() => setShowAddSong(!showAddSong)}
-                  className="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg font-bold transition duration-300 flex-shrink-0"
-                >
-                  {showAddSong ? 'Hide Add Song' : 'Add New Song'}
-                </button>
-                <button
-                  onClick={() => setShowPlaylistImport(!showPlaylistImport)}
-                  className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-bold transition duration-300 flex-shrink-0"
-                >
-                  {showPlaylistImport ? 'Hide Playlist Import' : 'Import Playlist'}
-                </button>
-                <button
-                  onClick={() => setShowCsvUpload(!showCsvUpload)}
-                  className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold transition duration-300 flex-shrink-0"
-                >
-                  {showCsvUpload ? 'Hide CSV Upload' : 'Upload CSV'}
-                </button>
-                <button
-                  onClick={() => setShowLstUpload(!showLstUpload)}
-                  className="bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-lg font-bold transition duration-300 flex-shrink-0"
-                >
-                  {showLstUpload ? 'Hide LST Upload' : 'Upload LST'}
-                </button>
+                </div>
               </div>
             </div>
 
