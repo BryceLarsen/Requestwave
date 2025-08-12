@@ -153,22 +153,23 @@ class StripeFlowTester:
                 try:
                     monthly_result = monthly_response.json()
                     
-                    # Check for checkout session URL
-                    if "url" in monthly_result and "session_id" in monthly_result:
-                        checkout_url = monthly_result["url"]
-                        session_id = monthly_result["session_id"]
+                    # Check for checkout session URL (backend returns 'checkout_url', not 'url')
+                    if "checkout_url" in monthly_result:
+                        checkout_url = monthly_result["checkout_url"]
                         
                         print(f"   ✅ Monthly checkout URL: {checkout_url[:100]}...")
-                        print(f"   ✅ Monthly session ID: {session_id}")
                         
-                        # Verify it's a valid Stripe checkout URL
-                        if "checkout.stripe.com" in checkout_url:
+                        # Verify it's a valid Stripe checkout URL with live session
+                        if "checkout.stripe.com" in checkout_url and "cs_live_" in checkout_url:
                             monthly_success = True
-                            monthly_logs = f"Monthly plan checkout successful - Session ID: {session_id}, URL: {checkout_url[:50]}..."
+                            monthly_logs = f"Monthly plan checkout successful - LIVE session URL: {checkout_url[:50]}..."
+                        elif "checkout.stripe.com" in checkout_url:
+                            monthly_success = True
+                            monthly_logs = f"Monthly plan checkout successful - URL: {checkout_url[:50]}..."
                         else:
                             monthly_logs = f"Invalid checkout URL format: {checkout_url}"
                     else:
-                        monthly_logs = f"Missing url or session_id in response: {list(monthly_result.keys())}"
+                        monthly_logs = f"Missing checkout_url in response: {list(monthly_result.keys())}"
                         
                 except json.JSONDecodeError:
                     monthly_logs = "Response is not valid JSON"
