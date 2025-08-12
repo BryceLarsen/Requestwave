@@ -1324,9 +1324,9 @@ const MusicianDashboard = () => {
         song.genres.some(genre => genre.toLowerCase().includes(genreFilter.toLowerCase()));
       
       // Playlist filter (client-side)
-      const playlistMatch = artistFilter === '' || (() => {
+      const playlistMatch = playlistFilter === '' || (() => {
         // Find the selected playlist
-        const selectedPlaylist = playlists.find(p => p.id === artistFilter);
+        const selectedPlaylist = playlists.find(p => p.id === playlistFilter);
         if (!selectedPlaylist || !selectedPlaylist.song_ids) return false;
         // Check if current song is in the selected playlist
         return selectedPlaylist.song_ids.includes(song.id);
