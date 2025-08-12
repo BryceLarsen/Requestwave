@@ -2292,14 +2292,6 @@ const MusicianDashboard = () => {
             </button>
           ))}
           
-          {/* Help/Quick Start Button */}
-          <button
-            onClick={() => setShowQuickStart(true)}
-            className="px-2 py-2 rounded-lg font-medium transition duration-300 text-sm bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white flex items-center justify-center w-8 h-8 ml-2"
-            title="Quick Start Guide"
-          >
-            ?
-          </button>
         </div>
 
         {/* Mobile Navigation Dropdown (visible on mobile only) */}
