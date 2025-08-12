@@ -27,14 +27,14 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://livewave-music.emergent.host/api"
+BASE_URL = "https://musician-dashboard.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
-    "name": "Jazz Virtuoso",
-    "email": "jazz.virtuoso@requestwave.com",
+    "name": "Playlist Test Musician",
+    "email": "playlist.test@requestwave.com",
     "password": "SecurePassword123!"
 }
 
-# Pro account for On Stage testing
+# Pro account for playlist testing
 PRO_MUSICIAN = {
     "email": "brycelarsenmusic@gmail.com",
     "password": "RequestWave2024!"
