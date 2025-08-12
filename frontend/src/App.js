@@ -1975,6 +1975,36 @@ const MusicianDashboard = () => {
     }
   };
 
+  const batchDeleteSuggestions = async () => {
+    if (selectedSuggestions.size === 0) {
+      alert('Please select suggestions to delete');
+      return;
+    }
+
+    const confirmMessage = `Permanently delete ${selectedSuggestions.size} selected suggestion(s)? This cannot be undone.`;
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const deletePromises = Array.from(selectedSuggestions).map(suggestionId =>
+        axios.delete(`${API}/song-suggestions/${suggestionId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      );
+
+      await Promise.all(deletePromises);
+      
+      // Clear selection and refresh
+      clearSuggestionSelection();
+      fetchSongSuggestions();
+      
+      alert(`Successfully deleted ${selectedSuggestions.size} suggestion(s)`);
+    } catch (error) {
+      console.error('Error batch deleting suggestions:', error);
+      alert('Error deleting suggestions. Please try again.');
+    }
+  };
+
   // CSV Upload functions
   const handleCsvFileSelect = (e) => {
     const file = e.target.files[0];
