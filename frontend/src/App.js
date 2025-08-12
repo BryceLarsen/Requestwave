@@ -5223,7 +5223,7 @@ const MusicianDashboard = () => {
                       <h3 className="text-lg font-bold text-yellow-300 mb-3 flex items-center">
                         💰 Subscription & Payments
                       </h3>
-                      <p className="text-gray-300 text-sm mb-2">Free Plan includes limited monthly requests.</p>
+                      <p className="text-gray-300 text-sm mb-2">Free 14-day trial with unlimited requests.</p>
                       <p className="text-yellow-200 text-sm font-bold mb-2">Pro Plan ($10/month or $5/month annually) gives you:</p>
                       <ul className="text-gray-300 text-sm space-y-1">
                         <li>• Unlimited requests</li>
