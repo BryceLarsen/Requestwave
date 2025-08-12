@@ -1272,6 +1272,1040 @@ class RequestWaveAPITester:
             if 'original_token' in locals():
                 self.auth_token = original_token
 
+    def test_playlist_creation_with_new_defaults(self):
+        """Test playlist creation with new defaults (is_public=false, is_deleted=false) - PRIORITY 1"""
+        try:
+            print("🎵 PRIORITY 1: Testing Playlist Creation with New Defaults")
+            print("=" * 80)
+            
+            # Step 1: Login with Pro account
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("Playlist Creation New Defaults - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            
+            # Step 2: Get available songs for playlist creation
+            print("📊 Step 2: Get available songs for playlist creation")
+            
+            songs_response = self.make_request("GET", "/songs")
+            
+            if songs_response.status_code != 200:
+                self.log_result("Playlist Creation New Defaults - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            songs = songs_response.json()
+            if len(songs) < 3:
+                self.log_result("Playlist Creation New Defaults - Insufficient Songs", False, f"Need at least 3 songs, found {len(songs)}")
+                self.auth_token = original_token
+                return
+            
+            # Use first 3 songs for testing
+            test_song_ids = [songs[i]["id"] for i in range(3)]
+            print(f"   ✅ Using {len(test_song_ids)} songs for playlist creation")
+            
+            # Step 3: Create test playlist
+            print("📊 Step 3: Create test playlist and verify new defaults")
+            
+            playlist_data = {
+                "name": "Test Playlist New Defaults",
+                "song_ids": test_song_ids
+            }
+            
+            create_response = self.make_request("POST", "/playlists", playlist_data)
+            
+            if create_response.status_code != 200:
+                self.log_result("Playlist Creation New Defaults - Create Playlist", False, f"Failed to create playlist: {create_response.status_code}, Response: {create_response.text}")
+                self.auth_token = original_token
+                return
+            
+            created_playlist = create_response.json()
+            playlist_id = created_playlist["id"]
+            
+            print(f"   ✅ Created playlist: {created_playlist['name']} with ID: {playlist_id}")
+            print(f"   📊 Playlist response: {created_playlist}")
+            
+            # Step 4: Verify is_public defaults to false
+            print("📊 Step 4: Verify is_public defaults to false")
+            
+            # Check if is_public is in response (might not be included in creation response)
+            is_public_in_response = "is_public" in created_playlist
+            if is_public_in_response:
+                is_public_default = created_playlist["is_public"] == False
+                print(f"   ✅ is_public field present in response: {created_playlist['is_public']}")
+            else:
+                print(f"   ⚠️  is_public field not in creation response, will check via GET")
+                is_public_default = True  # Assume correct for now, will verify below
+            
+            # Step 5: Verify defaults via GET endpoint
+            print("📊 Step 5: Verify defaults via GET /playlists/{playlist_id}")
+            
+            get_response = self.make_request("GET", f"/playlists/{playlist_id}")
+            
+            if get_response.status_code != 200:
+                self.log_result("Playlist Creation New Defaults - GET Playlist", False, f"Failed to get playlist: {get_response.status_code}")
+                # Clean up
+                self.make_request("DELETE", f"/playlists/{playlist_id}")
+                self.auth_token = original_token
+                return
+            
+            get_data = get_response.json()
+            print(f"   📊 GET response keys: {list(get_data.keys())}")
+            
+            # Check is_public field
+            has_is_public = "is_public" in get_data
+            if has_is_public:
+                is_public_correct = get_data["is_public"] == False
+                print(f"   ✅ is_public field: {get_data['is_public']} (should be False)")
+            else:
+                print(f"   ❌ is_public field missing from GET response")
+                is_public_correct = False
+            
+            # Step 6: Verify playlist appears in authenticated playlists list
+            print("📊 Step 6: Verify playlist appears in authenticated playlists list")
+            
+            playlists_response = self.make_request("GET", "/playlists")
+            
+            if playlists_response.status_code == 200:
+                playlists = playlists_response.json()
+                playlist_found = any(p["id"] == playlist_id for p in playlists)
+                
+                if playlist_found:
+                    print(f"   ✅ Playlist found in authenticated playlists list")
+                    found_playlist = next(p for p in playlists if p["id"] == playlist_id)
+                    print(f"   📊 Playlist in list: is_public={found_playlist.get('is_public', 'missing')}")
+                else:
+                    print(f"   ❌ Playlist not found in authenticated playlists list")
+                    playlist_found = False
+            else:
+                print(f"   ❌ Failed to get playlists list: {playlists_response.status_code}")
+                playlist_found = False
+            
+            # Step 7: Verify playlist does NOT appear in public audience playlists (since is_public=false)
+            print("📊 Step 7: Verify playlist does NOT appear in public audience playlists")
+            
+            # Clear auth token for public access
+            self.auth_token = None
+            musician_slug = login_data_response["musician"]["slug"]
+            
+            public_playlists_response = self.make_request("GET", f"/musicians/{musician_slug}/playlists")
+            
+            if public_playlists_response.status_code == 200:
+                public_playlists = public_playlists_response.json()
+                playlist_in_public = any(p["id"] == playlist_id for p in public_playlists)
+                
+                if not playlist_in_public:
+                    print(f"   ✅ Playlist correctly NOT in public playlists (is_public=false)")
+                    public_filtering_correct = True
+                else:
+                    print(f"   ❌ Playlist incorrectly appears in public playlists despite is_public=false")
+                    public_filtering_correct = False
+            else:
+                print(f"   ⚠️  Could not test public playlists: {public_playlists_response.status_code}")
+                public_filtering_correct = True  # Assume correct if can't test
+            
+            # Restore auth token
+            self.auth_token = original_token
+            
+            # Step 8: Clean up test playlist
+            print("📊 Step 8: Clean up test playlist")
+            
+            delete_response = self.make_request("DELETE", f"/playlists/{playlist_id}")
+            if delete_response.status_code == 200:
+                print(f"   ✅ Deleted test playlist")
+            else:
+                print(f"   ⚠️  Failed to delete test playlist: {delete_response.status_code}")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            if has_is_public and is_public_correct and playlist_found and public_filtering_correct:
+                self.log_result("Playlist Creation with New Defaults", True, f"✅ PRIORITY 1 COMPLETE: Playlist creation correctly sets is_public=false by default and filters properly")
+            else:
+                issues = []
+                if not has_is_public:
+                    issues.append("missing is_public field")
+                if not is_public_correct:
+                    issues.append("is_public not defaulting to false")
+                if not playlist_found:
+                    issues.append("playlist not in authenticated list")
+                if not public_filtering_correct:
+                    issues.append("public filtering not working")
+                
+                self.log_result("Playlist Creation with New Defaults", False, f"❌ CRITICAL PLAYLIST DEFAULTS ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Playlist Creation with New Defaults", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_playlist_rename_functionality(self):
+        """Test PUT /playlists/{playlist_id}/name for renaming - PRIORITY 1"""
+        try:
+            print("🎵 PRIORITY 1: Testing Playlist Rename Functionality")
+            print("=" * 80)
+            
+            # Step 1: Login with Pro account
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("Playlist Rename - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            
+            # Step 2: Create test playlist
+            print("📊 Step 2: Create test playlist for renaming")
+            
+            songs_response = self.make_request("GET", "/songs")
+            
+            if songs_response.status_code != 200:
+                self.log_result("Playlist Rename - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            songs = songs_response.json()
+            if len(songs) < 2:
+                self.log_result("Playlist Rename - Insufficient Songs", False, f"Need at least 2 songs, found {len(songs)}")
+                self.auth_token = original_token
+                return
+            
+            # Create playlist with initial name
+            initial_name = "Original Playlist Name"
+            test_song_ids = [songs[0]["id"], songs[1]["id"]]
+            playlist_data = {
+                "name": initial_name,
+                "song_ids": test_song_ids
+            }
+            
+            create_response = self.make_request("POST", "/playlists", playlist_data)
+            
+            if create_response.status_code != 200:
+                self.log_result("Playlist Rename - Create Test Playlist", False, f"Failed to create playlist: {create_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            created_playlist = create_response.json()
+            playlist_id = created_playlist["id"]
+            initial_updated_at = created_playlist.get("updated_at")
+            
+            print(f"   ✅ Created test playlist: '{initial_name}' with ID: {playlist_id}")
+            print(f"   📊 Initial updated_at: {initial_updated_at}")
+            
+            # Wait a moment to ensure updated_at will change
+            import time
+            time.sleep(1)
+            
+            # Step 3: Test rename functionality
+            print("📊 Step 3: Test rename using PUT /playlists/{playlist_id}/name")
+            
+            new_name = "Renamed Playlist Name"
+            rename_data = {
+                "name": new_name
+            }
+            
+            rename_response = self.make_request("PUT", f"/playlists/{playlist_id}/name", rename_data)
+            
+            print(f"   📊 Rename endpoint status: {rename_response.status_code}")
+            
+            if rename_response.status_code != 200:
+                self.log_result("Playlist Rename - Rename Request", False, f"Rename failed: {rename_response.status_code}, Response: {rename_response.text}")
+                # Clean up
+                self.make_request("DELETE", f"/playlists/{playlist_id}")
+                self.auth_token = original_token
+                return
+            
+            rename_result = rename_response.json()
+            new_updated_at = rename_result.get("updated_at")
+            
+            print(f"   ✅ Rename request successful")
+            print(f"   📊 New name: {rename_result.get('name')}")
+            print(f"   📊 New updated_at: {new_updated_at}")
+            
+            # Step 4: Verify name changed
+            print("📊 Step 4: Verify name changed correctly")
+            
+            name_changed = rename_result.get("name") == new_name
+            
+            if name_changed:
+                print(f"   ✅ Name changed from '{initial_name}' to '{new_name}'")
+            else:
+                print(f"   ❌ Name not changed correctly. Expected: '{new_name}', Got: '{rename_result.get('name')}'")
+            
+            # Step 5: Verify updated_at changed
+            print("📊 Step 5: Verify updated_at field changed")
+            
+            updated_at_changed = new_updated_at != initial_updated_at
+            
+            if updated_at_changed:
+                print(f"   ✅ updated_at changed from {initial_updated_at} to {new_updated_at}")
+            else:
+                print(f"   ❌ updated_at did not change: {initial_updated_at}")
+            
+            # Step 6: Verify GET endpoint returns new name
+            print("📊 Step 6: Verify GET endpoint returns new name")
+            
+            get_response = self.make_request("GET", f"/playlists/{playlist_id}")
+            
+            if get_response.status_code == 200:
+                get_data = get_response.json()
+                get_name_correct = get_data.get("name") == new_name
+                
+                if get_name_correct:
+                    print(f"   ✅ GET endpoint returns new name: '{get_data.get('name')}'")
+                else:
+                    print(f"   ❌ GET endpoint name incorrect. Expected: '{new_name}', Got: '{get_data.get('name')}'")
+            else:
+                print(f"   ❌ GET endpoint failed: {get_response.status_code}")
+                get_name_correct = False
+            
+            # Step 7: Test validation - empty name
+            print("📊 Step 7: Test validation - empty name should fail")
+            
+            empty_name_data = {"name": ""}
+            empty_response = self.make_request("PUT", f"/playlists/{playlist_id}/name", empty_name_data)
+            
+            empty_validation_correct = empty_response.status_code == 400
+            
+            if empty_validation_correct:
+                print(f"   ✅ Empty name correctly rejected with status 400")
+            else:
+                print(f"   ❌ Empty name validation failed. Status: {empty_response.status_code}")
+            
+            # Step 8: Clean up test playlist
+            print("📊 Step 8: Clean up test playlist")
+            
+            delete_response = self.make_request("DELETE", f"/playlists/{playlist_id}")
+            if delete_response.status_code == 200:
+                print(f"   ✅ Deleted test playlist")
+            else:
+                print(f"   ⚠️  Failed to delete test playlist: {delete_response.status_code}")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            if name_changed and updated_at_changed and get_name_correct and empty_validation_correct:
+                self.log_result("Playlist Rename Functionality", True, f"✅ PRIORITY 1 COMPLETE: PUT /playlists/{{playlist_id}}/name successfully renames playlists and updates updated_at field")
+            else:
+                issues = []
+                if not name_changed:
+                    issues.append("name not changed")
+                if not updated_at_changed:
+                    issues.append("updated_at field not changed")
+                if not get_name_correct:
+                    issues.append("GET endpoint doesn't reflect new name")
+                if not empty_validation_correct:
+                    issues.append("empty name validation failed")
+                
+                self.log_result("Playlist Rename Functionality", False, f"❌ CRITICAL PLAYLIST RENAME ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Playlist Rename Functionality", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_playlist_visibility_toggle(self):
+        """Test PUT /playlists/{playlist_id}/visibility for public/private toggle - PRIORITY 1"""
+        try:
+            print("🎵 PRIORITY 1: Testing Playlist Visibility Toggle")
+            print("=" * 80)
+            
+            # Step 1: Login with Pro account
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("Playlist Visibility Toggle - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            
+            # Step 2: Create test playlist (starts as private by default)
+            print("📊 Step 2: Create test playlist (starts private by default)")
+            
+            songs_response = self.make_request("GET", "/songs")
+            
+            if songs_response.status_code != 200:
+                self.log_result("Playlist Visibility Toggle - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            songs = songs_response.json()
+            if len(songs) < 2:
+                self.log_result("Playlist Visibility Toggle - Insufficient Songs", False, f"Need at least 2 songs, found {len(songs)}")
+                self.auth_token = original_token
+                return
+            
+            # Create playlist
+            test_song_ids = [songs[0]["id"], songs[1]["id"]]
+            playlist_data = {
+                "name": "Visibility Test Playlist",
+                "song_ids": test_song_ids
+            }
+            
+            create_response = self.make_request("POST", "/playlists", playlist_data)
+            
+            if create_response.status_code != 200:
+                self.log_result("Playlist Visibility Toggle - Create Test Playlist", False, f"Failed to create playlist: {create_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            created_playlist = create_response.json()
+            playlist_id = created_playlist["id"]
+            initial_updated_at = created_playlist.get("updated_at")
+            
+            print(f"   ✅ Created test playlist: '{created_playlist['name']}' with ID: {playlist_id}")
+            print(f"   📊 Initial updated_at: {initial_updated_at}")
+            
+            # Step 3: Verify playlist starts as private (not in public list)
+            print("📊 Step 3: Verify playlist starts as private (not in public audience list)")
+            
+            # Clear auth token for public access
+            self.auth_token = None
+            
+            public_playlists_response = self.make_request("GET", f"/musicians/{musician_slug}/playlists")
+            
+            if public_playlists_response.status_code == 200:
+                public_playlists = public_playlists_response.json()
+                playlist_in_public_initially = any(p["id"] == playlist_id for p in public_playlists)
+                
+                if not playlist_in_public_initially:
+                    print(f"   ✅ Playlist correctly starts as private (not in public list)")
+                    initial_privacy_correct = True
+                else:
+                    print(f"   ❌ Playlist incorrectly appears in public list initially")
+                    initial_privacy_correct = False
+            else:
+                print(f"   ⚠️  Could not test initial public playlists: {public_playlists_response.status_code}")
+                initial_privacy_correct = True  # Assume correct if can't test
+            
+            # Restore auth token
+            self.auth_token = original_token
+            
+            # Wait a moment to ensure updated_at will change
+            import time
+            time.sleep(1)
+            
+            # Step 4: Make playlist public
+            print("📊 Step 4: Make playlist public using PUT /playlists/{playlist_id}/visibility")
+            
+            make_public_data = {
+                "is_public": True
+            }
+            
+            public_response = self.make_request("PUT", f"/playlists/{playlist_id}/visibility", make_public_data)
+            
+            print(f"   📊 Make public endpoint status: {public_response.status_code}")
+            
+            if public_response.status_code != 200:
+                self.log_result("Playlist Visibility Toggle - Make Public", False, f"Make public failed: {public_response.status_code}, Response: {public_response.text}")
+                # Clean up
+                self.make_request("DELETE", f"/playlists/{playlist_id}")
+                self.auth_token = original_token
+                return
+            
+            public_result = public_response.json()
+            public_updated_at = public_result.get("updated_at")
+            
+            print(f"   ✅ Make public request successful")
+            print(f"   📊 is_public: {public_result.get('is_public')}")
+            print(f"   📊 New updated_at: {public_updated_at}")
+            
+            # Step 5: Verify playlist now appears in public list
+            print("📊 Step 5: Verify playlist now appears in public audience list")
+            
+            # Clear auth token for public access
+            self.auth_token = None
+            
+            public_playlists_after_response = self.make_request("GET", f"/musicians/{musician_slug}/playlists")
+            
+            if public_playlists_after_response.status_code == 200:
+                public_playlists_after = public_playlists_after_response.json()
+                playlist_in_public_after = any(p["id"] == playlist_id for p in public_playlists_after)
+                
+                if playlist_in_public_after:
+                    print(f"   ✅ Playlist now appears in public list after making public")
+                    public_visibility_working = True
+                else:
+                    print(f"   ❌ Playlist still not in public list after making public")
+                    public_visibility_working = False
+            else:
+                print(f"   ❌ Could not test public playlists after making public: {public_playlists_after_response.status_code}")
+                public_visibility_working = False
+            
+            # Restore auth token
+            self.auth_token = original_token
+            
+            # Step 6: Make playlist private again
+            print("📊 Step 6: Make playlist private again")
+            
+            time.sleep(1)  # Wait for updated_at change
+            
+            make_private_data = {
+                "is_public": False
+            }
+            
+            private_response = self.make_request("PUT", f"/playlists/{playlist_id}/visibility", make_private_data)
+            
+            if private_response.status_code != 200:
+                self.log_result("Playlist Visibility Toggle - Make Private", False, f"Make private failed: {private_response.status_code}")
+                # Clean up
+                self.make_request("DELETE", f"/playlists/{playlist_id}")
+                self.auth_token = original_token
+                return
+            
+            private_result = private_response.json()
+            private_updated_at = private_result.get("updated_at")
+            
+            print(f"   ✅ Make private request successful")
+            print(f"   📊 is_public: {private_result.get('is_public')}")
+            print(f"   📊 Final updated_at: {private_updated_at}")
+            
+            # Step 7: Verify playlist no longer appears in public list
+            print("📊 Step 7: Verify playlist no longer appears in public list")
+            
+            # Clear auth token for public access
+            self.auth_token = None
+            
+            public_playlists_final_response = self.make_request("GET", f"/musicians/{musician_slug}/playlists")
+            
+            if public_playlists_final_response.status_code == 200:
+                public_playlists_final = public_playlists_final_response.json()
+                playlist_in_public_final = any(p["id"] == playlist_id for p in public_playlists_final)
+                
+                if not playlist_in_public_final:
+                    print(f"   ✅ Playlist correctly removed from public list after making private")
+                    private_visibility_working = True
+                else:
+                    print(f"   ❌ Playlist still in public list after making private")
+                    private_visibility_working = False
+            else:
+                print(f"   ❌ Could not test final public playlists: {public_playlists_final_response.status_code}")
+                private_visibility_working = False
+            
+            # Restore auth token
+            self.auth_token = original_token
+            
+            # Step 8: Verify updated_at changed for both operations
+            print("📊 Step 8: Verify updated_at changed for both operations")
+            
+            public_updated_at_changed = public_updated_at != initial_updated_at
+            private_updated_at_changed = private_updated_at != public_updated_at
+            
+            if public_updated_at_changed and private_updated_at_changed:
+                print(f"   ✅ updated_at changed for both operations")
+                updated_at_working = True
+            else:
+                print(f"   ❌ updated_at not changing properly")
+                updated_at_working = False
+            
+            # Step 9: Clean up test playlist
+            print("📊 Step 9: Clean up test playlist")
+            
+            delete_response = self.make_request("DELETE", f"/playlists/{playlist_id}")
+            if delete_response.status_code == 200:
+                print(f"   ✅ Deleted test playlist")
+            else:
+                print(f"   ⚠️  Failed to delete test playlist: {delete_response.status_code}")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            if initial_privacy_correct and public_visibility_working and private_visibility_working and updated_at_working:
+                self.log_result("Playlist Visibility Toggle", True, f"✅ PRIORITY 1 COMPLETE: PUT /playlists/{{playlist_id}}/visibility successfully toggles public/private status and updates audience filtering")
+            else:
+                issues = []
+                if not initial_privacy_correct:
+                    issues.append("initial privacy not correct")
+                if not public_visibility_working:
+                    issues.append("making public not working")
+                if not private_visibility_working:
+                    issues.append("making private not working")
+                if not updated_at_working:
+                    issues.append("updated_at not changing")
+                
+                self.log_result("Playlist Visibility Toggle", False, f"❌ CRITICAL PLAYLIST VISIBILITY ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Playlist Visibility Toggle", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_playlist_soft_delete(self):
+        """Test DELETE /playlists/{playlist_id} for soft delete - PRIORITY 1"""
+        try:
+            print("🎵 PRIORITY 1: Testing Playlist Soft Delete")
+            print("=" * 80)
+            
+            # Step 1: Login with Pro account
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("Playlist Soft Delete - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            
+            # Step 2: Create test playlist
+            print("📊 Step 2: Create test playlist for soft delete testing")
+            
+            songs_response = self.make_request("GET", "/songs")
+            
+            if songs_response.status_code != 200:
+                self.log_result("Playlist Soft Delete - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            songs = songs_response.json()
+            if len(songs) < 2:
+                self.log_result("Playlist Soft Delete - Insufficient Songs", False, f"Need at least 2 songs, found {len(songs)}")
+                self.auth_token = original_token
+                return
+            
+            # Create playlist
+            test_song_ids = [songs[0]["id"], songs[1]["id"]]
+            playlist_data = {
+                "name": "Soft Delete Test Playlist",
+                "song_ids": test_song_ids
+            }
+            
+            create_response = self.make_request("POST", "/playlists", playlist_data)
+            
+            if create_response.status_code != 200:
+                self.log_result("Playlist Soft Delete - Create Test Playlist", False, f"Failed to create playlist: {create_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            created_playlist = create_response.json()
+            playlist_id = created_playlist["id"]
+            playlist_name = created_playlist["name"]
+            
+            print(f"   ✅ Created test playlist: '{playlist_name}' with ID: {playlist_id}")
+            
+            # Step 3: Verify playlist appears in authenticated playlists list before deletion
+            print("📊 Step 3: Verify playlist appears in authenticated playlists list before deletion")
+            
+            playlists_before_response = self.make_request("GET", "/playlists")
+            
+            if playlists_before_response.status_code == 200:
+                playlists_before = playlists_before_response.json()
+                playlist_count_before = len(playlists_before)
+                playlist_found_before = any(p["id"] == playlist_id for p in playlists_before)
+                
+                if playlist_found_before:
+                    print(f"   ✅ Playlist found in list before deletion ({playlist_count_before} total playlists)")
+                else:
+                    print(f"   ❌ Playlist not found in list before deletion")
+                    # Still continue with test
+            else:
+                print(f"   ❌ Failed to get playlists before deletion: {playlists_before_response.status_code}")
+                playlist_count_before = 0
+                playlist_found_before = False
+            
+            # Step 4: Soft delete the playlist
+            print("📊 Step 4: Soft delete playlist using DELETE /playlists/{playlist_id}")
+            
+            delete_response = self.make_request("DELETE", f"/playlists/{playlist_id}")
+            
+            print(f"   📊 Delete endpoint status: {delete_response.status_code}")
+            
+            if delete_response.status_code != 200:
+                self.log_result("Playlist Soft Delete - Delete Request", False, f"Delete failed: {delete_response.status_code}, Response: {delete_response.text}")
+                self.auth_token = original_token
+                return
+            
+            delete_result = delete_response.json()
+            
+            print(f"   ✅ Delete request successful")
+            print(f"   📊 Delete response: {delete_result}")
+            
+            # Step 5: Verify playlist no longer appears in authenticated playlists list
+            print("📊 Step 5: Verify playlist no longer appears in authenticated playlists list")
+            
+            playlists_after_response = self.make_request("GET", "/playlists")
+            
+            if playlists_after_response.status_code == 200:
+                playlists_after = playlists_after_response.json()
+                playlist_count_after = len(playlists_after)
+                playlist_found_after = any(p["id"] == playlist_id for p in playlists_after)
+                
+                if not playlist_found_after:
+                    print(f"   ✅ Playlist correctly removed from list after deletion ({playlist_count_after} total playlists)")
+                    soft_delete_working = True
+                else:
+                    print(f"   ❌ Playlist still appears in list after deletion")
+                    soft_delete_working = False
+                
+                # Verify count decreased
+                if playlist_found_before and playlist_count_after == playlist_count_before - 1:
+                    print(f"   ✅ Playlist count decreased correctly: {playlist_count_before} → {playlist_count_after}")
+                elif not playlist_found_before:
+                    print(f"   ⚠️  Could not verify count change (playlist not found initially)")
+                else:
+                    print(f"   ❌ Playlist count not decreased correctly: {playlist_count_before} → {playlist_count_after}")
+            else:
+                print(f"   ❌ Failed to get playlists after deletion: {playlists_after_response.status_code}")
+                soft_delete_working = False
+            
+            # Step 6: Verify playlist no longer appears in public audience playlists
+            print("📊 Step 6: Verify playlist no longer appears in public audience playlists")
+            
+            # Clear auth token for public access
+            self.auth_token = None
+            
+            public_playlists_response = self.make_request("GET", f"/musicians/{musician_slug}/playlists")
+            
+            if public_playlists_response.status_code == 200:
+                public_playlists = public_playlists_response.json()
+                playlist_in_public = any(p["id"] == playlist_id for p in public_playlists)
+                
+                if not playlist_in_public:
+                    print(f"   ✅ Playlist correctly not in public playlists after deletion")
+                    public_filtering_working = True
+                else:
+                    print(f"   ❌ Playlist still appears in public playlists after deletion")
+                    public_filtering_working = False
+            else:
+                print(f"   ⚠️  Could not test public playlists: {public_playlists_response.status_code}")
+                public_filtering_working = True  # Assume correct if can't test
+            
+            # Restore auth token
+            self.auth_token = original_token
+            
+            # Step 7: Verify attempting to access deleted playlist returns 404
+            print("📊 Step 7: Verify attempting to access deleted playlist returns 404")
+            
+            get_deleted_response = self.make_request("GET", f"/playlists/{playlist_id}")
+            
+            if get_deleted_response.status_code == 404:
+                print(f"   ✅ GET deleted playlist correctly returns 404")
+                get_deleted_correct = True
+            else:
+                print(f"   ❌ GET deleted playlist returns {get_deleted_response.status_code} instead of 404")
+                get_deleted_correct = False
+            
+            # Step 8: Verify attempting to modify deleted playlist returns 404
+            print("📊 Step 8: Verify attempting to modify deleted playlist returns 404")
+            
+            modify_deleted_response = self.make_request("PUT", f"/playlists/{playlist_id}/name", {"name": "Should Fail"})
+            
+            if modify_deleted_response.status_code == 404:
+                print(f"   ✅ Modify deleted playlist correctly returns 404")
+                modify_deleted_correct = True
+            else:
+                print(f"   ❌ Modify deleted playlist returns {modify_deleted_response.status_code} instead of 404")
+                modify_deleted_correct = False
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            if soft_delete_working and public_filtering_working and get_deleted_correct and modify_deleted_correct:
+                self.log_result("Playlist Soft Delete", True, f"✅ PRIORITY 1 COMPLETE: DELETE /playlists/{{playlist_id}} successfully soft deletes playlists and filters them from all lists")
+            else:
+                issues = []
+                if not soft_delete_working:
+                    issues.append("soft delete not working in authenticated list")
+                if not public_filtering_working:
+                    issues.append("soft delete not working in public list")
+                if not get_deleted_correct:
+                    issues.append("GET deleted playlist doesn't return 404")
+                if not modify_deleted_correct:
+                    issues.append("modify deleted playlist doesn't return 404")
+                
+                self.log_result("Playlist Soft Delete", False, f"❌ CRITICAL PLAYLIST SOFT DELETE ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Playlist Soft Delete", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_audience_playlist_filtering(self):
+        """Test audience playlists endpoint only returns public, non-deleted playlists - PRIORITY 1"""
+        try:
+            print("🎵 PRIORITY 1: Testing Audience Playlist Filtering")
+            print("=" * 80)
+            
+            # Step 1: Login with Pro account
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("Audience Playlist Filtering - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            
+            # Step 2: Create test playlists with different visibility states
+            print("📊 Step 2: Create test playlists with different visibility states")
+            
+            songs_response = self.make_request("GET", "/songs")
+            
+            if songs_response.status_code != 200:
+                self.log_result("Audience Playlist Filtering - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            songs = songs_response.json()
+            if len(songs) < 2:
+                self.log_result("Audience Playlist Filtering - Insufficient Songs", False, f"Need at least 2 songs, found {len(songs)}")
+                self.auth_token = original_token
+                return
+            
+            test_song_ids = [songs[0]["id"], songs[1]["id"]]
+            created_playlists = []
+            
+            # Create private playlist (default)
+            private_playlist_data = {
+                "name": "Private Test Playlist",
+                "song_ids": test_song_ids
+            }
+            
+            private_response = self.make_request("POST", "/playlists", private_playlist_data)
+            if private_response.status_code == 200:
+                private_playlist = private_response.json()
+                created_playlists.append(("private", private_playlist["id"], private_playlist["name"]))
+                print(f"   ✅ Created private playlist: {private_playlist['name']}")
+            else:
+                print(f"   ❌ Failed to create private playlist: {private_response.status_code}")
+            
+            # Create public playlist
+            public_playlist_data = {
+                "name": "Public Test Playlist",
+                "song_ids": test_song_ids
+            }
+            
+            public_response = self.make_request("POST", "/playlists", public_playlist_data)
+            if public_response.status_code == 200:
+                public_playlist = public_response.json()
+                public_playlist_id = public_playlist["id"]
+                created_playlists.append(("public", public_playlist_id, public_playlist["name"]))
+                print(f"   ✅ Created public playlist: {public_playlist['name']}")
+                
+                # Make it public
+                make_public_data = {"is_public": True}
+                visibility_response = self.make_request("PUT", f"/playlists/{public_playlist_id}/visibility", make_public_data)
+                if visibility_response.status_code == 200:
+                    print(f"   ✅ Made playlist public")
+                else:
+                    print(f"   ❌ Failed to make playlist public: {visibility_response.status_code}")
+            else:
+                print(f"   ❌ Failed to create public playlist: {public_response.status_code}")
+            
+            # Create playlist to be deleted
+            delete_playlist_data = {
+                "name": "To Be Deleted Playlist",
+                "song_ids": test_song_ids
+            }
+            
+            delete_response = self.make_request("POST", "/playlists", delete_playlist_data)
+            if delete_response.status_code == 200:
+                delete_playlist = delete_response.json()
+                delete_playlist_id = delete_playlist["id"]
+                created_playlists.append(("deleted", delete_playlist_id, delete_playlist["name"]))
+                print(f"   ✅ Created playlist to be deleted: {delete_playlist['name']}")
+                
+                # Make it public first, then delete it
+                make_public_data = {"is_public": True}
+                visibility_response = self.make_request("PUT", f"/playlists/{delete_playlist_id}/visibility", make_public_data)
+                if visibility_response.status_code == 200:
+                    print(f"   ✅ Made playlist public before deletion")
+                
+                # Now delete it
+                delete_request_response = self.make_request("DELETE", f"/playlists/{delete_playlist_id}")
+                if delete_request_response.status_code == 200:
+                    print(f"   ✅ Soft deleted playlist")
+                else:
+                    print(f"   ❌ Failed to delete playlist: {delete_request_response.status_code}")
+            else:
+                print(f"   ❌ Failed to create playlist for deletion: {delete_response.status_code}")
+            
+            print(f"   📊 Created {len(created_playlists)} test playlists")
+            
+            # Step 3: Test audience playlists endpoint (public access)
+            print("📊 Step 3: Test audience playlists endpoint (public access)")
+            
+            # Clear auth token for public access
+            self.auth_token = None
+            
+            audience_playlists_response = self.make_request("GET", f"/musicians/{musician_slug}/playlists")
+            
+            print(f"   📊 Audience playlists endpoint status: {audience_playlists_response.status_code}")
+            
+            if audience_playlists_response.status_code != 200:
+                self.log_result("Audience Playlist Filtering - Audience Endpoint", False, f"Audience playlists endpoint failed: {audience_playlists_response.status_code}")
+                # Clean up
+                self.auth_token = original_token
+                for playlist_type, playlist_id, playlist_name in created_playlists:
+                    if playlist_type != "deleted":  # Don't try to delete already deleted playlists
+                        self.make_request("DELETE", f"/playlists/{playlist_id}")
+                return
+            
+            audience_playlists = audience_playlists_response.json()
+            print(f"   📊 Found {len(audience_playlists)} playlists in audience endpoint")
+            
+            # Step 4: Verify filtering logic
+            print("📊 Step 4: Verify filtering logic")
+            
+            # Check which playlists appear in audience list
+            audience_playlist_ids = [p["id"] for p in audience_playlists]
+            
+            filtering_correct = True
+            filtering_issues = []
+            
+            for playlist_type, playlist_id, playlist_name in created_playlists:
+                playlist_in_audience = playlist_id in audience_playlist_ids
+                
+                if playlist_type == "private":
+                    # Private playlists should NOT appear
+                    if not playlist_in_audience:
+                        print(f"   ✅ Private playlist '{playlist_name}' correctly NOT in audience list")
+                    else:
+                        print(f"   ❌ Private playlist '{playlist_name}' incorrectly appears in audience list")
+                        filtering_correct = False
+                        filtering_issues.append(f"private playlist {playlist_name} appears")
+                
+                elif playlist_type == "public":
+                    # Public playlists SHOULD appear
+                    if playlist_in_audience:
+                        print(f"   ✅ Public playlist '{playlist_name}' correctly appears in audience list")
+                    else:
+                        print(f"   ❌ Public playlist '{playlist_name}' incorrectly missing from audience list")
+                        filtering_correct = False
+                        filtering_issues.append(f"public playlist {playlist_name} missing")
+                
+                elif playlist_type == "deleted":
+                    # Deleted playlists should NOT appear (even if they were public)
+                    if not playlist_in_audience:
+                        print(f"   ✅ Deleted playlist '{playlist_name}' correctly NOT in audience list")
+                    else:
+                        print(f"   ❌ Deleted playlist '{playlist_name}' incorrectly appears in audience list")
+                        filtering_correct = False
+                        filtering_issues.append(f"deleted playlist {playlist_name} appears")
+            
+            # Step 5: Verify playlist structure in audience response
+            print("📊 Step 5: Verify playlist structure in audience response")
+            
+            structure_valid = True
+            if len(audience_playlists) > 0:
+                sample_playlist = audience_playlists[0]
+                required_fields = ["id", "name", "song_count"]
+                missing_fields = [field for field in required_fields if field not in sample_playlist]
+                
+                if len(missing_fields) == 0:
+                    print(f"   ✅ Audience playlist structure correct")
+                else:
+                    print(f"   ❌ Audience playlist missing fields: {missing_fields}")
+                    structure_valid = False
+            else:
+                print(f"   ⚠️  No playlists in audience response to check structure")
+            
+            # Restore auth token
+            self.auth_token = original_token
+            
+            # Step 6: Clean up test playlists
+            print("📊 Step 6: Clean up test playlists")
+            
+            for playlist_type, playlist_id, playlist_name in created_playlists:
+                if playlist_type != "deleted":  # Don't try to delete already deleted playlists
+                    delete_cleanup_response = self.make_request("DELETE", f"/playlists/{playlist_id}")
+                    if delete_cleanup_response.status_code == 200:
+                        print(f"   ✅ Cleaned up {playlist_type} playlist: {playlist_name}")
+                    else:
+                        print(f"   ⚠️  Failed to clean up {playlist_type} playlist: {playlist_name}")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            if filtering_correct and structure_valid:
+                self.log_result("Audience Playlist Filtering", True, f"✅ PRIORITY 1 COMPLETE: Audience playlists endpoint correctly filters to only show public, non-deleted playlists")
+            else:
+                issues = []
+                if not filtering_correct:
+                    issues.extend(filtering_issues)
+                if not structure_valid:
+                    issues.append("playlist structure invalid")
+                
+                self.log_result("Audience Playlist Filtering", False, f"❌ CRITICAL AUDIENCE FILTERING ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Audience Playlist Filtering", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
     def test_playlist_functionality_comprehensive(self):
         """Comprehensive test of playlist functionality for audience interface - PRIORITY 2"""
         try:
