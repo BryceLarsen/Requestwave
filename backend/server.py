@@ -86,7 +86,7 @@ class CustomAPIRoute(APIRoute):
     def get_route_handler(self) -> Callable:
         original_route_handler = super().get_route_handler()
         
-        async def custom_route_handler(request: Request) -> Response:
+        async def custom_route_handler(request: FastAPIRequest) -> Response:
             # Log which handler is being called
             endpoint_name = self.endpoint.__name__ if self.endpoint else "unknown"
             print(f"🚀 HANDLER_CALLED path={request.url.path} endpoint={endpoint_name}")
