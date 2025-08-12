@@ -14060,38 +14060,39 @@ if __name__ == "__main__":
     tester = RequestWaveAPITester()
     
 def main():
-    """Run playlist editing backend endpoints tests"""
-    print("🎵 PLAYLIST EDITING BACKEND ENDPOINTS TESTING")
+    """Run comprehensive playlist management backend tests"""
+    print("🎵 COMPREHENSIVE PLAYLIST MANAGEMENT BACKEND TESTING")
     print("=" * 80)
-    print("Testing new playlist editing backend endpoints as requested:")
-    print("1. Test playlist creation with updated_at field")
-    print("2. GET /api/playlists/{playlist_id} - returns detailed playlist with ordered song_ids")
-    print("3. PUT /api/playlists/{playlist_id}/songs - replaces entire song list, removes duplicates")
-    print("4. DELETE /api/playlists/{playlist_id}/songs/{song_id} - removes single song")
-    print("5. Test duplicate handling in PUT endpoint")
+    print("Testing comprehensive playlist management backend updates as requested:")
+    print("1. Test playlist creation with new defaults (is_public=false, is_deleted=false)")
+    print("2. PUT /api/playlists/{playlist_id}/name - rename functionality")
+    print("3. PUT /api/playlists/{playlist_id}/visibility - public/private toggle")
+    print("4. DELETE /api/playlists/{playlist_id} - soft delete (sets is_deleted=true)")
+    print("5. Test audience filtering (only public, non-deleted playlists)")
+    print("6. Test active playlist clearing when playlist is deleted or made private")
     print("Test Credentials: brycelarsenmusic@gmail.com / RequestWave2024!")
     print("=" * 80)
     
     tester = RequestWaveAPITester()
     
-    # Test 1: Playlist creation with updated_at field
-    tester.test_playlist_creation_with_updated_at()
+    # Test 1: Playlist creation with new defaults
+    tester.test_playlist_creation_with_new_defaults()
     
-    # Test 2: GET /playlists/{playlist_id} endpoint
-    tester.test_get_playlist_detail_endpoint()
+    # Test 2: Playlist rename functionality
+    tester.test_playlist_rename_functionality()
     
-    # Test 3: PUT /playlists/{playlist_id}/songs for reordering
-    tester.test_put_playlist_songs_reorder()
+    # Test 3: Playlist visibility toggle
+    tester.test_playlist_visibility_toggle()
     
-    # Test 4: DELETE /playlists/{playlist_id}/songs/{song_id}
-    tester.test_delete_single_song_from_playlist()
+    # Test 4: Playlist soft delete
+    tester.test_playlist_soft_delete()
     
-    # Test 5: Duplicate handling in PUT endpoint
-    tester.test_duplicate_handling_in_put_endpoint()
+    # Test 5: Audience playlist filtering
+    tester.test_audience_playlist_filtering()
     
     # Print final results
     print("\n" + "=" * 80)
-    print("🎵 PLAYLIST EDITING BACKEND ENDPOINTS TEST RESULTS")
+    print("🎵 COMPREHENSIVE PLAYLIST MANAGEMENT TEST RESULTS")
     print("=" * 80)
     print(f"✅ Tests Passed: {tester.results['passed']}")
     print(f"❌ Tests Failed: {tester.results['failed']}")
