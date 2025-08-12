@@ -5140,7 +5140,7 @@ const MusicianDashboard = () => {
                       <div>
                         <h4 className="font-bold text-purple-200 mb-2">3. Customize Your Page</h4>
                         <p className="text-gray-300 text-sm">• Go to the <span className="text-green-300">Design</span> tab to choose your theme and layout.</p>
-                        <p className="text-gray-300 text-sm">• Add social links, tip options (PayPal/Venmo), and artist photo (Pro users only).</p>
+                        <p className="text-gray-300 text-sm">• Add social links, tip options (PayPal/Venmo), and artist photo.</p>
                         <p className="text-gray-300 text-sm">• Select which playlist is active from the <span className="text-green-300">Profile</span> tab.</p>
                       </div>
                       
