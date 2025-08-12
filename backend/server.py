@@ -4291,8 +4291,10 @@ async def create_playlist(
             id=playlist_dict["id"],
             name=playlist_dict["name"],
             song_count=len(playlist_dict["song_ids"]),
+            song_ids=playlist_dict["song_ids"],  # NEW: Include song_ids
             is_active=is_active,
-            created_at=playlist_dict["created_at"]
+            created_at=playlist_dict["created_at"],
+            updated_at=playlist_dict["updated_at"]  # NEW: Include updated_at
         )
         
     except HTTPException:
