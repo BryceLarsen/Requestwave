@@ -3408,10 +3408,8 @@ const MusicianDashboard = () => {
                             {/* 3-Dot Menu */}
                             <div className="relative">
                               <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  const menu = e.currentTarget.nextElementSibling;
-                                  menu.classList.toggle('hidden');
+                                onClick={() => {
+                                  setOpenDropdownId(openDropdownId === playlist.id ? null : playlist.id);
                                 }}
                                 className="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-sm text-white font-medium transition duration-300"
                                 title="More options"
@@ -3420,40 +3418,54 @@ const MusicianDashboard = () => {
                               </button>
                               
                               {/* Dropdown Menu */}
-                              <div className="hidden absolute right-0 top-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-10 min-w-[150px]">
-                                <button
-                                  onClick={() => startEditingPlaylistName(playlist.id, playlist.name)}
-                                  className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 flex items-center space-x-2"
-                                >
-                                  <span>✏️</span>
-                                  <span>Rename</span>
-                                </button>
-                                <button
-                                  onClick={() => togglePlaylistVisibility(playlist.id, playlist.is_public)}
-                                  className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 flex items-center space-x-2"
-                                >
-                                  <span>{playlist.is_public ? '🔒' : '🌐'}</span>
-                                  <span>{playlist.is_public ? 'Make Private' : 'Make Public'}</span>
-                                </button>
-                                <button
-                                  onClick={() => activatePlaylist(playlist.id)}
-                                  disabled={playlist.is_active}
-                                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-700 flex items-center space-x-2 ${
-                                    playlist.is_active ? 'text-gray-400 cursor-not-allowed' : 'text-white'
-                                  }`}
-                                >
-                                  <span>⭐</span>
-                                  <span>{playlist.is_active ? 'Active' : 'Make Active'}</span>
-                                </button>
-                                <hr className="border-gray-600 my-1" />
-                                <button
-                                  onClick={() => confirmDeletePlaylist(playlist)}
-                                  className="w-full text-left px-4 py-2 text-sm text-red-300 hover:bg-gray-700 hover:text-red-200 flex items-center space-x-2"
-                                >
-                                  <span>🗑️</span>
-                                  <span>Delete</span>
-                                </button>
-                              </div>
+                              {openDropdownId === playlist.id && (
+                                <div className="absolute right-0 top-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-10 min-w-[150px]">
+                                  <button
+                                    onClick={() => {
+                                      startEditingPlaylistName(playlist.id, playlist.name);
+                                      setOpenDropdownId(null);
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 flex items-center space-x-2"
+                                  >
+                                    <span>✏️</span>
+                                    <span>Rename</span>
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      togglePlaylistVisibility(playlist.id, playlist.is_public);
+                                      setOpenDropdownId(null);
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 flex items-center space-x-2"
+                                  >
+                                    <span>{playlist.is_public ? '🔒' : '🌐'}</span>
+                                    <span>{playlist.is_public ? 'Make Private' : 'Make Public'}</span>
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      activatePlaylist(playlist.id);
+                                      setOpenDropdownId(null);
+                                    }}
+                                    disabled={playlist.is_active}
+                                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-700 flex items-center space-x-2 ${
+                                      playlist.is_active ? 'text-gray-400 cursor-not-allowed' : 'text-white'
+                                    }`}
+                                  >
+                                    <span>⭐</span>
+                                    <span>{playlist.is_active ? 'Active' : 'Make Active'}</span>
+                                  </button>
+                                  <hr className="border-gray-600 my-1" />
+                                  <button
+                                    onClick={() => {
+                                      confirmDeletePlaylist(playlist);
+                                      setOpenDropdownId(null);
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm text-red-300 hover:bg-gray-700 hover:text-red-200 flex items-center space-x-2"
+                                  >
+                                    <span>🗑️</span>
+                                    <span>Delete</span>
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
