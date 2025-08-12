@@ -12366,3 +12366,43 @@ if __name__ == "__main__":
     total_tests = tester.results["passed"] + tester.results["failed"]
     success_rate = (tester.results["passed"] / total_tests * 100) if total_tests > 0 else 0
     exit(0 if success_rate >= 80 else 1)
+def main():
+    """Run playlist functionality tests"""
+    print("🎵 PLAYLIST FUNCTIONALITY TESTING FOR AUDIENCE INTERFACE")
+    print("=" * 80)
+    print("Testing new playlist functionality as requested:")
+    print("1. GET /api/musicians/{slug}/playlists - Public playlists endpoint")
+    print("2. GET /api/musicians/{slug}/songs?playlist={playlist_id} - Songs with playlist filtering")
+    print("3. Comprehensive playlist functionality verification")
+    print("=" * 80)
+    
+    tester = RequestWaveAPITester()
+    
+    # Test 1: Public playlists endpoint
+    tester.test_public_playlists_endpoint()
+    
+    # Test 2: Songs with playlist filtering
+    tester.test_songs_with_playlist_filtering()
+    
+    # Test 3: Comprehensive playlist functionality
+    tester.test_playlist_functionality_comprehensive()
+    
+    # Print final results
+    print("\n" + "=" * 80)
+    print("🎵 PLAYLIST FUNCTIONALITY TEST RESULTS")
+    print("=" * 80)
+    print(f"✅ Tests Passed: {tester.results['passed']}")
+    print(f"❌ Tests Failed: {tester.results['failed']}")
+    print(f"📊 Success Rate: {tester.results['passed']/(tester.results['passed']+tester.results['failed'])*100:.1f}%")
+    
+    if tester.results['errors']:
+        print("\n❌ ERRORS FOUND:")
+        for error in tester.results['errors']:
+            print(f"   • {error}")
+    
+    print("=" * 80)
+    
+    return tester.results['failed'] == 0
+
+if __name__ == "__main__":
+    main()
