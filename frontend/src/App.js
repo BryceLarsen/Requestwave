@@ -3121,7 +3121,7 @@ const MusicianDashboard = () => {
                     </select>
                     {playlistFilter && playlistFilter !== 'all_songs' && (
                       <button
-                        onClick={() => openEditPlaylistModal(playlistFilter)}
+                        onClick={() => openEditPlaylistSongsModal(playlistFilter)}
                         className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center space-x-1 transition duration-300"
                         title="Edit Playlist"
                       >
