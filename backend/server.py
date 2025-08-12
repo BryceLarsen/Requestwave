@@ -4500,6 +4500,7 @@ async def get_playlist_detail(
             "song_ids": playlist.get("song_ids", []),
             "songs": songs,
             "song_count": len(songs),
+            "is_public": playlist.get("is_public", False),  # NEW: Include public status
             "created_at": playlist["created_at"],
             "updated_at": playlist.get("updated_at", playlist["created_at"])
         }
