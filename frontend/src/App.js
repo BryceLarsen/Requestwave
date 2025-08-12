@@ -2540,7 +2540,13 @@ const MusicianDashboard = () => {
 
     } catch (error) {
       console.error('Error toggling playlist visibility:', error);
-      alert(error.response?.data?.detail || 'Error updating playlist visibility');
+      if (error.response?.status === 403) {
+        showPlaylistToastWithMessage('You can only modify your own playlists');
+      } else if (error.response?.status === 404) {
+        showPlaylistToastWithMessage('Playlist not found');
+      } else {
+        showPlaylistToastWithMessage(error.response?.data?.detail || 'Error updating playlist visibility');
+      }
     }
   };
 
