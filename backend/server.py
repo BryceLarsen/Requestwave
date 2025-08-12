@@ -4366,6 +4366,7 @@ async def get_playlists(musician_id: str = Depends(get_current_musician)):
             song_count=len(all_song_ids),
             song_ids=all_song_ids,  # NEW: Include all song IDs
             is_active=(active_playlist_id is None),
+            is_public=True,  # NEW: All Songs is always considered "public"
             created_at=datetime.utcnow(),  # This won't be used for display
             updated_at=datetime.utcnow()   # This won't be used for display
         )
