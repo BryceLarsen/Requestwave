@@ -104,7 +104,20 @@
 user_problem_statement: "Fix playlist creation bug: User reports that when they select 5 songs and create a new playlist, it doesn't show up in the playlists tab or existing playlists dropdown. Need to verify playlists are being saved and displayed correctly."
 
 backend:
-  - task: "Authentication System"
+  - task: "Playlist Creation Bug Fix"
+    implemented: true
+    working: false
+    file: "App.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reported: 'I am trying to select 5 songs, and create a new playlist, but then it does not show up under the all playlists tab, and if I try again, it is not in the existing playlists drop down.'"
+      - working: "NA"
+        agent: "main"
+        comment: "ISSUE IDENTIFIED: Backend testing shows playlist creation works correctly. Frontend fetchPlaylists() function only allowed plan === 'pro', but backend allows both 'trial' and 'pro'. Fixed frontend to check for both ['trial', 'pro'].includes(subscriptionStatus.plan) in fetchPlaylists function and useEffect."
     implemented: true
     working: true
     file: "server.py"
