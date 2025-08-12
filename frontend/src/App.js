@@ -3098,18 +3098,30 @@ const MusicianDashboard = () => {
                       <option key={genre} value={genre}>{genre}</option>
                     ))}
                   </select>
-                  <select
-                    value={playlistFilter}
-                    onChange={(e) => setPlaylistFilter(e.target.value)}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
-                  >
-                    <option value="">All Playlists</option>
-                    {playlists.map((playlist) => (
-                      <option key={playlist.id} value={playlist.id}>
-                        {playlist.name} ({playlist.song_count} songs)
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex items-center space-x-2">
+                    <select
+                      value={playlistFilter}
+                      onChange={(e) => setPlaylistFilter(e.target.value)}
+                      className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+                    >
+                      <option value="">All Playlists</option>
+                      {playlists.map((playlist) => (
+                        <option key={playlist.id} value={playlist.id}>
+                          {playlist.name} ({playlist.song_count} songs)
+                        </option>
+                      ))}
+                    </select>
+                    {playlistFilter && playlistFilter !== 'all_songs' && (
+                      <button
+                        onClick={() => openEditPlaylistModal(playlistFilter)}
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center space-x-1 transition duration-300"
+                        title="Edit Playlist"
+                      >
+                        <span>✏️</span>
+                        <span>Edit</span>
+                      </button>
+                    )}
+                  </div>
                   <select
                     value={moodFilter}
                     onChange={(e) => setMoodFilter(e.target.value)}
