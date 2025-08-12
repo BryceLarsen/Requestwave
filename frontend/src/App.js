@@ -1940,6 +1940,11 @@ const MusicianDashboard = () => {
     setSelectedSuggestions(new Set());
   };
 
+  const selectAllSuggestions = (suggestionsList) => {
+    const suggestionIds = suggestionsList.map(s => s.id);
+    setSelectedSuggestions(new Set(suggestionIds));
+  };
+
   const batchSuggestionAction = async (action) => {
     if (selectedSuggestions.size === 0) {
       alert('Please select suggestions to update');
