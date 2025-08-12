@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, UploadFile, File, Request, Response
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, UploadFile, File, Request as FastAPIRequest, Response
 from fastapi.routing import APIRoute
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
