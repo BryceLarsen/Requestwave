@@ -6308,13 +6308,18 @@ const AudienceInterface = () => {
               ))}
             </select>
             
-            <input
-              type="text"
-              placeholder="Artist name..."
-              value={selectedFilters.artist}
-              onChange={(e) => setSelectedFilters({...selectedFilters, artist: e.target.value})}
-              className="bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white placeholder-gray-400 text-sm md:text-base"
-            />
+            <select
+              value={selectedFilters.playlist}
+              onChange={(e) => setSelectedFilters({...selectedFilters, playlist: e.target.value})}
+              className="bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
+            >
+              <option value="">All Playlists</option>
+              {playlists.map((playlist) => (
+                <option key={playlist.id} value={playlist.id}>
+                  {playlist.name} ({playlist.song_count} songs)
+                </option>
+              ))}
+            </select>
             
             <select
               value={selectedFilters.mood}
