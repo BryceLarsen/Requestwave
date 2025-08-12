@@ -1545,13 +1545,6 @@ const MusicianDashboard = () => {
       fetchFilterOptions();
       fetchRequests();
       fetchDesignSettings();
-      
-      // Check if this is first login
-      const hasSeenQuickStart = localStorage.getItem(`quickstart_seen_${musician.id}`);
-      if (!hasSeenQuickStart) {
-        setIsFirstLogin(true);
-        setShowQuickStart(true);
-      }
     }
   }, [musician]);
 
