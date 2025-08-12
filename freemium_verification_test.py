@@ -229,7 +229,7 @@ class FreemiumVerificationTester:
                 # Expected case - Stripe error due to test keys
                 try:
                     response_data = response.json()
-                    if "stripe" in response.text.lower() or "error" in response_data:
+                    if "stripe" in response.text.lower() or "error" in response_data or "invalid api key" in response.text.lower():
                         self.log_result("Subscription Checkout", True, 
                                       f"✅ Checkout returns 400 with Stripe error as expected: {response_data}")
                         return True
@@ -238,9 +238,14 @@ class FreemiumVerificationTester:
                                       f"❌ Checkout returns 400 but not Stripe error: {response_data}")
                         return False
                 except json.JSONDecodeError:
-                    self.log_result("Subscription Checkout", True, 
-                                  f"✅ Checkout returns 400 with error message: {response.text}")
-                    return True
+                    if "stripe" in response.text.lower() or "invalid api key" in response.text.lower():
+                        self.log_result("Subscription Checkout", True, 
+                                      f"✅ Checkout returns 400 with Stripe error message: {response.text}")
+                        return True
+                    else:
+                        self.log_result("Subscription Checkout", False, 
+                                      f"❌ Checkout returns 400 but not Stripe error: {response.text}")
+                        return False
             elif response.status_code == 422:
                 self.log_result("Subscription Checkout", False, 
                               f"❌ CRITICAL: 422 routing conflict detected! Checkout endpoint conflicting with other routes")
