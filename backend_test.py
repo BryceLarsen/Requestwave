@@ -184,14 +184,14 @@ class RequestWaveAPITester:
         except Exception as e:
             self.log_result("JWT Token Validation", False, f"Exception: {str(e)}")
 
-    def test_v2_subscription_endpoints(self):
-        """PRIORITY 1: Test NEW v2 Freemium Subscription Endpoints"""
+    def test_public_playlists_endpoint(self):
+        """Test GET /api/musicians/{slug}/playlists endpoint - PRIORITY 1"""
         try:
-            print("🎯 PRIORITY 1: Testing NEW v2 Freemium Subscription Endpoints")
+            print("🎵 PRIORITY 1: Testing Public Playlists Endpoint")
             print("=" * 80)
             
-            # Step 1: Login with brycelarsenmusic@gmail.com / RequestWave2024!
-            print("📊 Step 1: Login with brycelarsenmusic@gmail.com / RequestWave2024!")
+            # Step 1: Login with Pro account to ensure playlists exist
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com to verify playlists exist")
             login_data = {
                 "email": PRO_MUSICIAN["email"],
                 "password": PRO_MUSICIAN["password"]
@@ -200,212 +200,165 @@ class RequestWaveAPITester:
             login_response = self.make_request("POST", "/auth/login", login_data)
             
             if login_response.status_code != 200:
-                self.log_result("v2 Endpoints - Pro Login", False, f"Failed to login: {login_response.status_code}, Response: {login_response.text}")
+                self.log_result("Public Playlists - Pro Login", False, f"Failed to login: {login_response.status_code}")
                 return
             
             login_data_response = login_response.json()
             original_token = self.auth_token
             self.auth_token = login_data_response["token"]
-            pro_musician_id = login_data_response["musician"]["id"]
+            pro_musician_slug = login_data_response["musician"]["slug"]
             
             print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
-            print(f"   ✅ Musician ID: {pro_musician_id}")
-            print(f"   ✅ JWT Token (first 50 chars): {self.auth_token[:50]}...")
+            print(f"   ✅ Musician slug: {pro_musician_slug}")
             
-            # Step 2: Test GET /api/v2/subscription/status
-            print("📊 Step 2: Test GET /api/v2/subscription/status")
+            # Step 2: Check if playlists exist, create one if needed
+            print("📊 Step 2: Check existing playlists and create test playlist if needed")
             
-            status_response = self.make_request("GET", "/v2/subscription/status")
+            existing_playlists_response = self.make_request("GET", "/playlists")
             
-            print(f"   📊 Status endpoint response code: {status_response.status_code}")
-            print(f"   📊 Status endpoint response: {status_response.text}")
-            
-            if status_response.status_code == 200:
-                try:
-                    status_data = status_response.json()
-                    print(f"   📊 Status data structure: {list(status_data.keys())}")
+            if existing_playlists_response.status_code == 200:
+                existing_playlists = existing_playlists_response.json()
+                print(f"   📊 Found {len(existing_playlists)} existing playlists")
+                
+                # Filter out "All Songs" playlist
+                actual_playlists = [p for p in existing_playlists if p.get("name") != "All Songs"]
+                
+                if len(actual_playlists) == 0:
+                    # Create a test playlist
+                    print("   📊 Creating test playlist for public endpoint testing")
                     
-                    # Check for freemium model fields
-                    expected_fields = ["plan", "audience_link_active", "trial_active", "trial_ends_at", "subscription_ends_at", "days_remaining", "can_reactivate", "grace_period_active", "grace_period_ends_at"]
-                    missing_fields = [field for field in expected_fields if field not in status_data]
-                    
-                    if len(missing_fields) == 0:
-                        print(f"   ✅ All expected freemium fields present: {expected_fields}")
-                        print(f"   ✅ audience_link_active: {status_data.get('audience_link_active')}")
-                        print(f"   ✅ trial_active: {status_data.get('trial_active')}")
-                        print(f"   ✅ plan: {status_data.get('plan')}")
-                        status_endpoint_working = True
+                    # Get some songs first
+                    songs_response = self.make_request("GET", "/songs")
+                    if songs_response.status_code == 200:
+                        songs = songs_response.json()
+                        song_ids = [song["id"] for song in songs[:3]]  # Use first 3 songs
+                        
+                        playlist_data = {
+                            "name": "Test Playlist for Audience",
+                            "song_ids": song_ids
+                        }
+                        
+                        create_playlist_response = self.make_request("POST", "/playlists", playlist_data)
+                        if create_playlist_response.status_code == 200:
+                            print(f"   ✅ Created test playlist with {len(song_ids)} songs")
+                        else:
+                            print(f"   ⚠️  Failed to create test playlist: {create_playlist_response.status_code}")
                     else:
-                        print(f"   ❌ Missing expected fields: {missing_fields}")
-                        status_endpoint_working = False
+                        print(f"   ⚠️  Could not get songs for playlist creation: {songs_response.status_code}")
+                else:
+                    print(f"   ✅ Using existing playlists: {[p['name'] for p in actual_playlists]}")
+            else:
+                print(f"   ⚠️  Could not check existing playlists: {existing_playlists_response.status_code}")
+            
+            # Step 3: Test public playlists endpoint WITHOUT authentication
+            print("📊 Step 3: Test GET /api/musicians/{slug}/playlists WITHOUT authentication")
+            
+            # Clear auth token for public access
+            self.auth_token = None
+            
+            public_playlists_response = self.make_request("GET", f"/musicians/{pro_musician_slug}/playlists")
+            
+            print(f"   📊 Public playlists endpoint status: {public_playlists_response.status_code}")
+            print(f"   📊 Public playlists response: {public_playlists_response.text}")
+            
+            if public_playlists_response.status_code == 200:
+                try:
+                    public_playlists = public_playlists_response.json()
+                    print(f"   📊 Public playlists structure: {type(public_playlists)}")
+                    
+                    if isinstance(public_playlists, list):
+                        print(f"   ✅ Returned {len(public_playlists)} playlists")
+                        
+                        # Verify playlist structure
+                        expected_fields = ["id", "name", "song_count"]
+                        structure_valid = True
+                        
+                        for i, playlist in enumerate(public_playlists):
+                            print(f"   📊 Playlist {i+1}: {playlist.get('name', 'Unknown')} ({playlist.get('song_count', 0)} songs)")
+                            
+                            missing_fields = [field for field in expected_fields if field not in playlist]
+                            if missing_fields:
+                                print(f"   ❌ Playlist {i+1} missing fields: {missing_fields}")
+                                structure_valid = False
+                            else:
+                                print(f"   ✅ Playlist {i+1} has all required fields")
+                        
+                        public_endpoint_working = structure_valid
+                    else:
+                        print(f"   ❌ Expected list, got: {type(public_playlists)}")
+                        public_endpoint_working = False
                         
                 except json.JSONDecodeError:
                     print(f"   ❌ Response is not valid JSON")
-                    status_endpoint_working = False
+                    public_endpoint_working = False
             else:
-                print(f"   ❌ Status endpoint failed with code: {status_response.status_code}")
-                status_endpoint_working = False
+                print(f"   ❌ Public playlists endpoint failed: {public_playlists_response.status_code}")
+                public_endpoint_working = False
             
-            # Step 3: Test POST /api/v2/subscription/checkout
-            print("📊 Step 3: Test POST /api/v2/subscription/checkout")
+            # Step 4: Test with non-existent musician
+            print("📊 Step 4: Test graceful handling of non-existent musician")
             
-            checkout_data = {
-                "plan": "monthly",
-                "success_url": "https://livewave-music.emergent.host/dashboard?tab=subscription&session_id={CHECKOUT_SESSION_ID}",
-                "cancel_url": "https://livewave-music.emergent.host/dashboard?tab=subscription"
-            }
+            nonexistent_response = self.make_request("GET", "/musicians/nonexistent-musician-slug/playlists")
             
-            checkout_response = self.make_request("POST", "/v2/subscription/checkout", checkout_data)
+            print(f"   📊 Non-existent musician response: {nonexistent_response.status_code}")
             
-            print(f"   📊 Checkout endpoint response code: {checkout_response.status_code}")
-            print(f"   📊 Checkout endpoint response: {checkout_response.text}")
-            
-            session_id = None
-            if checkout_response.status_code == 200:
-                try:
-                    checkout_result = checkout_response.json()
-                    print(f"   📊 Checkout response structure: {list(checkout_result.keys())}")
-                    
-                    # Check for expected fields
-                    if "checkout_url" in checkout_result and "session_id" in checkout_result:
-                        checkout_url = checkout_result["checkout_url"]
-                        session_id = checkout_result["session_id"]
-                        
-                        print(f"   ✅ Checkout URL generated: {checkout_url[:100]}...")
-                        print(f"   ✅ Session ID: {session_id}")
-                        
-                        # Verify it's a valid Stripe checkout URL
-                        if "checkout.stripe.com" in checkout_url or "stripe.com" in checkout_url:
-                            print(f"   ✅ Valid Stripe checkout URL format")
-                            checkout_endpoint_working = True
-                        else:
-                            print(f"   ❌ Invalid checkout URL format")
-                            checkout_endpoint_working = False
-                    else:
-                        print(f"   ❌ Missing checkout_url or session_id in response")
-                        checkout_endpoint_working = False
-                        
-                except json.JSONDecodeError:
-                    print(f"   ❌ Checkout response is not valid JSON")
-                    checkout_endpoint_working = False
-            elif checkout_response.status_code == 422:
-                print(f"   ❌ CRITICAL: 422 validation error - routing conflict detected!")
-                print(f"   ❌ This indicates the v2 endpoint is conflicting with legacy endpoints")
-                checkout_endpoint_working = False
+            if nonexistent_response.status_code == 404:
+                print(f"   ✅ Correctly returns 404 for non-existent musician")
+                graceful_handling = True
             else:
-                print(f"   ❌ Checkout endpoint failed with code: {checkout_response.status_code}")
-                checkout_endpoint_working = False
+                print(f"   ❌ Expected 404, got: {nonexistent_response.status_code}")
+                graceful_handling = False
             
-            # Step 4: Test GET /api/v2/subscription/checkout/status/{session_id} (if we have a session_id)
-            print("📊 Step 4: Test GET /api/v2/subscription/checkout/status/{session_id}")
+            # Step 5: Verify no authentication required
+            print("📊 Step 5: Verify endpoint works without any authentication headers")
             
-            checkout_status_working = False
-            if session_id:
-                checkout_status_response = self.make_request("GET", f"/v2/subscription/checkout/status/{session_id}")
-                
-                print(f"   📊 Checkout status response code: {checkout_status_response.status_code}")
-                print(f"   📊 Checkout status response: {checkout_status_response.text}")
-                
-                if checkout_status_response.status_code == 200:
-                    try:
-                        status_result = checkout_status_response.json()
-                        print(f"   📊 Checkout status structure: {list(status_result.keys())}")
-                        
-                        # Check for expected fields
-                        expected_status_fields = ["status", "payment_status", "amount_total", "currency"]
-                        missing_status_fields = [field for field in expected_status_fields if field not in status_result]
-                        
-                        if len(missing_status_fields) == 0:
-                            print(f"   ✅ All expected status fields present: {expected_status_fields}")
-                            print(f"   ✅ Payment status: {status_result.get('payment_status')}")
-                            print(f"   ✅ Amount: {status_result.get('amount_total')} {status_result.get('currency')}")
-                            checkout_status_working = True
-                        else:
-                            print(f"   ❌ Missing status fields: {missing_status_fields}")
-                            
-                    except json.JSONDecodeError:
-                        print(f"   ❌ Checkout status response is not valid JSON")
-                else:
-                    print(f"   ❌ Checkout status endpoint failed with code: {checkout_status_response.status_code}")
+            # Make request with completely clean headers
+            import requests
+            clean_response = requests.get(f"{self.base_url}/musicians/{pro_musician_slug}/playlists")
+            
+            print(f"   📊 Clean request status: {clean_response.status_code}")
+            
+            if clean_response.status_code == 200:
+                print(f"   ✅ Endpoint accessible without authentication")
+                no_auth_required = True
             else:
-                print(f"   ⚠️  Skipping checkout status test - no session_id available")
-            
-            # Step 5: Test POST /api/v2/subscription/cancel
-            print("📊 Step 5: Test POST /api/v2/subscription/cancel")
-            
-            cancel_response = self.make_request("POST", "/v2/subscription/cancel")
-            
-            print(f"   📊 Cancel endpoint response code: {cancel_response.status_code}")
-            print(f"   📊 Cancel endpoint response: {cancel_response.text}")
-            
-            if cancel_response.status_code == 200:
-                try:
-                    cancel_result = cancel_response.json()
-                    print(f"   📊 Cancel response structure: {list(cancel_result.keys())}")
-                    
-                    # Check for expected fields
-                    if "success" in cancel_result and "message" in cancel_result:
-                        print(f"   ✅ Cancel successful: {cancel_result.get('message')}")
-                        cancel_endpoint_working = True
-                    else:
-                        print(f"   ❌ Missing success or message in cancel response")
-                        cancel_endpoint_working = False
-                        
-                except json.JSONDecodeError:
-                    print(f"   ❌ Cancel response is not valid JSON")
-                    cancel_endpoint_working = False
-            else:
-                print(f"   ❌ Cancel endpoint failed with code: {cancel_response.status_code}")
-                cancel_endpoint_working = False
-            
-            # Step 6: Verify debug logs are showing (check for 🎯 DEBUG messages)
-            print("📊 Step 6: Check for debug log messages")
-            print("   ℹ️  Debug messages should appear in server logs with '🎯 DEBUG:' prefix")
-            print("   ℹ️  This confirms the correct v2 endpoints are being called")
+                print(f"   ❌ Endpoint requires authentication: {clean_response.status_code}")
+                no_auth_required = False
             
             # Restore original token
             self.auth_token = original_token
             
             # Final assessment
-            endpoints_working = [
-                ("GET /v2/subscription/status", status_endpoint_working),
-                ("POST /v2/subscription/checkout", checkout_endpoint_working),
-                ("GET /v2/subscription/checkout/status", checkout_status_working or session_id is None),  # Pass if skipped
-                ("POST /v2/subscription/cancel", cancel_endpoint_working)
-            ]
-            
-            working_count = sum(1 for _, working in endpoints_working if working)
-            total_count = len(endpoints_working)
-            
-            print(f"📊 FINAL RESULTS: {working_count}/{total_count} v2 endpoints working")
-            
-            for endpoint_name, working in endpoints_working:
-                status_icon = "✅" if working else "❌"
-                print(f"   {status_icon} {endpoint_name}")
-            
-            if working_count == total_count:
-                self.log_result("v2 Subscription Endpoints", True, f"✅ ALL v2 ENDPOINTS WORKING: {working_count}/{total_count} endpoints functional. No routing conflicts detected. Freemium model properly implemented.")
-            elif working_count >= 3:
-                self.log_result("v2 Subscription Endpoints", True, f"✅ MOSTLY WORKING: {working_count}/{total_count} v2 endpoints functional. Minor issues detected.")
+            if public_endpoint_working and graceful_handling and no_auth_required:
+                self.log_result("Public Playlists Endpoint", True, f"✅ PRIORITY 1 COMPLETE: Public playlists endpoint working correctly - returns simplified playlist data without authentication, handles non-existent musicians gracefully")
+            elif public_endpoint_working and no_auth_required:
+                self.log_result("Public Playlists Endpoint", True, f"✅ PUBLIC PLAYLISTS WORKING: Core functionality works, minor issues with error handling")
             else:
-                failed_endpoints = [name for name, working in endpoints_working if not working]
-                self.log_result("v2 Subscription Endpoints", False, f"❌ CRITICAL v2 ENDPOINT ISSUES: {len(failed_endpoints)} endpoints failing: {', '.join(failed_endpoints)}")
+                issues = []
+                if not public_endpoint_working:
+                    issues.append("playlist data structure incorrect")
+                if not graceful_handling:
+                    issues.append("poor error handling for non-existent musicians")
+                if not no_auth_required:
+                    issues.append("endpoint requires authentication when it should be public")
+                
+                self.log_result("Public Playlists Endpoint", False, f"❌ CRITICAL PUBLIC PLAYLISTS ISSUES: {', '.join(issues)}")
             
             print("=" * 80)
             
         except Exception as e:
-            self.log_result("v2 Subscription Endpoints", False, f"❌ Exception: {str(e)}")
+            self.log_result("Public Playlists Endpoint", False, f"❌ Exception: {str(e)}")
             # Restore original token in case of exception
             if 'original_token' in locals():
                 self.auth_token = original_token
 
-    def debug_response_format_mismatch(self):
-        """PRIORITY 2: Debug Response Format Mismatch"""
+    def test_songs_with_playlist_filtering(self):
+        """Test GET /api/musicians/{slug}/songs?playlist={playlist_id} endpoint - PRIORITY 1"""
         try:
-            print("🚨 PRIORITY 2: Debugging Response Format Mismatch")
+            print("🎵 PRIORITY 1: Testing Songs with Playlist Filtering")
             print("=" * 80)
             
-            # Step 1: Login with brycelarsenmusic@gmail.com
+            # Step 1: Login with Pro account
             print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
             login_data = {
                 "email": PRO_MUSICIAN["email"],
@@ -415,326 +368,414 @@ class RequestWaveAPITester:
             login_response = self.make_request("POST", "/auth/login", login_data)
             
             if login_response.status_code != 200:
-                self.log_result("Response Format Debug - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                self.log_result("Songs Playlist Filtering - Pro Login", False, f"Failed to login: {login_response.status_code}")
                 return
             
             login_data_response = login_response.json()
             original_token = self.auth_token
             self.auth_token = login_data_response["token"]
-            pro_musician_id = login_data_response["musician"]["id"]
             pro_musician_slug = login_data_response["musician"]["slug"]
             
             print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
-            print(f"   ✅ Musician ID: {pro_musician_id}")
-            
-            # Step 2: Test GET /api/requests/updates/{musician_id} and examine actual response structure
-            print("📊 Step 2: Test GET /api/requests/updates/{musician_id} and examine actual response structure")
-            
-            polling_response = self.make_request("GET", f"/requests/updates/{pro_musician_id}")
-            
-            print(f"   📊 Polling endpoint status code: {polling_response.status_code}")
-            print(f"   📊 Polling endpoint headers: {dict(polling_response.headers)}")
-            
-            if polling_response.status_code != 200:
-                self.log_result("Response Format Debug - Polling Endpoint", False, f"Polling endpoint failed: {polling_response.status_code}, Response: {polling_response.text}")
-                self.auth_token = original_token
-                return
-            
-            try:
-                polling_data = polling_response.json()
-                print(f"   📊 Raw response JSON: {json.dumps(polling_data, indent=2)}")
-            except json.JSONDecodeError:
-                print(f"   ❌ Response is not valid JSON: {polling_response.text}")
-                self.log_result("Response Format Debug - JSON Parsing", False, "Response is not valid JSON")
-                self.auth_token = original_token
-                return
-            
-            # Step 3: Compare with expected format: {"requests": [...], "total_requests": N, "last_updated": "..."}
-            print("📊 Step 3: Compare with expected format")
-            
-            expected_fields = ["requests", "total_requests", "last_updated"]
-            actual_fields = list(polling_data.keys())
-            
-            print(f"   📊 Expected fields: {expected_fields}")
-            print(f"   📊 Actual fields: {actual_fields}")
-            
-            missing_fields = [field for field in expected_fields if field not in actual_fields]
-            extra_fields = [field for field in actual_fields if field not in expected_fields]
-            
-            if missing_fields:
-                print(f"   ❌ Missing expected fields: {missing_fields}")
-            else:
-                print(f"   ✅ All expected fields present")
-            
-            if extra_fields:
-                print(f"   📊 Extra fields found: {extra_fields}")
-                
-                # Check if "timestamp" is present instead of expected fields
-                if "timestamp" in extra_fields:
-                    print(f"   🚨 CRITICAL: Found 'timestamp' field instead of expected 'last_updated'")
-                    print(f"   🚨 Timestamp value: {polling_data.get('timestamp')}")
-            
-            # Step 4: Verify if multiple versions of the endpoint exist or if there's a caching issue
-            print("📊 Step 4: Check for multiple endpoint versions or caching issues")
-            
-            # Test different endpoint variations
-            endpoint_variations = [
-                f"/requests/updates/{pro_musician_id}",
-                f"/api/requests/updates/{pro_musician_id}",
-                f"/requests/polling/{pro_musician_id}",
-                f"/requests/live/{pro_musician_id}"
-            ]
-            
-            for endpoint in endpoint_variations:
-                print(f"   📊 Testing endpoint: {endpoint}")
-                test_response = self.make_request("GET", endpoint)
-                print(f"      Status: {test_response.status_code}")
-                
-                if test_response.status_code == 200:
-                    try:
-                        test_data = test_response.json()
-                        test_fields = list(test_data.keys())
-                        print(f"      Fields: {test_fields}")
-                        
-                        if "timestamp" in test_fields:
-                            print(f"      🚨 This endpoint returns 'timestamp': {test_data.get('timestamp')}")
-                        if "total_requests" in test_fields:
-                            print(f"      ✅ This endpoint returns 'total_requests': {test_data.get('total_requests')}")
-                        if "last_updated" in test_fields:
-                            print(f"      ✅ This endpoint returns 'last_updated': {test_data.get('last_updated')}")
-                    except:
-                        print(f"      Response not JSON: {test_response.text[:100]}")
-                else:
-                    print(f"      Error: {test_response.text[:100]}")
-            
-            # Step 5: Test with cache-busting parameters
-            print("📊 Step 5: Test with cache-busting parameters")
-            
-            import time
-            cache_bust_params = {"_t": int(time.time())}
-            
-            cache_bust_response = self.make_request("GET", f"/requests/updates/{pro_musician_id}", params=cache_bust_params)
-            
-            if cache_bust_response.status_code == 200:
-                try:
-                    cache_bust_data = cache_bust_response.json()
-                    cache_bust_fields = list(cache_bust_data.keys())
-                    print(f"   📊 Cache-busted response fields: {cache_bust_fields}")
-                    
-                    if cache_bust_fields != actual_fields:
-                        print(f"   🚨 CACHING ISSUE DETECTED: Different fields with cache-busting")
-                        print(f"   📊 Original: {actual_fields}")
-                        print(f"   📊 Cache-busted: {cache_bust_fields}")
-                    else:
-                        print(f"   ✅ No caching issue - same fields returned")
-                except:
-                    print(f"   ❌ Cache-busted response not JSON")
-            
-            # Restore original token
-            self.auth_token = original_token
-            
-            # Final assessment
-            format_correct = len(missing_fields) == 0
-            has_timestamp_issue = "timestamp" in actual_fields and "last_updated" not in actual_fields
-            
-            if format_correct and not has_timestamp_issue:
-                self.log_result("Response Format Debug", True, f"✅ Response format is correct - includes all expected fields: {expected_fields}")
-            elif has_timestamp_issue:
-                self.log_result("Response Format Debug", False, f"❌ CRITICAL RESPONSE FORMAT ISSUE: Polling endpoint returns 'timestamp' instead of expected 'last_updated' field. Actual fields: {actual_fields}")
-            else:
-                self.log_result("Response Format Debug", False, f"❌ RESPONSE FORMAT MISMATCH: Missing fields {missing_fields}, actual fields: {actual_fields}")
-            
-            print("=" * 80)
-            
-        except Exception as e:
-            self.log_result("Response Format Debug", False, f"❌ Exception: {str(e)}")
-            # Restore original token in case of exception
-            if 'original_token' in locals():
-                self.auth_token = original_token
-
-    def test_basic_request_flow(self):
-        """PRIORITY 3: Test Basic Request Flow"""
-        try:
-            print("🚨 PRIORITY 3: Testing Basic Request Flow")
-            print("=" * 80)
-            
-            # Step 1: Login with brycelarsenmusic@gmail.com
-            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
-            login_data = {
-                "email": PRO_MUSICIAN["email"],
-                "password": PRO_MUSICIAN["password"]
-            }
-            
-            login_response = self.make_request("POST", "/auth/login", login_data)
-            
-            if login_response.status_code != 200:
-                self.log_result("Basic Request Flow - Pro Login", False, f"Failed to login: {login_response.status_code}")
-                return
-            
-            login_data_response = login_response.json()
-            original_token = self.auth_token
-            self.auth_token = login_data_response["token"]
-            pro_musician_id = login_data_response["musician"]["id"]
-            pro_musician_slug = login_data_response["musician"]["slug"]
-            
-            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
-            print(f"   ✅ Musician ID: {pro_musician_id}")
             print(f"   ✅ Musician slug: {pro_musician_slug}")
             
-            # Step 2: Submit audience request through POST /api/musicians/bryce-larsen/requests
-            print("📊 Step 2: Submit audience request through POST /api/musicians/bryce-larsen/requests")
+            # Step 2: Get available playlists
+            print("📊 Step 2: Get available playlists for testing")
             
-            # Get available songs first
+            playlists_response = self.make_request("GET", "/playlists")
+            
+            if playlists_response.status_code != 200:
+                self.log_result("Songs Playlist Filtering - Get Playlists", False, f"Failed to get playlists: {playlists_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            playlists = playlists_response.json()
+            
+            # Filter out "All Songs" playlist and find a real playlist
+            actual_playlists = [p for p in playlists if p.get("name") != "All Songs" and p.get("song_count", 0) > 0]
+            
+            if len(actual_playlists) == 0:
+                print("   📊 No playlists found, creating test playlist")
+                
+                # Get some songs first
+                songs_response = self.make_request("GET", "/songs")
+                if songs_response.status_code == 200:
+                    songs = songs_response.json()
+                    if len(songs) >= 2:
+                        song_ids = [songs[0]["id"], songs[1]["id"]]  # Use first 2 songs
+                        
+                        playlist_data = {
+                            "name": "Filtering Test Playlist",
+                            "song_ids": song_ids
+                        }
+                        
+                        create_response = self.make_request("POST", "/playlists", playlist_data)
+                        if create_response.status_code == 200:
+                            created_playlist = create_response.json()
+                            test_playlist_id = created_playlist["id"]
+                            print(f"   ✅ Created test playlist: {created_playlist['name']} with {len(song_ids)} songs")
+                        else:
+                            self.log_result("Songs Playlist Filtering - Create Test Playlist", False, f"Failed to create playlist: {create_response.status_code}")
+                            self.auth_token = original_token
+                            return
+                    else:
+                        self.log_result("Songs Playlist Filtering - Insufficient Songs", False, "Not enough songs to create test playlist")
+                        self.auth_token = original_token
+                        return
+                else:
+                    self.log_result("Songs Playlist Filtering - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
+                    self.auth_token = original_token
+                    return
+            else:
+                test_playlist_id = actual_playlists[0]["id"]
+                print(f"   ✅ Using existing playlist: {actual_playlists[0]['name']} with {actual_playlists[0]['song_count']} songs")
+            
+            # Step 3: Test songs endpoint WITHOUT playlist filter (baseline)
+            print("📊 Step 3: Test songs endpoint without playlist filter (baseline)")
+            
+            # Clear auth token for public access
+            self.auth_token = None
+            
+            all_songs_response = self.make_request("GET", f"/musicians/{pro_musician_slug}/songs")
+            
+            if all_songs_response.status_code != 200:
+                self.log_result("Songs Playlist Filtering - Baseline Songs", False, f"Failed to get all songs: {all_songs_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            all_songs = all_songs_response.json()
+            print(f"   ✅ Baseline: {len(all_songs)} total songs available")
+            
+            # Step 4: Test songs endpoint WITH playlist filter
+            print("📊 Step 4: Test songs endpoint WITH playlist filter")
+            
+            filtered_songs_response = self.make_request("GET", f"/musicians/{pro_musician_slug}/songs", params={"playlist": test_playlist_id})
+            
+            print(f"   📊 Filtered songs response status: {filtered_songs_response.status_code}")
+            print(f"   📊 Filtered songs response: {filtered_songs_response.text[:200]}...")
+            
+            if filtered_songs_response.status_code == 200:
+                try:
+                    filtered_songs = filtered_songs_response.json()
+                    print(f"   ✅ Filtered: {len(filtered_songs)} songs in playlist")
+                    
+                    # Verify filtering worked
+                    if len(filtered_songs) < len(all_songs):
+                        print(f"   ✅ Filtering working: {len(filtered_songs)} < {len(all_songs)}")
+                        filtering_working = True
+                    elif len(filtered_songs) == len(all_songs):
+                        print(f"   ⚠️  Same number of songs - playlist might contain all songs")
+                        filtering_working = True  # Still valid if playlist contains all songs
+                    else:
+                        print(f"   ❌ More filtered songs than total songs - something wrong")
+                        filtering_working = False
+                    
+                    # Verify song structure is correct
+                    if len(filtered_songs) > 0:
+                        sample_song = filtered_songs[0]
+                        required_fields = ["id", "title", "artist"]
+                        missing_fields = [field for field in required_fields if field not in sample_song]
+                        
+                        if len(missing_fields) == 0:
+                            print(f"   ✅ Song structure correct: {sample_song.get('title')} by {sample_song.get('artist')}")
+                            structure_valid = True
+                        else:
+                            print(f"   ❌ Song missing fields: {missing_fields}")
+                            structure_valid = False
+                    else:
+                        print(f"   ⚠️  No songs in filtered result")
+                        structure_valid = True  # Empty result is valid
+                        
+                except json.JSONDecodeError:
+                    print(f"   ❌ Filtered response is not valid JSON")
+                    filtering_working = False
+                    structure_valid = False
+            else:
+                print(f"   ❌ Filtered songs endpoint failed: {filtered_songs_response.status_code}")
+                filtering_working = False
+                structure_valid = False
+            
+            # Step 5: Test playlist filtering with other filters (genre, mood)
+            print("📊 Step 5: Test playlist filtering combined with other filters")
+            
+            # Get available filter options first
+            filter_options_response = self.make_request("GET", f"/musicians/{pro_musician_slug}/songs/filter-options")
+            
+            combined_filtering_working = True
+            if filter_options_response.status_code == 200:
+                filter_options = filter_options_response.json()
+                available_genres = filter_options.get("genres", [])
+                available_moods = filter_options.get("moods", [])
+                
+                if len(available_genres) > 0:
+                    # Test playlist + genre filter
+                    test_genre = available_genres[0]
+                    combined_params = {"playlist": test_playlist_id, "genre": test_genre}
+                    
+                    combined_response = self.make_request("GET", f"/musicians/{pro_musician_slug}/songs", params=combined_params)
+                    
+                    if combined_response.status_code == 200:
+                        combined_songs = combined_response.json()
+                        print(f"   ✅ Combined filtering (playlist + genre '{test_genre}'): {len(combined_songs)} songs")
+                        
+                        # Verify all songs have the specified genre
+                        if len(combined_songs) > 0:
+                            genre_match = all(test_genre in song.get("genres", []) for song in combined_songs)
+                            if genre_match:
+                                print(f"   ✅ All filtered songs contain genre '{test_genre}'")
+                            else:
+                                print(f"   ❌ Some songs don't contain the specified genre")
+                                combined_filtering_working = False
+                    else:
+                        print(f"   ❌ Combined filtering failed: {combined_response.status_code}")
+                        combined_filtering_working = False
+                else:
+                    print(f"   ⚠️  No genres available for combined filtering test")
+            else:
+                print(f"   ⚠️  Could not get filter options: {filter_options_response.status_code}")
+            
+            # Step 6: Test invalid playlist ID
+            print("📊 Step 6: Test with invalid playlist ID")
+            
+            invalid_playlist_response = self.make_request("GET", f"/musicians/{pro_musician_slug}/songs", params={"playlist": "invalid-playlist-id"})
+            
+            print(f"   📊 Invalid playlist response: {invalid_playlist_response.status_code}")
+            
+            if invalid_playlist_response.status_code in [200, 400, 404]:
+                # 200 = returns all songs (ignores invalid playlist)
+                # 400/404 = proper error handling
+                print(f"   ✅ Invalid playlist handled appropriately")
+                invalid_handling = True
+            else:
+                print(f"   ❌ Unexpected response for invalid playlist: {invalid_playlist_response.status_code}")
+                invalid_handling = False
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            if filtering_working and structure_valid and combined_filtering_working and invalid_handling:
+                self.log_result("Songs Playlist Filtering", True, f"✅ PRIORITY 1 COMPLETE: Songs playlist filtering working correctly - filters by playlist, works with other filters, handles invalid playlists gracefully")
+            elif filtering_working and structure_valid:
+                self.log_result("Songs Playlist Filtering", True, f"✅ PLAYLIST FILTERING WORKING: Core filtering functionality works, minor issues with edge cases")
+            else:
+                issues = []
+                if not filtering_working:
+                    issues.append("playlist filtering not working")
+                if not structure_valid:
+                    issues.append("song structure incorrect")
+                if not combined_filtering_working:
+                    issues.append("combined filtering with other parameters fails")
+                if not invalid_handling:
+                    issues.append("poor handling of invalid playlist IDs")
+                
+                self.log_result("Songs Playlist Filtering", False, f"❌ CRITICAL PLAYLIST FILTERING ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Songs Playlist Filtering", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_playlist_functionality_comprehensive(self):
+        """Comprehensive test of playlist functionality for audience interface - PRIORITY 2"""
+        try:
+            print("🎵 PRIORITY 2: Comprehensive Playlist Functionality Test")
+            print("=" * 80)
+            
+            # Step 1: Login with Pro account
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("Comprehensive Playlist Test - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            pro_musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            
+            # Step 2: Create multiple test playlists with different songs
+            print("📊 Step 2: Create multiple test playlists for comprehensive testing")
+            
+            # Get available songs
             songs_response = self.make_request("GET", "/songs")
             if songs_response.status_code != 200:
-                self.log_result("Basic Request Flow - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
+                self.log_result("Comprehensive Playlist Test - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
                 self.auth_token = original_token
                 return
             
             songs = songs_response.json()
-            if len(songs) == 0:
-                # Create a test song first
-                test_song_data = {
-                    "title": "Basic Request Flow Test Song",
-                    "artist": "Flow Test Artist",
-                    "genres": ["Pop"],
-                    "moods": ["Feel Good"],
-                    "year": 2024,
-                    "notes": "Test song for basic request flow"
-                }
-                
-                create_song_response = self.make_request("POST", "/songs", test_song_data)
-                if create_song_response.status_code == 200:
-                    songs = [create_song_response.json()]
-                    print(f"   ✅ Created test song: {songs[0]['title']}")
-                else:
-                    self.log_result("Basic Request Flow - Create Test Song", False, f"Failed to create test song: {create_song_response.status_code}")
-                    self.auth_token = original_token
-                    return
+            if len(songs) < 4:
+                self.log_result("Comprehensive Playlist Test - Insufficient Songs", False, f"Need at least 4 songs, found {len(songs)}")
+                self.auth_token = original_token
+                return
             
-            test_song = songs[0]
-            print(f"   ✅ Using song for test: '{test_song['title']}' by {test_song['artist']}")
+            # Create test playlists
+            test_playlists = []
             
-            # Clear auth token for public request creation
-            self.auth_token = None
-            
-            request_data = {
-                "song_id": test_song["id"],
-                "requester_name": "Basic Flow Test User",
-                "requester_email": "basicflow.test@requestwave.com",
-                "dedication": "Testing basic request flow functionality"
+            # Playlist 1: First 2 songs
+            playlist1_data = {
+                "name": "Test Playlist 1",
+                "song_ids": [songs[0]["id"], songs[1]["id"]]
             }
             
-            # Submit request to musician's endpoint
-            request_response = self.make_request("POST", f"/musicians/{pro_musician_slug}/requests", request_data)
+            playlist1_response = self.make_request("POST", "/playlists", playlist1_data)
+            if playlist1_response.status_code == 200:
+                playlist1 = playlist1_response.json()
+                test_playlists.append(playlist1)
+                print(f"   ✅ Created Playlist 1: {playlist1['name']} with 2 songs")
             
-            print(f"   📊 Request submission status: {request_response.status_code}")
-            print(f"   📊 Request submission response: {request_response.text}")
+            # Playlist 2: Last 2 songs
+            playlist2_data = {
+                "name": "Test Playlist 2", 
+                "song_ids": [songs[-2]["id"], songs[-1]["id"]]
+            }
             
-            if request_response.status_code != 200:
-                self.log_result("Basic Request Flow - Submit Request", False, f"Failed to submit request: {request_response.status_code}, Response: {request_response.text}")
+            playlist2_response = self.make_request("POST", "/playlists", playlist2_data)
+            if playlist2_response.status_code == 200:
+                playlist2 = playlist2_response.json()
+                test_playlists.append(playlist2)
+                print(f"   ✅ Created Playlist 2: {playlist2['name']} with 2 songs")
+            
+            if len(test_playlists) < 2:
+                self.log_result("Comprehensive Playlist Test - Create Playlists", False, "Failed to create test playlists")
                 self.auth_token = original_token
                 return
             
-            request_result = request_response.json()
-            test_request_id = request_result.get("id")
+            # Step 3: Test public playlists endpoint returns all playlists
+            print("📊 Step 3: Verify public playlists endpoint returns all created playlists")
             
-            print(f"   ✅ Successfully submitted audience request with ID: {test_request_id}")
-            print(f"   ✅ Initial status: {request_result.get('status', 'unknown')}")
+            # Clear auth for public access
+            self.auth_token = None
             
-            # Step 3: Verify request appears in GET /api/requests/updates/{musician_id}
-            print("📊 Step 3: Verify request appears in GET /api/requests/updates/{musician_id}")
+            public_playlists_response = self.make_request("GET", f"/musicians/{pro_musician_slug}/playlists")
             
-            # Restore auth token for authenticated polling
-            self.auth_token = login_data_response["token"]
-            
-            polling_response = self.make_request("GET", f"/requests/updates/{pro_musician_id}")
-            
-            print(f"   📊 Polling response status: {polling_response.status_code}")
-            
-            if polling_response.status_code != 200:
-                self.log_result("Basic Request Flow - Polling Check", False, f"Polling failed: {polling_response.status_code}, Response: {polling_response.text}")
-                self.auth_token = original_token
-                return
-            
-            polling_data = polling_response.json()
-            polling_requests = polling_data.get("requests", [])
-            
-            print(f"   📊 Polling response structure: {list(polling_data.keys())}")
-            print(f"   📊 Number of requests in polling: {len(polling_requests)}")
-            
-            # Find our test request in the polling data
-            test_request_in_polling = None
-            for req in polling_requests:
-                if req.get("id") == test_request_id:
-                    test_request_in_polling = req
-                    break
-            
-            if test_request_in_polling:
-                print(f"   ✅ Request appears in polling endpoint")
-                print(f"   ✅ Request details: {test_request_in_polling.get('requester_name')} - {test_request_in_polling.get('song_title')}")
-                request_in_polling = True
-            else:
-                print(f"   ❌ Request NOT found in polling endpoint")
-                print(f"   📊 Available request IDs: {[req.get('id') for req in polling_requests]}")
-                request_in_polling = False
-            
-            # Step 4: Check if real-time updates work correctly
-            print("📊 Step 4: Check if real-time updates work correctly")
-            
-            if request_in_polling:
-                # Wait a moment and poll again to test consistency
-                import time
-                time.sleep(2)
+            if public_playlists_response.status_code == 200:
+                public_playlists = public_playlists_response.json()
                 
-                consistency_response = self.make_request("GET", f"/requests/updates/{pro_musician_id}")
+                # Find our test playlists
+                found_playlist1 = any(p.get("name") == "Test Playlist 1" for p in public_playlists)
+                found_playlist2 = any(p.get("name") == "Test Playlist 2" for p in public_playlists)
                 
-                if consistency_response.status_code == 200:
-                    consistency_data = consistency_response.json()
-                    consistency_requests = consistency_data.get("requests", [])
-                    
-                    # Check if our request is still there
-                    still_there = any(req.get("id") == test_request_id for req in consistency_requests)
-                    
-                    if still_there:
-                        print(f"   ✅ Real-time updates working - request persists in polling")
-                        real_time_working = True
-                    else:
-                        print(f"   ❌ Real-time updates issue - request disappeared")
-                        real_time_working = False
+                if found_playlist1 and found_playlist2:
+                    print(f"   ✅ Both test playlists found in public endpoint")
+                    public_playlists_complete = True
                 else:
-                    print(f"   ❌ Consistency check failed: {consistency_response.status_code}")
-                    real_time_working = False
+                    print(f"   ❌ Test playlists missing from public endpoint")
+                    public_playlists_complete = False
             else:
-                real_time_working = False
+                print(f"   ❌ Public playlists endpoint failed: {public_playlists_response.status_code}")
+                public_playlists_complete = False
             
-            # Restore original token
+            # Step 4: Test each playlist returns correct songs
+            print("📊 Step 4: Test each playlist returns correct songs")
+            
+            playlist_filtering_accurate = True
+            
+            for i, playlist in enumerate(test_playlists, 1):
+                playlist_id = playlist["id"]
+                expected_song_count = playlist["song_count"]
+                
+                playlist_songs_response = self.make_request("GET", f"/musicians/{pro_musician_slug}/songs", params={"playlist": playlist_id})
+                
+                if playlist_songs_response.status_code == 200:
+                    playlist_songs = playlist_songs_response.json()
+                    actual_song_count = len(playlist_songs)
+                    
+                    if actual_song_count == expected_song_count:
+                        print(f"   ✅ Playlist {i} returns correct number of songs: {actual_song_count}")
+                    else:
+                        print(f"   ❌ Playlist {i} song count mismatch: expected {expected_song_count}, got {actual_song_count}")
+                        playlist_filtering_accurate = False
+                    
+                    # Verify song IDs match
+                    returned_song_ids = [song["id"] for song in playlist_songs]
+                    expected_song_ids = playlist1_data["song_ids"] if i == 1 else playlist2_data["song_ids"]
+                    
+                    if set(returned_song_ids) == set(expected_song_ids):
+                        print(f"   ✅ Playlist {i} returns correct songs")
+                    else:
+                        print(f"   ❌ Playlist {i} returns wrong songs")
+                        playlist_filtering_accurate = False
+                else:
+                    print(f"   ❌ Failed to get songs for playlist {i}: {playlist_songs_response.status_code}")
+                    playlist_filtering_accurate = False
+            
+            # Step 5: Test that playlists don't interfere with each other
+            print("📊 Step 5: Test playlist isolation (playlists don't interfere)")
+            
+            # Get songs from playlist 1
+            p1_songs_response = self.make_request("GET", f"/musicians/{pro_musician_slug}/songs", params={"playlist": test_playlists[0]["id"]})
+            
+            # Get songs from playlist 2
+            p2_songs_response = self.make_request("GET", f"/musicians/{pro_musician_slug}/songs", params={"playlist": test_playlists[1]["id"]})
+            
+            playlist_isolation = True
+            if p1_songs_response.status_code == 200 and p2_songs_response.status_code == 200:
+                p1_songs = p1_songs_response.json()
+                p2_songs = p2_songs_response.json()
+                
+                p1_song_ids = set(song["id"] for song in p1_songs)
+                p2_song_ids = set(song["id"] for song in p2_songs)
+                
+                # Should have no overlap (we created them with different songs)
+                overlap = p1_song_ids.intersection(p2_song_ids)
+                
+                if len(overlap) == 0:
+                    print(f"   ✅ Playlists properly isolated - no song overlap")
+                else:
+                    print(f"   ❌ Playlists have unexpected overlap: {len(overlap)} songs")
+                    playlist_isolation = False
+            else:
+                print(f"   ❌ Failed to test playlist isolation")
+                playlist_isolation = False
+            
+            # Step 6: Clean up test playlists
+            print("📊 Step 6: Clean up test playlists")
+            
+            # Restore auth token for cleanup
             self.auth_token = original_token
             
-            # Final assessment
-            basic_flow_working = (request_response.status_code == 200 and 
-                                polling_response.status_code == 200 and 
-                                request_in_polling)
+            cleanup_successful = True
+            for playlist in test_playlists:
+                delete_response = self.make_request("DELETE", f"/playlists/{playlist['id']}")
+                if delete_response.status_code == 200:
+                    print(f"   ✅ Deleted playlist: {playlist['name']}")
+                else:
+                    print(f"   ⚠️  Failed to delete playlist: {playlist['name']}")
+                    cleanup_successful = False
             
-            if basic_flow_working and real_time_working:
-                self.log_result("Basic Request Flow", True, f"✅ PRIORITY 3 COMPLETE: Basic request flow working correctly - audience requests can be submitted and appear in real-time polling")
-            elif basic_flow_working:
-                self.log_result("Basic Request Flow", True, f"✅ BASIC FLOW WORKING: Requests can be submitted and appear in polling, minor real-time consistency issues")
+            # Final assessment
+            if public_playlists_complete and playlist_filtering_accurate and playlist_isolation:
+                self.log_result("Comprehensive Playlist Functionality", True, f"✅ PRIORITY 2 COMPLETE: Comprehensive playlist functionality working correctly - public endpoint complete, filtering accurate, proper isolation")
+            elif public_playlists_complete and playlist_filtering_accurate:
+                self.log_result("Comprehensive Playlist Functionality", True, f"✅ PLAYLIST FUNCTIONALITY WORKING: Core functionality works correctly")
             else:
                 issues = []
-                if request_response.status_code != 200:
-                    issues.append(f"request submission failed ({request_response.status_code})")
-                if polling_response.status_code != 200:
-                    issues.append(f"polling endpoint failed ({polling_response.status_code})")
-                if not request_in_polling:
-                    issues.append("request not appearing in polling")
+                if not public_playlists_complete:
+                    issues.append("public playlists endpoint incomplete")
+                if not playlist_filtering_accurate:
+                    issues.append("playlist filtering inaccurate")
+                if not playlist_isolation:
+                    issues.append("playlists interfere with each other")
                 
-                self.log_result("Basic Request Flow", False, f"❌ CRITICAL BASIC REQUEST FLOW ISSUES: {', '.join(issues)}")
+                self.log_result("Comprehensive Playlist Functionality", False, f"❌ CRITICAL COMPREHENSIVE PLAYLIST ISSUES: {', '.join(issues)}")
             
             print("=" * 80)
             
         except Exception as e:
-            self.log_result("Basic Request Flow", False, f"❌ Exception: {str(e)}")
+            self.log_result("Comprehensive Playlist Functionality", False, f"❌ Exception: {str(e)}")
             # Restore original token in case of exception
             if 'original_token' in locals():
                 self.auth_token = original_token
