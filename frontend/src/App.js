@@ -3099,8 +3099,8 @@ const MusicianDashboard = () => {
                     ))}
                   </select>
                   <select
-                    value={artistFilter}
-                    onChange={(e) => setArtistFilter(e.target.value)}
+                    value={playlistFilter}
+                    onChange={(e) => setPlaylistFilter(e.target.value)}
                     className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
                   >
                     <option value="">All Playlists</option>
