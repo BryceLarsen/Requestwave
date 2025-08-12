@@ -2256,9 +2256,6 @@ const MusicianDashboard = () => {
                   {requests.filter(r => r.status === 'pending').length}
                 </span>
               )}
-              {tab === 'design' && subscriptionStatus && subscriptionStatus.plan !== 'pro' && subscriptionStatus.plan !== 'trial' && (
-                <span className="ml-1 text-xs bg-green-600 rounded px-1">PRO</span>
-              )}
             </button>
           ))}
           
