@@ -5217,7 +5217,7 @@ const MusicianDashboard = () => {
     </div>
   );
 };
-            <div className="bg-gray-800 rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+const AudienceInterface = () => {
               {/* Header */}
               <div className="bg-gradient-to-r from-purple-600 to-green-600 p-6 rounded-t-xl">
                 <div className="flex justify-between items-center">
