@@ -4622,6 +4622,195 @@ async def remove_song_from_playlist(
         logger.error(f"Error removing song from playlist: {str(e)}")
         raise HTTPException(status_code=500, detail="Error removing song from playlist")
 
+@api_router.put("/playlists/{playlist_id}/name")
+async def rename_playlist(
+    playlist_id: str,
+    rename_data: dict,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Rename a playlist (Pro feature)"""
+    try:
+        # Check Pro access
+        await require_pro_access(musician_id)
+        
+        # Validate request body
+        new_name = rename_data.get("name", "").strip()
+        if not new_name:
+            raise HTTPException(status_code=400, detail="Playlist name cannot be empty")
+        
+        if len(new_name) > 100:
+            raise HTTPException(status_code=400, detail="Playlist name too long (max 100 characters)")
+        
+        # Verify playlist belongs to musician and is not deleted
+        playlist = await db.playlists.find_one({
+            "id": playlist_id, 
+            "musician_id": musician_id,
+            "is_deleted": {"$ne": True}
+        })
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+        
+        # Update playlist name
+        now = datetime.utcnow()
+        await db.playlists.update_one(
+            {"id": playlist_id, "musician_id": musician_id},
+            {
+                "$set": {
+                    "name": new_name,
+                    "updated_at": now
+                }
+            }
+        )
+        
+        logger.info(f"Renamed playlist {playlist_id} to '{new_name}' for musician {musician_id}")
+        return {
+            "id": playlist_id,
+            "name": new_name,
+            "updated_at": now,
+            "message": "Playlist renamed successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error renaming playlist: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error renaming playlist")
+
+@api_router.put("/playlists/{playlist_id}/visibility")
+async def toggle_playlist_visibility(
+    playlist_id: str,
+    visibility_data: dict,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Toggle playlist public/private status (Pro feature)"""
+    try:
+        # Check Pro access
+        await require_pro_access(musician_id)
+        
+        # Validate request body
+        is_public = visibility_data.get("is_public")
+        if is_public is None:
+            raise HTTPException(status_code=400, detail="is_public field is required")
+        
+        if not isinstance(is_public, bool):
+            raise HTTPException(status_code=400, detail="is_public must be a boolean")
+        
+        # Verify playlist belongs to musician and is not deleted
+        playlist = await db.playlists.find_one({
+            "id": playlist_id, 
+            "musician_id": musician_id,
+            "is_deleted": {"$ne": True}
+        })
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+        
+        now = datetime.utcnow()
+        
+        # If making playlist private and it's currently active, clear active status
+        clear_active = False
+        if not is_public and playlist.get("is_public", False):
+            musician = await db.musicians.find_one({"id": musician_id})
+            if musician.get("active_playlist_id") == playlist_id:
+                await db.musicians.update_one(
+                    {"id": musician_id},
+                    {"$unset": {"active_playlist_id": ""}}
+                )
+                clear_active = True
+        
+        # Update playlist visibility
+        await db.playlists.update_one(
+            {"id": playlist_id, "musician_id": musician_id},
+            {
+                "$set": {
+                    "is_public": is_public,
+                    "updated_at": now
+                }
+            }
+        )
+        
+        status_text = "public" if is_public else "private"
+        logger.info(f"Made playlist {playlist_id} {status_text} for musician {musician_id}")
+        
+        response = {
+            "id": playlist_id,
+            "is_public": is_public,
+            "updated_at": now,
+            "message": f"Playlist made {status_text}"
+        }
+        
+        if clear_active:
+            response["active_playlist_cleared"] = True
+            response["message"] += " and removed from active status"
+        
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error toggling playlist visibility: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error updating playlist visibility")
+
+@api_router.delete("/playlists/{playlist_id}")
+async def soft_delete_playlist(
+    playlist_id: str,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Soft delete a playlist (Pro feature)"""
+    try:
+        # Check Pro access
+        await require_pro_access(musician_id)
+        
+        # Verify playlist belongs to musician and is not already deleted
+        playlist = await db.playlists.find_one({
+            "id": playlist_id, 
+            "musician_id": musician_id,
+            "is_deleted": {"$ne": True}
+        })
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+        
+        now = datetime.utcnow()
+        
+        # If this playlist is currently active, clear active status
+        clear_active = False
+        musician = await db.musicians.find_one({"id": musician_id})
+        if musician.get("active_playlist_id") == playlist_id:
+            await db.musicians.update_one(
+                {"id": musician_id},
+                {"$unset": {"active_playlist_id": ""}}
+            )
+            clear_active = True
+        
+        # Soft delete playlist
+        await db.playlists.update_one(
+            {"id": playlist_id, "musician_id": musician_id},
+            {
+                "$set": {
+                    "is_deleted": True,
+                    "updated_at": now
+                }
+            }
+        )
+        
+        logger.info(f"Soft deleted playlist {playlist_id} for musician {musician_id}")
+        
+        response = {
+            "id": playlist_id,
+            "message": f"Playlist '{playlist['name']}' deleted successfully"
+        }
+        
+        if clear_active:
+            response["active_playlist_cleared"] = True
+            response["message"] += " and removed from active status"
+        
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error soft deleting playlist: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error deleting playlist")
+
 @api_router.put("/playlists/{playlist_id}/activate")
 async def activate_playlist(
     playlist_id: str,
