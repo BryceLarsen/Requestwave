@@ -439,6 +439,7 @@ class PlaylistResponse(BaseModel):
     song_count: int
     song_ids: List[str] = []  # NEW: Add song_ids for client-side filtering
     is_active: bool
+    is_public: bool = False  # NEW: Public/private status
     created_at: datetime
     updated_at: datetime  # NEW: Add updated_at field to response
 
