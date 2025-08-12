@@ -4628,7 +4628,11 @@ async def remove_song_from_playlist(
         )
         
         # Return updated playlist
-        updated_playlist = await db.playlists.find_one({"id": playlist_id, "musician_id": musician_id})
+        updated_playlist = await db.playlists.find_one({
+            "id": playlist_id, 
+            "musician_id": musician_id,
+            "is_deleted": {"$ne": True}
+        })
         
         logger.info(f"Removed song {song_id} from playlist {playlist_id}")
         return {
