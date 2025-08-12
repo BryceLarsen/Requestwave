@@ -2394,7 +2394,7 @@ const MusicianDashboard = () => {
               <h2 className="text-2xl font-bold">Song Management</h2>
               <div className="flex gap-2">
                 {/* Song Management Dropdown */}
-                <div className="relative">
+                <div className="relative song-management-dropdown">
                   <button
                     onClick={() => setShowSongManagementDropdown(!showSongManagementDropdown)}
                     className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-bold transition duration-300 flex items-center space-x-2"
