@@ -1850,6 +1850,18 @@ const MusicianDashboard = () => {
     setSelectedRequests(new Set(requestIds));
   };
 
+  const toggleRequestSelection = (requestId) => {
+    setSelectedRequests(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(requestId)) {
+        newSet.delete(requestId);
+      } else {
+        newSet.add(requestId);
+      }
+      return newSet;
+    });
+  };
+
   const batchUpdateRequestStatus = async (status) => {
     if (selectedRequests.size === 0) {
       alert('Please select requests to update');
