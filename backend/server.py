@@ -4479,7 +4479,6 @@ async def create_freemium_checkout_session(
             # Create subscription-mode checkout session (NO startup fee line item here)
             session = stripe.checkout.Session.create(
                 mode="subscription",
-                customer_creation="if_required",
                 success_url=success_url,
                 cancel_url=cancel_url,
                 line_items=[{"price": price_id, "quantity": 1}],
