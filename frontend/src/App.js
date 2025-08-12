@@ -4600,41 +4600,38 @@ const MusicianDashboard = () => {
                   </label>
                 </div>
                 
-                {/* NEW: Pro Feature - Song Suggestions Toggle */}
-                {subscriptionStatus && subscriptionStatus.plan === 'pro' && (
-                  <div className="flex items-center space-x-3">
-                    {/* Toggle Switch */}
-                    <div className="relative inline-block w-10 mr-2 align-middle select-none">
-                      <input
-                        type="checkbox"
-                        id="allow_song_suggestions"
-                        checked={designSettings.allow_song_suggestions}
-                        onChange={(e) => setDesignSettings({...designSettings, allow_song_suggestions: e.target.checked})}
-                        className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 transform"
-                        style={{
-                          left: designSettings.allow_song_suggestions ? '16px' : '0px',
-                          backgroundColor: '#ffffff'
-                        }}
-                      />
-                      <label
-                        htmlFor="allow_song_suggestions"
-                        className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer transition-colors duration-300 ${
-                          designSettings.allow_song_suggestions ? 'bg-green-500' : 'bg-gray-600'
-                        }`}
-                      ></label>
-                    </div>
-                    <label htmlFor="allow_song_suggestions" className="text-white text-sm cursor-pointer">
-                      Song Suggestions {designSettings.allow_song_suggestions ? 'ON' : 'OFF'}
-                      <span className="text-yellow-400 ml-2">✨ PRO</span>
-                    </label>
-                    <div className="group relative">
-                      <span className="text-gray-400 cursor-help">ℹ️</span>
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 w-48 text-center">
-                        Let your audience suggest songs that aren't in your current repertoire
-                      </div>
+                {/* Song Suggestions Toggle - Available for all users */}
+                <div className="flex items-center space-x-3">
+                  {/* Toggle Switch */}
+                  <div className="relative inline-block w-10 mr-2 align-middle select-none">
+                    <input
+                      type="checkbox"
+                      id="allow_song_suggestions"
+                      checked={designSettings.allow_song_suggestions}
+                      onChange={(e) => setDesignSettings({...designSettings, allow_song_suggestions: e.target.checked})}
+                      className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 transform"
+                      style={{
+                        left: designSettings.allow_song_suggestions ? '16px' : '0px',
+                        backgroundColor: '#ffffff'
+                      }}
+                    />
+                    <label
+                      htmlFor="allow_song_suggestions"
+                      className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer transition-colors duration-300 ${
+                        designSettings.allow_song_suggestions ? 'bg-green-500' : 'bg-gray-600'
+                      }`}
+                    ></label>
+                  </div>
+                  <label htmlFor="allow_song_suggestions" className="text-white text-sm cursor-pointer">
+                    Song Suggestions {designSettings.allow_song_suggestions ? 'ON' : 'OFF'}
+                  </label>
+                  <div className="group relative">
+                    <span className="text-gray-400 cursor-help">ℹ️</span>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 w-48 text-center">
+                      Let your audience suggest songs that aren't in your current repertoire
                     </div>
                   </div>
-                )}
+                </div>
                 
                 {/* Show Pro upgrade notice for free users */}
                 {subscriptionStatus && subscriptionStatus.plan !== 'pro' && (
