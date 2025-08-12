@@ -4032,7 +4032,7 @@ const MusicianDashboard = () => {
                       <p className="text-gray-300 mb-6">
                         {subscriptionStatus.can_reactivate 
                           ? 'Welcome back! Reactivate your audience link to start receiving requests again.'
-                          : 'Get unlimited song requests with a low monthly fee and 30-day free trial.'
+                          : 'Get unlimited song requests with a low monthly fee and 14-day free trial.'
                         }
                       </p>
 
