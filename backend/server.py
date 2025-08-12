@@ -4269,12 +4269,14 @@ async def create_playlist(
                 raise HTTPException(status_code=400, detail="Some songs don't belong to you")
         
         # Create playlist
+        now = datetime.utcnow()
         playlist_dict = {
             "id": str(uuid.uuid4()),
             "musician_id": musician_id,
             "name": playlist_data.name,
             "song_ids": playlist_data.song_ids,
-            "created_at": datetime.utcnow()
+            "created_at": now,
+            "updated_at": now  # NEW: Set initial updated_at
         }
         
         await db.playlists.insert_one(playlist_dict)
