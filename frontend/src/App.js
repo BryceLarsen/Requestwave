@@ -479,7 +479,7 @@ const MusicianDashboard = () => {
   });
   const [songFilter, setSongFilter] = useState('');
   const [genreFilter, setGenreFilter] = useState('');
-  const [artistFilter, setArtistFilter] = useState('');
+  const [playlistFilter, setPlaylistFilter] = useState('');
   const [moodFilter, setMoodFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
   const [decadeFilter, setDecadeFilter] = useState('');  // NEW: Add decade filter
