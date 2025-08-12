@@ -3078,7 +3078,7 @@ const MusicianDashboard = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-3 mb-4">
                   <input
                     type="text"
-                    placeholder="Search songs..."
+                    placeholder="Search Song Title or Artist"
                     value={songFilter}
                     onChange={(e) => setSongFilter(e.target.value)}
                     className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-1"
