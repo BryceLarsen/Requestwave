@@ -3356,7 +3356,7 @@ const MusicianDashboard = () => {
                     onClick={() => {
                       setSongFilter('');
                       setGenreFilter('');
-                      setArtistFilter('');
+                      setPlaylistFilter('');
                       setMoodFilter('');
                       setYearFilter('');
                       setDecadeFilter('');
