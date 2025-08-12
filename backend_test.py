@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 """
-PLAYLIST EDITING BACKEND ENDPOINTS TESTING
+COMPREHENSIVE PLAYLIST MANAGEMENT BACKEND TESTING
 
-Testing the new playlist editing backend endpoints as requested:
+Testing the comprehensive playlist management backend updates as requested:
 
 CRITICAL TEST ENDPOINTS:
-1. Test playlist creation with updated_at field
-2. GET /api/playlists/{playlist_id} - returns detailed playlist with ordered song_ids
-3. PUT /api/playlists/{playlist_id}/songs - replaces entire song list, removes duplicates
-4. DELETE /api/playlists/{playlist_id}/songs/{song_id} - removes single song
-5. Test duplicate handling in PUT endpoint
+1. Test playlist creation with new defaults (is_public=false, is_deleted=false)
+2. PUT /api/playlists/{playlist_id}/name - rename functionality
+3. PUT /api/playlists/{playlist_id}/visibility - public/private toggle
+4. DELETE /api/playlists/{playlist_id} - soft delete (sets is_deleted=true)
+5. Test audience filtering (only public, non-deleted playlists)
+6. Test active playlist clearing when playlist is deleted or made private
 
 Test Credentials: brycelarsenmusic@gmail.com / RequestWave2024!
 
-Expected: All new playlist editing endpoints working correctly with proper updated_at tracking.
+Expected: All new playlist management features working correctly with proper field defaults and filtering.
 """
 
 import requests
