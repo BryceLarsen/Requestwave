@@ -6358,7 +6358,7 @@ const AudienceInterface = () => {
             {searchQuery ? (
               <>
                 <span className="text-white font-medium">{filteredSongs.length}</span> song{filteredSongs.length !== 1 ? 's' : ''} found for "<span className="text-white font-medium">{searchQuery}</span>"
-                {(selectedFilters.genre || selectedFilters.artist || selectedFilters.mood || selectedFilters.year || selectedFilters.decade) && (
+                {(selectedFilters.genre || selectedFilters.playlist || selectedFilters.mood || selectedFilters.year || selectedFilters.decade) && (
                   <span> with additional filters applied</span>
                 )}
               </>
