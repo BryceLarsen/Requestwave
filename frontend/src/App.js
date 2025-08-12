@@ -4631,26 +4631,6 @@ const MusicianDashboard = () => {
                       Let your audience suggest songs that aren't in your current repertoire
                     </div>
                   </div>
-                </div>
-                
-                {/* Show Pro upgrade notice for free users */}
-                {subscriptionStatus && subscriptionStatus.plan !== 'pro' && (
-                  <div className="bg-yellow-900/20 border border-yellow-500/50 rounded-lg p-3">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-yellow-400">✨</span>
-                      <span className="text-yellow-200 text-sm font-medium">Song Suggestions - Pro Feature</span>
-                    </div>
-                    <p className="text-yellow-300 text-xs mt-1">
-                      Upgrade to Pro to let your audience suggest songs that aren't in your repertoire
-                    </p>
-                    <button
-                      onClick={() => setShowUpgrade(true)}
-                      className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs px-3 py-1 rounded mt-2 transition duration-300"
-                    >
-                      Upgrade to Pro
-                    </button>
-                  </div>
-                )}
               </div>
 
               <div className="flex space-x-4">
