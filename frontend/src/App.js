@@ -4603,15 +4603,28 @@ const MusicianDashboard = () => {
                 {/* NEW: Pro Feature - Song Suggestions Toggle */}
                 {subscriptionStatus && subscriptionStatus.plan === 'pro' && (
                   <div className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      id="allow_song_suggestions"
-                      checked={designSettings.allow_song_suggestions}
-                      onChange={(e) => setDesignSettings({...designSettings, allow_song_suggestions: e.target.checked})}
-                      className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500 focus:ring-2"
-                    />
-                    <label htmlFor="allow_song_suggestions" className="text-white text-sm">
-                      Allow Song Suggestions 
+                    {/* Toggle Switch */}
+                    <div className="relative inline-block w-10 mr-2 align-middle select-none">
+                      <input
+                        type="checkbox"
+                        id="allow_song_suggestions"
+                        checked={designSettings.allow_song_suggestions}
+                        onChange={(e) => setDesignSettings({...designSettings, allow_song_suggestions: e.target.checked})}
+                        className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 transform"
+                        style={{
+                          left: designSettings.allow_song_suggestions ? '16px' : '0px',
+                          backgroundColor: '#ffffff'
+                        }}
+                      />
+                      <label
+                        htmlFor="allow_song_suggestions"
+                        className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer transition-colors duration-300 ${
+                          designSettings.allow_song_suggestions ? 'bg-green-500' : 'bg-gray-600'
+                        }`}
+                      ></label>
+                    </div>
+                    <label htmlFor="allow_song_suggestions" className="text-white text-sm cursor-pointer">
+                      Song Suggestions {designSettings.allow_song_suggestions ? 'ON' : 'OFF'}
                       <span className="text-yellow-400 ml-2">✨ PRO</span>
                     </label>
                     <div className="group relative">
