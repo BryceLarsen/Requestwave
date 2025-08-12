@@ -523,6 +523,9 @@ const MusicianDashboard = () => {
   // Mobile Navigation Dropdown State
   const [showMobileNav, setShowMobileNav] = useState(false);
   
+  // Quick Start Guide (manual access only)
+  const [showQuickStart, setShowQuickStart] = useState(false);
+  
   // NEW: Auto-fill metadata state
   const [autoFillLoading, setAutoFillLoading] = useState(false);
   
