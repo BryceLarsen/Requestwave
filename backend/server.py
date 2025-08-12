@@ -430,6 +430,8 @@ class Playlist(BaseModel):
     song_ids: List[str] = []
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)  # NEW: Track last modification
+    is_public: bool = False  # NEW: Public/private toggle (default private)
+    is_deleted: bool = False  # NEW: Soft delete flag
 
 class PlaylistResponse(BaseModel):
     id: str
