@@ -12332,40 +12332,6 @@ if __name__ == "__main__":
     
     tester = RequestWaveAPITester()
     
-    # Health check first
-    print("🔍 PRELIMINARY: Health Check")
-    tester.test_health_check()
-    print()
-    
-    # Run the v2 subscription endpoints test
-    print("🎯 RUNNING v2 SUBSCRIPTION ENDPOINTS TEST")
-    print("=" * 100)
-    
-    tester.test_v2_subscription_endpoints()
-    print()
-    
-    # Print final results
-    print("🎯 v2 SUBSCRIPTION ENDPOINTS TEST RESULTS")
-    print("=" * 100)
-    print(f"✅ Tests Passed: {tester.results['passed']}")
-    print(f"❌ Tests Failed: {tester.results['failed']}")
-    print(f"📊 Total Tests: {tester.results['passed'] + tester.results['failed']}")
-    
-    if tester.results['failed'] > 0:
-        print("\n🚨 v2 ENDPOINT ISSUES FOUND:")
-        for error in tester.results['errors']:
-            print(f"   ❌ {error}")
-    else:
-        print("\n✅ ALL v2 SUBSCRIPTION ENDPOINT TESTS PASSED!")
-        print("🎉 No routing conflicts detected!")
-        print("🎉 Freemium model working correctly!")
-    
-    print("=" * 100)
-    
-    # Exit with appropriate code for automation
-    total_tests = tester.results["passed"] + tester.results["failed"]
-    success_rate = (tester.results["passed"] / total_tests * 100) if total_tests > 0 else 0
-    exit(0 if success_rate >= 80 else 1)
 def main():
     """Run playlist functionality tests"""
     print("🎵 PLAYLIST FUNCTIONALITY TESTING FOR AUDIENCE INTERFACE")
@@ -12403,6 +12369,9 @@ def main():
     print("=" * 80)
     
     return tester.results['failed'] == 0
+
+if __name__ == "__main__":
+    main()
 
 if __name__ == "__main__":
     main()
