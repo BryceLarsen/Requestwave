@@ -4549,10 +4549,7 @@ const MusicianDashboard = () => {
                       📷 Upload Photo
                     </label>
                     <p className="text-xs text-gray-400 mt-1">
-                      {subscriptionStatus?.plan_type === 'pro' 
-                        ? 'Max 2MB, JPG/PNG' 
-                        : 'Pro feature - Max 2MB, JPG/PNG'
-                      }
+                      Max 2MB, JPG/PNG
                     </p>
                   </div>
                 </div>
