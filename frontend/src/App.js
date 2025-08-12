@@ -4632,6 +4632,7 @@ const MusicianDashboard = () => {
                     </div>
                   </div>
               </div>
+              </div>
 
               <div className="flex space-x-4">
                 <button
