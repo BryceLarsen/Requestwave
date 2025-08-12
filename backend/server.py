@@ -4930,9 +4930,9 @@ app.include_router(freemium_router, prefix="/v2")
 # Route logging startup hook
 @app.on_event("startup")
 async def log_routes():
-    """Log Stripe key prefix and subscription routes to debug routing conflicts"""
+    """Log full route list and Stripe key prefix for diagnostics"""
     print("\n" + "="*80)
-    print("🔍 FREEMIUM BACKEND DIAGNOSTICS:")
+    print("🔍 FREEMIUM BACKEND STARTUP DIAGNOSTICS:")
     print("="*80)
     
     # Log Stripe key prefix as required
@@ -4942,22 +4942,45 @@ async def log_routes():
     print(f"🔗 Webhook Secret Set: {'Yes' if STRIPE_WEBHOOK_SECRET else 'No'}")
     print(f"💰 Price IDs: STARTUP={PRICE_STARTUP_15}, MONTHLY={PRICE_MONTHLY_5}, ANNUAL={PRICE_ANNUAL_24}")
     
-    print("\n📋 SUBSCRIPTION ENDPOINT ROUTES:")
+    print("\n📋 FULL ROUTE LIST:")
     print("-" * 50)
     
-    # Log subscription routes specifically
+    # Log all routes
+    webhook_routes = []
     subscription_routes = []
+    other_routes = []
+    
     for route in app.routes:
         if hasattr(route, 'methods') and hasattr(route, 'path'):
+            methods = ', '.join(route.methods) if route.methods else 'N/A'
             path = route.path
-            if '/subscription' in path or '/stripe' in path or '/webhook' in path:
-                methods = ', '.join(route.methods) if route.methods else 'N/A'
-                endpoint = getattr(route, 'endpoint', None)
-                endpoint_name = endpoint.__name__ if endpoint and hasattr(endpoint, '__name__') else 'N/A'
-                subscription_routes.append(f"  {methods:10} {path:40} -> {endpoint_name}")
+            endpoint = getattr(route, 'endpoint', None)
+            endpoint_name = endpoint.__name__ if endpoint and hasattr(endpoint, '__name__') else 'N/A'
+            route_info = f"  {methods:10} {path:40} -> {endpoint_name}"
+            
+            # Categorize routes
+            if '/webhook' in path or 'webhook' in endpoint_name.lower():
+                webhook_routes.append(route_info)
+            elif '/subscription' in path:
+                subscription_routes.append(route_info)
+            else:
+                other_routes.append(route_info)
     
+    # Display webhook routes prominently
+    if webhook_routes:
+        print("🔗 WEBHOOK ROUTES:")
+        for route_info in sorted(webhook_routes):
+            print(route_info)
+    else:
+        print("⚠️  NO WEBHOOK ROUTES FOUND")
+    
+    print("\n💳 SUBSCRIPTION ROUTES:")
     for route_info in sorted(subscription_routes):
         print(route_info)
+    
+    print(f"\n📊 TOTAL ROUTES: {len(list(app.routes))}")
+    print(f"🔗 Webhook Routes: {len(webhook_routes)}")
+    print(f"💳 Subscription Routes: {len(subscription_routes)}")
     
     print("\n" + "="*80)
 
