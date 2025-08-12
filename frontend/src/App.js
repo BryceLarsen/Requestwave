@@ -3576,25 +3576,31 @@ const MusicianDashboard = () => {
                 </div>
                 {subscriptionStatus && (
                   <div className="text-right">
-                    <div className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      subscriptionStatus.plan === 'trial' ? 'bg-blue-600' :
-                      subscriptionStatus.plan === 'pro' ? 'bg-green-600' : 'bg-orange-600'
-                    }`}>
-                      {subscriptionStatus.plan === 'trial' ? 'TRIAL' :
-                       subscriptionStatus.plan === 'pro' ? 'PRO' : 'FREE'}
-                    </div>
-                    <div className="text-purple-200 text-xs mt-1">
-                      {subscriptionStatus.plan === 'trial' ? 
-                        `Trial ends: ${formatTimestamp(subscriptionStatus.trial_ends_at).split(' at ')[0]}` :
-                        subscriptionStatus.plan === 'pro' ? 
-                        'Unlimited requests' :
-                        `${subscriptionStatus.requests_used}/${subscriptionStatus.requests_limit} requests used`
-                      }
-                    </div>
-                    {subscriptionStatus.plan === 'free' && subscriptionStatus.next_reset_date && (
-                      <div className="text-purple-300 text-xs">
-                        Resets: {formatTimestamp(subscriptionStatus.next_reset_date).split(' at ')[0]}
-                      </div>
+                    {subscriptionStatus.plan === 'free' || !subscriptionStatus.audience_link_active ? (
+                      <button
+                        onClick={() => setActiveTab('subscription')}
+                        className="bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-lg font-bold transition duration-300 text-sm"
+                      >
+                        Upgrade Now
+                      </button>
+                    ) : (
+                      <>
+                        <div className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          subscriptionStatus.plan === 'trialing' ? 'bg-blue-600' :
+                          subscriptionStatus.plan === 'active' ? 'bg-green-600' : 'bg-orange-600'
+                        }`}>
+                          {subscriptionStatus.plan === 'trialing' ? 'TRIAL' :
+                           subscriptionStatus.plan === 'active' ? 'PRO' : 'FREE'}
+                        </div>
+                        <div className="text-purple-200 text-xs mt-1">
+                          {subscriptionStatus.plan === 'trialing' ? 
+                            `Trial ends: ${subscriptionStatus.trial_end ? new Date(subscriptionStatus.trial_end).toLocaleDateString() : 'Soon'}` :
+                            subscriptionStatus.plan === 'active' ? 
+                            'Unlimited requests' :
+                            'Start your 14-day trial'
+                          }
+                        </div>
+                      </>
                     )}
                   </div>
                 )}
