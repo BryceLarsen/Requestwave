@@ -5736,6 +5736,7 @@ const AudienceInterface = () => {
     fetchSongs();
     fetchFilters();
     fetchDesignSettings();
+    fetchPlaylists(); // NEW: Fetch playlists for audience filtering
   }, [slug]);
 
   useEffect(() => {
