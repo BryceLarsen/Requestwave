@@ -5564,75 +5564,113 @@ const MusicianDashboard = () => {
                   <p className="text-gray-400 text-center py-8">No playlists created yet. Select some songs and click "Add to Playlist" to create your first playlist!</p>
                 ) : (
                   playlists.filter(p => p.id !== 'all_songs').map(playlist => (
-                    <div key={playlist.id} className="bg-gray-700 rounded-lg p-4 flex items-center justify-between">
-                      <div className="flex-1">
-                        {editingPlaylist === playlist.id ? (
+                    <div key={playlist.id} className="bg-gray-700 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex-1">
+                          {editingPlaylist === playlist.id ? (
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="text"
+                                value={editingPlaylistName}
+                                onChange={(e) => setEditingPlaylistName(e.target.value)}
+                                className="bg-gray-600 border border-gray-500 rounded px-3 py-1 text-white flex-1"
+                                onKeyPress={(e) => {
+                                  if (e.key === 'Enter') {
+                                    savePlaylistName(playlist.id);
+                                  } else if (e.key === 'Escape') {
+                                    cancelEditingPlaylistName();
+                                  }
+                                }}
+                                onBlur={() => savePlaylistName(playlist.id)}
+                                autoFocus
+                              />
+                              <button
+                                onClick={() => savePlaylistName(playlist.id)}
+                                className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={cancelEditingPlaylistName}
+                                className="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-sm"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <div>
+                              <div className="flex items-center space-x-2">
+                                <h3 className="font-medium">{playlist.name}</h3>
+                                <div className="flex items-center space-x-1">
+                                  {playlist.is_active && (
+                                    <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                                      Active
+                                    </span>
+                                  )}
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    playlist.is_public 
+                                      ? 'bg-blue-500 text-white' 
+                                      : 'bg-gray-500 text-white'
+                                  }`}>
+                                    {playlist.is_public ? 'Public' : 'Private'}
+                                  </span>
+                                </div>
+                              </div>
+                              <p className="text-gray-400 text-sm mt-1">
+                                {playlist.song_count} songs
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {editingPlaylist !== playlist.id && (
                           <div className="flex items-center space-x-2">
-                            <input
-                              type="text"
-                              defaultValue={playlist.name}
-                              className="bg-gray-600 border border-gray-500 rounded px-3 py-1 text-white flex-1"
-                              onKeyPress={(e) => {
-                                if (e.key === 'Enter') {
-                                  updatePlaylistName(playlist.id, e.target.value);
-                                }
-                              }}
-                              autoFocus
-                            />
+                            {/* Public/Private Toggle */}
                             <button
-                              onClick={(e) => {
-                                const input = e.target.parentElement.querySelector('input');
-                                updatePlaylistName(playlist.id, input.value);
-                              }}
-                              className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm"
+                              onClick={() => togglePlaylistVisibility(playlist.id, playlist.is_public)}
+                              className={`px-3 py-1 rounded text-sm font-medium transition duration-300 ${
+                                playlist.is_public
+                                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                  : 'bg-gray-600 hover:bg-gray-700 text-white'
+                              }`}
+                              title={playlist.is_public ? 'Make Private' : 'Make Public'}
                             >
-                              Save
+                              {playlist.is_public ? '🌐' : '🔒'}
                             </button>
+                            
+                            {/* Activate Button */}
                             <button
-                              onClick={() => setEditingPlaylist(null)}
-                              className="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-sm"
+                              onClick={() => activatePlaylist(playlist.id)}
+                              disabled={playlist.is_active}
+                              className={`px-3 py-1 rounded text-sm font-medium transition duration-300 ${
+                                playlist.is_active
+                                  ? 'bg-green-600 text-white cursor-default'
+                                  : 'bg-purple-600 hover:bg-purple-700 text-white'
+                              }`}
                             >
-                              Cancel
+                              {playlist.is_active ? 'Active' : 'Activate'}
                             </button>
-                          </div>
-                        ) : (
-                          <div>
-                            <h3 className="font-medium">{playlist.name}</h3>
-                            <p className="text-gray-400 text-sm">
-                              {playlist.song_count} songs
-                              {playlist.is_active && <span className="ml-2 text-green-400">• Active</span>}
-                            </p>
+                            
+                            {/* Rename Button */}
+                            <button
+                              onClick={() => startEditingPlaylistName(playlist.id, playlist.name)}
+                              className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm text-white font-medium transition duration-300"
+                              title="Rename playlist"
+                            >
+                              ✏️
+                            </button>
+                            
+                            {/* Delete Button */}
+                            <button
+                              onClick={() => confirmDeletePlaylist(playlist)}
+                              className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm text-white font-medium transition duration-300"
+                              title="Delete playlist"
+                            >
+                              🗑️
+                            </button>
                           </div>
                         )}
                       </div>
-                      
-                      {editingPlaylist !== playlist.id && (
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => activatePlaylist(playlist.id)}
-                            disabled={playlist.is_active}
-                            className={`px-3 py-1 rounded text-sm font-medium transition duration-300 ${
-                              playlist.is_active
-                                ? 'bg-green-600 text-white cursor-default'
-                                : 'bg-purple-600 hover:bg-purple-700 text-white'
-                            }`}
-                          >
-                            {playlist.is_active ? 'Active' : 'Activate'}
-                          </button>
-                          <button
-                            onClick={() => setEditingPlaylist(playlist.id)}
-                            className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm"
-                          >
-                            Rename
-                          </button>
-                          <button
-                            onClick={() => deletePlaylist(playlist.id, playlist.name)}
-                            className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
                     </div>
                   ))
                 )}
