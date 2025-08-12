@@ -5699,8 +5699,8 @@ const AudienceInterface = () => {
       if (selectedFilters.genre) {
         params.append('genre', selectedFilters.genre);
       }
-      if (selectedFilters.artist) {
-        params.append('artist', selectedFilters.artist);
+      if (selectedFilters.playlist) {
+        params.append('playlist', selectedFilters.playlist);
       }
       if (selectedFilters.mood) {
         params.append('mood', selectedFilters.mood);
