@@ -1348,7 +1348,7 @@ const MusicianDashboard = () => {
       const notesMatch = notesFilter === '' ||
         (song.notes && song.notes.toLowerCase().includes(notesFilter.toLowerCase()));
       
-      return searchMatch && genreMatch && artistMatch && moodMatch && yearMatch && decadeMatch && notesMatch;
+      return searchMatch && genreMatch && playlistMatch && moodMatch && yearMatch && decadeMatch && notesMatch;
     });
     
     setFilteredSongs(filtered);
