@@ -1323,9 +1323,14 @@ const MusicianDashboard = () => {
       const genreMatch = genreFilter === '' || 
         song.genres.some(genre => genre.toLowerCase().includes(genreFilter.toLowerCase()));
       
-      // Artist filter
-      const artistMatch = artistFilter === '' ||
-        song.artist.toLowerCase().includes(artistFilter.toLowerCase());
+      // Playlist filter (client-side)
+      const playlistMatch = artistFilter === '' || (() => {
+        // Find the selected playlist
+        const selectedPlaylist = playlists.find(p => p.id === artistFilter);
+        if (!selectedPlaylist || !selectedPlaylist.song_ids) return false;
+        // Check if current song is in the selected playlist
+        return selectedPlaylist.song_ids.includes(song.id);
+      })();
       
       // Mood filter
       const moodMatch = moodFilter === '' ||
