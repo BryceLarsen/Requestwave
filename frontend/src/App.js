@@ -1923,6 +1923,58 @@ const MusicianDashboard = () => {
     }
   };
 
+  // Song suggestion batch functions
+  const toggleSuggestionSelection = (suggestionId) => {
+    setSelectedSuggestions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(suggestionId)) {
+        newSet.delete(suggestionId);
+      } else {
+        newSet.add(suggestionId);
+      }
+      return newSet;
+    });
+  };
+
+  const clearSuggestionSelection = () => {
+    setSelectedSuggestions(new Set());
+  };
+
+  const batchSuggestionAction = async (action) => {
+    if (selectedSuggestions.size === 0) {
+      alert('Please select suggestions to update');
+      return;
+    }
+
+    const actionText = action === 'added' ? 'add to repertoire' : 'reject';
+    const confirmMessage = `${actionText.charAt(0).toUpperCase() + actionText.slice(1)} ${selectedSuggestions.size} selected suggestion(s)?`;
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const updatePromises = Array.from(selectedSuggestions).map(suggestionId =>
+        axios.put(`${API}/song-suggestions/${suggestionId}/status`, 
+          { status: action },
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        )
+      );
+
+      await Promise.all(updatePromises);
+      
+      // Clear selection and refresh
+      clearSuggestionSelection();
+      fetchSongSuggestions();
+      
+      const successMessage = action === 'added' 
+        ? `Successfully added ${selectedSuggestions.size} suggestion(s) to your repertoire`
+        : `Successfully rejected ${selectedSuggestions.size} suggestion(s)`;
+      alert(successMessage);
+    } catch (error) {
+      console.error('Error batch updating suggestions:', error);
+      alert('Error updating suggestions. Please try again.');
+    }
+  };
+
   // CSV Upload functions
   const handleCsvFileSelect = (e) => {
     const file = e.target.files[0];
