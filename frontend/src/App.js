@@ -520,6 +520,9 @@ const MusicianDashboard = () => {
   // Song Management Dropdown State
   const [showSongManagementDropdown, setShowSongManagementDropdown] = useState(false);
   
+  // Mobile Navigation Dropdown State
+  const [showMobileNav, setShowMobileNav] = useState(false);
+  
   // NEW: Auto-fill metadata state
   const [autoFillLoading, setAutoFillLoading] = useState(false);
   
