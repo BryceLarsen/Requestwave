@@ -587,6 +587,21 @@ backend:
         agent: "testing"
         comment: "USER REGISTRATION UPDATES FULLY WORKING: Comprehensive testing confirms user registration correctly implements freemium model with automatic trial activation. ✅ FREEMIUM FIELDS POPULATED: New user registration includes all required freemium model fields - audience_link_active=true, has_had_trial=true, trial_end set to 30 days from registration, stripe_customer_id=null, stripe_subscription_id=null, subscription_status=null. ✅ AUTOMATIC TRIAL START: Registration automatically activates 30-day trial without requiring separate API calls or user actions. ✅ TRIAL DURATION CORRECT: Trial end date calculated correctly (~29-30 days from registration) with proper datetime handling. ✅ SUBSCRIPTION EVENT LOGGING: Registration creates subscription event log entry with event_type='trial_started', reason='new_registration', and proper timestamp for audit trail. ✅ BACKWARD COMPATIBILITY: Registration maintains all existing fields (design_settings, legacy subscription fields) while adding freemium model fields. ✅ JWT TOKEN GENERATION: Registration returns valid JWT token and complete musician object including freemium fields for immediate frontend use. The user registration updates are production-ready and seamlessly integrate freemium model activation into the signup flow."
 
+  - task: "Playlist Functionality for Audience Interface"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented new playlist functionality for audience interface including public playlists endpoint GET /api/musicians/{slug}/playlists and songs filtering with playlist parameter GET /api/musicians/{slug}/songs?playlist={playlist_id}"
+      - working: false
+        agent: "testing"
+        comment: "PLAYLIST FUNCTIONALITY PARTIALLY WORKING WITH CRITICAL ACCESS CONTROL ISSUE: Comprehensive testing reveals mixed results for new playlist functionality. ✅ PUBLIC PLAYLISTS ENDPOINT WORKING: GET /api/musicians/{slug}/playlists successfully returns simplified playlist data (id, name, song_count) without authentication, handles non-existent musicians gracefully with 404 errors, and works correctly as a public endpoint. ❌ CRITICAL SONGS ACCESS ISSUE: GET /api/musicians/{slug}/songs returns 402 Payment Required error preventing playlist filtering tests, even for Pro subscriber brycelarsenmusic@gmail.com with valid subscription. This suggests freemium access control is incorrectly blocking access for Pro users. ❌ PLAYLIST FILTERING UNTESTABLE: Cannot verify playlist filtering functionality (GET /api/musicians/{slug}/songs?playlist={playlist_id}) due to 402 access control blocking songs endpoint. The public playlists endpoint is working correctly, but the songs access control issue prevents full verification of playlist filtering functionality. Need to investigate why Pro subscriber is getting 402 Payment Required errors on audience-facing songs endpoint."
+
 frontend:
   - task: "Musician Dashboard"
     implemented: true
