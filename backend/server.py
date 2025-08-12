@@ -4566,7 +4566,11 @@ async def update_playlist_songs(
         )
         
         # Return updated playlist
-        updated_playlist = await db.playlists.find_one({"id": playlist_id, "musician_id": musician_id})
+        updated_playlist = await db.playlists.find_one({
+            "id": playlist_id, 
+            "musician_id": musician_id,
+            "is_deleted": {"$ne": True}
+        })
         
         logger.info(f"Updated songs for playlist {playlist_id}, new count: {len(unique_song_ids)}")
         return {
