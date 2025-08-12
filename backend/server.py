@@ -3318,8 +3318,12 @@ async def get_musician_public_playlists(slug: str):
         raise HTTPException(status_code=404, detail="Musician not found")
     
     try:
-        # Get all playlists for this musician
-        playlists_cursor = db.playlists.find({"musician_id": musician["id"]}).sort("created_at", -1)
+        # Get only public, non-deleted playlists for this musician
+        playlists_cursor = db.playlists.find({
+            "musician_id": musician["id"],
+            "is_public": True,  # NEW: Only public playlists
+            "is_deleted": {"$ne": True}  # NEW: Exclude soft-deleted playlists
+        }).sort("created_at", -1)
         playlists = await playlists_cursor.to_list(None)
         
         # Build simplified response for public use (no song details, just name and song count)
