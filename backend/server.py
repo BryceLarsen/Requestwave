@@ -4437,6 +4437,169 @@ async def delete_playlist(
         logger.error(f"Error deleting playlist: {str(e)}")
         raise HTTPException(status_code=500, detail="Error deleting playlist")
 
+@api_router.get("/playlists/{playlist_id}")
+async def get_playlist_detail(
+    playlist_id: str,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Get detailed playlist information with ordered song_ids (Pro feature)"""
+    try:
+        # Check Pro access
+        await require_pro_access(musician_id)
+        
+        # Verify playlist belongs to musician
+        playlist = await db.playlists.find_one({"id": playlist_id, "musician_id": musician_id})
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+        
+        # Get song details in the order they appear in the playlist
+        songs = []
+        if playlist.get("song_ids"):
+            for song_id in playlist["song_ids"]:
+                song = await db.songs.find_one({"id": song_id, "musician_id": musician_id, "hidden": {"$ne": True}})
+                if song:  # Only include songs that still exist
+                    songs.append(Song(**song))
+        
+        return {
+            "id": playlist["id"],
+            "name": playlist["name"],
+            "song_ids": playlist.get("song_ids", []),
+            "songs": songs,
+            "song_count": len(songs),
+            "created_at": playlist["created_at"],
+            "updated_at": playlist.get("updated_at", playlist["created_at"])
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching playlist detail: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error fetching playlist detail")
+
+@api_router.put("/playlists/{playlist_id}/songs")
+async def update_playlist_songs(
+    playlist_id: str,
+    song_data: dict,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Replace the entire ordered list of songs in a playlist (Pro feature)"""
+    try:
+        # Check Pro access
+        await require_pro_access(musician_id)
+        
+        # Validate request body
+        song_ids = song_data.get("song_ids", [])
+        if not isinstance(song_ids, list):
+            raise HTTPException(status_code=400, detail="song_ids must be a list")
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_song_ids = []
+        for song_id in song_ids:
+            if song_id not in seen:
+                seen.add(song_id)
+                unique_song_ids.append(song_id)
+        
+        # Verify playlist belongs to musician
+        playlist = await db.playlists.find_one({"id": playlist_id, "musician_id": musician_id})
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+        
+        # Verify all songs belong to the musician and exist
+        if unique_song_ids:
+            song_check_count = await db.songs.count_documents({
+                "id": {"$in": unique_song_ids},
+                "musician_id": musician_id,
+                "hidden": {"$ne": True}
+            })
+            if song_check_count != len(unique_song_ids):
+                raise HTTPException(status_code=400, detail="Some songs are invalid or don't belong to you")
+        
+        # Update playlist with new song order
+        now = datetime.utcnow()
+        await db.playlists.update_one(
+            {"id": playlist_id, "musician_id": musician_id},
+            {
+                "$set": {
+                    "song_ids": unique_song_ids,
+                    "updated_at": now
+                }
+            }
+        )
+        
+        # Return updated playlist
+        updated_playlist = await db.playlists.find_one({"id": playlist_id, "musician_id": musician_id})
+        
+        logger.info(f"Updated songs for playlist {playlist_id}, new count: {len(unique_song_ids)}")
+        return {
+            "id": updated_playlist["id"],
+            "name": updated_playlist["name"],
+            "song_ids": updated_playlist["song_ids"],
+            "song_count": len(updated_playlist["song_ids"]),
+            "created_at": updated_playlist["created_at"],
+            "updated_at": updated_playlist["updated_at"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating playlist songs: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error updating playlist songs")
+
+@api_router.delete("/playlists/{playlist_id}/songs/{song_id}")
+async def remove_song_from_playlist(
+    playlist_id: str,
+    song_id: str,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Remove a single song from a playlist (Pro feature)"""
+    try:
+        # Check Pro access
+        await require_pro_access(musician_id)
+        
+        # Verify playlist belongs to musician
+        playlist = await db.playlists.find_one({"id": playlist_id, "musician_id": musician_id})
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+        
+        # Check if song is in the playlist
+        current_song_ids = playlist.get("song_ids", [])
+        if song_id not in current_song_ids:
+            raise HTTPException(status_code=404, detail="Song not found in playlist")
+        
+        # Remove song from playlist
+        updated_song_ids = [sid for sid in current_song_ids if sid != song_id]
+        now = datetime.utcnow()
+        
+        await db.playlists.update_one(
+            {"id": playlist_id, "musician_id": musician_id},
+            {
+                "$set": {
+                    "song_ids": updated_song_ids,
+                    "updated_at": now
+                }
+            }
+        )
+        
+        # Return updated playlist
+        updated_playlist = await db.playlists.find_one({"id": playlist_id, "musician_id": musician_id})
+        
+        logger.info(f"Removed song {song_id} from playlist {playlist_id}")
+        return {
+            "id": updated_playlist["id"],
+            "name": updated_playlist["name"],
+            "song_ids": updated_playlist["song_ids"],
+            "song_count": len(updated_playlist["song_ids"]),
+            "created_at": updated_playlist["created_at"],
+            "updated_at": updated_playlist["updated_at"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error removing song from playlist: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error removing song from playlist")
+
 @api_router.put("/playlists/{playlist_id}/activate")
 async def activate_playlist(
     playlist_id: str,
