@@ -429,6 +429,7 @@ class Playlist(BaseModel):
     name: str
     song_ids: List[str] = []
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)  # NEW: Track last modification
 
 class PlaylistResponse(BaseModel):
     id: str
