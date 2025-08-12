@@ -2357,6 +2357,95 @@ const MusicianDashboard = () => {
     }
   };
 
+  // NEW: Edit Playlist Songs Functions
+  const openEditPlaylistSongsModal = async (playlistId) => {
+    if (!playlistId || playlistId === 'all_songs') return;
+    
+    try {
+      setEditPlaylistLoading(true);
+      setEditPlaylistError('');
+      
+      // Fetch detailed playlist information
+      const response = await axios.get(`${API}/playlists/${playlistId}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      
+      setEditingSongsPlaylist(response.data);
+      setEditPlaylistSongs(response.data.songs || []);
+      setShowEditPlaylistSongsModal(true);
+      setHasUnsavedChanges(false);
+      
+    } catch (error) {
+      console.error('Error fetching playlist details:', error);
+      setEditPlaylistError('Error loading playlist details');
+      alert('Error loading playlist for editing');
+    } finally {
+      setEditPlaylistLoading(false);
+    }
+  };
+
+  const closeEditPlaylistSongsModal = () => {
+    if (hasUnsavedChanges) {
+      if (!confirm('You have unsaved changes. Are you sure you want to close?')) {
+        return;
+      }
+    }
+    
+    setShowEditPlaylistSongsModal(false);
+    setEditingSongsPlaylist(null);
+    setEditPlaylistSongs([]);
+    setEditPlaylistError('');
+    setHasUnsavedChanges(false);
+  };
+
+  const removeSongFromEditPlaylist = (songId) => {
+    const updatedSongs = editPlaylistSongs.filter(song => song.id !== songId);
+    setEditPlaylistSongs(updatedSongs);
+    setHasUnsavedChanges(true);
+  };
+
+  const reorderPlaylistSongs = (dragIndex, hoverIndex) => {
+    const draggedSong = editPlaylistSongs[dragIndex];
+    const updatedSongs = [...editPlaylistSongs];
+    updatedSongs.splice(dragIndex, 1);
+    updatedSongs.splice(hoverIndex, 0, draggedSong);
+    
+    setEditPlaylistSongs(updatedSongs);
+    setHasUnsavedChanges(true);
+  };
+
+  const savePlaylistSongs = async () => {
+    if (!editingSongsPlaylist) return;
+    
+    try {
+      setEditPlaylistLoading(true);
+      setEditPlaylistError('');
+      
+      const songIds = editPlaylistSongs.map(song => song.id);
+      
+      await axios.put(`${API}/playlists/${editingSongsPlaylist.id}/songs`, {
+        song_ids: songIds
+      }, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      
+      // Refresh playlists and close modal
+      await fetchPlaylists();
+      setShowEditPlaylistSongsModal(false);
+      setEditingSongsPlaylist(null);
+      setEditPlaylistSongs([]);
+      setHasUnsavedChanges(false);
+      
+      alert('Playlist updated successfully!');
+      
+    } catch (error) {
+      console.error('Error saving playlist changes:', error);
+      setEditPlaylistError(error.response?.data?.detail || 'Error saving playlist changes');
+    } finally {
+      setEditPlaylistLoading(false);
+    }
+  };
+
   const handleContactSubmit = async (e) => {
     e.preventDefault();
     if (!contactForm.name.trim() || !contactForm.email.trim() || !contactForm.message.trim()) {
