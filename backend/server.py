@@ -49,7 +49,7 @@ STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
 STARTUP_FEE = 15.00  # One-time startup fee
 MONTHLY_PLAN_FEE = 5.00  # Monthly subscription
 ANNUAL_PLAN_FEE = 24.00  # Annual subscription (equivalent to $2/month)
-TRIAL_DAYS = 30  # 30-day free trial
+TRIAL_DAYS = 14  # 14-day trial (FINALIZED - consistent with checkout logic)
 GRACE_PERIOD_DAYS = 3  # Grace period for failed payments
 
 # Stripe Price IDs from environment
