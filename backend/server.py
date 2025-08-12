@@ -4405,7 +4405,7 @@ async def create_freemium_checkout_session(
     checkout_request: V2CheckoutRequest,
     musician_id: str = Depends(get_current_musician)
 ):
-    """Create Stripe checkout session with startup fee + subscription plan"""
+    """FINALIZED: Create Stripe checkout session - subscription only, startup fee on first post-trial invoice"""
     try:
         plan = checkout_request.plan
         success_url = checkout_request.success_url
@@ -4420,57 +4420,51 @@ async def create_freemium_checkout_session(
         if not musician:
             raise HTTPException(status_code=404, detail="Musician not found")
         
-        # Map plan to price ID as specified
-        if plan == "monthly":
-            subscription_price_id = PRICE_MONTHLY_5
-        else:  # annual
-            subscription_price_id = PRICE_ANNUAL_24
-        
+        # Get price ID using helper function
+        price_id = _plan_price_id(plan)
         has_had_trial = musician.get("has_had_trial", False)
-        trial_days = 0 if has_had_trial else 30
+        trial_days = 14 if not has_had_trial else 0
+        
+        # Log as required
+        stripe_key_prefix = STRIPE_API_KEY[:7] if STRIPE_API_KEY else "NOT_SET"
+        logger.info(f"Stripe live checkout: key={stripe_key_prefix} plan={plan} price={price_id}")
         
         try:
             import stripe
             stripe.api_key = STRIPE_API_KEY
             
-            # Create checkout session with both line items as required
+            # Create subscription-mode checkout session (NO startup fee line item here)
             session = stripe.checkout.Session.create(
-                payment_method_types=['card'],
-                line_items=[
-                    {
-                        'price': PRICE_STARTUP_15,  # Always include startup fee first
-                        'quantity': 1,
-                    },
-                    {
-                        'price': subscription_price_id,  # Monthly or annual plan
-                        'quantity': 1,
-                    }
-                ],
-                mode='subscription',
+                mode="subscription",
+                customer_creation="if_required",
                 success_url=success_url,
                 cancel_url=cancel_url,
+                line_items=[{"price": price_id, "quantity": 1}],
                 subscription_data={
-                    'trial_period_days': trial_days,
-                } if trial_days > 0 else {},
-                metadata={
-                    'musician_id': musician_id,
-                    'plan': plan,
-                    'trial_eligible': str(not has_had_trial)
-                }
+                    "trial_period_days": trial_days,
+                    "proration_behavior": "none",
+                    # Mark plan choice on subscription for later
+                    "metadata": {"rw_plan": plan, "musician_id": musician_id}
+                },
+                allow_promotion_codes=False,
+                metadata={"musician_id": musician_id, "plan": plan}
             )
+            
+            logger.info(f"Checkout session created: trial_period_days={trial_days}, plan={plan}, price_id={price_id}")
             
             # Record transaction
             transaction = PaymentTransaction(
                 musician_id=musician_id,
                 session_id=session.id,
-                amount=15.0 + (5.0 if plan == "monthly" else 24.0),  # Startup + subscription
+                amount=MONTHLY_PLAN_FEE if plan == "monthly" else ANNUAL_PLAN_FEE,
                 currency="usd",
                 payment_status="pending",
                 transaction_type="freemium_subscription",
                 subscription_plan=plan,
                 metadata={
                     'stripe_session_id': session.id,
-                    'trial_days': trial_days
+                    'trial_days': trial_days,
+                    'price_id': price_id
                 }
             )
             
@@ -4479,8 +4473,9 @@ async def create_freemium_checkout_session(
             return {"checkout_url": session.url}
             
         except stripe.error.StripeError as e:
-            logger.error(f"Stripe error in checkout: {str(e)}")
-            raise HTTPException(status_code=400, detail=str(e))
+            msg = getattr(e, "user_message", None) or str(e)
+            logger.error(f"Stripe error creating session: {msg}")
+            raise HTTPException(status_code=400, detail=f"Stripe error: {msg}")
             
     except HTTPException:
         raise
