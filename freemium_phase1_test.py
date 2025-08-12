@@ -502,7 +502,8 @@ class FreemiumSubscriptionTester:
             ("GET /api/subscription/status", status_success),
             ("POST /api/subscription/checkout", checkout_success),
             ("POST /api/subscription/cancel", cancel_success),
-            ("POST /api/webhook/stripe", webhook_success)
+            ("POST /api/stripe/webhook", webhook_success),
+            ("POST /stripe/webhook (mounted)", mounted_webhook_success)
         ]
         
         working_count = sum(1 for _, success in endpoints_tested if success)
