@@ -4878,7 +4878,7 @@ async def log_routes():
     stripe_prefix = stripe_key[:7] if len(stripe_key) >= 7 else stripe_key
     print(f"🔑 Stripe API Key Prefix: {stripe_prefix}")
     print(f"🔗 Webhook Secret Set: {'Yes' if STRIPE_WEBHOOK_SECRET else 'No'}")
-    print(f"💰 Price IDs: STARTUP={PRICE_STARTUP_15}, MONTHLY={PRICE_MONTHLY_5}, ANNUAL={PRICE_ANNUAL_24}")
+    print(f"💰 Price IDs: STARTUP={PRICE_STARTUP_15}, MONTHLY={PRICE_MONTHLY_5}, ANNUAL={PRICE_ANNUAL_48}")
     
     # Verify live keys
     if stripe_prefix == "sk_live":
