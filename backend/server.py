@@ -4850,8 +4850,12 @@ async def activate_playlist(
             logger.info(f"Activated 'All Songs' for musician {musician_id}")
             return {"success": True, "message": "All Songs activated"}
         
-        # Verify playlist belongs to musician
-        playlist = await db.playlists.find_one({"id": playlist_id, "musician_id": musician_id})
+        # Verify playlist belongs to musician and is not deleted
+        playlist = await db.playlists.find_one({
+            "id": playlist_id, 
+            "musician_id": musician_id,
+            "is_deleted": {"$ne": True}
+        })
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
         
