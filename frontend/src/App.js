@@ -3283,6 +3283,186 @@ const MusicianDashboard = () => {
             )}
 
             {/* Songs List */}
+            {/* NEW: My Playlists Section */}
+            {subscriptionStatus && ['trial', 'pro', 'canceled'].includes(subscriptionStatus.plan) && (
+              <div className="bg-gray-800 rounded-xl p-6 mb-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold">🎵 My Playlists</h2>
+                  <button
+                    onClick={() => setShowManagePlaylistsModal(true)}
+                    className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg text-sm font-medium transition duration-300"
+                  >
+                    + New Playlist
+                  </button>
+                </div>
+
+                {playlists.filter(p => p.id !== 'all_songs').length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-4">🎵</div>
+                    <h3 className="text-xl font-bold text-gray-300 mb-2">No playlists yet</h3>
+                    <p className="text-gray-400 mb-4">Create your first playlist to organize your songs</p>
+                    <button
+                      onClick={() => setShowManagePlaylistsModal(true)}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium transition duration-300"
+                    >
+                      + New Playlist
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {playlists.filter(p => p.id !== 'all_songs').map(playlist => (
+                      <div key={playlist.id} className="bg-gray-700 rounded-lg p-4 flex items-center justify-between">
+                        <div className="flex-1">
+                          {editingPlaylist === playlist.id ? (
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="text"
+                                value={editingPlaylistName}
+                                onChange={(e) => setEditingPlaylistName(e.target.value)}
+                                className="bg-gray-600 border border-gray-500 rounded px-3 py-1 text-white flex-1"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    savePlaylistName(playlist.id);
+                                  } else if (e.key === 'Escape') {
+                                    e.preventDefault();
+                                    cancelEditingPlaylistName();
+                                  }
+                                }}
+                                onBlur={() => {
+                                  // Only save if there's actually a name
+                                  if (editingPlaylistName.trim()) {
+                                    savePlaylistName(playlist.id);
+                                  } else {
+                                    cancelEditingPlaylistName();
+                                  }
+                                }}
+                                autoFocus
+                              />
+                              {!editingPlaylistName.trim() && (
+                                <span className="text-red-400 text-sm">Name can't be empty</span>
+                              )}
+                              <button
+                                onClick={() => savePlaylistName(playlist.id)}
+                                disabled={!editingPlaylistName.trim()}
+                                className="bg-green-600 hover:bg-green-700 disabled:bg-gray-500 px-3 py-1 rounded text-sm text-white transition duration-300"
+                              >
+                                ✓
+                              </button>
+                              <button
+                                onClick={cancelEditingPlaylistName}
+                                className="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-sm text-white transition duration-300"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <div>
+                              <div className="flex items-center space-x-2">
+                                <h3 className="font-medium">{playlist.name}</h3>
+                                <div className="flex items-center space-x-1">
+                                  {playlist.is_active && (
+                                    <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                                      Active
+                                    </span>
+                                  )}
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    playlist.is_public 
+                                      ? 'bg-blue-500 text-white' 
+                                      : 'bg-gray-500 text-white'
+                                  }`}>
+                                    {playlist.is_public ? '🌐 Public' : '🔒 Private'}
+                                  </span>
+                                </div>
+                              </div>
+                              <p className="text-gray-400 text-sm mt-1">
+                                {playlist.song_count} songs
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {editingPlaylist !== playlist.id && (
+                          <div className="flex items-center space-x-2">
+                            {/* Edit Songs Button */}
+                            <button
+                              onClick={() => openEditPlaylistSongsModal(playlist.id)}
+                              className="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-sm text-white font-medium transition duration-300 flex items-center space-x-1"
+                              title="Edit playlist songs"
+                            >
+                              <span>✏️</span>
+                              <span className="hidden sm:inline">Edit Songs</span>
+                            </button>
+                            
+                            {/* Add Songs Button (Placeholder) */}
+                            <button
+                              onClick={() => alert('Adding songs is almost ready. For now, use Edit Playlist to remove/reorder.')}
+                              className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm text-white font-medium transition duration-300 flex items-center space-x-1"
+                              title="Add songs to playlist"
+                            >
+                              <span>➕</span>
+                              <span className="hidden sm:inline">Add Songs</span>
+                            </button>
+                            
+                            {/* 3-Dot Menu */}
+                            <div className="relative">
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  const menu = e.currentTarget.nextElementSibling;
+                                  menu.classList.toggle('hidden');
+                                }}
+                                className="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-sm text-white font-medium transition duration-300"
+                                title="More options"
+                              >
+                                ⋮
+                              </button>
+                              
+                              {/* Dropdown Menu */}
+                              <div className="hidden absolute right-0 top-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-10 min-w-[150px]">
+                                <button
+                                  onClick={() => startEditingPlaylistName(playlist.id, playlist.name)}
+                                  className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 flex items-center space-x-2"
+                                >
+                                  <span>✏️</span>
+                                  <span>Rename</span>
+                                </button>
+                                <button
+                                  onClick={() => togglePlaylistVisibility(playlist.id, playlist.is_public)}
+                                  className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 flex items-center space-x-2"
+                                >
+                                  <span>{playlist.is_public ? '🔒' : '🌐'}</span>
+                                  <span>{playlist.is_public ? 'Make Private' : 'Make Public'}</span>
+                                </button>
+                                <button
+                                  onClick={() => activatePlaylist(playlist.id)}
+                                  disabled={playlist.is_active}
+                                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-700 flex items-center space-x-2 ${
+                                    playlist.is_active ? 'text-gray-400 cursor-not-allowed' : 'text-white'
+                                  }`}
+                                >
+                                  <span>⭐</span>
+                                  <span>{playlist.is_active ? 'Active' : 'Make Active'}</span>
+                                </button>
+                                <hr className="border-gray-600 my-1" />
+                                <button
+                                  onClick={() => confirmDeletePlaylist(playlist)}
+                                  className="w-full text-left px-4 py-2 text-sm text-red-300 hover:bg-gray-700 hover:text-red-200 flex items-center space-x-2"
+                                >
+                                  <span>🗑️</span>
+                                  <span>Delete</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="bg-gray-800 rounded-xl p-6">
               {/* NEW: Filter and Batch Edit Controls */}
               <div className="mb-6">
