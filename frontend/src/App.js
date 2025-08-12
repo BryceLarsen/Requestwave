@@ -2547,7 +2547,7 @@ const MusicianDashboard = () => {
     setShowPlaylistDeleteConfirmation(false);
   };
 
-  const deletePlaylist = async () => {
+  const softDeletePlaylist = async () => {
     if (!playlistToDelete) return;
 
     try {
