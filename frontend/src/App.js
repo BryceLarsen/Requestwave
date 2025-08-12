@@ -579,6 +579,7 @@ const MusicianDashboard = () => {
   const [showPlaylistDeleteConfirmation, setShowPlaylistDeleteConfirmation] = useState(false);
   const [showPlaylistToast, setShowPlaylistToast] = useState(false);
   const [playlistToastMessage, setPlaylistToastMessage] = useState('');
+  const [openDropdownId, setOpenDropdownId] = useState(null); // NEW: Track which dropdown is open
   
   // NEW: Tip functionality functions
   const handleTipButton = (songId = null) => {
