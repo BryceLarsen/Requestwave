@@ -13025,29 +13025,38 @@ if __name__ == "__main__":
     tester = RequestWaveAPITester()
     
 def main():
-    """Run playlist functionality tests"""
-    print("🎵 PLAYLIST FUNCTIONALITY TESTING FOR AUDIENCE INTERFACE")
+    """Run playlist editing backend endpoints tests"""
+    print("🎵 PLAYLIST EDITING BACKEND ENDPOINTS TESTING")
     print("=" * 80)
-    print("Testing new playlist functionality as requested:")
-    print("1. GET /api/musicians/{slug}/playlists - Public playlists endpoint")
-    print("2. GET /api/musicians/{slug}/songs?playlist={playlist_id} - Songs with playlist filtering")
-    print("3. Comprehensive playlist functionality verification")
+    print("Testing new playlist editing backend endpoints as requested:")
+    print("1. Test playlist creation with updated_at field")
+    print("2. GET /api/playlists/{playlist_id} - returns detailed playlist with ordered song_ids")
+    print("3. PUT /api/playlists/{playlist_id}/songs - replaces entire song list, removes duplicates")
+    print("4. DELETE /api/playlists/{playlist_id}/songs/{song_id} - removes single song")
+    print("5. Test duplicate handling in PUT endpoint")
+    print("Test Credentials: brycelarsenmusic@gmail.com / RequestWave2024!")
     print("=" * 80)
     
     tester = RequestWaveAPITester()
     
-    # Test 1: Public playlists endpoint
-    tester.test_public_playlists_endpoint()
+    # Test 1: Playlist creation with updated_at field
+    tester.test_playlist_creation_with_updated_at()
     
-    # Test 2: Songs with playlist filtering
-    tester.test_songs_with_playlist_filtering()
+    # Test 2: GET /playlists/{playlist_id} endpoint
+    tester.test_get_playlist_detail_endpoint()
     
-    # Test 3: Comprehensive playlist functionality
-    tester.test_playlist_functionality_comprehensive()
+    # Test 3: PUT /playlists/{playlist_id}/songs for reordering
+    tester.test_put_playlist_songs_reorder()
+    
+    # Test 4: DELETE /playlists/{playlist_id}/songs/{song_id}
+    tester.test_delete_single_song_from_playlist()
+    
+    # Test 5: Duplicate handling in PUT endpoint
+    tester.test_duplicate_handling_in_put_endpoint()
     
     # Print final results
     print("\n" + "=" * 80)
-    print("🎵 PLAYLIST FUNCTIONALITY TEST RESULTS")
+    print("🎵 PLAYLIST EDITING BACKEND ENDPOINTS TEST RESULTS")
     print("=" * 80)
     print(f"✅ Tests Passed: {tester.results['passed']}")
     print(f"❌ Tests Failed: {tester.results['failed']}")
