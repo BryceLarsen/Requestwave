@@ -601,7 +601,7 @@ async def activate_audience_link(musician_id: str, reason: str = "subscription_a
         "timestamp": datetime.utcnow()
     })
 
-def init_stripe_checkout(request: Request) -> StripeCheckout:
+def init_stripe_checkout(request: FastAPIRequest) -> StripeCheckout:
     """Initialize Stripe checkout with webhook URL"""
     host_url = str(request.base_url).rstrip('/')
     webhook_url = f"{host_url}/api/webhook/stripe"
