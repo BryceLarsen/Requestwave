@@ -517,6 +517,9 @@ const MusicianDashboard = () => {
   // Batch selection state for song suggestions
   const [selectedSuggestions, setSelectedSuggestions] = useState(new Set());
   
+  // Song Management Dropdown State
+  const [showSongManagementDropdown, setShowSongManagementDropdown] = useState(false);
+  
   // NEW: Auto-fill metadata state
   const [autoFillLoading, setAutoFillLoading] = useState(false);
   
