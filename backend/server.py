@@ -4320,8 +4320,11 @@ async def get_playlists(musician_id: str = Depends(get_current_musician)):
         musician = await db.musicians.find_one({"id": musician_id})
         active_playlist_id = musician.get("active_playlist_id")
         
-        # Get all playlists
-        playlists_cursor = db.playlists.find({"musician_id": musician_id}).sort("created_at", -1)
+        # Get all playlists (excluding deleted ones)
+        playlists_cursor = db.playlists.find({
+            "musician_id": musician_id,
+            "is_deleted": {"$ne": True}  # NEW: Exclude soft-deleted playlists
+        }).sort("created_at", -1)
         playlists = await playlists_cursor.to_list(None)
         
         # Build response with song counts
