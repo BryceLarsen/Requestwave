@@ -4086,11 +4086,7 @@ const MusicianDashboard = () => {
                           disabled={upgrading}
                           className="bg-gradient-to-r from-purple-600 to-green-600 hover:from-purple-700 hover:to-green-700 px-8 py-3 rounded-lg font-bold text-white transition duration-300 disabled:opacity-50"
                         >
-                          {upgrading ? 'Processing...' : 
-                            `${subscriptionStatus.can_reactivate ? 'Reactivate' : 'Start'} - ${
-                              selectedPlan === 'monthly' ? '$20 today' : '$63 today'
-                            }`
-                          }
+                          {upgrading ? 'Processing...' : 'Start Free Trial Now'}
                         </button>
                         <p className="text-gray-400 text-sm mt-2">
                           {subscriptionStatus.can_reactivate 
