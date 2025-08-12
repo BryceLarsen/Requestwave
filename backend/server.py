@@ -4354,7 +4354,8 @@ async def get_playlists(musician_id: str = Depends(get_current_musician)):
             song_count=len(all_song_ids),
             song_ids=all_song_ids,  # NEW: Include all song IDs
             is_active=(active_playlist_id is None),
-            created_at=datetime.utcnow()  # This won't be used for display
+            created_at=datetime.utcnow(),  # This won't be used for display
+            updated_at=datetime.utcnow()   # This won't be used for display
         )
         playlist_responses.insert(0, all_songs_response)
         
