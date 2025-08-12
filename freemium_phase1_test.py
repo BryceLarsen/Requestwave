@@ -161,12 +161,13 @@ class FreemiumSubscriptionTester:
                     data = response.json()
                     print(f"   📊 Response Structure: {list(data.keys())}")
                     
-                    # Check for required freemium fields as specified in acceptance criteria
+                    # Check for required freemium fields as specified in review request
                     required_fields = [
                         "audience_link_active", 
                         "trial_active", 
-                        "trial_ends_at", 
-                        "plan"
+                        "trial_end", 
+                        "plan",
+                        "status"
                     ]
                     
                     missing_fields = [field for field in required_fields if field not in data]
