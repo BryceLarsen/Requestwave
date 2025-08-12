@@ -5863,10 +5863,10 @@ const AudienceInterface = () => {
     if (selectedFilters.genre) {
       filtered = filtered.filter(song => song.genres.includes(selectedFilters.genre));
     }
-    if (selectedFilters.artist) {
-      filtered = filtered.filter(song => 
-        song.artist.toLowerCase().includes(selectedFilters.artist.toLowerCase())
-      );
+    if (selectedFilters.playlist) {
+      // Note: Playlist filtering is handled by backend, this is for client-side fallback
+      // The playlist filter would need access to playlist songs data to work client-side
+      // For now, we rely on backend filtering
     }
     if (selectedFilters.mood) {
       filtered = filtered.filter(song => song.moods.includes(selectedFilters.mood));
