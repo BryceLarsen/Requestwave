@@ -815,6 +815,7 @@ metadata:
 
 test_plan:
   current_focus: 
+    - "Playlist Functionality for Audience Interface"
     - "QR Code URL Fix Verification"
     - "Missing Audience Request Endpoint"
     - "On Stage Real-Time Updates Issue"
@@ -828,7 +829,9 @@ test_plan:
 
 agent_communication:
   - agent: "main"
-    message: "📝 PLAYLIST IMPORT NOTES FIX IMPLEMENTED: Modified playlist import functionality to remove default 'Imported from [platform] playlist' messages from notes field as requested by user. Updated server.py to set notes='' (blank) for all playlist import scenarios: Spotify imports, Apple Music imports, and fallback songs. Please test playlist import functionality to verify imports still work correctly but now with blank notes fields instead of default platform messages. Test both Spotify and Apple Music playlist imports with user account brycelarsenmusic@gmail.com / RequestWave2024!"
+    message: "📝 PLAYLIST IMPORT NOTES FIX IMPLEMENTED: Modified playlist import functionality to remove default 'Imported from [platform] playlist' messages from notes field as requested by user. Updated server.py to set notes='' (blank) for all playlist import import scenarios: Spotify imports, Apple Music imports, and fallback songs. Please test playlist import functionality to verify imports still work correctly but now with blank notes fields instead of default platform messages. Test both Spotify and Apple Music playlist imports with user account brycelarsenmusic@gmail.com / RequestWave2024!"
+  - agent: "testing"
+    message: "🎵 PLAYLIST FUNCTIONALITY TESTING COMPLETED: Tested new playlist functionality for audience interface as requested. ✅ PUBLIC PLAYLISTS ENDPOINT WORKING: GET /api/musicians/{slug}/playlists returns simplified playlist data without authentication, handles non-existent musicians gracefully (404), and provides correct structure with id, name, and song_count fields. ❌ CRITICAL ISSUE FOUND: Songs endpoint returns 402 Payment Required error preventing playlist filtering tests. This suggests freemium access control is incorrectly blocking access for Pro subscriber brycelarsenmusic@gmail.com. The playlist filtering functionality cannot be verified due to this access control issue. Need to investigate why Pro subscriber is getting 402 errors on songs endpoint."
   - agent: "main"
     message: "🎯 CURATED GENRE/MOOD CATEGORIES IMPLEMENTED: Updated the automatic genre and mood assignment system to use curated, performance-optimized categories as requested. IMPLEMENTED: 1) Updated assign_genre_and_mood() function with intelligent artist-based and keyword-based detection using 20 curated genres and 20 curated moods, 2) Enhanced get_mood_from_audio_features() to map Spotify audio features to performance-context moods like 'Bar Anthems', 'Campfire', 'Coffeehouse' instead of generic categories, 3) Updated ALL hardcoded sample songs throughout the codebase to use new curated categories. Musicians can still add custom categories but automatic assignment now uses meaningful, live-performance focused categories. Please test: aut"
   - agent: "testing"
