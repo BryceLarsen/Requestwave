@@ -4457,6 +4457,7 @@ async def create_freemium_checkout_session(
     """FINALIZED: Create Stripe checkout session - subscription only, startup fee on first post-trial invoice"""
     try:
         print(f"🚀 DEBUG: Checkout function called with plan={checkout_request.plan}")
+        print(f"🚀 DEBUG: Function create_freemium_checkout_session is being executed")
         
         plan = checkout_request.plan
         success_url = checkout_request.success_url
