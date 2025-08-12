@@ -545,9 +545,6 @@ const MusicianDashboard = () => {
   // NEW: Batch enrichment for existing songs
   const [batchEnrichLoading, setBatchEnrichLoading] = useState(false);
   
-  // NEW: Quick Start Guide functionality
-  const [showQuickStart, setShowQuickStart] = useState(false);
-  const [isFirstLogin, setIsFirstLogin] = useState(false);
   const [contactForm, setContactForm] = useState({
     name: '',
     email: '',
