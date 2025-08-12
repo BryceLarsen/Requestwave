@@ -1024,18 +1024,22 @@ const MusicianDashboard = () => {
   // Close song management dropdown when clicking outside or pressing Escape
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (showSongManagementDropdown && !event.target.closest('.relative')) {
+      if (showSongManagementDropdown && !event.target.closest('.song-management-dropdown')) {
         setShowSongManagementDropdown(false);
+      }
+      if (showMobileNav && !event.target.closest('.mobile-nav-dropdown')) {
+        setShowMobileNav(false);
       }
     };
 
     const handleEscapeKey = (event) => {
-      if (event.key === 'Escape' && showSongManagementDropdown) {
-        setShowSongManagementDropdown(false);
+      if (event.key === 'Escape') {
+        if (showSongManagementDropdown) setShowSongManagementDropdown(false);
+        if (showMobileNav) setShowMobileNav(false);
       }
     };
 
-    if (showSongManagementDropdown) {
+    if (showSongManagementDropdown || showMobileNav) {
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('keydown', handleEscapeKey);
     }
@@ -1044,7 +1048,7 @@ const MusicianDashboard = () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscapeKey);
     };
-  }, [showSongManagementDropdown]);
+  }, [showSongManagementDropdown, showMobileNav]);
 
   const fetchSongs = async () => {
     try {
