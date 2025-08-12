@@ -5977,6 +5977,55 @@ const MusicianDashboard = () => {
           </div>
         )}
 
+        {/* NEW: Playlist Delete Confirmation Modal */}
+        {showPlaylistDeleteConfirmation && playlistToDelete && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-lg max-w-md w-full p-6">
+              <div className="text-center">
+                <div className="text-4xl mb-4">🗑️</div>
+                <h3 className="text-xl font-bold text-white mb-2">Delete Playlist</h3>
+                <p className="text-gray-300 mb-4">
+                  Are you sure you want to delete "<span className="font-medium">{playlistToDelete.name}</span>"?
+                </p>
+                <p className="text-gray-400 text-sm mb-6">
+                  This playlist has {playlistToDelete.song_count} songs. This action cannot be undone.
+                </p>
+                
+                <div className="flex space-x-4">
+                  <button
+                    onClick={cancelDeletePlaylist}
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition duration-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={softDeletePlaylist}
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition duration-300"
+                  >
+                    Delete Playlist
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* NEW: Playlist Toast Notification */}
+        {showPlaylistToast && (
+          <div className="fixed top-4 right-4 z-50">
+            <div className="bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 max-w-sm">
+              <span className="text-lg">✅</span>
+              <span className="font-medium">{playlistToastMessage}</span>
+              <button
+                onClick={() => setShowPlaylistToast(false)}
+                className="text-white hover:text-gray-200 ml-2"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
