@@ -2389,6 +2389,15 @@ const MusicianDashboard = () => {
                   ))}
                   
                   <div className="border-t border-gray-700 mt-2 pt-2">
+                    <button
+                      onClick={() => {
+                        setShowQuickStart(true);
+                        setShowMobileNav(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-700 text-gray-300"
+                    >
+                      📖 Quick Start Guide
+                    </button>
                   </div>
                 </div>
               </div>
