@@ -6100,7 +6100,7 @@ const AudienceInterface = () => {
   const clearFilters = () => {
     setSelectedFilters({
       genre: '',
-      artist: '',
+      playlist: '',
       mood: '',
       year: '',
       decade: ''  // NEW: Clear decade filter
