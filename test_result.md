@@ -101,7 +101,7 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
-user_problem_statement: "Build RequestWave - a live music request platform with musician and audience interfaces, real-time requests, and CSV song upload functionality"
+user_problem_statement: "Fix playlist creation bug: User reports that when they select 5 songs and create a new playlist, it doesn't show up in the playlists tab or existing playlists dropdown. Need to verify playlists are being saved and displayed correctly."
 
 backend:
   - task: "Authentication System"
