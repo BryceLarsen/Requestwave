@@ -538,6 +538,14 @@ const MusicianDashboard = () => {
   const [currentRequestId, setCurrentRequestId] = useState(null);
   const [showPostRequestModal, setShowPostRequestModal] = useState(false);
   
+  // NEW: Edit Playlist Modal State
+  const [showEditPlaylistModal, setShowEditPlaylistModal] = useState(false);
+  const [editingPlaylist, setEditingPlaylist] = useState(null);
+  const [editPlaylistSongs, setEditPlaylistSongs] = useState([]);
+  const [editPlaylistLoading, setEditPlaylistLoading] = useState(false);
+  const [editPlaylistError, setEditPlaylistError] = useState('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  
   // NEW: Tip functionality state
   const [showTipModal, setShowTipModal] = useState(false);
   const [tipAmount, setTipAmount] = useState('');
