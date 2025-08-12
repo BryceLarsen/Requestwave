@@ -3093,13 +3093,18 @@ const MusicianDashboard = () => {
                       <option key={genre} value={genre}>{genre}</option>
                     ))}
                   </select>
-                  <input
-                    type="text"
-                    placeholder="Filter by artist..."
+                  <select
                     value={artistFilter}
                     onChange={(e) => setArtistFilter(e.target.value)}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
-                  />
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+                  >
+                    <option value="">All Playlists</option>
+                    {playlists.map((playlist) => (
+                      <option key={playlist.id} value={playlist.id}>
+                        {playlist.name} ({playlist.song_count} songs)
+                      </option>
+                    ))}
+                  </select>
                   <select
                     value={moodFilter}
                     onChange={(e) => setMoodFilter(e.target.value)}
