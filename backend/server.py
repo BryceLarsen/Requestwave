@@ -4534,8 +4534,12 @@ async def update_playlist_songs(
                 seen.add(song_id)
                 unique_song_ids.append(song_id)
         
-        # Verify playlist belongs to musician
-        playlist = await db.playlists.find_one({"id": playlist_id, "musician_id": musician_id})
+        # Verify playlist belongs to musician and is not deleted
+        playlist = await db.playlists.find_one({
+            "id": playlist_id, 
+            "musician_id": musician_id,
+            "is_deleted": {"$ne": True}
+        })
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
         
