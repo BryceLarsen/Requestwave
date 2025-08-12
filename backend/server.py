@@ -438,6 +438,7 @@ class PlaylistResponse(BaseModel):
     song_ids: List[str] = []  # NEW: Add song_ids for client-side filtering
     is_active: bool
     created_at: datetime
+    updated_at: datetime  # NEW: Add updated_at field to response
 
 class PlaylistUpdate(BaseModel):
     song_ids: List[str]
