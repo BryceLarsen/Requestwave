@@ -4496,7 +4496,6 @@ async def create_freemium_checkout_session(
                     # Mark plan choice on subscription for later
                     "metadata": {"rw_plan": plan, "musician_id": musician_id}
                 },
-                customer_creation="always",  # Required for subscription mode
                 allow_promotion_codes=False,
                 metadata={"musician_id": musician_id, "plan": plan}
             )
