@@ -1756,7 +1756,7 @@ async def mark_access(customer_id: str, active: bool):
 # SINGLE WEBHOOK ENDPOINT - POST /api/stripe/webhook (FINALIZED with startup fee logic)
 @api_router.post("/stripe/webhook")
 async def stripe_webhook_handler(request: FastAPIRequest):
-    """Single Stripe webhook handler - accepts raw body, no auth, always returns 200"""
+    """FINALIZED: Single Stripe webhook handler - handles startup fee on first post-trial invoice"""
     try:
         import stripe
         stripe.api_key = STRIPE_API_KEY
@@ -1769,11 +1769,14 @@ async def stripe_webhook_handler(request: FastAPIRequest):
             logger.error("Missing Stripe signature in webhook")
             return {"status": "error", "message": "Missing signature"}
         
+        webhook_secret = STRIPE_WEBHOOK_SECRET
+        if not webhook_secret:
+            logger.error("Missing STRIPE_WEBHOOK_SECRET")
+            return {"status": "error", "message": "Missing webhook secret"}
+        
         try:
             # Verify webhook signature
-            event = stripe.Webhook.construct_event(
-                body, signature, STRIPE_WEBHOOK_SECRET
-            )
+            event = stripe.Webhook.construct_event(body, signature, webhook_secret)
         except ValueError:
             logger.error("Invalid webhook payload")
             return {"status": "error", "message": "Invalid payload"}
@@ -1781,84 +1784,85 @@ async def stripe_webhook_handler(request: FastAPIRequest):
             logger.error("Invalid webhook signature")
             return {"status": "error", "message": "Invalid signature"}
         
-        logger.info(f"Processing Stripe webhook: {event['type']}")
+        event_type = event["type"]
+        obj = event["data"]["object"]
+        logger.info(f"Stripe event: {event_type}")
         
-        # Handle minimum required events
-        if event['type'] == 'checkout.session.completed':
-            session = event['data']['object']
-            musician_id = session.get('metadata', {}).get('musician_id')
+        # Handle checkout.session.completed - turn on trial immediately
+        if event_type == "checkout.session.completed":
+            sub_id = obj.get("subscription")
+            customer_id = obj.get("customer")
+            if sub_id and customer_id:
+                await mark_trial_started(customer_id, sub_id)
+                logger.info(f"Trial started for customer {customer_id}, subscription {sub_id}")
+        
+        # Handle invoice.upcoming - add startup fee to FIRST post-trial invoice only
+        elif event_type == "invoice.upcoming":
+            subscription_id = obj.get("subscription")
+            customer_id = obj.get("customer")
             
-            if musician_id:
-                musician = await db.musicians.find_one({"id": musician_id})
-                if musician and not musician.get("has_had_trial", False):
-                    await start_trial_for_musician(musician_id)
-                    logger.info(f"Started trial for musician {musician_id}")
-                else:
-                    await activate_audience_link(musician_id, "checkout_completed")
-                    logger.info(f"Activated audience link for musician {musician_id}")
+            if subscription_id and customer_id:
+                # Get subscription details
+                try:
+                    subscription = stripe.Subscription.retrieve(subscription_id)
+                    trial_end = subscription.get("trial_end")
+                    
+                    # Only if trialing or trial just ended, and startup fee not already applied
+                    if trial_end and not await startup_fee_already_applied(customer_id, subscription_id):
+                        logger.info(f"Adding startup fee to upcoming invoice for customer {customer_id}, subscription {subscription_id}")
+                        
+                        # Add one-time startup fee invoice item to this upcoming invoice
+                        stripe.InvoiceItem.create(
+                            customer=customer_id,
+                            price=PRICE_STARTUP_15,
+                            subscription=subscription_id,  # ties it to this subscription's invoice
+                            description="RequestWave Startup Fee"
+                        )
+                        
+                        # Mark as applied to prevent duplicates
+                        await mark_startup_fee_applied(customer_id, subscription_id)
+                        logger.info(f"Startup fee applied for customer {customer_id}, subscription {subscription_id}")
+                    
+                except Exception as e:
+                    logger.error(f"Error processing invoice.upcoming: {str(e)}")
         
-        elif event['type'] in ['customer.subscription.created', 'customer.subscription.updated']:
-            subscription = event['data']['object']
-            customer_id = subscription['customer']
-            
-            musician = await db.musicians.find_one({"stripe_customer_id": customer_id})
-            if musician:
-                musician_id = musician["id"]
-                await db.musicians.update_one(
-                    {"id": musician_id},
-                    {
-                        "$set": {
-                            "audience_link_active": True,
-                            "subscription_status": subscription['status'],
-                            "subscription_current_period_end": datetime.fromtimestamp(subscription['current_period_end'])
-                        }
-                    }
-                )
-                logger.info(f"Updated subscription for musician {musician_id}")
+        # Handle invoice.payment_succeeded - keep access on
+        elif event_type == "invoice.payment_succeeded":
+            customer_id = obj.get("customer")
+            if customer_id:
+                await mark_access(customer_id=customer_id, active=True)
+                logger.info(f"Access granted for customer {customer_id}")
         
-        elif event['type'] == 'customer.subscription.deleted':
-            subscription = event['data']['object']
-            customer_id = subscription['customer']
-            
-            musician = await db.musicians.find_one({"stripe_customer_id": customer_id})
-            if musician:
-                musician_id = musician["id"]
-                await deactivate_audience_link(musician_id, "subscription_deleted")
-                logger.info(f"Deactivated audience link for musician {musician_id}")
+        # Handle invoice.payment_failed - turn off access
+        elif event_type == "invoice.payment_failed":
+            customer_id = obj.get("customer")
+            if customer_id:
+                # Optionally add 3d grace; for now, turn off immediately
+                await mark_access(customer_id=customer_id, active=False)
+                logger.info(f"Access revoked for customer {customer_id} due to payment failure")
         
-        elif event['type'] == 'invoice.payment_succeeded':
-            invoice = event['data']['object']
-            customer_id = invoice['customer']
-            
-            musician = await db.musicians.find_one({"stripe_customer_id": customer_id})
-            if musician:
-                musician_id = musician["id"]
-                await db.musicians.update_one(
-                    {"id": musician_id},
-                    {"$set": {"audience_link_active": True, "payment_grace_period_end": None}}
-                )
-                logger.info(f"Payment succeeded for musician {musician_id}")
+        # Handle customer.subscription.updated - toggle access based on status
+        elif event_type == "customer.subscription.updated":
+            customer_id = obj.get("customer")
+            status = obj.get("status")
+            if customer_id and status:
+                active = status in ("trialing", "active")
+                await mark_access(customer_id=customer_id, active=active)
+                logger.info(f"Access {'granted' if active else 'revoked'} for customer {customer_id}, status: {status}")
         
-        elif event['type'] == 'invoice.payment_failed':
-            invoice = event['data']['object']
-            customer_id = invoice['customer']
-            
-            musician = await db.musicians.find_one({"stripe_customer_id": customer_id})
-            if musician:
-                musician_id = musician["id"]
-                grace_end = datetime.utcnow() + timedelta(days=3)
-                await db.musicians.update_one(
-                    {"id": musician_id},
-                    {"$set": {"payment_grace_period_end": grace_end}}
-                )
-                logger.info(f"Payment failed for musician {musician_id}, started 3-day grace period")
+        # Handle customer.subscription.deleted - turn off access
+        elif event_type == "customer.subscription.deleted":
+            customer_id = obj.get("customer")
+            if customer_id:
+                await mark_access(customer_id=customer_id, active=False)
+                logger.info(f"Access revoked for customer {customer_id} - subscription deleted")
         
-        # Always return 200 to Stripe
-        return {"status": "success"}
+        # Always return success to Stripe
+        return {"received": True}
         
     except Exception as e:
         logger.error(f"Error processing Stripe webhook: {str(e)}")
-        # Still return 200 to prevent Stripe retries
+        # Still return success to prevent Stripe retries
         return {"status": "error", "message": str(e)}
 
 # Musician endpoints
