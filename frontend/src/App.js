@@ -5465,6 +5465,7 @@ const AudienceInterface = () => {
   const [songs, setSongs] = useState([]);
   const [filteredSongs, setFilteredSongs] = useState([]);
   const [filters, setFilters] = useState({});
+  const [playlists, setPlaylists] = useState([]); // NEW: Add playlists state
   const [designSettings, setDesignSettings] = useState({
     color_scheme: 'purple',
     layout_mode: 'grid',
@@ -5476,7 +5477,7 @@ const AudienceInterface = () => {
   });
   const [selectedFilters, setSelectedFilters] = useState({
     genre: '',
-    artist: '',
+    playlist: '', // CHANGED: Replace 'artist' with 'playlist'
     mood: '',
     year: '',
     decade: ''  // NEW: Add decade filter
