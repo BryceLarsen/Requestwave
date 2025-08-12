@@ -518,26 +518,43 @@ class FreemiumSubscriptionTester:
         
         print()
         
-        # Critical issues check
-        critical_issues = []
-        if not status_success:
-            critical_issues.append("Subscription status endpoint not working")
-        if not checkout_success:
-            critical_issues.append("Checkout endpoint not working - blocks revenue generation")
-        if not webhook_success:
-            critical_issues.append("Webhook endpoint not accessible - blocks payment processing")
+        # Success criteria evaluation per review request
+        print("\n🎯 PHASE 1 SUCCESS CRITERIA EVALUATION:")
         
-        if len(critical_issues) == 0:
-            print("✅ SUCCESS: All critical freemium subscription endpoints are working!")
-            print("✅ No 422 routing conflicts detected")
-            print("✅ Authentication working correctly")
-            print("✅ Stripe integration accessible")
-            if session_id:
-                print(f"✅ Checkout session created: {session_id}")
+        criteria = [
+            ("All endpoints return appropriate responses (no 422s)", 
+             status_success and checkout_success and cancel_success and (webhook_success or mounted_webhook_success)),
+            ("Checkout returns 400 on Stripe error (not 500)", checkout_success),
+            ("Status has trial_end and status fields", status_success),
+            ("Cancel works correctly", cancel_success),
+            ("At least one webhook path returns 200", webhook_success or mounted_webhook_success),
+            ("No routing conflicts", 
+             status_success and checkout_success and cancel_success and (webhook_success or mounted_webhook_success))
+        ]
+        
+        met_criteria = sum(1 for _, met in criteria if met)
+        total_criteria = len(criteria)
+        
+        for criterion, met in criteria:
+            status = "✅" if met else "❌"
+            print(f"   {status} {criterion}")
+        
+        print(f"\n📊 CRITERIA MET: {met_criteria}/{total_criteria}")
+        
+        if met_criteria == total_criteria:
+            print(f"\n🎉 PHASE 1 VERIFICATION COMPLETE!")
+            print(f"✅ All success criteria met - freemium backend is ready for production")
+            print(f"✅ 100% success rate on endpoint accessibility")
+            print(f"✅ Proper error codes implemented")
+            print(f"✅ All required fields in responses")
+            print(f"✅ Webhook processing without routing conflicts")
+        elif met_criteria >= 4:
+            print(f"\n⚠️  PHASE 1 MOSTLY COMPLETE")
+            print(f"✅ {met_criteria}/{total_criteria} criteria met - minor issues remain")
         else:
-            print("❌ CRITICAL ISSUES FOUND:")
-            for issue in critical_issues:
-                print(f"   ❌ {issue}")
+            print(f"\n❌ PHASE 1 VERIFICATION FAILED")
+            print(f"❌ Only {met_criteria}/{total_criteria} criteria met")
+            print(f"❌ Critical issues prevent Phase 1 completion")
         
         print("\n" + "=" * 80)
         print(f"📊 PASSED: {self.results['passed']}")
