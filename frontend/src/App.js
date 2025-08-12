@@ -5212,15 +5212,12 @@ const MusicianDashboard = () => {
           </div>
         )}
 
-
       </div>
     </div>
   );
 };
+
 const AudienceInterface = () => {
-              {/* Header */}
-              <div className="bg-gradient-to-r from-purple-600 to-green-600 p-6 rounded-t-xl">
-                <div className="flex justify-between items-center">
                   <div className="flex items-center space-x-3">
                     <img
                       src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png"
