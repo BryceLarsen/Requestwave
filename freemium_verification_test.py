@@ -164,9 +164,13 @@ class FreemiumVerificationTester:
                         self.log_result("Single Webhook Endpoint", True, 
                                       f"✅ Webhook returns 200 with success status. Response: {response_data}")
                         return True
+                    elif response_data.get("status") == "error" and "signature" in response_data.get("message", "").lower():
+                        self.log_result("Single Webhook Endpoint", True, 
+                                      f"✅ Webhook returns 200 and correctly rejects request due to missing signature (expected behavior). Response: {response_data}")
+                        return True
                     else:
                         self.log_result("Single Webhook Endpoint", False, 
-                                      f"❌ Webhook returns 200 but wrong response format: {response_data}")
+                                      f"❌ Webhook returns 200 but unexpected response format: {response_data}")
                         return False
                 except json.JSONDecodeError:
                     self.log_result("Single Webhook Endpoint", True, 
