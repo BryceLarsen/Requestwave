@@ -4821,43 +4821,36 @@ app.include_router(freemium_router, prefix="/v2")
 # Route logging startup hook
 @app.on_event("startup")
 async def log_routes():
-    """Log all registered routes to debug routing conflicts and detect invisible chars"""
+    """Log Stripe key prefix and subscription routes to debug routing conflicts"""
     print("\n" + "="*80)
-    print("🔍 REGISTERED ROUTES DEBUG:")
+    print("🔍 FREEMIUM BACKEND DIAGNOSTICS:")
     print("="*80)
     
-    # Check for invisible characters and log warnings
-    invisible_chars = {0x200B, 0x200C, 0x200D, 0xFEFF}
+    # Log Stripe key prefix as required
+    stripe_key = STRIPE_API_KEY or "NOT_SET"
+    stripe_prefix = stripe_key[:12] if len(stripe_key) >= 12 else stripe_key
+    print(f"🔑 Stripe API Key Prefix: {stripe_prefix}")
+    print(f"🔗 Webhook Secret Set: {'Yes' if STRIPE_WEBHOOK_SECRET else 'No'}")
+    print(f"💰 Price IDs: STARTUP={PRICE_STARTUP_15}, MONTHLY={PRICE_MONTHLY_5}, ANNUAL={PRICE_ANNUAL_24}")
     
+    print("\n📋 SUBSCRIPTION ENDPOINT ROUTES:")
+    print("-" * 50)
+    
+    # Log subscription routes specifically
+    subscription_routes = []
     for route in app.routes:
         if hasattr(route, 'methods') and hasattr(route, 'path'):
-            methods = ', '.join(route.methods) if route.methods else 'N/A'
             path = route.path
-            name = getattr(route, 'name', 'N/A')
-            endpoint = getattr(route, 'endpoint', None)
-            endpoint_name = endpoint.__name__ if endpoint and hasattr(endpoint, '__name__') else 'N/A'
-            print(f"  {methods:10} {path:40} -> {endpoint_name}")
-            
-            # Check for invisible characters
-            for i, ch in enumerate(path):
-                if ord(ch) < 32 or ord(ch) in invisible_chars:
-                    print(f"    ⚠️  WARNING: Invisible character found in path at position {i}")
-                    print(f"       Character code: {ord(ch)}, repr: {repr(path)}")
-            
-            # Highlight subscription routes
-            if 'subscription' in path.lower():
-                print(f"    🎯 SUBSCRIPTION ROUTE: {methods} {path} -> {endpoint_name}")
+            if '/subscription' in path or '/stripe' in path or '/webhook' in path:
+                methods = ', '.join(route.methods) if route.methods else 'N/A'
+                endpoint = getattr(route, 'endpoint', None)
+                endpoint_name = endpoint.__name__ if endpoint and hasattr(endpoint, '__name__') else 'N/A'
+                subscription_routes.append(f"  {methods:10} {path:40} -> {endpoint_name}")
     
-    # Check router prefixes
-    for router_name, router_obj in [("api_router", api_router), ("freemium_router", freemium_router)]:
-        if hasattr(router_obj, 'prefix') and router_obj.prefix:
-            prefix = router_obj.prefix
-            for i, ch in enumerate(prefix):
-                if ord(ch) < 32 or ord(ch) in invisible_chars:
-                    print(f"    ⚠️  WARNING: Invisible character in {router_name} prefix at position {i}")
-                    print(f"       Character code: {ord(ch)}, repr: {repr(prefix)}")
+    for route_info in sorted(subscription_routes):
+        print(route_info)
     
-    print("="*80 + "\n")
+    print("\n" + "="*80)
 
 # CORS middleware
 app.add_middleware(
