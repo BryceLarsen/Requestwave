@@ -4053,9 +4053,9 @@ const MusicianDashboard = () => {
                             </span>
                           </div>
                           <p className="text-2xl font-bold text-white">
-                            $24<span className="text-sm text-gray-400">/year</span>
+                            $48<span className="text-sm text-gray-400">/year</span>
                           </p>
-                          <p className="text-gray-300 text-sm">Equivalent to $2/month</p>
+                          <p className="text-gray-300 text-sm">Equivalent to $4/month</p>
                           <p className="text-gray-400 text-sm mt-2">
                             + $15 one-time startup fee
                           </p>
