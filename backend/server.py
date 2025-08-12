@@ -376,12 +376,13 @@ class SubscriptionStatus(BaseModel):
     plan: str  # "trial", "free", "active", "canceled", "expired"
     audience_link_active: bool
     trial_active: bool
-    trial_ends_at: Optional[datetime] = None
+    trial_end: Optional[datetime] = None  # Changed from trial_ends_at to match user spec
     subscription_ends_at: Optional[datetime] = None
     days_remaining: Optional[int] = None
     can_reactivate: bool = False
     grace_period_active: bool = False
     grace_period_ends_at: Optional[datetime] = None
+    status: str = "active"  # Added missing status field
 
 class AccountDeletionRequest(BaseModel):
     confirmation_text: str  # Must be "DELETE"
