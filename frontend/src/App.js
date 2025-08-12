@@ -1845,6 +1845,11 @@ const MusicianDashboard = () => {
     setSelectedRequests(new Set());
   };
 
+  const selectAllRequests = (requestsList) => {
+    const requestIds = requestsList.map(r => r.id);
+    setSelectedRequests(new Set(requestIds));
+  };
+
   const batchUpdateRequestStatus = async (status) => {
     if (selectedRequests.size === 0) {
       alert('Please select requests to update');
