@@ -887,7 +887,7 @@ metadata:
 
 test_plan:
   current_focus: 
-    - "Playlist Functionality for Audience Interface"
+    - "Comprehensive Playlist Management Backend Updates"
     - "QR Code URL Fix Verification"
     - "Missing Audience Request Endpoint"
     - "On Stage Real-Time Updates Issue"
