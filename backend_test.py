@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 """
-FINAL VERIFICATION TEST: v2 Subscription Endpoints After Parameter Injection Fix
+PLAYLIST FUNCTIONALITY TESTING FOR AUDIENCE INTERFACE
 
-Testing all v2 endpoints that were supposedly fixed after removing Request parameter injection issues:
+Testing the new playlist functionality for the audience interface as requested:
 
 CRITICAL TEST ENDPOINTS:
-1. GET /api/v2/subscription/status - Should return freemium status  
-2. POST /api/v2/subscription/checkout - Should work without 422 errors
-3. GET /api/v2/subscription/checkout/status/{session_id} - Should work without expecting body
-4. POST /api/v2/subscription/cancel - Should work
+1. GET /api/musicians/{slug}/playlists - Public playlists endpoint
+   - Should return playlists for any musician without authentication
+   - Should return simplified playlist data with id, name, and song_count
+   - Should handle non-existent musicians gracefully
+
+2. GET /api/musicians/{slug}/songs?playlist={playlist_id} - Songs with playlist filtering
+   - Should filter songs by the specified playlist
+   - Should work alongside existing filters (genre, mood, etc.)
+   - Should still work without playlist parameter (showing all songs or active playlist)
 
 Test Credentials: brycelarsenmusic@gmail.com / RequestWave2024!
 
-Expected: All endpoints working without parameter injection errors. 
-If successful, endpoints should be moved from v2 back to /api/subscription paths.
+Expected: All playlist functionality working correctly for audience interface.
 """
 
 import requests
