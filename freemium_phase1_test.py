@@ -490,6 +490,7 @@ class FreemiumSubscriptionTester:
         checkout_success, session_id = self.test_subscription_checkout_endpoint()
         cancel_success = self.test_subscription_cancel_endpoint()
         webhook_success = self.test_webhook_stripe_endpoint()
+        mounted_webhook_success = self.test_mounted_webhook_endpoint()
         
         # Step 3: Summary
         print("\n" + "=" * 80)
