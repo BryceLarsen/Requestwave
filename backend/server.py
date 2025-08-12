@@ -4298,6 +4298,7 @@ async def create_playlist(
             song_count=len(playlist_dict["song_ids"]),
             song_ids=playlist_dict["song_ids"],  # NEW: Include song_ids
             is_active=is_active,
+            is_public=playlist_dict["is_public"],  # NEW: Include public status
             created_at=playlist_dict["created_at"],
             updated_at=playlist_dict["updated_at"]  # NEW: Include updated_at
         )
