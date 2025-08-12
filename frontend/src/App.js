@@ -2172,15 +2172,6 @@ const MusicianDashboard = () => {
     }
   };
 
-  // NEW: Quick Start guide functions
-  const handleQuickStartClose = () => {
-    setShowQuickStart(false);
-    if (isFirstLogin) {
-      localStorage.setItem(`quickstart_seen_${musician.id}`, 'true');
-      setIsFirstLogin(false);
-    }
-  };
-
   const handleContactSubmit = async (e) => {
     e.preventDefault();
     if (!contactForm.name.trim() || !contactForm.email.trim() || !contactForm.message.trim()) {
