@@ -2615,6 +2615,19 @@ const MusicianDashboard = () => {
     }
   }, [musician, subscriptionStatus]);
 
+  // NEW: Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Close dropdown if clicking outside
+      if (openDropdownId && !event.target.closest('.relative')) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openDropdownId]);
+
   const audienceUrl = `${window.location.origin}/musician/${musician.slug}`;
 
   if (loading) {
