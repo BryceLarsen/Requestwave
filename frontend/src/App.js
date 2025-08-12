@@ -2564,18 +2564,36 @@ const MusicianDashboard = () => {
         setPlaylistFilter('');
       }
 
+      // Close Edit Playlist modal if it was the deleted playlist
+      if (editingSongsPlaylist && editingSongsPlaylist.id === playlistToDelete.id) {
+        setShowEditPlaylistSongsModal(false);
+        setEditingSongsPlaylist(null);
+        setEditPlaylistSongs([]);
+        setHasUnsavedChanges(false);
+      }
+
+      // Close any open dropdown
+      setOpenDropdownId(null);
+
       let message = response.data.message || 'Playlist deleted successfully';
       
       // Show additional message if active playlist was cleared
       if (response.data.active_playlist_cleared) {
         setActivePlaylistId(null);
+        message += ' Active playlist cleared.';
       }
       
       showPlaylistToastWithMessage(message);
 
     } catch (error) {
       console.error('Error deleting playlist:', error);
-      alert(error.response?.data?.detail || 'Error deleting playlist');
+      if (error.response?.status === 403) {
+        showPlaylistToastWithMessage('You can only delete your own playlists');
+      } else if (error.response?.status === 404) {
+        showPlaylistToastWithMessage('Playlist not found');
+      } else {
+        showPlaylistToastWithMessage(error.response?.data?.detail || 'Error deleting playlist');
+      }
     } finally {
       setPlaylistToDelete(null);
       setShowPlaylistDeleteConfirmation(false);
