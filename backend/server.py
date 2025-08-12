@@ -4443,6 +4443,12 @@ async def freemium_subscription_status_endpoint(musician_id: str = Depends(get_c
         logger.error(f"Error getting subscription status: {str(e)}")
         raise HTTPException(status_code=500, detail="Error getting subscription status")
 
+@api_router.post("/subscription/checkout-test")
+async def test_checkout_route():
+    """Test route to verify routing is working"""
+    print("🚀 DEBUG: Test checkout route called")
+    return {"message": "Test route working"}
+
 @api_router.post("/subscription/checkout")
 async def create_freemium_checkout_session(
     checkout_request: V2CheckoutRequest,
