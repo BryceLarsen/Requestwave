@@ -1018,7 +1018,7 @@ const MusicianDashboard = () => {
     }
   }, [activeTab]);
 
-  // Close song management dropdown when clicking outside
+  // Close song management dropdown when clicking outside or pressing Escape
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (showSongManagementDropdown && !event.target.closest('.relative')) {
@@ -1026,9 +1026,20 @@ const MusicianDashboard = () => {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    const handleEscapeKey = (event) => {
+      if (event.key === 'Escape' && showSongManagementDropdown) {
+        setShowSongManagementDropdown(false);
+      }
+    };
+
+    if (showSongManagementDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEscapeKey);
+    }
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
     };
   }, [showSongManagementDropdown]);
 
