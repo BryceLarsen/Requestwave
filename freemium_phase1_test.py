@@ -176,8 +176,9 @@ class FreemiumSubscriptionTester:
                         print(f"   ✅ All required freemium fields present: {required_fields}")
                         print(f"   ✅ audience_link_active: {data.get('audience_link_active')}")
                         print(f"   ✅ trial_active: {data.get('trial_active')}")
-                        print(f"   ✅ trial_ends_at: {data.get('trial_ends_at')}")
+                        print(f"   ✅ trial_end: {data.get('trial_end')}")
                         print(f"   ✅ plan: {data.get('plan')}")
+                        print(f"   ✅ status: {data.get('status')}")
                         
                         self.log_result("Subscription Status Endpoint", True, f"Returns all required freemium fields: {required_fields}")
                         return True
