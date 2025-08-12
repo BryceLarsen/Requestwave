@@ -1671,13 +1671,6 @@ const MusicianDashboard = () => {
   };
 
   const handleArtistPhotoUpload = (e) => {
-    // Check if user has Pro subscription before allowing upload
-    if (!subscriptionStatus || subscriptionStatus.plan_type !== 'pro') {
-      setDesignError('Photo upload is a Pro feature. Upgrade to access this functionality.');
-      setShowUpgrade(true);
-      return;
-    }
-
     const file = e.target.files[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
