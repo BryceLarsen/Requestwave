@@ -2377,7 +2377,7 @@ const MusicianDashboard = () => {
 
   // Fetch playlists on component mount and when subscription status changes
   useEffect(() => {
-    if (musician && subscriptionStatus && subscriptionStatus.plan === 'pro') {
+    if (musician && subscriptionStatus && ['trial', 'pro'].includes(subscriptionStatus.plan)) {
       fetchPlaylists();
     }
   }, [musician, subscriptionStatus]);
