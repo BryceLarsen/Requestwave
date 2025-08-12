@@ -33,7 +33,7 @@ from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 
 # Configuration
-BASE_URL = "https://0f29ca6b-8d22-435d-ada5-8af4e2d283fe.preview.emergentagent.com/api"
+BASE_URL = "https://musician-dashboard.preview.emergentagent.com/api"
 
 # Test users for different scenarios
 NEW_USER = {
@@ -351,7 +351,7 @@ class FreemiumModelTester:
             
             monthly_checkout_data = {
                 "package_id": "monthly_plan",
-                "origin_url": "https://0f29ca6b-8d22-435d-ada5-8af4e2d283fe.preview.emergentagent.com"
+                "origin_url": "https://musician-dashboard.preview.emergentagent.com"
             }
             
             monthly_response = self.make_request("POST", "/subscription/checkout", monthly_checkout_data)
@@ -390,7 +390,7 @@ class FreemiumModelTester:
             
             annual_checkout_data = {
                 "package_id": "annual_plan",
-                "origin_url": "https://0f29ca6b-8d22-435d-ada5-8af4e2d283fe.preview.emergentagent.com"
+                "origin_url": "https://musician-dashboard.preview.emergentagent.com"
             }
             
             annual_response = self.make_request("POST", "/subscription/checkout", annual_checkout_data)
@@ -416,7 +416,7 @@ class FreemiumModelTester:
             
             invalid_checkout_data = {
                 "package_id": "invalid_plan",
-                "origin_url": "https://0f29ca6b-8d22-435d-ada5-8af4e2d283fe.preview.emergentagent.com"
+                "origin_url": "https://musician-dashboard.preview.emergentagent.com"
             }
             
             invalid_response = self.make_request("POST", "/subscription/checkout", invalid_checkout_data)
@@ -897,7 +897,7 @@ class FreemiumModelTester:
             
             checkout_data = {
                 "package_id": "monthly_plan",
-                "origin_url": "https://0f29ca6b-8d22-435d-ada5-8af4e2d283fe.preview.emergentagent.com"
+                "origin_url": "https://musician-dashboard.preview.emergentagent.com"
             }
             
             checkout_response = self.make_request("POST", "/subscription/checkout", checkout_data)

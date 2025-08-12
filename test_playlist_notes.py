@@ -10,7 +10,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://0f29ca6b-8d22-435d-ada5-8af4e2d283fe.preview.emergentagent.com/api"
+BASE_URL = "https://musician-dashboard.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {

@@ -34,7 +34,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration - Use environment variable for backend URL
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://0f29ca6b-8d22-435d-ada5-8af4e2d283fe.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://musician-dashboard.preview.emergentagent.com')
 BASE_URL = f"{BACKEND_URL}/api"
 
 # Test credentials from review request
