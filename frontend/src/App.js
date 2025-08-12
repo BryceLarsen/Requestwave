@@ -4088,7 +4088,7 @@ const MusicianDashboard = () => {
                         >
                           {upgrading ? 'Processing...' : 
                             `${subscriptionStatus.can_reactivate ? 'Reactivate' : 'Start'} - ${
-                              selectedPlan === 'monthly' ? '$20 today' : '$39 today'
+                              selectedPlan === 'monthly' ? '$20 today' : '$63 today'
                             }`
                           }
                         </button>
