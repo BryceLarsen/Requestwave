@@ -1,23 +1,19 @@
 #!/usr/bin/env python3
 """
-PLAYLIST FUNCTIONALITY TESTING FOR AUDIENCE INTERFACE
+PLAYLIST EDITING BACKEND ENDPOINTS TESTING
 
-Testing the new playlist functionality for the audience interface as requested:
+Testing the new playlist editing backend endpoints as requested:
 
 CRITICAL TEST ENDPOINTS:
-1. GET /api/musicians/{slug}/playlists - Public playlists endpoint
-   - Should return playlists for any musician without authentication
-   - Should return simplified playlist data with id, name, and song_count
-   - Should handle non-existent musicians gracefully
-
-2. GET /api/musicians/{slug}/songs?playlist={playlist_id} - Songs with playlist filtering
-   - Should filter songs by the specified playlist
-   - Should work alongside existing filters (genre, mood, etc.)
-   - Should still work without playlist parameter (showing all songs or active playlist)
+1. Test playlist creation with updated_at field
+2. GET /api/playlists/{playlist_id} - returns detailed playlist with ordered song_ids
+3. PUT /api/playlists/{playlist_id}/songs - replaces entire song list, removes duplicates
+4. DELETE /api/playlists/{playlist_id}/songs/{song_id} - removes single song
+5. Test duplicate handling in PUT endpoint
 
 Test Credentials: brycelarsenmusic@gmail.com / RequestWave2024!
 
-Expected: All playlist functionality working correctly for audience interface.
+Expected: All new playlist editing endpoints working correctly with proper updated_at tracking.
 """
 
 import requests
