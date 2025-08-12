@@ -1661,12 +1661,7 @@ const MusicianDashboard = () => {
       await axios.put(`${API}/design/settings`, designSettings);
       alert('Design settings updated successfully!');
     } catch (error) {
-      if (error.response?.status === 402) {
-        setDesignError('Design customization is a Pro feature. Upgrade to access these settings.');
-        setShowUpgrade(true);
-      } else {
-        setDesignError(error.response?.data?.detail || 'Error updating design settings');
-      }
+      setDesignError(error.response?.data?.detail || 'Error updating design settings');
     }
   };
 
