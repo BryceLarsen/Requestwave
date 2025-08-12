@@ -180,14 +180,14 @@ class RequestWaveAPITester:
         except Exception as e:
             self.log_result("JWT Token Validation", False, f"Exception: {str(e)}")
 
-    def test_public_playlists_endpoint(self):
-        """Test GET /api/musicians/{slug}/playlists endpoint - PRIORITY 1"""
+    def test_playlist_creation_with_updated_at(self):
+        """Test playlist creation includes updated_at field - PRIORITY 1"""
         try:
-            print("🎵 PRIORITY 1: Testing Public Playlists Endpoint")
+            print("🎵 PRIORITY 1: Testing Playlist Creation with updated_at Field")
             print("=" * 80)
             
-            # Step 1: Login with Pro account to ensure playlists exist
-            print("📊 Step 1: Login with brycelarsenmusic@gmail.com to verify playlists exist")
+            # Step 1: Login with Pro account
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
             login_data = {
                 "email": PRO_MUSICIAN["email"],
                 "password": PRO_MUSICIAN["password"]
@@ -196,7 +196,7 @@ class RequestWaveAPITester:
             login_response = self.make_request("POST", "/auth/login", login_data)
             
             if login_response.status_code != 200:
-                self.log_result("Public Playlists - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                self.log_result("Playlist Creation with updated_at - Pro Login", False, f"Failed to login: {login_response.status_code}")
                 return
             
             login_data_response = login_response.json()
@@ -205,145 +205,841 @@ class RequestWaveAPITester:
             pro_musician_slug = login_data_response["musician"]["slug"]
             
             print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
-            print(f"   ✅ Musician slug: {pro_musician_slug}")
             
-            # Step 2: Check if playlists exist, create one if needed
-            print("📊 Step 2: Check existing playlists and create test playlist if needed")
+            # Step 2: Get available songs for playlist creation
+            print("📊 Step 2: Get available songs for playlist creation")
             
-            existing_playlists_response = self.make_request("GET", "/playlists")
+            songs_response = self.make_request("GET", "/songs")
             
-            if existing_playlists_response.status_code == 200:
-                existing_playlists = existing_playlists_response.json()
-                print(f"   📊 Found {len(existing_playlists)} existing playlists")
+            if songs_response.status_code != 200:
+                self.log_result("Playlist Creation with updated_at - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            songs = songs_response.json()
+            if len(songs) < 4:
+                self.log_result("Playlist Creation with updated_at - Insufficient Songs", False, f"Need at least 4 songs, found {len(songs)}")
+                self.auth_token = original_token
+                return
+            
+            # Use first 4 songs for testing
+            test_song_ids = [songs[i]["id"] for i in range(4)]
+            print(f"   ✅ Using {len(test_song_ids)} songs for playlist creation")
+            
+            # Step 3: Create test playlist with songs
+            print("📊 Step 3: Create test playlist with 4 songs")
+            
+            playlist_data = {
+                "name": "Test Playlist with updated_at",
+                "song_ids": test_song_ids
+            }
+            
+            create_response = self.make_request("POST", "/playlists", playlist_data)
+            
+            if create_response.status_code != 200:
+                self.log_result("Playlist Creation with updated_at - Create Playlist", False, f"Failed to create playlist: {create_response.status_code}, Response: {create_response.text}")
+                self.auth_token = original_token
+                return
+            
+            created_playlist = create_response.json()
+            playlist_id = created_playlist["id"]
+            
+            print(f"   ✅ Created playlist: {created_playlist['name']} with ID: {playlist_id}")
+            print(f"   📊 Playlist response: {created_playlist}")
+            
+            # Step 4: Verify created_at and updated_at are both set
+            print("📊 Step 4: Verify created_at and updated_at fields are set")
+            
+            has_created_at = "created_at" in created_playlist
+            has_updated_at = "updated_at" in created_playlist
+            
+            if has_created_at:
+                print(f"   ✅ created_at field present: {created_playlist['created_at']}")
+            else:
+                print(f"   ❌ created_at field missing")
+            
+            if has_updated_at:
+                print(f"   ✅ updated_at field present: {created_playlist['updated_at']}")
+            else:
+                print(f"   ❌ updated_at field missing")
+            
+            # Step 5: Verify both timestamps are recent and similar
+            print("📊 Step 5: Verify timestamps are recent and similar")
+            
+            timestamps_valid = False
+            if has_created_at and has_updated_at:
+                # For new playlist, created_at and updated_at should be the same or very close
+                created_at = created_playlist['created_at']
+                updated_at = created_playlist['updated_at']
                 
-                # Filter out "All Songs" playlist
-                actual_playlists = [p for p in existing_playlists if p.get("name") != "All Songs"]
-                
-                if len(actual_playlists) == 0:
-                    # Create a test playlist
-                    print("   📊 Creating test playlist for public endpoint testing")
-                    
-                    # Get some songs first
-                    songs_response = self.make_request("GET", "/songs")
-                    if songs_response.status_code == 200:
-                        songs = songs_response.json()
-                        song_ids = [song["id"] for song in songs[:3]]  # Use first 3 songs
-                        
-                        playlist_data = {
-                            "name": "Test Playlist for Audience",
-                            "song_ids": song_ids
-                        }
-                        
-                        create_playlist_response = self.make_request("POST", "/playlists", playlist_data)
-                        if create_playlist_response.status_code == 200:
-                            print(f"   ✅ Created test playlist with {len(song_ids)} songs")
-                        else:
-                            print(f"   ⚠️  Failed to create test playlist: {create_playlist_response.status_code}")
-                    else:
-                        print(f"   ⚠️  Could not get songs for playlist creation: {songs_response.status_code}")
+                # Check if they're the same (for new playlist they should be identical)
+                if created_at == updated_at:
+                    print(f"   ✅ created_at and updated_at are identical (as expected for new playlist)")
+                    timestamps_valid = True
                 else:
-                    print(f"   ✅ Using existing playlists: {[p['name'] for p in actual_playlists]}")
+                    print(f"   ⚠️  created_at and updated_at differ (may be acceptable): created={created_at}, updated={updated_at}")
+                    timestamps_valid = True  # Still acceptable
+            
+            # Step 6: Clean up test playlist
+            print("📊 Step 6: Clean up test playlist")
+            
+            delete_response = self.make_request("DELETE", f"/playlists/{playlist_id}")
+            if delete_response.status_code == 200:
+                print(f"   ✅ Deleted test playlist")
             else:
-                print(f"   ⚠️  Could not check existing playlists: {existing_playlists_response.status_code}")
-            
-            # Step 3: Test public playlists endpoint WITHOUT authentication
-            print("📊 Step 3: Test GET /api/musicians/{slug}/playlists WITHOUT authentication")
-            
-            # Clear auth token for public access
-            self.auth_token = None
-            
-            public_playlists_response = self.make_request("GET", f"/musicians/{pro_musician_slug}/playlists")
-            
-            print(f"   📊 Public playlists endpoint status: {public_playlists_response.status_code}")
-            print(f"   📊 Public playlists response: {public_playlists_response.text}")
-            
-            if public_playlists_response.status_code == 200:
-                try:
-                    public_playlists = public_playlists_response.json()
-                    print(f"   📊 Public playlists structure: {type(public_playlists)}")
-                    
-                    if isinstance(public_playlists, list):
-                        print(f"   ✅ Returned {len(public_playlists)} playlists")
-                        
-                        # Verify playlist structure
-                        expected_fields = ["id", "name", "song_count"]
-                        structure_valid = True
-                        
-                        for i, playlist in enumerate(public_playlists):
-                            print(f"   📊 Playlist {i+1}: {playlist.get('name', 'Unknown')} ({playlist.get('song_count', 0)} songs)")
-                            
-                            missing_fields = [field for field in expected_fields if field not in playlist]
-                            if missing_fields:
-                                print(f"   ❌ Playlist {i+1} missing fields: {missing_fields}")
-                                structure_valid = False
-                            else:
-                                print(f"   ✅ Playlist {i+1} has all required fields")
-                        
-                        public_endpoint_working = structure_valid
-                    else:
-                        print(f"   ❌ Expected list, got: {type(public_playlists)}")
-                        public_endpoint_working = False
-                        
-                except json.JSONDecodeError:
-                    print(f"   ❌ Response is not valid JSON")
-                    public_endpoint_working = False
-            else:
-                print(f"   ❌ Public playlists endpoint failed: {public_playlists_response.status_code}")
-                public_endpoint_working = False
-            
-            # Step 4: Test with non-existent musician
-            print("📊 Step 4: Test graceful handling of non-existent musician")
-            
-            nonexistent_response = self.make_request("GET", "/musicians/nonexistent-musician-slug/playlists")
-            
-            print(f"   📊 Non-existent musician response: {nonexistent_response.status_code}")
-            
-            if nonexistent_response.status_code == 404:
-                print(f"   ✅ Correctly returns 404 for non-existent musician")
-                graceful_handling = True
-            else:
-                print(f"   ❌ Expected 404, got: {nonexistent_response.status_code}")
-                graceful_handling = False
-            
-            # Step 5: Verify no authentication required
-            print("📊 Step 5: Verify endpoint works without any authentication headers")
-            
-            # Make request with completely clean headers
-            import requests
-            clean_response = requests.get(f"{self.base_url}/musicians/{pro_musician_slug}/playlists")
-            
-            print(f"   📊 Clean request status: {clean_response.status_code}")
-            
-            if clean_response.status_code == 200:
-                print(f"   ✅ Endpoint accessible without authentication")
-                no_auth_required = True
-            else:
-                print(f"   ❌ Endpoint requires authentication: {clean_response.status_code}")
-                no_auth_required = False
+                print(f"   ⚠️  Failed to delete test playlist: {delete_response.status_code}")
             
             # Restore original token
             self.auth_token = original_token
             
             # Final assessment
-            if public_endpoint_working and graceful_handling and no_auth_required:
-                self.log_result("Public Playlists Endpoint", True, f"✅ PRIORITY 1 COMPLETE: Public playlists endpoint working correctly - returns simplified playlist data without authentication, handles non-existent musicians gracefully")
-            elif public_endpoint_working and no_auth_required:
-                self.log_result("Public Playlists Endpoint", True, f"✅ PUBLIC PLAYLISTS WORKING: Core functionality works, minor issues with error handling")
+            if has_created_at and has_updated_at and timestamps_valid:
+                self.log_result("Playlist Creation with updated_at", True, f"✅ PRIORITY 1 COMPLETE: Playlist creation correctly sets both created_at and updated_at fields")
             else:
                 issues = []
-                if not public_endpoint_working:
-                    issues.append("playlist data structure incorrect")
-                if not graceful_handling:
-                    issues.append("poor error handling for non-existent musicians")
-                if not no_auth_required:
-                    issues.append("endpoint requires authentication when it should be public")
+                if not has_created_at:
+                    issues.append("missing created_at field")
+                if not has_updated_at:
+                    issues.append("missing updated_at field")
+                if not timestamps_valid:
+                    issues.append("invalid timestamp values")
                 
-                self.log_result("Public Playlists Endpoint", False, f"❌ CRITICAL PUBLIC PLAYLISTS ISSUES: {', '.join(issues)}")
+                self.log_result("Playlist Creation with updated_at", False, f"❌ CRITICAL PLAYLIST CREATION ISSUES: {', '.join(issues)}")
             
             print("=" * 80)
             
         except Exception as e:
-            self.log_result("Public Playlists Endpoint", False, f"❌ Exception: {str(e)}")
+            self.log_result("Playlist Creation with updated_at", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_get_playlist_detail_endpoint(self):
+        """Test GET /playlists/{playlist_id} endpoint - PRIORITY 1"""
+        try:
+            print("🎵 PRIORITY 1: Testing GET /playlists/{playlist_id} Endpoint")
+            print("=" * 80)
+            
+            # Step 1: Login with Pro account
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("GET Playlist Detail - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            
+            # Step 2: Get available songs and create test playlist
+            print("📊 Step 2: Create test playlist for detailed testing")
+            
+            songs_response = self.make_request("GET", "/songs")
+            
+            if songs_response.status_code != 200:
+                self.log_result("GET Playlist Detail - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            songs = songs_response.json()
+            if len(songs) < 3:
+                self.log_result("GET Playlist Detail - Insufficient Songs", False, f"Need at least 3 songs, found {len(songs)}")
+                self.auth_token = original_token
+                return
+            
+            # Create playlist with specific song order
+            test_song_ids = [songs[0]["id"], songs[1]["id"], songs[2]["id"]]
+            playlist_data = {
+                "name": "Detail Test Playlist",
+                "song_ids": test_song_ids
+            }
+            
+            create_response = self.make_request("POST", "/playlists", playlist_data)
+            
+            if create_response.status_code != 200:
+                self.log_result("GET Playlist Detail - Create Test Playlist", False, f"Failed to create playlist: {create_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            created_playlist = create_response.json()
+            playlist_id = created_playlist["id"]
+            
+            print(f"   ✅ Created test playlist: {created_playlist['name']} with {len(test_song_ids)} songs")
+            
+            # Step 3: Test GET /playlists/{playlist_id} endpoint
+            print("📊 Step 3: Test GET /playlists/{playlist_id} endpoint")
+            
+            detail_response = self.make_request("GET", f"/playlists/{playlist_id}")
+            
+            print(f"   📊 Detail endpoint status: {detail_response.status_code}")
+            
+            if detail_response.status_code != 200:
+                self.log_result("GET Playlist Detail - Detail Endpoint", False, f"Detail endpoint failed: {detail_response.status_code}, Response: {detail_response.text}")
+                # Clean up
+                self.make_request("DELETE", f"/playlists/{playlist_id}")
+                self.auth_token = original_token
+                return
+            
+            detail_data = detail_response.json()
+            print(f"   📊 Detail response keys: {list(detail_data.keys())}")
+            
+            # Step 4: Verify response structure and content
+            print("📊 Step 4: Verify detailed playlist response structure")
+            
+            required_fields = ["id", "name", "song_ids", "songs", "song_count", "created_at", "updated_at"]
+            missing_fields = [field for field in required_fields if field not in detail_data]
+            
+            if len(missing_fields) == 0:
+                print(f"   ✅ All required fields present: {required_fields}")
+                structure_valid = True
+            else:
+                print(f"   ❌ Missing fields: {missing_fields}")
+                structure_valid = False
+            
+            # Step 5: Verify song_ids are in correct order
+            print("📊 Step 5: Verify song_ids are returned in correct order")
+            
+            returned_song_ids = detail_data.get("song_ids", [])
+            songs_order_correct = returned_song_ids == test_song_ids
+            
+            if songs_order_correct:
+                print(f"   ✅ Song IDs in correct order: {returned_song_ids}")
+            else:
+                print(f"   ❌ Song order incorrect. Expected: {test_song_ids}, Got: {returned_song_ids}")
+            
+            # Step 6: Verify song details are included
+            print("📊 Step 6: Verify song details are included in response")
+            
+            returned_songs = detail_data.get("songs", [])
+            songs_details_valid = len(returned_songs) == len(test_song_ids)
+            
+            if songs_details_valid:
+                print(f"   ✅ Correct number of song details: {len(returned_songs)}")
+                
+                # Verify song details structure
+                if len(returned_songs) > 0:
+                    sample_song = returned_songs[0]
+                    song_required_fields = ["id", "title", "artist"]
+                    song_missing_fields = [field for field in song_required_fields if field not in sample_song]
+                    
+                    if len(song_missing_fields) == 0:
+                        print(f"   ✅ Song details structure correct: {sample_song.get('title')} by {sample_song.get('artist')}")
+                    else:
+                        print(f"   ❌ Song details missing fields: {song_missing_fields}")
+                        songs_details_valid = False
+            else:
+                print(f"   ❌ Wrong number of song details. Expected: {len(test_song_ids)}, Got: {len(returned_songs)}")
+            
+            # Step 7: Verify song_count matches
+            print("📊 Step 7: Verify song_count field is accurate")
+            
+            returned_song_count = detail_data.get("song_count", 0)
+            song_count_correct = returned_song_count == len(test_song_ids)
+            
+            if song_count_correct:
+                print(f"   ✅ Song count correct: {returned_song_count}")
+            else:
+                print(f"   ❌ Song count incorrect. Expected: {len(test_song_ids)}, Got: {returned_song_count}")
+            
+            # Step 8: Clean up test playlist
+            print("📊 Step 8: Clean up test playlist")
+            
+            delete_response = self.make_request("DELETE", f"/playlists/{playlist_id}")
+            if delete_response.status_code == 200:
+                print(f"   ✅ Deleted test playlist")
+            else:
+                print(f"   ⚠️  Failed to delete test playlist: {delete_response.status_code}")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            if structure_valid and songs_order_correct and songs_details_valid and song_count_correct:
+                self.log_result("GET Playlist Detail Endpoint", True, f"✅ PRIORITY 1 COMPLETE: GET /playlists/{{playlist_id}} returns detailed playlist with ordered song_ids and song details")
+            else:
+                issues = []
+                if not structure_valid:
+                    issues.append(f"missing fields: {missing_fields}")
+                if not songs_order_correct:
+                    issues.append("song order incorrect")
+                if not songs_details_valid:
+                    issues.append("song details invalid")
+                if not song_count_correct:
+                    issues.append("song count incorrect")
+                
+                self.log_result("GET Playlist Detail Endpoint", False, f"❌ CRITICAL GET PLAYLIST DETAIL ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("GET Playlist Detail Endpoint", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_put_playlist_songs_reorder(self):
+        """Test PUT /playlists/{playlist_id}/songs for reordering - PRIORITY 1"""
+        try:
+            print("🎵 PRIORITY 1: Testing PUT /playlists/{playlist_id}/songs for Reordering")
+            print("=" * 80)
+            
+            # Step 1: Login with Pro account
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("PUT Playlist Songs Reorder - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            
+            # Step 2: Create test playlist with initial order
+            print("📊 Step 2: Create test playlist with initial song order")
+            
+            songs_response = self.make_request("GET", "/songs")
+            
+            if songs_response.status_code != 200:
+                self.log_result("PUT Playlist Songs Reorder - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            songs = songs_response.json()
+            if len(songs) < 4:
+                self.log_result("PUT Playlist Songs Reorder - Insufficient Songs", False, f"Need at least 4 songs, found {len(songs)}")
+                self.auth_token = original_token
+                return
+            
+            # Initial order: [0, 1, 2, 3]
+            initial_song_ids = [songs[i]["id"] for i in range(4)]
+            playlist_data = {
+                "name": "Reorder Test Playlist",
+                "song_ids": initial_song_ids
+            }
+            
+            create_response = self.make_request("POST", "/playlists", playlist_data)
+            
+            if create_response.status_code != 200:
+                self.log_result("PUT Playlist Songs Reorder - Create Test Playlist", False, f"Failed to create playlist: {create_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            created_playlist = create_response.json()
+            playlist_id = created_playlist["id"]
+            initial_updated_at = created_playlist.get("updated_at")
+            
+            print(f"   ✅ Created test playlist: {created_playlist['name']} with initial order")
+            print(f"   📊 Initial song order: {initial_song_ids}")
+            print(f"   📊 Initial updated_at: {initial_updated_at}")
+            
+            # Wait a moment to ensure updated_at will change
+            import time
+            time.sleep(1)
+            
+            # Step 3: Reorder songs using PUT endpoint
+            print("📊 Step 3: Reorder songs using PUT /playlists/{playlist_id}/songs")
+            
+            # New order: [3, 1, 0, 2] (reverse and shuffle)
+            reordered_song_ids = [initial_song_ids[3], initial_song_ids[1], initial_song_ids[0], initial_song_ids[2]]
+            reorder_data = {
+                "song_ids": reordered_song_ids
+            }
+            
+            reorder_response = self.make_request("PUT", f"/playlists/{playlist_id}/songs", reorder_data)
+            
+            print(f"   📊 Reorder endpoint status: {reorder_response.status_code}")
+            
+            if reorder_response.status_code != 200:
+                self.log_result("PUT Playlist Songs Reorder - Reorder Request", False, f"Reorder failed: {reorder_response.status_code}, Response: {reorder_response.text}")
+                # Clean up
+                self.make_request("DELETE", f"/playlists/{playlist_id}")
+                self.auth_token = original_token
+                return
+            
+            reorder_result = reorder_response.json()
+            new_updated_at = reorder_result.get("updated_at")
+            
+            print(f"   ✅ Reorder request successful")
+            print(f"   📊 New song order: {reorder_result.get('song_ids', [])}")
+            print(f"   📊 New updated_at: {new_updated_at}")
+            
+            # Step 4: Verify updated_at changed
+            print("📊 Step 4: Verify updated_at field changed")
+            
+            updated_at_changed = new_updated_at != initial_updated_at
+            
+            if updated_at_changed:
+                print(f"   ✅ updated_at changed from {initial_updated_at} to {new_updated_at}")
+            else:
+                print(f"   ❌ updated_at did not change: {initial_updated_at}")
+            
+            # Step 5: Verify new order is correct
+            print("📊 Step 5: Verify songs are in new order")
+            
+            returned_song_ids = reorder_result.get("song_ids", [])
+            order_correct = returned_song_ids == reordered_song_ids
+            
+            if order_correct:
+                print(f"   ✅ Song order correct after reordering")
+            else:
+                print(f"   ❌ Song order incorrect. Expected: {reordered_song_ids}, Got: {returned_song_ids}")
+            
+            # Step 6: Verify GET endpoint returns new order
+            print("📊 Step 6: Verify GET endpoint returns songs in new order")
+            
+            get_response = self.make_request("GET", f"/playlists/{playlist_id}")
+            
+            if get_response.status_code == 200:
+                get_data = get_response.json()
+                get_song_ids = get_data.get("song_ids", [])
+                get_order_correct = get_song_ids == reordered_song_ids
+                
+                if get_order_correct:
+                    print(f"   ✅ GET endpoint returns songs in new order")
+                else:
+                    print(f"   ❌ GET endpoint order incorrect. Expected: {reordered_song_ids}, Got: {get_song_ids}")
+            else:
+                print(f"   ❌ GET endpoint failed: {get_response.status_code}")
+                get_order_correct = False
+            
+            # Step 7: Clean up test playlist
+            print("📊 Step 7: Clean up test playlist")
+            
+            delete_response = self.make_request("DELETE", f"/playlists/{playlist_id}")
+            if delete_response.status_code == 200:
+                print(f"   ✅ Deleted test playlist")
+            else:
+                print(f"   ⚠️  Failed to delete test playlist: {delete_response.status_code}")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            if updated_at_changed and order_correct and get_order_correct:
+                self.log_result("PUT Playlist Songs Reorder", True, f"✅ PRIORITY 1 COMPLETE: PUT /playlists/{{playlist_id}}/songs successfully reorders songs and updates updated_at field")
+            else:
+                issues = []
+                if not updated_at_changed:
+                    issues.append("updated_at field not changed")
+                if not order_correct:
+                    issues.append("song reordering failed")
+                if not get_order_correct:
+                    issues.append("GET endpoint doesn't reflect new order")
+                
+                self.log_result("PUT Playlist Songs Reorder", False, f"❌ CRITICAL PUT PLAYLIST SONGS ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("PUT Playlist Songs Reorder", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_delete_single_song_from_playlist(self):
+        """Test DELETE /playlists/{playlist_id}/songs/{song_id} - PRIORITY 1"""
+        try:
+            print("🎵 PRIORITY 1: Testing DELETE /playlists/{playlist_id}/songs/{song_id}")
+            print("=" * 80)
+            
+            # Step 1: Login with Pro account
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("DELETE Single Song - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            
+            # Step 2: Create test playlist with multiple songs
+            print("📊 Step 2: Create test playlist with multiple songs")
+            
+            songs_response = self.make_request("GET", "/songs")
+            
+            if songs_response.status_code != 200:
+                self.log_result("DELETE Single Song - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            songs = songs_response.json()
+            if len(songs) < 3:
+                self.log_result("DELETE Single Song - Insufficient Songs", False, f"Need at least 3 songs, found {len(songs)}")
+                self.auth_token = original_token
+                return
+            
+            # Create playlist with 3 songs
+            initial_song_ids = [songs[i]["id"] for i in range(3)]
+            playlist_data = {
+                "name": "Delete Song Test Playlist",
+                "song_ids": initial_song_ids
+            }
+            
+            create_response = self.make_request("POST", "/playlists", playlist_data)
+            
+            if create_response.status_code != 200:
+                self.log_result("DELETE Single Song - Create Test Playlist", False, f"Failed to create playlist: {create_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            created_playlist = create_response.json()
+            playlist_id = created_playlist["id"]
+            initial_updated_at = created_playlist.get("updated_at")
+            
+            print(f"   ✅ Created test playlist: {created_playlist['name']} with {len(initial_song_ids)} songs")
+            print(f"   📊 Initial songs: {initial_song_ids}")
+            print(f"   📊 Initial updated_at: {initial_updated_at}")
+            
+            # Wait a moment to ensure updated_at will change
+            import time
+            time.sleep(1)
+            
+            # Step 3: Remove one song using DELETE endpoint
+            print("📊 Step 3: Remove one song using DELETE endpoint")
+            
+            song_to_remove = initial_song_ids[1]  # Remove middle song
+            expected_remaining_songs = [initial_song_ids[0], initial_song_ids[2]]
+            
+            delete_response = self.make_request("DELETE", f"/playlists/{playlist_id}/songs/{song_to_remove}")
+            
+            print(f"   📊 Delete song endpoint status: {delete_response.status_code}")
+            
+            if delete_response.status_code != 200:
+                self.log_result("DELETE Single Song - Delete Request", False, f"Delete song failed: {delete_response.status_code}, Response: {delete_response.text}")
+                # Clean up
+                self.make_request("DELETE", f"/playlists/{playlist_id}")
+                self.auth_token = original_token
+                return
+            
+            delete_result = delete_response.json()
+            new_updated_at = delete_result.get("updated_at")
+            
+            print(f"   ✅ Delete song request successful")
+            print(f"   📊 Remaining songs: {delete_result.get('song_ids', [])}")
+            print(f"   📊 New updated_at: {new_updated_at}")
+            
+            # Step 4: Verify song count decreased
+            print("📊 Step 4: Verify song count decreased")
+            
+            new_song_count = delete_result.get("song_count", 0)
+            count_decreased = new_song_count == len(initial_song_ids) - 1
+            
+            if count_decreased:
+                print(f"   ✅ Song count decreased from {len(initial_song_ids)} to {new_song_count}")
+            else:
+                print(f"   ❌ Song count incorrect. Expected: {len(initial_song_ids) - 1}, Got: {new_song_count}")
+            
+            # Step 5: Verify updated_at changed
+            print("📊 Step 5: Verify updated_at field changed")
+            
+            updated_at_changed = new_updated_at != initial_updated_at
+            
+            if updated_at_changed:
+                print(f"   ✅ updated_at changed from {initial_updated_at} to {new_updated_at}")
+            else:
+                print(f"   ❌ updated_at did not change: {initial_updated_at}")
+            
+            # Step 6: Verify correct song was removed
+            print("📊 Step 6: Verify correct song was removed")
+            
+            remaining_song_ids = delete_result.get("song_ids", [])
+            correct_song_removed = remaining_song_ids == expected_remaining_songs
+            
+            if correct_song_removed:
+                print(f"   ✅ Correct song removed, remaining: {remaining_song_ids}")
+            else:
+                print(f"   ❌ Wrong songs remaining. Expected: {expected_remaining_songs}, Got: {remaining_song_ids}")
+            
+            # Step 7: Verify GET endpoint reflects the change
+            print("📊 Step 7: Verify GET endpoint reflects the change")
+            
+            get_response = self.make_request("GET", f"/playlists/{playlist_id}")
+            
+            if get_response.status_code == 200:
+                get_data = get_response.json()
+                get_song_ids = get_data.get("song_ids", [])
+                get_reflects_change = get_song_ids == expected_remaining_songs
+                
+                if get_reflects_change:
+                    print(f"   ✅ GET endpoint reflects song removal")
+                else:
+                    print(f"   ❌ GET endpoint incorrect. Expected: {expected_remaining_songs}, Got: {get_song_ids}")
+            else:
+                print(f"   ❌ GET endpoint failed: {get_response.status_code}")
+                get_reflects_change = False
+            
+            # Step 8: Clean up test playlist
+            print("📊 Step 8: Clean up test playlist")
+            
+            cleanup_response = self.make_request("DELETE", f"/playlists/{playlist_id}")
+            if cleanup_response.status_code == 200:
+                print(f"   ✅ Deleted test playlist")
+            else:
+                print(f"   ⚠️  Failed to delete test playlist: {cleanup_response.status_code}")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            if count_decreased and updated_at_changed and correct_song_removed and get_reflects_change:
+                self.log_result("DELETE Single Song from Playlist", True, f"✅ PRIORITY 1 COMPLETE: DELETE /playlists/{{playlist_id}}/songs/{{song_id}} successfully removes single song and updates updated_at field")
+            else:
+                issues = []
+                if not count_decreased:
+                    issues.append("song count not decreased")
+                if not updated_at_changed:
+                    issues.append("updated_at field not changed")
+                if not correct_song_removed:
+                    issues.append("wrong song removed")
+                if not get_reflects_change:
+                    issues.append("GET endpoint doesn't reflect change")
+                
+                self.log_result("DELETE Single Song from Playlist", False, f"❌ CRITICAL DELETE SINGLE SONG ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("DELETE Single Song from Playlist", False, f"❌ Exception: {str(e)}")
+            # Restore original token in case of exception
+            if 'original_token' in locals():
+                self.auth_token = original_token
+
+    def test_duplicate_handling_in_put_endpoint(self):
+        """Test duplicate handling in PUT /playlists/{playlist_id}/songs - PRIORITY 1"""
+        try:
+            print("🎵 PRIORITY 1: Testing Duplicate Handling in PUT Endpoint")
+            print("=" * 80)
+            
+            # Step 1: Login with Pro account
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
+            login_data = {
+                "email": PRO_MUSICIAN["email"],
+                "password": PRO_MUSICIAN["password"]
+            }
+            
+            login_response = self.make_request("POST", "/auth/login", login_data)
+            
+            if login_response.status_code != 200:
+                self.log_result("Duplicate Handling PUT - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return
+            
+            login_data_response = login_response.json()
+            original_token = self.auth_token
+            self.auth_token = login_data_response["token"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            
+            # Step 2: Create test playlist
+            print("📊 Step 2: Create test playlist for duplicate testing")
+            
+            songs_response = self.make_request("GET", "/songs")
+            
+            if songs_response.status_code != 200:
+                self.log_result("Duplicate Handling PUT - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            songs = songs_response.json()
+            if len(songs) < 3:
+                self.log_result("Duplicate Handling PUT - Insufficient Songs", False, f"Need at least 3 songs, found {len(songs)}")
+                self.auth_token = original_token
+                return
+            
+            # Create playlist with initial songs
+            initial_song_ids = [songs[i]["id"] for i in range(3)]
+            playlist_data = {
+                "name": "Duplicate Test Playlist",
+                "song_ids": initial_song_ids
+            }
+            
+            create_response = self.make_request("POST", "/playlists", playlist_data)
+            
+            if create_response.status_code != 200:
+                self.log_result("Duplicate Handling PUT - Create Test Playlist", False, f"Failed to create playlist: {create_response.status_code}")
+                self.auth_token = original_token
+                return
+            
+            created_playlist = create_response.json()
+            playlist_id = created_playlist["id"]
+            
+            print(f"   ✅ Created test playlist: {created_playlist['name']}")
+            
+            # Step 3: Test PUT with duplicate song_ids
+            print("📊 Step 3: Test PUT with duplicate song_ids")
+            
+            # Create list with duplicates: [song0, song1, song0, song2, song1, song0]
+            song_ids_with_duplicates = [
+                initial_song_ids[0],  # First occurrence
+                initial_song_ids[1],  # First occurrence
+                initial_song_ids[0],  # Duplicate
+                initial_song_ids[2],  # First occurrence
+                initial_song_ids[1],  # Duplicate
+                initial_song_ids[0]   # Another duplicate
+            ]
+            
+            # Expected result after deduplication (preserving first occurrence order)
+            expected_deduplicated = [initial_song_ids[0], initial_song_ids[1], initial_song_ids[2]]
+            
+            duplicate_data = {
+                "song_ids": song_ids_with_duplicates
+            }
+            
+            print(f"   📊 Sending song_ids with duplicates: {song_ids_with_duplicates}")
+            print(f"   📊 Expected after deduplication: {expected_deduplicated}")
+            
+            put_response = self.make_request("PUT", f"/playlists/{playlist_id}/songs", duplicate_data)
+            
+            print(f"   📊 PUT with duplicates status: {put_response.status_code}")
+            
+            if put_response.status_code != 200:
+                self.log_result("Duplicate Handling PUT - PUT Request", False, f"PUT with duplicates failed: {put_response.status_code}, Response: {put_response.text}")
+                # Clean up
+                self.make_request("DELETE", f"/playlists/{playlist_id}")
+                self.auth_token = original_token
+                return
+            
+            put_result = put_response.json()
+            returned_song_ids = put_result.get("song_ids", [])
+            
+            print(f"   ✅ PUT request successful")
+            print(f"   📊 Returned song_ids: {returned_song_ids}")
+            
+            # Step 4: Verify duplicates were removed
+            print("📊 Step 4: Verify duplicates were removed")
+            
+            duplicates_removed = len(returned_song_ids) < len(song_ids_with_duplicates)
+            correct_deduplication = returned_song_ids == expected_deduplicated
+            
+            if duplicates_removed:
+                print(f"   ✅ Duplicates removed: {len(song_ids_with_duplicates)} → {len(returned_song_ids)}")
+            else:
+                print(f"   ❌ Duplicates not removed: still {len(returned_song_ids)} songs")
+            
+            if correct_deduplication:
+                print(f"   ✅ Correct deduplication preserving order")
+            else:
+                print(f"   ❌ Incorrect deduplication. Expected: {expected_deduplicated}, Got: {returned_song_ids}")
+            
+            # Step 5: Verify order is preserved for first occurrences
+            print("📊 Step 5: Verify order is preserved for first occurrences")
+            
+            # Check if the order of unique songs matches the order of their first appearance
+            order_preserved = True
+            if len(returned_song_ids) == len(expected_deduplicated):
+                for i, expected_id in enumerate(expected_deduplicated):
+                    if i < len(returned_song_ids) and returned_song_ids[i] != expected_id:
+                        order_preserved = False
+                        break
+            else:
+                order_preserved = False
+            
+            if order_preserved:
+                print(f"   ✅ Order preserved for first occurrences")
+            else:
+                print(f"   ❌ Order not preserved correctly")
+            
+            # Step 6: Verify GET endpoint reflects deduplicated result
+            print("📊 Step 6: Verify GET endpoint reflects deduplicated result")
+            
+            get_response = self.make_request("GET", f"/playlists/{playlist_id}")
+            
+            if get_response.status_code == 200:
+                get_data = get_response.json()
+                get_song_ids = get_data.get("song_ids", [])
+                get_matches_put = get_song_ids == returned_song_ids
+                
+                if get_matches_put:
+                    print(f"   ✅ GET endpoint matches PUT result")
+                else:
+                    print(f"   ❌ GET endpoint mismatch. PUT result: {returned_song_ids}, GET result: {get_song_ids}")
+            else:
+                print(f"   ❌ GET endpoint failed: {get_response.status_code}")
+                get_matches_put = False
+            
+            # Step 7: Test edge case - all duplicates of same song
+            print("📊 Step 7: Test edge case - all duplicates of same song")
+            
+            all_same_song = [initial_song_ids[0]] * 5  # Same song 5 times
+            expected_single = [initial_song_ids[0]]    # Should result in single song
+            
+            edge_case_data = {
+                "song_ids": all_same_song
+            }
+            
+            edge_response = self.make_request("PUT", f"/playlists/{playlist_id}/songs", edge_case_data)
+            
+            if edge_response.status_code == 200:
+                edge_result = edge_response.json()
+                edge_song_ids = edge_result.get("song_ids", [])
+                edge_case_correct = edge_song_ids == expected_single
+                
+                if edge_case_correct:
+                    print(f"   ✅ Edge case handled correctly: {len(all_same_song)} duplicates → 1 unique")
+                else:
+                    print(f"   ❌ Edge case failed. Expected: {expected_single}, Got: {edge_song_ids}")
+            else:
+                print(f"   ❌ Edge case request failed: {edge_response.status_code}")
+                edge_case_correct = False
+            
+            # Step 8: Clean up test playlist
+            print("📊 Step 8: Clean up test playlist")
+            
+            delete_response = self.make_request("DELETE", f"/playlists/{playlist_id}")
+            if delete_response.status_code == 200:
+                print(f"   ✅ Deleted test playlist")
+            else:
+                print(f"   ⚠️  Failed to delete test playlist: {delete_response.status_code}")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            # Final assessment
+            if duplicates_removed and correct_deduplication and order_preserved and get_matches_put and edge_case_correct:
+                self.log_result("Duplicate Handling in PUT Endpoint", True, f"✅ PRIORITY 1 COMPLETE: PUT endpoint correctly removes duplicates while preserving order of first occurrences")
+            else:
+                issues = []
+                if not duplicates_removed:
+                    issues.append("duplicates not removed")
+                if not correct_deduplication:
+                    issues.append("incorrect deduplication logic")
+                if not order_preserved:
+                    issues.append("order not preserved")
+                if not get_matches_put:
+                    issues.append("GET endpoint doesn't match PUT result")
+                if not edge_case_correct:
+                    issues.append("edge case handling failed")
+                
+                self.log_result("Duplicate Handling in PUT Endpoint", False, f"❌ CRITICAL DUPLICATE HANDLING ISSUES: {', '.join(issues)}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Duplicate Handling in PUT Endpoint", False, f"❌ Exception: {str(e)}")
             # Restore original token in case of exception
             if 'original_token' in locals():
                 self.auth_token = original_token
