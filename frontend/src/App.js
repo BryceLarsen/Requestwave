@@ -4095,7 +4095,7 @@ const MusicianDashboard = () => {
                         <p className="text-gray-400 text-sm mt-2">
                           {subscriptionStatus.can_reactivate 
                             ? 'Immediate activation after payment'
-                            : '30-day free trial, then subscription begins'
+                            : '14-day free trial, then subscription begins'
                           }
                         </p>
                       </div>
