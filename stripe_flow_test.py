@@ -223,20 +223,46 @@ class StripeFlowTester:
             # Verify logs show trial_period_days: 14, plan, and price_id
             print("📊 Checking for required log artifacts")
             
-            # Note: In a real test, we would check server logs for these entries:
-            # - trial_period_days: 14 (not 30)
-            # - Monthly plan uses PRICE_MONTHLY_5
-            # - Annual plan uses PRICE_ANNUAL_48
-            # - Checkout session is subscription-mode only (no startup fee line item)
+            # Check backend logs for the trial_period_days=14 confirmation
+            print("   📊 Checking backend logs for trial_period_days=14...")
+            
+            try:
+                # Check recent backend logs for trial period confirmation
+                import subprocess
+                log_result = subprocess.run(
+                    ["tail", "-n", "100", "/var/log/supervisor/backend.out.log"], 
+                    capture_output=True, text=True
+                )
+                
+                log_content = log_result.stdout
+                
+                # Look for trial period logs
+                trial_logs_found = []
+                if "trial_period_days=14" in log_content:
+                    trial_logs_found.append("trial_period_days=14 confirmed in logs")
+                if "trial_period_days=0" in log_content:
+                    trial_logs_found.append("trial_period_days=0 for existing users confirmed")
+                
+                if trial_logs_found:
+                    print(f"   ✅ Trial period logs found: {trial_logs_found}")
+                else:
+                    print("   ℹ️  Trial period logs not found in recent output (may need to trigger new checkout)")
+                    
+            except Exception as e:
+                print(f"   ⚠️  Could not check backend logs: {e}")
+                trial_logs_found = ["Log check failed - manual verification needed"]
             
             expected_artifacts = [
-                "trial_period_days: 14",
-                "PRICE_MONTHLY_5 for monthly plan",
-                "PRICE_ANNUAL_48 for annual plan",
-                "Subscription-mode checkout (no startup fee in checkout)"
+                "trial_period_days: 14 (not 30)",
+                "Monthly plan uses PRICE_MONTHLY_5", 
+                "Annual plan uses PRICE_ANNUAL_48",
+                "Subscription-mode checkout (no startup fee in checkout)",
+                "Live Stripe environment (cs_live_ session IDs)"
             ]
             
             artifacts_note = "Server logs should show: " + ", ".join(expected_artifacts)
+            if trial_logs_found:
+                artifacts_note += f" | Found: {trial_logs_found}"
             
             # Final assessment
             if monthly_success and annual_success:
