@@ -56,6 +56,7 @@ GRACE_PERIOD_DAYS = 3  # Grace period for failed payments
 PRICE_STARTUP_15 = os.environ.get('PRICE_STARTUP_15')
 PRICE_MONTHLY_5 = os.environ.get('PRICE_MONTHLY_5')
 PRICE_ANNUAL_24 = os.environ.get('PRICE_ANNUAL_24')
+PRICE_ANNUAL_48 = os.environ.get('PRICE_ANNUAL_48')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
 
 def _plan_price_id(plan: str) -> str:
