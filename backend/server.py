@@ -1715,7 +1715,45 @@ async def login_musician(login_data: MusicianLogin):
     musician = Musician(**{k: v for k, v in musician_doc.items() if k != "password"})
     return AuthResponse(token=token, musician=musician)
 
-# SINGLE WEBHOOK ENDPOINT - POST /api/stripe/webhook (defined early to avoid routing conflicts)
+# NEW: Helper functions for finalized webhook handler
+async def mark_trial_started(customer_id: str, subscription_id: str):
+    """Mark trial as started for a customer"""
+    await db.musicians.update_one(
+        {"stripe_customer_id": customer_id},
+        {
+            "$set": {
+                "audience_link_active": True,
+                "stripe_subscription_id": subscription_id,
+                "subscription_status": "trialing",
+                "has_had_trial": True
+            }
+        }
+    )
+
+async def startup_fee_already_applied(customer_id: str, subscription_id: str) -> bool:
+    """Check if startup fee has already been applied for this customer/subscription"""
+    existing = await db.startup_fees.find_one({
+        "customer_id": customer_id,
+        "subscription_id": subscription_id
+    })
+    return existing is not None
+
+async def mark_startup_fee_applied(customer_id: str, subscription_id: str):
+    """Mark startup fee as applied to prevent duplicates"""
+    await db.startup_fees.insert_one({
+        "customer_id": customer_id,
+        "subscription_id": subscription_id,
+        "applied_at": datetime.utcnow()
+    })
+
+async def mark_access(customer_id: str, active: bool):
+    """Mark audience link access as active or inactive"""
+    await db.musicians.update_one(
+        {"stripe_customer_id": customer_id},
+        {"$set": {"audience_link_active": active}}
+    )
+
+# SINGLE WEBHOOK ENDPOINT - POST /api/stripe/webhook (FINALIZED with startup fee logic)
 @api_router.post("/stripe/webhook")
 async def stripe_webhook_handler(request: FastAPIRequest):
     """Single Stripe webhook handler - accepts raw body, no auth, always returns 200"""
