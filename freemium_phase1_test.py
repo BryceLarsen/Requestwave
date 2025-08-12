@@ -1,31 +1,30 @@
 #!/usr/bin/env python3
 """
-FREEMIUM SUBSCRIPTION ENDPOINTS TEST - Phase 1 Implementation
+FINAL PHASE 1 VERIFICATION TEST - Freemium Backend Implementation
 
-Testing the new freemium subscription backend endpoints as requested:
+Testing the completed freemium backend implementation with specific focus on:
 
-CRITICAL ENDPOINTS TO TEST:
-1. POST /api/subscription/checkout - Test with valid JSON body: {"plan": "monthly", "success_url": "https://example.com/success", "cancel_url": "https://example.com/cancel"}
-2. GET /api/subscription/status - Test authenticated endpoint, should return subscription status with freemium fields
-3. POST /api/subscription/cancel - Test authenticated endpoint for canceling subscriptions
-4. POST /api/webhook/stripe - Test webhook endpoint accessibility
+CRITICAL TEST ENDPOINTS:
+1. POST /api/subscription/checkout - Test with JSON payload, should return checkout_url or 400 error (NOT 500)
+2. GET /api/subscription/status - Should return: audience_link_active, trial_active, trial_end, plan, status
+3. POST /api/subscription/cancel - Should return success message and deactivate audience link  
+4. POST /api/stripe/webhook - Should return 200 without 422 validation errors
 
-AUTHENTICATION:
-- Register new user or use existing: brycelarsenmusic@gmail.com / RequestWave2024!
-- Use JWT token from login for authenticated endpoints
+AUTHENTICATION: brycelarsenmusic@gmail.com / RequestWave2024!
 
-ACCEPTANCE CRITERIA FROM USER:
-- POST /api/subscription/checkout returns checkout_url; no 422s
-- GET /api/subscription/status shows correct fields (audience_link_active, trial_active, trial_end, plan, status)  
-- Completing checkout should show two line items (startup fee + subscription)
-- No 422 responses; no routing conflicts
-- X-Handler response headers should show correct endpoint function names
+CRITICAL SUCCESS CRITERIA:
+✅ No 422 validation errors on any endpoint
+✅ Checkout returns 400 on Stripe errors (not 500)
+✅ Status returns trial_end field (not trial_ends_at)
+✅ Status returns status field
+✅ Webhook accepts raw body without Pydantic parsing conflicts
+✅ All endpoints use correct routing (no conflicts)
 
-FOCUS AREAS:
-- Verify routing conflicts are resolved (no more 422 parameter injection errors)
-- Check that endpoints return proper JSON responses
-- Verify checkout session creation works with Stripe test mode
-- Ensure authentication is working correctly
+EXPECTED RESULTS:
+- Checkout: Either valid checkout_url OR 400 with Stripe error message
+- Status: All required fields with correct names
+- Cancel: Success response
+- Webhook: 200 response without routing to request creation
 """
 
 import requests
@@ -34,10 +33,11 @@ import os
 import time
 from typing import Dict, Any, Optional
 
-# Configuration - Use environment variables from frontend/.env
-BASE_URL = "https://0f29ca6b-8d22-435d-ada5-8af4e2d283fe.preview.emergentagent.com/api"
+# Configuration - Use environment variable for backend URL
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://0f29ca6b-8d22-435d-ada5-8af4e2d283fe.preview.emergentagent.com')
+BASE_URL = f"{BACKEND_URL}/api"
 
-# Test credentials as specified in review request
+# Test credentials from review request
 TEST_CREDENTIALS = {
     "email": "brycelarsenmusic@gmail.com",
     "password": "RequestWave2024!"
