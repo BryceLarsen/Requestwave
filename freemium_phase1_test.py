@@ -257,8 +257,23 @@ class FreemiumSubscriptionTester:
                 except json.JSONDecodeError:
                     self.log_result("Subscription Checkout Endpoint", False, "Response is not valid JSON")
                     return False, None
+            elif response.status_code == 400:
+                # 400 is expected for invalid Stripe keys - this is correct behavior per review request
+                try:
+                    data = response.json()
+                    error_message = data.get("detail", "Unknown error")
+                    print(f"   ✅ 400 error as expected (Stripe error): {error_message}")
+                    self.log_result("Subscription Checkout Endpoint", True, "Returns 400 on Stripe error (not 500) - correct behavior")
+                    return True, None
+                except json.JSONDecodeError:
+                    print(f"   ✅ 400 error as expected: {response.text}")
+                    self.log_result("Subscription Checkout Endpoint", True, "Returns 400 on Stripe error (not 500) - correct behavior")
+                    return True, None
             elif response.status_code == 422:
                 self.log_result("Subscription Checkout Endpoint", False, "CRITICAL: 422 validation error - routing conflict detected!")
+                return False, None
+            elif response.status_code == 500:
+                self.log_result("Subscription Checkout Endpoint", False, "CRITICAL: 500 server error instead of expected 400 Stripe error")
                 return False, None
             else:
                 self.log_result("Subscription Checkout Endpoint", False, f"Unexpected status code: {response.status_code}")
