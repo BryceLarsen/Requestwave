@@ -635,21 +635,15 @@ class StripeFlowTester:
             
             print(f"   📊 Live indicators: {live_indicators}")
             print(f"   📊 Test indicators: {test_indicators}")
-            print(f"   📊 Expected price IDs found: {found_price_ids}")
             
             # Assessment
             is_live_environment = len(live_indicators) > 0 and len(test_indicators) == 0
-            has_correct_price_ids = len(found_price_ids) > 0
             
-            if is_live_environment and has_correct_price_ids:
-                artifacts = f"Live environment confirmed: {live_indicators}, Price IDs: {found_price_ids}"
+            if is_live_environment:
+                artifacts = f"Live environment confirmed: {live_indicators}"
                 self.log_result("Live Environment Verification", True,
-                              "Live Stripe keys and price IDs confirmed",
+                              "Live Stripe keys and environment confirmed",
                               artifacts)
-            elif is_live_environment:
-                self.log_result("Live Environment Verification", True,
-                              "Live Stripe keys confirmed, price IDs not visible in response",
-                              f"Live indicators: {live_indicators}")
             else:
                 issues = []
                 if test_indicators:
