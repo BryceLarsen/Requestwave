@@ -2290,8 +2290,8 @@ const MusicianDashboard = () => {
 
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-8">
 
-        {/* Tabs */}
-        <div className="flex flex-wrap gap-1 bg-gray-800 rounded-lg p-1 mb-8">
+        {/* Desktop Tabs (hidden on mobile) */}
+        <div className="hidden md:flex flex-wrap gap-1 bg-gray-800 rounded-lg p-1 mb-8">
           {['songs', 'requests', 'analytics', 'profile', 'subscription', 'design'].map((tab) => (
             <button
               key={tab}
@@ -2319,6 +2319,71 @@ const MusicianDashboard = () => {
           >
             ?
           </button>
+        </div>
+
+        {/* Mobile Navigation Dropdown (visible on mobile only) */}
+        <div className="md:hidden mb-8">
+          <div className="relative mobile-nav-dropdown">
+            <button
+              onClick={() => setShowMobileNav(!showMobileNav)}
+              className="w-full bg-gray-800 rounded-lg p-3 flex justify-between items-center"
+            >
+              <div className="flex items-center space-x-2">
+                <span className="font-medium">
+                  {activeTab === 'analytics' ? 'Analytics' : activeTab === 'design' ? 'Design' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                </span>
+                {activeTab === 'requests' && requests.filter(r => r.status === 'pending').length > 0 && (
+                  <span className="bg-red-500 text-white rounded-full px-2 py-1 text-xs">
+                    {requests.filter(r => r.status === 'pending').length}
+                  </span>
+                )}
+              </div>
+              <svg className={`w-5 h-5 transition-transform ${showMobileNav ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            
+            {/* Mobile Dropdown Menu */}
+            {showMobileNav && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50">
+                <div className="py-2">
+                  {['songs', 'requests', 'analytics', 'profile', 'subscription', 'design'].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => {
+                        setActiveTab(tab);
+                        setShowMobileNav(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center justify-between ${
+                        activeTab === tab ? 'bg-purple-600 text-white' : 'text-gray-300'
+                      }`}
+                    >
+                      <span>
+                        {tab === 'analytics' ? 'Analytics' : tab === 'design' ? 'Design' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                      </span>
+                      {tab === 'requests' && requests.filter(r => r.status === 'pending').length > 0 && (
+                        <span className="bg-red-500 text-white rounded-full px-2 py-1 text-xs">
+                          {requests.filter(r => r.status === 'pending').length}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                  
+                  <div className="border-t border-gray-700 mt-2 pt-2">
+                    <button
+                      onClick={() => {
+                        setShowQuickStart(true);
+                        setShowMobileNav(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-700 text-gray-300"
+                    >
+                      📖 Quick Start Guide
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Songs Tab */}
