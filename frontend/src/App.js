@@ -3993,7 +3993,7 @@ const MusicianDashboard = () => {
                     {subscriptionStatus.trial_active && (
                       <div className="mt-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded">
                         <p className="text-blue-300 font-medium">
-                          🎉 Your 30-day free trial is live!
+                          🎉 Your 14-day free trial is live!
                         </p>
                         <p className="text-gray-300 text-sm mt-1">
                           Trial ends on {subscriptionStatus.trial_ends_at ? 
