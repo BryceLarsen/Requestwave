@@ -5267,6 +5267,161 @@ const MusicianDashboard = () => {
           </div>
         )}
 
+        {/* Quick Start Guide Modal (manual access only) */}
+        {showQuickStart && (
+          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-purple-600 to-green-600 p-6 rounded-t-xl">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-3">
+                    <img
+                      src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png"
+                      alt="RequestWave"
+                      className="w-10 h-10 object-contain"
+                    />
+                    <h2 className="text-2xl font-bold text-white">
+                      🎬 <span className="text-purple-200">Request</span><span className="text-green-200">Wave</span> Quick Start Guide
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => setShowQuickStart(false)}
+                    className="text-white hover:text-gray-300 text-2xl font-bold"
+                  >
+                    ×
+                  </button>
+                </div>
+                <p className="text-purple-100 mt-2">Welcome to the stage! Get set up in just a few steps.</p>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Left Column */}
+                  <div className="space-y-6">
+                    {/* Step 1 */}
+                    <div className="bg-gray-700 rounded-lg p-6">
+                      <h3 className="text-xl font-bold text-purple-300 mb-4 flex items-center">
+                        🎵 Step 1: Add Your Songs
+                      </h3>
+                      <p className="text-gray-300 mb-3">Get started by building your repertoire:</p>
+                      
+                      <div className="space-y-2 mb-4">
+                        <p className="text-gray-300 text-sm">• Click <span className="text-blue-300">Auto-fill All</span> to automatically enrich your existing songs with metadata.</p>
+                        <p className="text-gray-300 text-sm">• Click <span className="text-green-300">Add New Song</span> for manual entry.</p>
+                        <p className="text-gray-300 text-sm">• Click <span className="text-green-300">Upload CSV</span> if you have a list already.</p>
+                        <p className="text-gray-300 text-sm">• Click <span className="text-orange-300">Upload LST</span> for setlist files (Song - Artist format).</p>
+                        <p className="text-gray-300 text-sm">• Use <span className="text-green-300">Import Playlist</span> to bring songs from Spotify or Apple Music.</p>
+                      </div>
+
+                      {/* Download CSV Button */}
+                      <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
+                        <h4 className="font-bold text-green-300 mb-2">🔥 Get Our Starter Pack!</h4>
+                        <p className="text-gray-300 text-sm mb-3">
+                          <a 
+                            href="https://docs.google.com/spreadsheets/d/1BgV_lF3PnUGSNmYc8L9Y1Qfv2m5s3tPFcVR5gZ8QX7t/export?format=csv"
+                            download="RequestWave_Popular_Songs.csv"
+                            className="text-green-300 underline hover:text-green-200"
+                          >
+                            Grab our curated list of 50+ crowd favorites to practice with. Download it, then head to the <span className="text-green-300">Songs</span> tab and hit <span className="text-green-300">Upload CSV</span> to see the magic happen!
+                          </a>
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Step 2 */}
+                    <div className="bg-gray-700 rounded-lg p-6">
+                      <h3 className="text-xl font-bold text-green-300 mb-4 flex items-center">
+                        🎨 Step 2: Customize Your Page
+                      </h3>
+                      <div>
+                        <h4 className="font-bold text-purple-200 mb-2">Customize Your Page</h4>
+                        <p className="text-gray-300 text-sm">• Go to the <span className="text-green-300">Design</span> tab to choose your theme and layout.</p>
+                        <p className="text-gray-300 text-sm">• Add social links, tip options (PayPal/Venmo), and artist photo.</p>
+                        <p className="text-gray-300 text-sm">• Select which playlist is active from the <span className="text-green-300">Profile</span> tab.</p>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <h4 className="font-bold text-purple-200 mb-2">Share Your Link</h4>
+                        <p className="text-gray-300 text-sm">• Find your Audience Link in the <span className="text-green-300">Profile</span> tab.</p>
+                        <p className="text-gray-300 text-sm">• Use the <span className="text-green-300">QR Code</span> or tap <span className="text-green-300">Print Flyer</span> to create something shareable.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column */}
+                  <div className="space-y-6">
+                    {/* Step 3 */}
+                    <div className="bg-gray-700 rounded-lg p-6">
+                      <h3 className="text-xl font-bold text-blue-300 mb-4 flex items-center">
+                        📱 Step 3: Go Live!
+                      </h3>
+                      <p className="text-gray-300 text-sm mb-4">During your performance:</p>
+                      <div className="space-y-2">
+                        <p className="text-gray-300 text-sm">• Share your QR code or link with the audience</p>
+                        <p className="text-gray-300 text-sm">• Watch requests come in real-time in the <span className="text-blue-300">Requests</span> tab</p>
+                        <p className="text-gray-300 text-sm">• Mark requests as "Playing", "Played", or "Skipped"</p>
+                        <p className="text-gray-300 text-sm">• Use the <span className="text-yellow-300">On Stage</span> mode for a cleaner view</p>
+                        <p className="text-gray-300 text-sm">• Check out the <span className="text-purple-300">Song Suggestions</span> feature for requests outside your repertoire</p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+                      <h3 className="text-lg font-bold text-blue-300 mb-3 flex items-center">
+                        📊 Track Your Success
+                      </h3>
+                      <p className="text-gray-300 text-sm">Head to Analytics to see your top-requested songs, request volume, and audience insights.</p>
+                      <p className="text-gray-300 text-sm">View by day, week, or month. Export data if you want to keep a log of your shows.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Section */}
+                <div className="mt-8 bg-gray-700 rounded-lg p-6">
+                  <h3 className="text-lg font-bold text-white mb-4 flex items-center">
+                    🔧 Need Help? Contact Support
+                  </h3>
+                  <p className="text-gray-300 text-sm mb-4">Still stuck? Send us a message — we're always here to help!</p>
+                  
+                  <form onSubmit={handleContactSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      placeholder="Your Name"
+                      value={contactForm.name}
+                      onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
+                      className="bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                      required
+                    />
+                    <input
+                      type="email"
+                      placeholder="Your Email"
+                      value={contactForm.email}
+                      onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
+                      className="bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                      required
+                    />
+                    <textarea
+                      placeholder="Your Message"
+                      value={contactForm.message}
+                      onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
+                      rows="4"
+                      className="md:col-span-2 bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                      required
+                    ></textarea>
+                    <button
+                      type="submit"
+                      disabled={contactLoading}
+                      className="md:col-span-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-bold transition duration-300"
+                    >
+                      {contactLoading ? 'Sending...' : 'Send Message'}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
