@@ -58,6 +58,15 @@ PRICE_MONTHLY_5 = os.environ.get('PRICE_MONTHLY_5')
 PRICE_ANNUAL_24 = os.environ.get('PRICE_ANNUAL_24')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
 
+def _plan_price_id(plan: str) -> str:
+    """Get Stripe price ID for a given plan"""
+    if plan == "monthly":
+        return PRICE_MONTHLY_5
+    elif plan == "annual":
+        return PRICE_ANNUAL_24
+    else:
+        raise ValueError(f"Invalid plan: {plan}")
+
 # Subscription packages - prevent frontend price manipulation
 SUBSCRIPTION_PACKAGES = {
     "monthly_plan": {
