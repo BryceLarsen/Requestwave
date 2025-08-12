@@ -538,9 +538,9 @@ const MusicianDashboard = () => {
   const [currentRequestId, setCurrentRequestId] = useState(null);
   const [showPostRequestModal, setShowPostRequestModal] = useState(false);
   
-  // NEW: Edit Playlist Modal State
-  const [showEditPlaylistModal, setShowEditPlaylistModal] = useState(false);
-  const [editingPlaylist, setEditingPlaylist] = useState(null);
+  // NEW: Edit Playlist Songs Modal State  
+  const [showEditPlaylistSongsModal, setShowEditPlaylistSongsModal] = useState(false);
+  const [editingSongsPlaylist, setEditingSongsPlaylist] = useState(null);
   const [editPlaylistSongs, setEditPlaylistSongs] = useState([]);
   const [editPlaylistLoading, setEditPlaylistLoading] = useState(false);
   const [editPlaylistError, setEditPlaylistError] = useState('');
