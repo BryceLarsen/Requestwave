@@ -4612,11 +4612,6 @@ async def stripe_webhook_handler(request: Request):
         return {"status": "error", "message": str(e)}
 
 # Legacy webhook endpoint - will redirect to new one
-@api_router.post("/webhook/stripe")
-async def legacy_stripe_webhook(request: Request):
-    """Legacy webhook endpoint - redirect to new path"""
-    return await stripe_webhook_handler(request)
-
 # Check audience link access middleware endpoint
 @api_router.get("/musicians/{musician_slug}/access-check")
 async def check_musician_audience_access(musician_slug: str):
