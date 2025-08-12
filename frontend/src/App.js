@@ -2174,8 +2174,8 @@ const MusicianDashboard = () => {
   // NEW: Playlist functions (Pro feature)
   const fetchPlaylists = async () => {
     try {
-      // Only fetch if user has Pro access (trial or pro)
-      if (!subscriptionStatus || !['trial', 'pro'].includes(subscriptionStatus.plan)) {
+      // Only fetch if user has Pro access (trial, pro, or canceled with valid access)
+      if (!subscriptionStatus || !['trial', 'pro', 'canceled'].includes(subscriptionStatus.plan)) {
         setPlaylists([]);
         return;
       }
