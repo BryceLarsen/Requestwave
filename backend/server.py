@@ -434,6 +434,7 @@ class PlaylistResponse(BaseModel):
     id: str
     name: str
     song_count: int
+    song_ids: List[str] = []  # NEW: Add song_ids for client-side filtering
     is_active: bool
     created_at: datetime
 
