@@ -6276,7 +6276,7 @@ const AudienceInterface = () => {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search by title, artist, genre, mood, or year..."
+                placeholder="Search Song Title or Artist"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-gray-700 border-2 border-gray-600 focus:border-blue-500 rounded-xl px-4 md:px-6 py-3 md:py-4 text-white placeholder-gray-400 text-base md:text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
