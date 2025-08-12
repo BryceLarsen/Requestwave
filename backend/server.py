@@ -4818,6 +4818,120 @@ async def test_endpoint_before_inclusion():
     """Simple test to verify endpoint registration works"""
     return {"message": "test endpoint before inclusion works", "timestamp": datetime.utcnow().isoformat()}
 
+# Create separate webhook app to completely avoid routing conflicts
+webhook_app = FastAPI()
+
+@webhook_app.post("/webhook")
+async def stripe_webhook_isolated(request: Request):
+    """Handle Stripe webhooks in completely isolated app"""
+    try:
+        import stripe
+        stripe.api_key = STRIPE_API_KEY
+        
+        # Get raw body and signature - NO PYDANTIC PARSING
+        body = await request.body()
+        signature = request.headers.get("stripe-signature")
+        
+        if not signature:
+            logger.error("Missing Stripe signature in webhook")
+            return {"error": "Missing signature"}, 400
+        
+        try:
+            # Verify webhook signature
+            event = stripe.Webhook.construct_event(
+                body, signature, STRIPE_WEBHOOK_SECRET
+            )
+        except ValueError:
+            logger.error("Invalid webhook payload")
+            return {"error": "Invalid payload"}, 400
+        except stripe.error.SignatureVerificationError:
+            logger.error("Invalid webhook signature")
+            return {"error": "Invalid signature"}, 400
+        
+        logger.info(f"Processing Stripe webhook: {event['type']}")
+        
+        # Handle specific events as required
+        if event['type'] == 'checkout.session.completed':
+            session = event['data']['object']
+            musician_id = session.get('metadata', {}).get('musician_id')
+            
+            if musician_id:
+                # Mark trial start if applicable - need to access main app's database
+                musician = await db.musicians.find_one({"id": musician_id})
+                if musician and not musician.get("has_had_trial", False):
+                    await start_trial_for_musician(musician_id)
+                    logger.info(f"Started trial for musician {musician_id}")
+                else:
+                    await activate_audience_link(musician_id, "checkout_completed")
+                    logger.info(f"Activated audience link for musician {musician_id}")
+        
+        elif event['type'] in ['customer.subscription.created', 'customer.subscription.updated']:
+            subscription = event['data']['object']
+            customer_id = subscription['customer']
+            
+            # Find musician by stripe customer ID
+            musician = await db.musicians.find_one({"stripe_customer_id": customer_id})
+            if musician:
+                musician_id = musician["id"]
+                await db.musicians.update_one(
+                    {"id": musician_id},
+                    {
+                        "$set": {
+                            "audience_link_active": True,
+                            "subscription_status": subscription['status'],
+                            "subscription_current_period_end": datetime.fromtimestamp(subscription['current_period_end'])
+                        }
+                    }
+                )
+                logger.info(f"Updated subscription for musician {musician_id}")
+        
+        elif event['type'] == 'customer.subscription.deleted':
+            subscription = event['data']['object']
+            customer_id = subscription['customer']
+            
+            musician = await db.musicians.find_one({"stripe_customer_id": customer_id})
+            if musician:
+                musician_id = musician["id"]
+                await deactivate_audience_link(musician_id, "subscription_deleted")
+                logger.info(f"Deactivated audience link for musician {musician_id}")
+        
+        elif event['type'] == 'invoice.payment_succeeded':
+            invoice = event['data']['object']
+            customer_id = invoice['customer']
+            
+            musician = await db.musicians.find_one({"stripe_customer_id": customer_id})
+            if musician:
+                musician_id = musician["id"]
+                # Keep audience_link_active=true on successful payment
+                await db.musicians.update_one(
+                    {"id": musician_id},
+                    {"$set": {"audience_link_active": True, "payment_grace_period_end": None}}
+                )
+                logger.info(f"Payment succeeded for musician {musician_id}")
+        
+        elif event['type'] == 'invoice.payment_failed':
+            invoice = event['data']['object']
+            customer_id = invoice['customer']
+            
+            musician = await db.musicians.find_one({"stripe_customer_id": customer_id})
+            if musician:
+                musician_id = musician["id"]
+                # Start 3-day grace period
+                grace_end = datetime.utcnow() + timedelta(days=3)
+                await db.musicians.update_one(
+                    {"id": musician_id},
+                    {"$set": {"payment_grace_period_end": grace_end}}
+                )
+                logger.info(f"Payment failed for musician {musician_id}, started 3-day grace period")
+        
+        # Always return 200 to Stripe
+        return {"status": "success"}
+        
+    except Exception as e:
+        logger.error(f"Error processing Stripe webhook: {str(e)}")
+        # Still return 200 to prevent Stripe retries
+        return {"status": "error", "message": str(e)}
+
 # Create separate webhook router to avoid routing conflicts
 webhook_router = APIRouter()
 
@@ -4934,6 +5048,9 @@ async def stripe_webhook_handler_main(request: Request):
 
 # Include the main router
 app.include_router(api_router)
+
+# Mount the webhook app at /stripe to completely isolate it
+app.mount("/stripe", webhook_app)
 
 # Include webhook router before other routers to avoid conflicts
 app.include_router(webhook_router, prefix="/api")
