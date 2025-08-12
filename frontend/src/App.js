@@ -2453,6 +2453,134 @@ const MusicianDashboard = () => {
     }
   };
 
+  // NEW: Enhanced Playlist Management Functions
+  const showPlaylistToastWithMessage = (message) => {
+    setPlaylistToastMessage(message);
+    setShowPlaylistToast(true);
+    setTimeout(() => setShowPlaylistToast(false), 5000); // Auto-hide after 5 seconds
+  };
+
+  const startEditingPlaylistName = (playlistId, currentName) => {
+    setEditingPlaylist(playlistId);
+    setEditingPlaylistName(currentName);
+  };
+
+  const cancelEditingPlaylistName = () => {
+    setEditingPlaylist(null);
+    setEditingPlaylistName('');
+  };
+
+  const savePlaylistName = async (playlistId) => {
+    const newName = editingPlaylistName.trim();
+    if (!newName) {
+      alert('Playlist name cannot be empty');
+      return;
+    }
+
+    if (newName.length > 100) {
+      alert('Playlist name too long (max 100 characters)');
+      return;
+    }
+
+    try {
+      await axios.put(`${API}/playlists/${playlistId}/name`, {
+        name: newName
+      }, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+
+      // Update local state
+      setPlaylists(prev => prev.map(p => 
+        p.id === playlistId ? { ...p, name: newName } : p
+      ));
+
+      setEditingPlaylist(null);
+      setEditingPlaylistName('');
+      showPlaylistToastWithMessage('Playlist renamed successfully!');
+
+    } catch (error) {
+      console.error('Error renaming playlist:', error);
+      alert(error.response?.data?.detail || 'Error renaming playlist');
+    }
+  };
+
+  const togglePlaylistVisibility = async (playlistId, currentStatus) => {
+    const newStatus = !currentStatus;
+    
+    try {
+      const response = await axios.put(`${API}/playlists/${playlistId}/visibility`, {
+        is_public: newStatus
+      }, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+
+      // Update local state
+      setPlaylists(prev => prev.map(p => 
+        p.id === playlistId ? { ...p, is_public: newStatus } : p
+      ));
+
+      const statusText = newStatus ? 'public' : 'private';
+      let message = `Playlist made ${statusText}`;
+      
+      // Show additional message if active playlist was cleared
+      if (response.data.active_playlist_cleared) {
+        message += ' and removed from active status';
+        // Reset active playlist selection
+        setActivePlaylistId(null);
+      }
+      
+      showPlaylistToastWithMessage(message);
+
+    } catch (error) {
+      console.error('Error toggling playlist visibility:', error);
+      alert(error.response?.data?.detail || 'Error updating playlist visibility');
+    }
+  };
+
+  const confirmDeletePlaylist = (playlist) => {
+    setPlaylistToDelete(playlist);
+    setShowPlaylistDeleteConfirmation(true);
+  };
+
+  const cancelDeletePlaylist = () => {
+    setPlaylistToDelete(null);
+    setShowPlaylistDeleteConfirmation(false);
+  };
+
+  const deletePlaylist = async () => {
+    if (!playlistToDelete) return;
+
+    try {
+      const response = await axios.delete(`${API}/playlists/${playlistToDelete.id}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+
+      // Remove from local state
+      setPlaylists(prev => prev.filter(p => p.id !== playlistToDelete.id));
+      
+      // Clear playlist filter if it was the deleted playlist
+      if (playlistFilter === playlistToDelete.id) {
+        setPlaylistFilter('');
+      }
+
+      let message = response.data.message || 'Playlist deleted successfully';
+      
+      // Show additional message if active playlist was cleared
+      if (response.data.active_playlist_cleared) {
+        setActivePlaylistId(null);
+      }
+      
+      showPlaylistToastWithMessage(message);
+
+    } catch (error) {
+      console.error('Error deleting playlist:', error);
+      alert(error.response?.data?.detail || 'Error deleting playlist');
+    } finally {
+      setPlaylistToDelete(null);
+      setShowPlaylistDeleteConfirmation(false);
+    }
+  };
+
   const handleContactSubmit = async (e) => {
     e.preventDefault();
     if (!contactForm.name.trim() || !contactForm.email.trim() || !contactForm.message.trim()) {
