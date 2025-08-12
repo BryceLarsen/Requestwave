@@ -4872,12 +4872,18 @@ async def log_routes():
     print("🔍 FREEMIUM BACKEND STARTUP DIAGNOSTICS:")
     print("="*80)
     
-    # Log Stripe key prefix as required
+    # Log Stripe key prefix as required (FINALIZED)
     stripe_key = STRIPE_API_KEY or "NOT_SET"
-    stripe_prefix = stripe_key[:12] if len(stripe_key) >= 12 else stripe_key
+    stripe_prefix = stripe_key[:7] if len(stripe_key) >= 7 else stripe_key
     print(f"🔑 Stripe API Key Prefix: {stripe_prefix}")
     print(f"🔗 Webhook Secret Set: {'Yes' if STRIPE_WEBHOOK_SECRET else 'No'}")
     print(f"💰 Price IDs: STARTUP={PRICE_STARTUP_15}, MONTHLY={PRICE_MONTHLY_5}, ANNUAL={PRICE_ANNUAL_24}")
+    
+    # Verify live keys
+    if stripe_prefix == "sk_live":
+        print("✅ LIVE STRIPE KEYS DETECTED - Production ready")
+    else:
+        print(f"⚠️  NON-LIVE KEYS DETECTED: {stripe_prefix}")
     
     print("\n📋 FULL ROUTE LIST:")
     print("-" * 50)
