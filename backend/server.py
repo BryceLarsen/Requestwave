@@ -1708,7 +1708,7 @@ async def login_musician(login_data: MusicianLogin):
 
 # SINGLE WEBHOOK ENDPOINT - POST /api/stripe/webhook (defined early to avoid routing conflicts)
 @api_router.post("/stripe/webhook")
-async def stripe_webhook_handler(request: Request):
+async def stripe_webhook_handler(request: FastAPIRequest):
     """Single Stripe webhook handler - accepts raw body, no auth, always returns 200"""
     try:
         import stripe
