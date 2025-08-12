@@ -64,7 +64,7 @@ def _plan_price_id(plan: str) -> str:
     if plan == "monthly":
         return PRICE_MONTHLY_5
     elif plan == "annual":
-        return PRICE_ANNUAL_24
+        return PRICE_ANNUAL_48
     else:
         raise ValueError(f"Invalid plan: {plan}")
 
