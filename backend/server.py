@@ -4331,11 +4331,23 @@ async def get_playlists(musician_id: str = Depends(get_current_musician)):
             "hidden": {"$ne": True}
         })
         
+        # Get all song IDs for "All Songs" playlist
+        all_songs_cursor = db.songs.find(
+            {
+                "musician_id": musician_id,
+                "hidden": {"$ne": True}
+            },
+            {"id": 1}  # Only fetch the id field
+        )
+        all_songs_docs = await all_songs_cursor.to_list(None)
+        all_song_ids = [song["id"] for song in all_songs_docs]
+        
         # Insert "All Songs" at the beginning
         all_songs_response = PlaylistResponse(
             id="all_songs",
             name="All Songs",
-            song_count=all_songs_count,
+            song_count=len(all_song_ids),
+            song_ids=all_song_ids,  # NEW: Include all song IDs
             is_active=(active_playlist_id is None),
             created_at=datetime.utcnow()  # This won't be used for display
         )
