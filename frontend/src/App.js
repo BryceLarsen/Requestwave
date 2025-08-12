@@ -3980,7 +3980,7 @@ const MusicianDashboard = () => {
                 </div>
                 
                 {/* NEW: Active Playlist Selector (Pro Feature) */}
-                {subscriptionStatus && ['trial', 'pro'].includes(subscriptionStatus.plan) && (
+                {subscriptionStatus && ['trial', 'pro', 'canceled'].includes(subscriptionStatus.plan) && (
                   <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                     <span className="text-purple-200 text-sm font-medium">Active Playlist:</span>
                     {playlists.length > 0 ? (
