@@ -4320,6 +4320,7 @@ async def get_playlists(musician_id: str = Depends(get_current_musician)):
                 id=playlist["id"],
                 name=playlist["name"],
                 song_count=len(playlist["song_ids"]),
+                song_ids=playlist["song_ids"],  # NEW: Include song_ids for client-side filtering
                 is_active=is_active,
                 created_at=playlist["created_at"]
             ))
