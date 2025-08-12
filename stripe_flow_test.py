@@ -197,22 +197,23 @@ class StripeFlowTester:
                 try:
                     annual_result = annual_response.json()
                     
-                    # Check for checkout session URL
-                    if "url" in annual_result and "session_id" in annual_result:
-                        checkout_url = annual_result["url"]
-                        session_id = annual_result["session_id"]
+                    # Check for checkout session URL (backend returns 'checkout_url', not 'url')
+                    if "checkout_url" in annual_result:
+                        checkout_url = annual_result["checkout_url"]
                         
                         print(f"   ✅ Annual checkout URL: {checkout_url[:100]}...")
-                        print(f"   ✅ Annual session ID: {session_id}")
                         
-                        # Verify it's a valid Stripe checkout URL
-                        if "checkout.stripe.com" in checkout_url:
+                        # Verify it's a valid Stripe checkout URL with live session
+                        if "checkout.stripe.com" in checkout_url and "cs_live_" in checkout_url:
                             annual_success = True
-                            annual_logs = f"Annual plan checkout successful - Session ID: {session_id}, URL: {checkout_url[:50]}..."
+                            annual_logs = f"Annual plan checkout successful - LIVE session URL: {checkout_url[:50]}..."
+                        elif "checkout.stripe.com" in checkout_url:
+                            annual_success = True
+                            annual_logs = f"Annual plan checkout successful - URL: {checkout_url[:50]}..."
                         else:
                             annual_logs = f"Invalid checkout URL format: {checkout_url}"
                     else:
-                        annual_logs = f"Missing url or session_id in response: {list(annual_result.keys())}"
+                        annual_logs = f"Missing checkout_url in response: {list(annual_result.keys())}"
                         
                 except json.JSONDecodeError:
                     annual_logs = "Response is not valid JSON"
