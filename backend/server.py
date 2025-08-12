@@ -4280,7 +4280,9 @@ async def create_playlist(
             "name": playlist_data.name,
             "song_ids": playlist_data.song_ids,
             "created_at": now,
-            "updated_at": now  # NEW: Set initial updated_at
+            "updated_at": now,  # NEW: Set initial updated_at
+            "is_public": False,  # NEW: Default to private
+            "is_deleted": False  # NEW: Default to not deleted
         }
         
         await db.playlists.insert_one(playlist_dict)
