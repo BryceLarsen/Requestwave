@@ -500,12 +500,12 @@ async def get_freemium_subscription_status(musician_id: str) -> SubscriptionStat
     # Check if in trial period
     trial_end = musician.get("trial_end")
     trial_active = False
-    trial_ends_at = None
+    trial_end_date = None
     days_remaining = None
     
     if trial_end and now < trial_end and not musician.get("has_had_trial", False):
         trial_active = True
-        trial_ends_at = trial_end
+        trial_end_date = trial_end
         days_remaining = (trial_end - now).days
     
     # Check subscription status
@@ -520,12 +520,16 @@ async def get_freemium_subscription_status(musician_id: str) -> SubscriptionStat
     # Determine plan status
     if trial_active:
         plan = "trial"
+        status = "trialing"
     elif subscription_status == "active":
         plan = "active"
+        status = "active"
     elif subscription_status in ["canceled", "incomplete_expired"]:
         plan = "canceled"
+        status = "canceled"
     else:
         plan = "free"
+        status = "incomplete"
     
     # Can reactivate if not currently active and has had a subscription before
     can_reactivate = (not audience_link_active and 
@@ -536,12 +540,13 @@ async def get_freemium_subscription_status(musician_id: str) -> SubscriptionStat
         plan=plan,
         audience_link_active=audience_link_active,
         trial_active=trial_active,
-        trial_ends_at=trial_ends_at,
+        trial_end=trial_end_date,  # Use trial_end instead of trial_ends_at
         subscription_ends_at=subscription_ends_at,
         days_remaining=days_remaining,
         can_reactivate=can_reactivate,
         grace_period_active=grace_period_active,
-        grace_period_ends_at=grace_period_end
+        grace_period_ends_at=grace_period_end,
+        status=status  # Add the required status field
     )
 
 async def start_trial_for_musician(musician_id: str):
