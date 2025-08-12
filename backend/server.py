@@ -2796,14 +2796,14 @@ async def get_musician_songs(
         "hidden": {"$ne": True}  # NEW: Filter out hidden songs for audience
     }
     
-    # NEW: Filter by active playlist if set (Pro feature)
-    active_playlist_id = musician.get("active_playlist_id")
-    if active_playlist_id:
-        # Get the active playlist
-        playlist = await db.playlists.find_one({"id": active_playlist_id, "musician_id": musician["id"]})
-        if playlist and playlist.get("song_ids"):
-            # Only show songs that are in the active playlist
-            query["id"] = {"$in": playlist["song_ids"]}
+    # NEW: Filter by playlist (explicit filter takes precedence over active playlist)
+    playlist_to_filter = playlist or musician.get("active_playlist_id")
+    if playlist_to_filter:
+        # Get the specified playlist
+        playlist_doc = await db.playlists.find_one({"id": playlist_to_filter, "musician_id": musician["id"]})
+        if playlist_doc and playlist_doc.get("song_ids"):
+            # Only show songs that are in the playlist
+            query["id"] = {"$in": playlist_doc["song_ids"]}
         else:
             # If playlist not found or empty, show no songs
             return []
