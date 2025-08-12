@@ -3302,6 +3302,35 @@ async def get_filter_options(slug: str):
         "decades": sorted(list(set(decades)))  # NEW: Return available decades
     }
 
+@api_router.get("/musicians/{slug}/playlists")
+async def get_musician_public_playlists(slug: str):
+    """Get public playlists for a musician (for audience filtering)"""
+    # Get musician
+    musician = await db.musicians.find_one({"slug": slug})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    try:
+        # Get all playlists for this musician
+        playlists_cursor = db.playlists.find({"musician_id": musician["id"]}).sort("created_at", -1)
+        playlists = await playlists_cursor.to_list(None)
+        
+        # Build simplified response for public use (no song details, just name and song count)
+        playlist_responses = []
+        for playlist in playlists:
+            song_count = len(playlist.get("song_ids", []))
+            playlist_responses.append({
+                "id": playlist["id"],
+                "name": playlist["name"],
+                "song_count": song_count
+            })
+        
+        return playlist_responses
+        
+    except Exception as e:
+        logger.error(f"Error fetching public playlists for musician {slug}: {str(e)}")
+        return []  # Return empty list instead of error for public endpoint
+
 # CSV Upload endpoints
 @api_router.post("/songs/csv/preview", response_model=CSVPreviewResponse)
 async def preview_csv_upload(
