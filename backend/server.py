@@ -38,7 +38,7 @@ load_dotenv(ROOT_DIR / '.env')
 # db = client[os.environ['DB_NAME']]
 mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ.get('DB_NAME', 'requestwave_production')]
+db = client[os.environ.get('DB_NAME', 'livewave-music-test_database')]
 
 
 # JWT Configuration
@@ -5393,10 +5393,20 @@ async def log_routes():
     print("\n" + "="*80)
 
 # CORS middleware
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_credentials=True,
+#     allow_origins=["*"],
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://requestwave.app",
+        "https://musician-dashboard.preview.emergentagent.com"
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
