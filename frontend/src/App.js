@@ -2639,6 +2639,13 @@ const MusicianDashboard = () => {
     }
   };
 
+  // NEW: Initialize subscription status on component mount
+  useEffect(() => {
+    if (musician) {
+      fetchSubscriptionStatus();
+    }
+  }, [musician]);
+
   // Fetch playlists on component mount and when subscription status changes
   useEffect(() => {
     if (musician && subscriptionStatus && ['trial', 'pro', 'canceled'].includes(subscriptionStatus.plan)) {
