@@ -1011,6 +1011,13 @@ const MusicianDashboard = () => {
     }
   }, [showProfile]);
 
+  // NEW: Fetch playlists when subscription status changes
+  useEffect(() => {
+    if (subscriptionStatus) {
+      fetchPlaylists();
+    }
+  }, [subscriptionStatus]);
+
   // NEW: Initialize profile state with musician data on login/auth restoration
   useEffect(() => {
     if (musician && musician.id) {
