@@ -484,10 +484,13 @@ class ProSubscriberFixTester:
         # Step 2: Check current subscription status
         current_status = self.test_check_current_subscription_status()
         
-        # Step 3: Update database to Pro status
-        if not self.test_manually_update_database_to_pro():
-            print("❌ Database update failed")
-            return
+        # Step 3: Update database to Pro status (skip if already Pro)
+        if current_status and current_status.get("plan") in ["trial", "pro", "active"] and current_status.get("audience_link_active"):
+            print("✅ User already has Pro access, skipping database update")
+        else:
+            if not self.test_manually_update_database_to_pro():
+                print("❌ Database update failed")
+                return
         
         # Step 4: Verify Pro status after update
         if not self.test_verify_pro_status_after_update():
