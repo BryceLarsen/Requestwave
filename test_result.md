@@ -101,7 +101,7 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
-user_problem_statement: "Fix playlist creation bug: User reports that when they select 5 songs and create a new playlist, it doesn't show up in the playlists tab or existing playlists dropdown. Need to verify playlists are being saved and displayed correctly."
+user_problem_statement: "Check password status and forgot password functionality for brycelarsenmusic@gmail.com: User cannot login and suspects password issues after Pro activation. Forgot password feature is returning an error. Need to verify user account integrity and password reset functionality."
 
 backend:
   - task: "Playlist Creation Bug Fix"
