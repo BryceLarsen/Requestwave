@@ -1,29 +1,32 @@
 <analysis>
-The previous AI engineer successfully transitioned the RequestWave application from an initial MVP to a comprehensive freemium model with integrated Stripe payments and significant UI/UX improvements. The work progressed through several distinct phases. Initially, persistent backend routing conflicts, especially with Stripe webhooks and FastAPI's path parameter matching, consumed significant effort. The engineer meticulously debugged these by reordering routes, creating separate routers, and adding diagnostic logging. Concurrently, the frontend was updated to reflect the new 14-day trial, corrected pricing, and unlimited requests messaging, along with fixing a critical checkout error. Finally, extensive UI refinements were made to remove Pro badging from various features (Song Suggestions, Design tab, Photo Upload, Analytics tab) and convert static buttons to more user-friendly toggles and dropdowns, significantly enhancing the free tier experience.
+The previous AI engineer successfully implemented a freemium model with Stripe integration and various UI/UX improvements for the RequestWave application. Initial work focused on fixing backend routing conflicts and enhancing the frontend for the 14-day trial and new pricing. Significant effort was then dedicated to simplifying the UI by removing Pro badges and consolidating features into dropdowns.
+
+A major portion of the recent work involved developing comprehensive playlist management functionalities, including creation, renaming, deletion, public/private toggling, and song reordering within playlists. This required extensive modifications to both backend API endpoints (adding , ,  to Playlist model, new CRUD endpoints) and frontend UI (new modals, drag-and-drop, state management).
+
+A critical phase involved persistent debugging of deployment and account-related issues. Despite code fixes, the application faced problems with Stripe keys, incorrect frontend/backend URL configurations, and a database environment mismatch between preview and production. This led to a series of troubleshooting steps, including manual database updates for a specific user's account and repeated calls to support to resolve external routing and environment variable syncing issues. The latest interaction confirms a database environment mismatch causing account resets on the deployed version.
 </analysis>
 
 <product_requirements>
-The RequestWave application enables musicians to manage songs, handle requests/tips, and monetize performances, supporting various import methods. It implements a freemium model with a trial and Stripe subscriptions.
+The RequestWave application empowers musicians to manage songs, process requests/tips, and monetize performances through a freemium model. It integrates Stripe for subscriptions, offering a 14-day free trial with a 5 startup fee and recurring monthly () or annual (8) plans. Key features include audience links, QR codes, and a page paused screen for inactive subscriptions.
 
-The product requirements evolved over the trajectory:
-1.  **Audience Interface (Initial, Unresolved):** Display artist social media links as buttons and make the artist's bio collapsible on the audience search page.
-2.  **Comprehensive Freemium Model (Core):** Implement Stripe-integrated freemium. Artist dashboard is free; audience links/QR codes are paywalled. Includes a 5 one-time startup fee and recurring monthly () or annual (8) subscriptions, with a 14-day free trial. The system must minimize Stripe transactions, re-charge startup fees for reactivations, manage  via webhooks (, , ), and enforce access with a page paused screen if inactive. Account deletion requires confirmation.
-3.  **Frontend UI Alignment:** Update frontend to reflect 14-day trial (remove 20 free requests), correct pricing (8/year, total 3 with startup), change checkout button to Start Free Trial Now, and replace the requests used bar with an Upgrade Now button.
-4.  **Feature Access & UI Simplification:** Make Song Suggestions a toggle switch and available to all users. Remove Pro badges/restrictions from the Design tab, artist logo, photo upload, and Analytics tab.
-5.  **UI Consolidation:** Convert the five song management buttons (Auto-fill all, Add a new song, Import Playlist, Upload CSV, Upload LST) into a single dropdown menu.
-6.  **Responsive Design:** On mobile/smaller screens, move Welcome [artist name] under the RequestWave logo and collapse main tabs into a dropdown. Desktop UI should remain unchanged.
-7.  **Quick Start Guide:** Remove the automatic popup on login, ensuring the guide is still accessible via the '?' button on both mobile and desktop.
+The development trajectory addressed:
+1.  **Comprehensive Freemium Model:** Full Stripe integration for subscriptions, managing  via webhooks, and enforcing access.
+2.  **Frontend UI Alignment:** Updating trial messaging, pricing displays, checkout button text, and replacing requests used bar with Upgrade Now.
+3.  **Feature Access & UI Simplification:** Making Song Suggestions a toggle available to all users, removing Pro badges from Design/Analytics tabs and photo upload.
+4.  **UI Consolidation:** Merging five song management buttons into a single dropdown.
+5.  **Responsive Design:** Adapting navigation for mobile screens.
+6.  **Quick Start Guide:** Removing automatic popup, keeping accessibility via a '?' button.
+7.  **Playlist Management:** Implementing playlist creation, renaming, public/private toggling, deletion, and song reordering/removal within playlists for both artist and audience views.
 </product_requirements>
 
 <key_technical_concepts>
--   **Full-stack Architecture**: React frontend, FastAPI backend, MongoDB.
+-   **Full-stack Architecture**: React (frontend), FastAPI (backend), MongoDB.
+-   **Payment & Subscriptions**: Stripe API, webhooks.
 -   **Authentication**: JWT token-based.
--   **API Integration**: Stripe for subscriptions and webhooks.
--   **Backend Routing**: FastAPI's  with prefixing and route reordering.
--   **Data Validation**: Pydantic models.
--   **Frontend State Management**: React , .
--   **UI/UX**: Tailwind CSS, responsive design, custom toggle switches.
--   **Service Management**: Supervisor for process control.
+-   **Data Management**: Pydantic models for data validation, MongoDB for persistence.
+-   **UI/UX**: Tailwind CSS, responsive design, state management with React hooks.
+-   **Deployment**: Kubernetes container environment, Supervisor for service control.
+-   **Troubleshooting**: Iterative debugging of environmental, network, and configuration issues.
 </key_technical_concepts>
 
 <code_architecture>
@@ -32,59 +35,57 @@ The application follows a standard full-stack structure.
 
 
 -   **/app/backend/server.py**: Core FastAPI backend.
-    -   **Importance**: Centralizes API endpoints for authentication, song/playlist management, request queue, profile updates, and payment integrations, interacting with MongoDB. It is the heart of the application's business logic.
+    -   **Importance**: Handles all API endpoints including authentication, song/playlist management, request queue, profile updates, and payment integrations with Stripe. It encapsulates the application's business logic and interacts with MongoDB.
     -   **Changes Made**:
-        -   **Freemium Model Implementation**: Modified Pydantic models (, ). Updated  model with , , , ,  fields. Configured Stripe price IDs from environment variables.
-        -   **New FastAPI Endpoints**: , , .
-        -   **Stripe Webhook Handler**: Implemented  to handle , , ,  events. Removed Pydantic parsing for raw body, verified Stripe-Signature. Crucially, the  handler was added to inject the   only once on the first post-trial invoice.
-        -   **Routing Fixes**: Relocated subscription and webhook endpoints to  and reordered routes ( before  routes) to resolve path parameter conflicts, specifically  being misinterpreted as . Removed an unused  mounted at .
-        -   **Access Control**: Implemented checks based on  for song and request endpoints.
-        -   **Diagnostic Endpoints/Logging**: Enhanced startup logs to display registered routes and Stripe key prefix, aiding in debugging routing issues.
-        -   **Trial Logic**: Updated  from 30 to 14.
-
+        -   **Freemium Model**: Updated  and  models. Implemented Stripe checkout, cancel, and status endpoints. Crucially, a robust Stripe webhook handler was added for subscription lifecycle events (, , ), including logic for a one-time startup fee and  management.
+        -   **Routing**: Resolved path parameter conflicts by reordering routes and using .
+        -   **Playlist Management**:
+            -   Modified  and  models to include , , and .
+            -   Added new endpoints:  for single playlist details,  to replace a playlist's song list,  to remove a single song,  for renaming and toggling public status, and  for soft deletion.
+            -   Updated  and  to filter by  and .
+            -   Ensured  is set on playlist creation and updates.
 -   **/app/frontend/src/App.js**: Main React component.
-    -   **Importance**: Manages routing, global state, UI for musician/audience dashboards, and all frontend logic for backend interaction.
+    -   **Importance**: Manages routing, global state, UI for musician/audience dashboards. Contains all frontend logic for backend interaction and renders various components based on user roles and subscription status.
     -   **Changes Made**:
-        -   **Freemium Model UI**: Updated display text for 14-day trial (from 30-day). Corrected annual pricing display (4 to 8, total 3 including startup fee). Replaced 20 free requests with unlimited requests during trial. Changed checkout button to Start Free Trial Now.
-        -   **Profile Tab**: Replaced the orange bar showing requests used with an Upgrade Now button that redirects to the subscription tab.
-        -   **Design Tab Enhancements**: Converted Song Suggestions from a checkbox to a visually appealing toggle switch. Removed Pro badges/restrictions from Song Suggestions, the Design tab name itself, and the Artist Photo upload feature. Updated related help text. Removed frontend logic that prevented non-pro users from saving design settings.
-        -   **Analytics Tab**: Removed the chart emoji (📊) from the tab name and dashboard header.
-        -   **Song Management UI**: Replaced the five individual song management buttons (Auto-fill All, Add a New Song, Import Playlist, Upload CSV, Upload LST) with a single ⚙️ Manage Songs dropdown menu, improving space efficiency and mobile experience.
-        -   **Responsive Navigation**: Implemented logic to show Welcome, [artist name] under the logo and collapse main navigation tabs into a dropdown on mobile screens (), while keeping desktop layout unchanged.
-        -   **Quick Start Guide**: Removed the automatic popup of the Quick Start Guide on first login, while ensuring it remains accessible via a '?' button in both desktop and mobile navigation.
-
+        -   **Freemium UI**: Updated trial messaging (30 to 14 days), pricing (4 to 8), and unlimited requests messaging. Replaced requests used bar with Upgrade Now.
+        -   **Feature Access & UI**: Removed Pro badges from Design/Analytics tabs and photo upload. Converted song suggestions to a toggle.
+        -   **UI Consolidation**: Replaced five song management buttons with a single dropdown.
+        -   **Responsive Design**: Implemented mobile-specific navigation and welcome text positioning.
+        -   **Quick Start Guide**: Removed auto-popup.
+        -   **Bug Fixes (ESLint/Scope)**: Relocated , , , , ,  functions to the correct components (primarily from  to  or defining them where needed) to resolve ESLint errors and scope issues.
+        -   **Audience Interface (Initial Request)**: Changed Search Songs... to Search Song Title or Artist and replaced filter by Artist with a playlist dropdown. Integrated backend playlist fetching.
+        -   **Musician Dashboard (User-requested Sync)**: Applied the same search placeholder and playlist dropdown changes as the Audience Interface. Modified client-side filtering logic to use playlist IDs (requiring backend to return  in ).
+        -   **Playlist Management UI**: Implemented an Edit Playlist modal (or page) with drag-and-drop song reordering and individual song removal. Added rename functionality (inline edit), public/private toggling, and delete functionality for playlists within the My Playlists section. Integrated toast notifications and confirmation modals.
+        -   **Subscription Status Handling**: Modified  and other access checks to correctly identify trial, pro, and canceled plan statuses for Pro features.
+        -   **Initialization Fix**: Added  and  calls to the main dashboard initialization useEffect to ensure data loads on mount.
 -   **/app/backend/.env**: Backend environment variables.
-    -   **Changes Made**: Updated , . Added , ,  (updated from ). These were changed to live keys as per the latest requirements.
-
+    -   **Changes Made**: Updated , , , ,  to live keys (though identified as placeholders in later debugging). , , and  were explicitly changed during debugging.
 -   **/app/frontend/.env**: Frontend environment variables.
-    -   **Changes Made**: None explicitly mentioned or made during this trajectory, though  is critical for frontend API calls.
+    -   **Changes Made**:  was explicitly changed during debugging from a preview URL to .
 </code_architecture>
 
 <pending_tasks>
-- Frontend testing for the Phase 3 Analytics Dashboard (mentioned in initial context, not addressed in trajectory).
-- Adding a prominent green tip button on the audience song search page (distinct from the post-request modal) (mentioned in initial context, not addressed in trajectory).
-- Completing the Audience Interface UI enhancements: integrating social media buttons and implementing a collapsible bio (partially attempted, then abandoned for freemium model, not revisited).
-- Resolving the persistent ESLint error about  not defined in .
+-   Frontend testing for the Phase 3 Analytics Dashboard (mentioned in initial context, not fully addressed).
+-   Adding a prominent green tip button on the audience song search page (distinct from the post-request modal) (mentioned in initial context, not addressed in trajectory).
+-   Completing the Audience Interface UI enhancements: integrating social media buttons and implementing a collapsible bio (partially attempted, then abandoned for freemium model, not revisited).
+-   Implementing the Add Songs button in the playlist edit modal, currently showing a placeholder message.
 </pending_tasks>
 
 <current_work>
-The previous AI engineer has just completed a series of frontend UI updates. The immediate last task was to remove the PRO icon from the artist photo line within the design tab, which was confirmed as successfully implemented. This aligns with the broader goal of making more features accessible to all users within the new 14-day free trial model.
+The most immediate work revolves around resolving critical deployment and account-specific issues preventing the application from functioning correctly on the production environment (), despite code fixes being in place.
 
-Specifically, the following key UI changes were recently completed and verified by the previous engineer:
--   The Start - 0 today / Start - 3 today checkout buttons were changed to Start Free Trial Now on the subscription tab.
--   The orange bar showing request usage on the profile tab was replaced with an Upgrade Now button.
--   The 30-day trial messaging was updated to 14-day trial across the frontend.
--   Annual pricing displays were corrected to 8 (from 4).
--   20 free requests language was removed, replaced with unlimited requests during trial.
--   Song suggestions were converted to a toggle switch and made available to all users.
--   Pro badges were removed from the Design tab, Artist Photo upload, and Analytics tab.
--   The five song management buttons were consolidated into a single dropdown menu.
--   Responsive design was implemented for mobile, collapsing navigation and repositioning welcome text.
--   The Quick Start Guide's automatic popup on login was removed, while keeping it accessible via a '?' button.
+Specifically, the user is unable to log in, and their account is stuck in free mode with the audience link paused. The My Playlists section (a recently developed feature for full playlist management including creation, reordering, deletion, and public/private toggling) is also not appearing on the deployed version.
 
-All these recent changes reflect the new business logic where many features are now part of the standard free trial experience, aiming for a cleaner, more consistent user interface. The frontend should now perfectly match the updated backend subscription model.
+Extensive troubleshooting by the previous AI engineer and the  has pinpointed the issues to **deployment configuration mismatches and infrastructure problems**:
+1.  **Stripe API Keys**: Initially identified as placeholder keys in , though the user later stated they had set real keys in the deployment environment.
+2.  **Frontend URL Configuration**:  in  was hardcoded to a preview URL, preventing communication with the custom domain. This was updated in code, but the changes were not syncing to production.
+3.  **Environment Variable Syncing**: A persistent orange bar warning in the deployment window indicates environment variables are not syncing to production.
+4.  **External API Routing (Custom Domain)**: While  works, authentication endpoints () return 500 errors via the custom domain, suggesting a Kubernetes ingress/proxy issue.
+5.  **Database Environment Mismatch**: The most recent finding is that the testing agents were operating on a *preview environment's database*, while the user's login attempts and issues are with the *production database*. This means manual account fixes made by the agent in the preview DB are not reflected in the deployed production app.
+
+The user temporarily removed the custom URL and was able to log in to the default Emergent URL, but their account was still not set to subscribed, and the audience link remained paused. A manual attempt by the agent to reactivate the user's account in the database (via testing agent interactions which hit the preview DB) failed to resolve the issue on the production deployment. The current state is that the user can log in with their old password (meaning the account exists), but it's in free mode.
 </current_work>
 
 <optional_next_step>
-Ask the user if they would like to verify the frontend changes.
+The next step is to address the database environment mismatch by instructing the user how to fix their production account.
 </optional_next_step>
