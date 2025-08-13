@@ -236,7 +236,7 @@ class ProSubscriberFixTester:
                 self.log_result("Manually Update Database to Pro", False, "No musician ID available")
                 return False
             
-            if not self.db:
+            if self.db is None:
                 self.log_result("Manually Update Database to Pro", False, "No database connection available")
                 return False
             
