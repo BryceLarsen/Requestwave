@@ -1774,7 +1774,13 @@ async def mark_access(customer_id: str, active: bool):
 # SINGLE WEBHOOK ENDPOINT - POST /api/stripe/webhook (FINALIZED with startup fee logic)
 @api_router.post("/stripe/webhook")
 async def stripe_webhook_handler(request: FastAPIRequest):
-    """FINALIZED: Single Stripe webhook handler - handles startup fee on first post-trial invoice"""
+    """Stripe webhook handler with structured logging and proper error handling"""
+    import uuid
+    import traceback
+    
+    webhook_id = str(uuid.uuid4())[:8]
+    event_id = None
+    
     try:
         import stripe
         stripe.api_key = STRIPE_API_KEY
@@ -1783,28 +1789,49 @@ async def stripe_webhook_handler(request: FastAPIRequest):
         body = await request.body()
         signature = request.headers.get("stripe-signature")
         
+        logger.info(f"[{webhook_id}] Webhook received", extra={
+            "webhook_id": webhook_id,
+            "has_signature": bool(signature),
+            "body_length": len(body) if body else 0,
+            "timestamp": datetime.utcnow().isoformat()
+        })
+        
         if not signature:
-            logger.error("Missing Stripe signature in webhook")
+            logger.error(f"[{webhook_id}] Missing Stripe signature in webhook")
             return {"status": "error", "message": "Missing signature"}
         
         webhook_secret = STRIPE_WEBHOOK_SECRET
         if not webhook_secret or webhook_secret.startswith("whsec_YOUR_REAL"):
-            logger.error("Missing or invalid STRIPE_WEBHOOK_SECRET")
+            logger.error(f"[{webhook_id}] Missing or invalid STRIPE_WEBHOOK_SECRET")
             return {"status": "error", "message": "Invalid webhook secret configuration"}
         
         try:
             # Verify webhook signature
             event = stripe.Webhook.construct_event(body, signature, webhook_secret)
-        except ValueError:
-            logger.error("Invalid webhook payload")
+            event_id = event.get("id", "unknown")
+            
+            logger.info(f"[{webhook_id}] Webhook signature verified", extra={
+                "webhook_id": webhook_id,
+                "stripe_event_id": event_id,
+                "event_type": event["type"]
+            })
+            
+        except ValueError as e:
+            logger.error(f"[{webhook_id}] Invalid webhook payload: {str(e)}")
             return {"status": "error", "message": "Invalid payload"}
-        except stripe.error.SignatureVerificationError:
-            logger.error("Invalid webhook signature")
+        except stripe.error.SignatureVerificationError as e:
+            logger.error(f"[{webhook_id}] Invalid webhook signature: {str(e)}")
             return {"status": "error", "message": "Invalid signature"}
         
         event_type = event["type"]
         obj = event["data"]["object"]
-        logger.info(f"Stripe event: {event_type}")
+        
+        logger.info(f"[{webhook_id}] Processing webhook event", extra={
+            "webhook_id": webhook_id,
+            "stripe_event_id": event_id,
+            "event_type": event_type,
+            "object_id": obj.get("id", "unknown")
+        })
         
         # Handle checkout.session.completed - turn on trial immediately
         if event_type == "checkout.session.completed":
