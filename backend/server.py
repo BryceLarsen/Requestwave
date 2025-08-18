@@ -1870,6 +1870,9 @@ async def mark_subscription_canceled(customer_id: str):
                 "trial_end": None,
                 "audience_link_active": False,
                 "subscription_status": "canceled"  # Legacy field
+            },
+            "$unset": {
+                "stripe_subscription_id": ""  # Clear subscription ID
             }
         }
     )
