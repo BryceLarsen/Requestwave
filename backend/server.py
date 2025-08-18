@@ -1819,10 +1819,54 @@ async def mark_startup_fee_applied(customer_id: str, subscription_id: str):
     })
 
 async def mark_access(customer_id: str, active: bool):
-    """Mark audience link access as active or inactive"""
+    """Mark audience link access as active or inactive (legacy function)"""
     await db.musicians.update_one(
         {"stripe_customer_id": customer_id},
         {"$set": {"audience_link_active": active}}
+    )
+
+# NEW: Three-state subscription transition functions
+async def mark_subscription_active(customer_id: str):
+    """Free Trial → Subscribed: when first invoice after trial is paid"""
+    await db.musicians.update_one(
+        {"stripe_customer_id": customer_id},
+        {
+            "$set": {
+                "plan": "pro",
+                "status": "active",
+                "audience_link_active": True,
+                "subscription_status": "active"  # Legacy field
+            }
+        }
+    )
+
+async def mark_subscription_canceled(customer_id: str):
+    """Free Trial → Free or Subscribed → Free: subscription canceled"""
+    await db.musicians.update_one(
+        {"stripe_customer_id": customer_id},
+        {
+            "$set": {
+                "plan": "free",
+                "status": "canceled",
+                "trial_end": None,
+                "audience_link_active": False,
+                "subscription_status": "canceled"  # Legacy field
+            }
+        }
+    )
+
+async def mark_subscription_past_due(customer_id: str):
+    """Active → Past Due: invoice payment failed"""
+    await db.musicians.update_one(
+        {"stripe_customer_id": customer_id},
+        {
+            "$set": {
+                "plan": "pro",  # Keep pro plan
+                "status": "past_due",
+                "audience_link_active": True,  # Keep features but show banner
+                "subscription_status": "past_due"  # Legacy field
+            }
+        }
     )
 
 # SINGLE WEBHOOK ENDPOINT - POST /api/stripe/webhook (FINALIZED with startup fee logic)
