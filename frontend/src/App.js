@@ -1276,10 +1276,10 @@ const MusicianDashboard = () => {
     }
   };
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = async (planType = null) => {
     setUpgrading(true);
     try {
-      const plan = selectedPlan; // 'monthly' or 'annual'
+      const plan = planType || selectedPlan; // Use parameter or fallback to selectedPlan
       
       const res = await fetch(`${API}/subscription/checkout`, {
         method: "POST",
