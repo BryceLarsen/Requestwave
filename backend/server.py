@@ -5175,17 +5175,23 @@ async def create_freemium_checkout_session(
             import stripe
             stripe.api_key = STRIPE_API_KEY
             
+            # Build subscription_data - only include trial_period_days if >= 1
+            subscription_data = {
+                "proration_behavior": "none",
+                "metadata": {"rw_plan": plan, "musician_id": musician_id}
+            }
+            
+            # Only pass trial_period_days if >= 1 (Stripe minimum requirement)
+            if trial_days >= 1:
+                subscription_data["trial_period_days"] = trial_days
+            
             session = stripe.checkout.Session.create(
                 mode="subscription",
                 success_url=success_url,
                 cancel_url=cancel_url,
                 customer_email=customer_email,
                 line_items=[{"price": price_id, "quantity": 1}],
-                subscription_data={
-                    "trial_period_days": trial_days,
-                    "proration_behavior": "none",
-                    "metadata": {"rw_plan": plan, "musician_id": musician_id}
-                },
+                subscription_data=subscription_data,
                 allow_promotion_codes=False,
                 metadata={"musician_id": musician_id, "plan": plan, "error_id": error_id}
             )
