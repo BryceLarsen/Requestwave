@@ -4965,6 +4965,16 @@ const MusicianDashboard = () => {
                           ✅ Audience Link Enabled & Accepting Requests
                         </p>
                       </div>
+                      
+                      {/* Cancel Subscription Button */}
+                      <div className="mt-4 pt-4 border-t border-green-500/30">
+                        <button
+                          onClick={handleCancelSubscription}
+                          className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-medium text-white transition duration-300"
+                        >
+                          Cancel Subscription
+                        </button>
+                      </div>
                     </div>
                   )}
 
