@@ -1317,52 +1317,45 @@ const MusicianDashboard = () => {
     }
   };
 
-  // NEW: Cancel subscription handler
-  const handleCancelSubscription = async (when) => {
-    setCanceling(true);
-    try {
-      const res = await fetch(`${API}/billing/cancel`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          when: when // "now" or "period_end"
-        })
-      });
-      
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data?.message || "Failed to cancel subscription");
-      }
-      
-      // Show success message
-      alert(data.message);
-      
-      // Refresh user data
-      await fetchCurrentUser();
-      setShowCancelModal(false);
-      
-    } catch (error) {
-      console.error('Cancel subscription error:', error);
-      alert(`Error canceling subscription: ${error.message}`);
-    } finally {
-      setCanceling(false);
-    }
-  };
-
-  const handleCancelSubscription = async () => {
-    if (window.confirm('Are you sure you want to cancel your subscription? Your audience link will be deactivated, but your songs and request history will remain saved.')) {
+  // NEW: Enhanced cancel subscription handler with modal
+  const handleCancelSubscription = async (when = null) => {
+    if (when) {
+      // Handle modal-based cancellation with timing option
+      setCanceling(true);
       try {
-        await axios.post(`${API}/subscription/cancel`);
-        alert('Subscription canceled. Your audience link has been deactivated.');
-        fetchSubscriptionStatus();
+        const res = await fetch(`${API}/billing/cancel`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({
+            when: when // "now" or "period_end"
+          })
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data?.message || "Failed to cancel subscription");
+        }
+        
+        // Show success message
+        alert(data.message);
+        
+        // Refresh user data
+        await fetchCurrentUser();
+        setShowCancelModal(false);
+        
       } catch (error) {
-        console.error('Error canceling subscription:', error);
-        alert('Error canceling subscription. Please try again.');
+        console.error('Cancel subscription error:', error);
+        alert(`Error canceling subscription: ${error.message}`);
+      } finally {
+        setCanceling(false);
       }
+    } else {
+      // Show the cancel modal
+      setShowCancelModal(true);
     }
   };
 
