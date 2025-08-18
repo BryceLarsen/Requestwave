@@ -104,23 +104,17 @@
 user_problem_statement: "CRITICAL PRODUCTION BUG: Subscribe button no longer shows error but nothing happens - no Stripe Checkout page opens. Need to fix both API response format (must return {url: stripe_checkout_url}) and frontend redirect logic. API should return HTTP 200 with proper JSON response, frontend should redirect to Stripe with window.location.assign(data.url), show loading state, and handle errors properly."
 
 backend:
-  - task: "CRITICAL: Production Proration Behavior Stripe Error Fix"
-    implemented: true
-    working: true
-    file: "server.py"
+  - task: "CRITICAL: Production Subscribe Button No Stripe Redirect Fix"
+    implemented: false
+    working: false
+    file: "App.js"
     stuck_count: 0
     priority: "critical"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: false
         agent: "user"
-        comment: "CRITICAL PRODUCTION BUG: User reported 'In production, POST /api/subscription/checkout is returning 400 with: \"The proration_behavior parameter can only be passed if a billing_cycle_anchor exists.\"' Need to remove proration_behavior from subscription_data, keep trial_period_days: 14, let Stripe default billing cycle to trial end, maintain $15 startup fee logic in checkout.session.completed webhook. Acceptance: Checkout redirects to Stripe showing '14 days free', no upfront charge, $15 invoice item attached, day 14 invoice includes both startup fee and plan amount."
-      - working: "NA"
-        agent: "main"
-        comment: "ISSUE ANALYSIS: Root cause - subscription_data included 'proration_behavior': 'none' which Stripe rejects without billing_cycle_anchor. SOLUTION IMPLEMENTED: Removed proration_behavior from subscription_data entirely, letting Stripe use default proration behavior. Kept trial_period_days: 14 for new users. No billing_cycle_anchor set - Stripe will default to trial end. Existing $15 startup fee logic in checkout.session.completed webhook preserved unchanged. Enhanced error logging already captures Stripe Request IDs and Event IDs with error_id for debugging."
-      - working: true
-        agent: "testing"
-        comment: "CRITICAL PRORATION_BEHAVIOR FIX COMPREHENSIVE TESTING COMPLETE: The production bug fix is working correctly with 83.3% success rate (5/6 tests passed). ✅ AUTHENTICATION: Successfully authenticated with brycelarsenmusic@gmail.com / RequestWave2024! credentials. ✅ SUBSCRIPTION STATUS: GET /api/subscription/status returns all required fields (plan=active, audience_link_active=true, status=active, trial_active=false). ✅ MONTHLY CHECKOUT: POST /api/subscription/checkout with monthly plan NO LONGER returns proration_behavior error - now returns proper Stripe configuration error instead of the critical bug. ✅ ANNUAL CHECKOUT: POST /api/subscription/checkout with annual plan NO LONGER returns proration_behavior error - now returns proper Stripe configuration error instead of the critical bug. ✅ ERROR LOGGING: Enhanced error logging with error_id working correctly, provides structured error responses. ✅ CODE VERIFICATION: Confirmed proration_behavior parameter completely removed from subscription_data in server.py line 5179, only trial_period_days: 14 and metadata included. ❌ Minor: Webhook endpoint returns 200 instead of expected 4xx for missing signature (acceptable behavior). CRITICAL SUCCESS: No proration_behavior errors detected in any test scenario. The production bug 'The proration_behavior parameter can only be passed if a billing_cycle_anchor exists' has been completely resolved. Current errors are now Stripe configuration issues (missing price IDs) which are separate from the proration_behavior bug."
+        comment: "CRITICAL PRODUCTION BUG: User reported 'On the deployed app, clicking Subscribe no longer shows an error, but nothing happens — no Stripe Checkout page opens.' Need to fix API response format (must return {url: stripe_checkout_url} with HTTP 200) and frontend redirect logic. Frontend should use window.location.assign(data.url), show loading state, handle errors properly. API should create Stripe session with proper parameters and return correct JSON format. Acceptance: Clicking Subscribe shows loading state, makes POST to /api/subscription/checkout, API returns {url}, browser redirects to Stripe Checkout showing '14 days free'."
 
   - task: "Song Suggestions Feature Flag Bug Fix"
     implemented: true
