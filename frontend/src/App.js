@@ -4938,6 +4938,16 @@ const MusicianDashboard = () => {
                           Your audience can now send requests!
                         </p>
                       </div>
+                      
+                      {/* Cancel Trial Button */}
+                      <div className="mt-4 pt-4 border-t border-blue-500/30">
+                        <button
+                          onClick={handleCancelSubscription}
+                          className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-medium text-white transition duration-300"
+                        >
+                          Cancel Trial
+                        </button>
+                      </div>
                     </div>
                   )}
 
