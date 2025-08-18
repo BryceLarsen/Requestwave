@@ -105,16 +105,19 @@ user_problem_statement: "CRITICAL PRODUCTION BUG: POST /api/subscription/checkou
 
 backend:
   - task: "CRITICAL: Production Subscription Checkout 400 Error Fix"
-    implemented: false
+    implemented: true
     working: false
     file: "server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "critical"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "user"
         comment: "CRITICAL PRODUCTION BUG: User reported 'Hitting POST /api/subscription/checkout on the deployed site returns 400 Bad Request and the UI shows \"Error processing subscription. Please try again.\"' Requires comprehensive fix with structured logging, proper validation (422 for missing fields), environment sanity checks, Stripe integration fixes, webhook handling, and proper error responses with error_id. Must work in PRODUCTION with live Stripe keys."
+      - working: false
+        agent: "testing"
+        comment: "SUBSCRIPTION CHECKOUT COMPREHENSIVE TESTING COMPLETE - CRITICAL ISSUES FOUND: Extensive testing reveals the subscription checkout system has been significantly improved but has several critical inconsistencies that need fixing. ✅ AUTHENTICATION WORKING: Successfully authenticated with brycelarsenmusic@gmail.com / RequestWave2024! credentials. ✅ STRUCTURED LOGGING IMPLEMENTED: System includes error_id tracking and comprehensive logging throughout checkout process. ✅ VALIDATION LOGIC WORKING: Returns proper 422 validation errors for missing/invalid fields (plan, success_url, cancel_url). ✅ ENVIRONMENT DETECTION: Correctly detects missing/placeholder Stripe configuration and provides helpful error messages. ❌ CRITICAL ISSUE #1: Configuration errors return 500 status instead of 400 - should be 400 Bad Request for client-side configuration issues. ❌ CRITICAL ISSUE #2: Error response format inconsistent - some errors have error_id nested in 'detail' object, others at root level, making client-side error handling difficult. ❌ CRITICAL ISSUE #3: Webhook endpoint returns 200 status with error message instead of proper 400/401 HTTP status codes for missing signatures. ❌ CRITICAL ISSUE #4: Some Pydantic validation errors don't include error_id, breaking the structured logging requirement. ENVIRONMENT STATUS: Test environment correctly configured to detect missing Stripe keys (PRICE_MONTHLY_5, PRICE_ANNUAL_48 not configured). The core functionality is implemented but needs consistency fixes for production deployment."
 
   - task: "Song Suggestions Feature Flag Bug Fix"
     implemented: true
