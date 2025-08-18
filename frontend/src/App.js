@@ -5805,6 +5805,48 @@ const MusicianDashboard = () => {
             </div>
           </div>
         )}
+
+        {/* Cancel Subscription Modal */}
+        {showCancelModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
+              <h3 className="text-xl font-bold text-white mb-4">Cancel Subscription</h3>
+              <p className="text-gray-300 mb-6">
+                If you cancel your subscription, your account will revert to free mode: you will keep all of your requests, songs, and data, but if you'd like to re-open your audience link, you'll need to pay the startup fee again. Free trial is not available for returning subscribers.
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium text-white mb-2">When would you like to cancel?</h4>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => handleCancelSubscription('now')}
+                      disabled={canceling}
+                      className="w-full bg-red-600 hover:bg-red-700 py-3 rounded-lg font-medium text-white transition duration-300 disabled:opacity-50"
+                    >
+                      {canceling ? 'Processing...' : 'Cancel Now'}
+                    </button>
+                    <button
+                      onClick={() => handleCancelSubscription('period_end')}
+                      disabled={canceling}
+                      className="w-full bg-orange-600 hover:bg-orange-700 py-3 rounded-lg font-medium text-white transition duration-300 disabled:opacity-50"
+                    >
+                      {canceling ? 'Processing...' : 'Cancel at End of Current Period'}
+                    </button>
+                  </div>
+                </div>
+                
+                <button
+                  onClick={() => setShowCancelModal(false)}
+                  disabled={canceling}
+                  className="w-full bg-gray-600 hover:bg-gray-700 py-2 rounded-lg font-medium text-white transition duration-300 disabled:opacity-50"
+                >
+                  Keep Subscription
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* NEW: Add to Playlist Modal */}
         {showPlaylistModal && (
