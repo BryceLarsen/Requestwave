@@ -101,7 +101,7 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
-user_problem_statement: "Fix song suggestions feature flag bug - 'Suggest a song' button doesn't appear on Audience Requests page even when 'Song Suggestions' is enabled in Design tab. Fix feature-flag logic so button renders when toggle is on, works in both preview and production. Acceptance: Toggling 'Song Suggestions' on in Design immediately shows button on Requests page; toggling off hides it."
+user_problem_statement: "CRITICAL PRODUCTION BUG: POST /api/subscription/checkout returns 400 Bad Request on deployed site. UI shows 'Error processing subscription. Please try again.' Need comprehensive fix with structured logging, proper validation (422 for missing fields), environment sanity checks, and proper Stripe integration. Must work in PRODUCTION environment with proper error handling and logging."
 
 backend:
   - task: "Song Suggestions Feature Flag Bug Fix"
