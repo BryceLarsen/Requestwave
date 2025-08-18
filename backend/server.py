@@ -1756,18 +1756,51 @@ async def login_musician(login_data: MusicianLogin):
 
 # NEW: Helper functions for finalized webhook handler
 async def mark_trial_started(customer_id: str, subscription_id: str):
-    """Mark trial as started for a customer"""
-    await db.musicians.update_one(
-        {"stripe_customer_id": customer_id},
-        {
-            "$set": {
-                "audience_link_active": True,
-                "stripe_subscription_id": subscription_id,
-                "subscription_status": "trialing",
-                "has_had_trial": True
+    """Mark trial as started for a customer - Free → Free Trial state transition"""
+    try:
+        import stripe
+        stripe.api_key = STRIPE_API_KEY
+        
+        # Get subscription details to get trial_end
+        subscription = stripe.Subscription.retrieve(subscription_id)
+        trial_end = None
+        if subscription.trial_end:
+            trial_end = datetime.fromtimestamp(subscription.trial_end)
+        
+        await db.musicians.update_one(
+            {"stripe_customer_id": customer_id},
+            {
+                "$set": {
+                    # Three-state model fields
+                    "plan": "pro",
+                    "status": "trialing",
+                    "trial_end": trial_end,
+                    
+                    # Legacy fields (keep for backward compatibility)
+                    "audience_link_active": True,
+                    "stripe_subscription_id": subscription_id,
+                    "subscription_status": "trialing",
+                    "has_had_trial": True
+                }
             }
-        }
-    )
+        )
+    except Exception as e:
+        logger.error(f"Error in mark_trial_started: {str(e)}")
+        # Fallback without Stripe API call
+        await db.musicians.update_one(
+            {"stripe_customer_id": customer_id},
+            {
+                "$set": {
+                    "plan": "pro",
+                    "status": "trialing",
+                    "trial_end": datetime.utcnow() + timedelta(days=14),  # Default 14 days
+                    "audience_link_active": True,
+                    "stripe_subscription_id": subscription_id,
+                    "subscription_status": "trialing",
+                    "has_had_trial": True
+                }
+            }
+        )
 
 async def startup_fee_already_applied(customer_id: str, subscription_id: str) -> bool:
     """Check if startup fee has already been applied for this customer/subscription"""
