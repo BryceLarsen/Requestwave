@@ -4796,7 +4796,7 @@ const MusicianDashboard = () => {
           </div>
         )}
 
-        {/* Subscription Tab - NEW: Freemium Model */}
+        {/* Subscription Tab - Three Explicit States */}
         {activeTab === 'subscription' && (
           <div className="space-y-6">
             {/* Subscription Status Card */}
@@ -4808,46 +4808,149 @@ const MusicianDashboard = () => {
                 </div>
               </div>
 
-              {subscriptionStatus && (
+              {currentUser && currentUser.billing && (
                 <div className="space-y-6">
-                  {/* Current Status */}
-                  <div className={`p-4 rounded-lg border ${
-                    subscriptionStatus.audience_link_active 
-                      ? 'bg-green-900/20 border-green-500/30' 
-                      : 'bg-red-900/20 border-red-500/30'
-                  }`}>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className={`font-bold ${
-                          subscriptionStatus.audience_link_active ? 'text-green-300' : 'text-red-300'
-                        }`}>
-                          {subscriptionStatus.plan === 'trial' && 'Free Trial Active'}
-                          {subscriptionStatus.plan === 'active' && 'Subscription Active'}
-                          {subscriptionStatus.plan === 'canceled' && 'Subscription Canceled'}
-                          {subscriptionStatus.plan === 'free' && 'Free Plan'}
-                        </h3>
-                        <p className="text-gray-300 text-sm">
-                          {subscriptionStatus.audience_link_active 
-                            ? 'Your audience link is active and receiving requests'
-                            : 'Your audience link is paused - upgrade to reactivate'
-                          }
-                        </p>
+                  {/* State 1: Free */}
+                  {currentUser.billing.plan === 'free' && (
+                    <div className="p-4 rounded-lg border bg-gray-900/20 border-gray-500/30">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="font-bold text-gray-300 mb-2">
+                            <span className="bg-gray-600 px-2 py-1 rounded text-sm">Free</span>
+                          </h3>
+                          <p className="text-gray-400 text-sm">
+                            Free — Audience Link is locked.
+                          </p>
+                        </div>
+                        <div className="w-4 h-4 rounded-full bg-red-500" />
                       </div>
-                      <div className={`w-4 h-4 rounded-full ${
-                        subscriptionStatus.audience_link_active ? 'bg-green-500' : 'bg-red-500'
-                      }`} />
+                      
+                      {/* CTA for Free Trial */}
+                      <div className="mt-6">
+                        <h4 className="font-bold text-white mb-4">Start Your 14-Day Free Trial</h4>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          {/* Monthly Plan */}
+                          <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                            <h5 className="font-bold text-white mb-2">Monthly</h5>
+                            <p className="text-2xl font-bold text-white mb-1">$10<span className="text-sm text-gray-400">/month</span></p>
+                            <p className="text-gray-400 text-xs mb-4">+ $15 startup fee</p>
+                            <button
+                              onClick={() => handleUpgrade('monthly')}
+                              disabled={upgrading}
+                              className="w-full bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300 disabled:opacity-50"
+                            >
+                              {upgrading ? 'Processing...' : 'Start Free Trial'}
+                            </button>
+                          </div>
+                          
+                          {/* Annual Plan */}
+                          <div className="bg-gray-700 rounded-lg p-4 border border-purple-500 relative">
+                            <div className="absolute -top-2 left-4 bg-purple-600 px-2 py-1 rounded text-xs font-bold">
+                              Best Value
+                            </div>
+                            <h5 className="font-bold text-white mb-2">Annual</h5>
+                            <p className="text-2xl font-bold text-white mb-1">$48<span className="text-sm text-gray-400">/year</span></p>
+                            <p className="text-gray-400 text-xs mb-4">+ $15 startup fee</p>
+                            <button
+                              onClick={() => handleUpgrade('annual')}
+                              disabled={upgrading}
+                              className="w-full bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300 disabled:opacity-50"
+                            >
+                              {upgrading ? 'Processing...' : 'Start Free Trial'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
+                  )}
 
-                    {/* Trial Information */}
-                    {subscriptionStatus.trial_active && (
-                      <div className="mt-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded">
-                        <p className="text-blue-300 font-medium">
-                          🎉 Your 14-day free trial is live!
+                  {/* State 2: Free Trial */}
+                  {currentUser.billing.plan === 'pro' && currentUser.billing.status === 'trialing' && (
+                    <div className="p-4 rounded-lg border bg-blue-900/20 border-blue-500/30">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="font-bold text-blue-300 mb-2">
+                            <span className="bg-blue-600 px-2 py-1 rounded text-sm">Free Trial</span>
+                          </h3>
+                          <p className="text-blue-200 text-sm">
+                            {currentUser.billing.trial_end && (() => {
+                              const daysLeft = Math.ceil((new Date(currentUser.billing.trial_end) - new Date()) / (1000 * 60 * 60 * 24));
+                              const trialEndDate = new Date(currentUser.billing.trial_end).toLocaleDateString();
+                              return `Free Trial — ${daysLeft} days left. You won't be charged until ${trialEndDate}. On that date you'll be billed $15 startup + your first monthly payment.`;
+                            })() || 'Free Trial — You won\'t be charged during your trial period.'}
+                          </p>
+                        </div>
+                        <div className="w-4 h-4 rounded-full bg-blue-500" />
+                      </div>
+                      
+                      {/* Audience Link Status */}
+                      <div className="mt-4 p-3 bg-green-900/20 border border-green-500/30 rounded">
+                        <p className="text-green-300 font-medium">
+                          ✅ Audience Link Enabled
                         </p>
                         <p className="text-gray-300 text-sm mt-1">
-                          Trial ends on {subscriptionStatus.trial_ends_at ? 
-                            new Date(subscriptionStatus.trial_ends_at).toLocaleDateString() : 
-                            'Unknown'}
+                          Your audience can now send requests!
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* State 3: Subscribed (Active) */}
+                  {currentUser.billing.plan === 'pro' && currentUser.billing.status === 'active' && (
+                    <div className="p-4 rounded-lg border bg-green-900/20 border-green-500/30">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="font-bold text-green-300 mb-2">
+                            <span className="bg-green-600 px-2 py-1 rounded text-sm">Pro — Active</span>
+                          </h3>
+                          <p className="text-green-200 text-sm">
+                            {currentUser.billing.next_invoice_date 
+                              ? `Pro — Active. Next bill on ${new Date(currentUser.billing.next_invoice_date).toLocaleDateString()}.`
+                              : 'Pro — Active. Your subscription is active and your audience link is enabled.'
+                            }
+                          </p>
+                        </div>
+                        <div className="w-4 h-4 rounded-full bg-green-500" />
+                      </div>
+                      
+                      {/* Audience Link Status */}
+                      <div className="mt-4 p-3 bg-green-900/20 border border-green-500/30 rounded">
+                        <p className="text-green-300 font-medium">
+                          ✅ Audience Link Enabled & Accepting Requests
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* State: Past Due */}
+                  {currentUser.billing.plan === 'pro' && currentUser.billing.status === 'past_due' && (
+                    <div className="p-4 rounded-lg border bg-orange-900/20 border-orange-500/30">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="font-bold text-orange-300 mb-2">
+                            <span className="bg-orange-600 px-2 py-1 rounded text-sm">Pro — Past Due</span>
+                          </h3>
+                          <p className="text-orange-200 text-sm">
+                            Payment issue — update your payment method.
+                          </p>
+                        </div>
+                        <div className="w-4 h-4 rounded-full bg-orange-500" />
+                      </div>
+                      
+                      {/* Payment Update Banner */}
+                      <div className="mt-4 p-3 bg-orange-900/20 border border-orange-500/30 rounded">
+                        <p className="text-orange-300 font-medium">
+                          ⚠️ Payment Issue - Update Your Card
+                        </p>
+                        <p className="text-gray-300 text-sm mt-1">
+                          Update your payment method to avoid service interruption.
+                        </p>
+                        <button className="mt-2 bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-lg text-sm font-bold transition duration-300">
+                          Update Payment Method
+                        </button>
+                      </div>
+                    </div>
+                  )}
                           {subscriptionStatus.days_remaining && ` (${subscriptionStatus.days_remaining} days remaining)`}
                         </p>
                         <p className="text-gray-300 text-sm">
