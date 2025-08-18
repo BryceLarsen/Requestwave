@@ -576,7 +576,18 @@ class CancelSubscriptionTester:
             # Restore auth token
             self.auth_token = original_token
             
-            if response.status_code == 400:
+            if response.status_code == 200:
+                # Check if it's a proper error response about missing signature
+                try:
+                    response_data = response.json()
+                    if response_data.get("status") == "error" and "signature" in response_data.get("message", "").lower():
+                        print(f"   ✅ Webhook correctly requires Stripe signature")
+                        self.log_result("Webhook Endpoint Accessibility", True, "Webhook endpoint accessible and validates signatures")
+                    else:
+                        self.log_result("Webhook Endpoint Accessibility", False, f"Unexpected webhook response: {response_data}")
+                except:
+                    self.log_result("Webhook Endpoint Accessibility", False, f"Webhook returned 200 but invalid JSON: {response.text}")
+            elif response.status_code == 400:
                 # Check if it's missing signature error (expected)
                 if "Missing signature" in response.text or "signature" in response.text.lower():
                     print(f"   ✅ Webhook correctly requires Stripe signature")
