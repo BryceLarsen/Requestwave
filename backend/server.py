@@ -339,6 +339,7 @@ class DesignUpdate(BaseModel):
     artist_photo: Optional[str] = None
     show_year: Optional[bool] = None
     show_notes: Optional[bool] = None
+    allow_song_suggestions: Optional[bool] = None
 
 class PlaylistImport(BaseModel):
     playlist_url: str
