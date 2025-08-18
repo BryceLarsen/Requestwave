@@ -630,7 +630,7 @@ async def activate_audience_link(musician_id: str, reason: str = "subscription_a
 def init_stripe_checkout(request: FastAPIRequest) -> StripeCheckout:
     """Initialize Stripe checkout with webhook URL"""
     host_url = str(request.base_url).rstrip('/')
-    webhook_url = f"{host_url}/api/webhook/stripe"
+    webhook_url = f"{host_url}/api/stripe/webhook"
     return StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
 
 async def require_pro_access(musician_id: str):
