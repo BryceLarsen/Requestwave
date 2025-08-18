@@ -5098,7 +5098,7 @@ async def create_freemium_checkout_session(
         if not STRIPE_API_KEY:
             logger.error(f"[{error_id}] STRIPE_API_KEY not configured")
             raise HTTPException(
-                status_code=500, 
+                status_code=400, 
                 detail={"error_id": error_id, "message": "Stripe API key not configured. Please contact support."}
             )
         
