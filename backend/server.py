@@ -5110,19 +5110,12 @@ async def create_freemium_checkout_session(
         
         # 2. Request Validation (422 for missing/invalid fields)
         plan = checkout_request.plan
-        success_url = checkout_request.success_url
-        cancel_url = checkout_request.cancel_url
         
         validation_errors = []
         if not plan:
             validation_errors.append("plan is required")
         elif plan not in ['monthly', 'annual']:
             validation_errors.append("plan must be 'monthly' or 'annual'")
-        
-        if not success_url:
-            validation_errors.append("success_url is required")
-        if not cancel_url:
-            validation_errors.append("cancel_url is required")
         
         if validation_errors:
             logger.error(f"[{error_id}] Validation errors: {validation_errors}")
