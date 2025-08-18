@@ -2192,6 +2192,41 @@ async def get_musician_design(slug: str):
         "bio": musician.get("bio", "")
     }
 
+# NEW: /api/me endpoint with billing state for subscription page UI
+@api_router.get("/me", response_model=UserMeResponse)
+async def get_current_user(musician_id: str = Depends(get_current_musician)):
+    """Get current user with billing state for subscription page UI"""
+    musician = await db.musicians.find_one({"id": musician_id})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    # Get billing state
+    plan = musician.get("plan", "free")
+    status = musician.get("status", "none")
+    trial_end = musician.get("trial_end")
+    
+    # Get next invoice date (placeholder for now - would need Stripe API call)
+    next_invoice_date = None
+    if status == "active" and musician.get("subscription_current_period_end"):
+        next_invoice_date = musician.get("subscription_current_period_end")
+    
+    billing_state = BillingState(
+        plan=plan,
+        status=status,
+        trial_end=trial_end,
+        next_invoice_date=next_invoice_date,
+        audience_link_active=await check_audience_link_access(musician_id),
+        has_pro_access=await check_pro_access(musician_id)
+    )
+    
+    return UserMeResponse(
+        id=musician["id"],
+        name=musician["name"],
+        email=musician["email"],
+        slug=musician.get("slug", ""),
+        billing=billing_state
+    )
+
 @api_router.get("/profile", response_model=MusicianProfile)
 async def get_profile(musician_id: str = Depends(get_current_musician)):
     """Get current musician's profile"""
