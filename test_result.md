@@ -101,7 +101,7 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
-user_problem_statement: "CRITICAL PRODUCTION BUG: POST /api/subscription/checkout failing with 'The minimum number of trial period days is 1.' Code is passing trial_period_days: 0 to Stripe. Need to fix trial period logic to only pass trial_period_days when >= 1, set to 14 days for new users, and ensure proper trial behavior with startup fee on first invoice after trial."
+user_problem_statement: "CRITICAL PRODUCTION BUG: POST /api/subscription/checkout returning 400 with 'The proration_behavior parameter can only be passed if a billing_cycle_anchor exists.' Need to remove proration_behavior from subscription_data, keep trial_period_days: 14, let Stripe default billing cycle to trial end, and maintain $15 startup fee logic in checkout.session.completed webhook."
 
 backend:
   - task: "CRITICAL: Production Trial Period Days Stripe Error Fix"
