@@ -256,6 +256,19 @@ class CancelSubscriptionTester:
                 self.log_result("Cancel Subscription Period End", False, "No auth token available")
                 return
             
+            # First check if user has Pro access via debug endpoint
+            debug_response = self.make_request("GET", "/debug/billing-state")
+            if debug_response.status_code == 200:
+                debug_data = debug_response.json()
+                has_pro_access = debug_data.get("has_pro_access", False)
+                has_subscription = debug_data.get("stripe_subscription_id") is not None
+                
+                print(f"   📊 Debug: has_pro_access={has_pro_access}, has_subscription={has_subscription}")
+            else:
+                has_pro_access = False
+                has_subscription = False
+                print(f"   ⚠️  Could not get debug info: {debug_response.status_code}")
+            
             # Test period end cancellation
             cancel_data = {"when": "period_end"}
             
@@ -303,8 +316,12 @@ class CancelSubscriptionTester:
                     self.log_result("Cancel Subscription Period End", False, f"400 error with invalid JSON: {response.text}")
                     
             elif response.status_code == 403:
-                print(f"   ⚠️  Access denied - user may not have Pro access")
-                self.log_result("Cancel Subscription Period End", True, "Correctly enforced Pro access requirement")
+                if not has_pro_access:
+                    print(f"   ✅ Access correctly denied - user doesn't have Pro access")
+                    self.log_result("Cancel Subscription Period End", True, "Correctly enforced Pro access requirement for free user")
+                else:
+                    print(f"   ❌ Access denied but user should have Pro access")
+                    self.log_result("Cancel Subscription Period End", False, "Pro user incorrectly denied access")
                 
             else:
                 self.log_result("Cancel Subscription Period End", False, f"Unexpected status code: {response.status_code}, Response: {response.text}")
