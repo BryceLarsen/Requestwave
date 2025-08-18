@@ -52,7 +52,7 @@ STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
 # Freemium Model Configuration
 STARTUP_FEE = 15.00  # One-time startup fee
 MONTHLY_PLAN_FEE = 5.00  # Monthly subscription
-ANNUAL_PLAN_FEE = 24.00  # Annual subscription (equivalent to $2/month)
+ANNUAL_PLAN_FEE = 48.00  # Annual subscription (equivalent to $4/month)
 TRIAL_DAYS = 14  # 14-day trial (FINALIZED - consistent with checkout logic)
 GRACE_PERIOD_DAYS = 3  # Grace period for failed payments
 
