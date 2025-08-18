@@ -105,7 +105,7 @@ user_problem_statement: "FEATURE REQUEST: Implement complete Stripe checkout flo
 
 backend:
   - task: "Complete Stripe Checkout Flow with Custom Trial Messaging"
-    implemented: false
+    implemented: true
     working: false
     file: "server.py, App.js"
     stuck_count: 0
@@ -115,6 +115,9 @@ backend:
       - working: false
         agent: "user"
         comment: "FEATURE REQUEST: User wants complete Stripe checkout implementation with custom messaging. When user clicks Monthly/Annual, create Stripe Checkout Session with 14-day trial showing custom message: 'Enjoy 14 days free. You won't be charged today. After the trial, you'll be billed $15 startup + your first {monthly/annual} payment.' Need new price ID env vars (STRIPE_PRICE_ID_MONTHLY_10, STRIPE_PRICE_ID_ANNUAL_48, STRIPE_PRICE_ID_STARTUP_15), custom_text in checkout session, frontend plan selection, maintain startup fee webhook logic. Acceptance: Monthly shows 'first monthly payment', Annual shows 'first annual payment', 14-day trial, no upfront charge, return as Pro (trialing)."
+      - working: "NA"
+        agent: "main"
+        comment: "IMPLEMENTATION COMPLETE: Updated environment variables to use new naming convention (STRIPE_PRICE_ID_MONTHLY_10, STRIPE_PRICE_ID_ANNUAL_48, STRIPE_PRICE_ID_STARTUP_15). Enhanced checkout session creation with custom_text showing 'Enjoy 14 days free. You won't be charged today. After the trial, you'll be billed $15 startup + your first {monthly/annual} payment.' Frontend simplified to send only {plan: 'monthly'/'annual'} in request body. Backend generates success/cancel URLs automatically pointing to /dashboard/billing. Updated V2CheckoutRequest model to only require plan field. Set allow_promotion_codes: true, trial_period_days: 14 always for new checkouts. Legacy startup fee webhook logic preserved with PRICE_STARTUP_15 alias. Updated monthly pricing from $5 to $10."
 
   - task: "Song Suggestions Feature Flag Bug Fix"
     implemented: true
