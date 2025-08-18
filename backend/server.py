@@ -1837,14 +1837,42 @@ async def stripe_webhook_handler(request: FastAPIRequest):
         if event_type == "checkout.session.completed":
             sub_id = obj.get("subscription")
             customer_id = obj.get("customer")
+            
+            logger.info(f"[{webhook_id}] Processing checkout.session.completed", extra={
+                "webhook_id": webhook_id,
+                "stripe_event_id": event_id,
+                "customer_id": customer_id,
+                "subscription_id": sub_id
+            })
+            
             if sub_id and customer_id:
-                await mark_trial_started(customer_id, sub_id)
-                logger.info(f"Trial started for customer {customer_id}, subscription {sub_id}")
+                try:
+                    await mark_trial_started(customer_id, sub_id)
+                    logger.info(f"[{webhook_id}] Trial started successfully", extra={
+                        "webhook_id": webhook_id,
+                        "customer_id": customer_id,
+                        "subscription_id": sub_id
+                    })
+                except Exception as e:
+                    logger.error(f"[{webhook_id}] Error starting trial", extra={
+                        "webhook_id": webhook_id,
+                        "customer_id": customer_id,
+                        "subscription_id": sub_id,
+                        "error": str(e),
+                        "stack_trace": traceback.format_exc()
+                    })
         
         # Handle invoice.upcoming - add startup fee to FIRST post-trial invoice only
         elif event_type == "invoice.upcoming":
             subscription_id = obj.get("subscription")
             customer_id = obj.get("customer")
+            
+            logger.info(f"[{webhook_id}] Processing invoice.upcoming", extra={
+                "webhook_id": webhook_id,
+                "stripe_event_id": event_id,
+                "customer_id": customer_id,
+                "subscription_id": subscription_id
+            })
             
             if subscription_id and customer_id:
                 # Get subscription details
@@ -1854,7 +1882,7 @@ async def stripe_webhook_handler(request: FastAPIRequest):
                     
                     # Only if trialing or trial just ended, and startup fee not already applied
                     if trial_end and not await startup_fee_already_applied(customer_id, subscription_id):
-                        logger.info(f"Adding startup fee to upcoming invoice for customer {customer_id}, subscription {subscription_id}")
+                        logger.info(f"[{webhook_id}] Adding startup fee to upcoming invoice")
                         
                         # Add one-time startup fee invoice item to this upcoming invoice
                         stripe.InvoiceItem.create(
@@ -1866,47 +1894,147 @@ async def stripe_webhook_handler(request: FastAPIRequest):
                         
                         # Mark as applied to prevent duplicates
                         await mark_startup_fee_applied(customer_id, subscription_id)
-                        logger.info(f"Startup fee applied for customer {customer_id}, subscription {subscription_id}")
+                        
+                        logger.info(f"[{webhook_id}] Startup fee applied successfully", extra={
+                            "webhook_id": webhook_id,
+                            "customer_id": customer_id,
+                            "subscription_id": subscription_id
+                        })
+                    else:
+                        logger.info(f"[{webhook_id}] Startup fee already applied, skipping")
                     
                 except Exception as e:
-                    logger.error(f"Error processing invoice.upcoming: {str(e)}")
+                    logger.error(f"[{webhook_id}] Error processing invoice.upcoming", extra={
+                        "webhook_id": webhook_id,
+                        "customer_id": customer_id,
+                        "subscription_id": subscription_id,
+                        "error": str(e),
+                        "stack_trace": traceback.format_exc()
+                    })
         
         # Handle invoice.payment_succeeded - keep access on
         elif event_type == "invoice.payment_succeeded":
             customer_id = obj.get("customer")
+            
+            logger.info(f"[{webhook_id}] Processing invoice.payment_succeeded", extra={
+                "webhook_id": webhook_id,
+                "stripe_event_id": event_id,
+                "customer_id": customer_id
+            })
+            
             if customer_id:
-                await mark_access(customer_id=customer_id, active=True)
-                logger.info(f"Access granted for customer {customer_id}")
+                try:
+                    await mark_access(customer_id=customer_id, active=True)
+                    logger.info(f"[{webhook_id}] Access granted for successful payment", extra={
+                        "webhook_id": webhook_id,
+                        "customer_id": customer_id
+                    })
+                except Exception as e:
+                    logger.error(f"[{webhook_id}] Error granting access", extra={
+                        "webhook_id": webhook_id,
+                        "customer_id": customer_id,
+                        "error": str(e),
+                        "stack_trace": traceback.format_exc()
+                    })
         
         # Handle invoice.payment_failed - turn off access
         elif event_type == "invoice.payment_failed":
             customer_id = obj.get("customer")
+            
+            logger.info(f"[{webhook_id}] Processing invoice.payment_failed", extra={
+                "webhook_id": webhook_id,
+                "stripe_event_id": event_id,
+                "customer_id": customer_id
+            })
+            
             if customer_id:
-                # Optionally add 3d grace; for now, turn off immediately
-                await mark_access(customer_id=customer_id, active=False)
-                logger.info(f"Access revoked for customer {customer_id} due to payment failure")
+                try:
+                    await mark_access(customer_id=customer_id, active=False)
+                    logger.info(f"[{webhook_id}] Access revoked due to payment failure", extra={
+                        "webhook_id": webhook_id,
+                        "customer_id": customer_id
+                    })
+                except Exception as e:
+                    logger.error(f"[{webhook_id}] Error revoking access", extra={
+                        "webhook_id": webhook_id,
+                        "customer_id": customer_id,
+                        "error": str(e),
+                        "stack_trace": traceback.format_exc()
+                    })
         
         # Handle customer.subscription.updated - toggle access based on status
         elif event_type == "customer.subscription.updated":
             customer_id = obj.get("customer")
             status = obj.get("status")
+            
+            logger.info(f"[{webhook_id}] Processing customer.subscription.updated", extra={
+                "webhook_id": webhook_id,
+                "stripe_event_id": event_id,
+                "customer_id": customer_id,
+                "subscription_status": status
+            })
+            
             if customer_id and status:
-                active = status in ("trialing", "active")
-                await mark_access(customer_id=customer_id, active=active)
-                logger.info(f"Access {'granted' if active else 'revoked'} for customer {customer_id}, status: {status}")
+                try:
+                    active = status in ("trialing", "active")
+                    await mark_access(customer_id=customer_id, active=active)
+                    logger.info(f"[{webhook_id}] Access {'granted' if active else 'revoked'} for subscription update", extra={
+                        "webhook_id": webhook_id,
+                        "customer_id": customer_id,
+                        "subscription_status": status,
+                        "access_granted": active
+                    })
+                except Exception as e:
+                    logger.error(f"[{webhook_id}] Error updating access", extra={
+                        "webhook_id": webhook_id,
+                        "customer_id": customer_id,
+                        "subscription_status": status,
+                        "error": str(e),
+                        "stack_trace": traceback.format_exc()
+                    })
         
         # Handle customer.subscription.deleted - turn off access
         elif event_type == "customer.subscription.deleted":
             customer_id = obj.get("customer")
+            
+            logger.info(f"[{webhook_id}] Processing customer.subscription.deleted", extra={
+                "webhook_id": webhook_id,
+                "stripe_event_id": event_id,
+                "customer_id": customer_id
+            })
+            
             if customer_id:
-                await mark_access(customer_id=customer_id, active=False)
-                logger.info(f"Access revoked for customer {customer_id} - subscription deleted")
+                try:
+                    await mark_access(customer_id=customer_id, active=False)
+                    logger.info(f"[{webhook_id}] Access revoked for subscription deletion", extra={
+                        "webhook_id": webhook_id,
+                        "customer_id": customer_id
+                    })
+                except Exception as e:
+                    logger.error(f"[{webhook_id}] Error revoking access", extra={
+                        "webhook_id": webhook_id,
+                        "customer_id": customer_id,
+                        "error": str(e),
+                        "stack_trace": traceback.format_exc()
+                    })
+        
+        # Log successful webhook processing
+        logger.info(f"[{webhook_id}] Webhook processed successfully", extra={
+            "webhook_id": webhook_id,
+            "stripe_event_id": event_id,
+            "event_type": event_type
+        })
         
         # Always return success to Stripe
         return {"received": True}
         
     except Exception as e:
-        logger.error(f"Error processing Stripe webhook: {str(e)}")
+        logger.error(f"[{webhook_id}] Critical webhook error", extra={
+            "webhook_id": webhook_id,
+            "stripe_event_id": event_id,
+            "error": str(e),
+            "stack_trace": traceback.format_exc()
+        })
         # Still return success to prevent Stripe retries
         return {"status": "error", "message": str(e)}
 
