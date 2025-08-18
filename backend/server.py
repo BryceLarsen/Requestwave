@@ -51,17 +51,21 @@ STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
 
 # Freemium Model Configuration
 STARTUP_FEE = 15.00  # One-time startup fee
-MONTHLY_PLAN_FEE = 5.00  # Monthly subscription
+MONTHLY_PLAN_FEE = 10.00  # Monthly subscription (updated to $10/month)
 ANNUAL_PLAN_FEE = 48.00  # Annual subscription (equivalent to $4/month)
 TRIAL_DAYS = 14  # 14-day trial (FINALIZED - consistent with checkout logic)
 GRACE_PERIOD_DAYS = 3  # Grace period for failed payments
 
-# Stripe Price IDs from environment
-PRICE_STARTUP_15 = os.environ.get('PRICE_STARTUP_15')
-PRICE_MONTHLY_5 = os.environ.get('PRICE_MONTHLY_5')
-PRICE_ANNUAL_24 = os.environ.get('PRICE_ANNUAL_24')
-PRICE_ANNUAL_48 = os.environ.get('PRICE_ANNUAL_48')
+# Stripe Price IDs from environment (new naming convention)
+STRIPE_PRICE_ID_STARTUP_15 = os.environ.get('STRIPE_PRICE_ID_STARTUP_15')
+STRIPE_PRICE_ID_MONTHLY_10 = os.environ.get('STRIPE_PRICE_ID_MONTHLY_10')
+STRIPE_PRICE_ID_ANNUAL_48 = os.environ.get('STRIPE_PRICE_ID_ANNUAL_48')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
+
+# Keep legacy variables for backward compatibility
+PRICE_STARTUP_15 = STRIPE_PRICE_ID_STARTUP_15
+PRICE_MONTHLY_5 = STRIPE_PRICE_ID_MONTHLY_10  # Note: this is now $10/month
+PRICE_ANNUAL_48 = STRIPE_PRICE_ID_ANNUAL_48
 
 def _plan_price_id(plan: str) -> str:
     """Get Stripe price ID for a given plan"""
