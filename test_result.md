@@ -105,7 +105,7 @@ user_problem_statement: "CRITICAL PRODUCTION BUG: POST /api/subscription/checkou
 
 backend:
   - task: "CRITICAL: Production Trial Period Days Stripe Error Fix"
-    implemented: false
+    implemented: true
     working: false
     file: "server.py"
     stuck_count: 0
@@ -115,6 +115,9 @@ backend:
       - working: false
         agent: "user"
         comment: "CRITICAL PRODUCTION BUG: User reported 'In production, POST /api/subscription/checkout is failing with \"The minimum number of trial period days is 1.\" That means the code is passing trial_period_days: 0.' Need to fix trial period logic to only pass trial_period_days when >= 1, set 14 days for new users, keep $15 startup fee logic on checkout.session.completed. Acceptance: User sees '14 days free' in Stripe Checkout, no upfront charge, day 14 invoice combines $15 startup + subscription, user marked Pro immediately after checkout."
+      - working: "NA"
+        agent: "main"
+        comment: "ISSUE ANALYSIS: Found root cause - code was always passing trial_period_days to Stripe, even when 0, which violates Stripe's minimum requirement of 1 day. SOLUTION IMPLEMENTED: Modified subscription_data construction to only include trial_period_days when >= 1. For new users (has_had_trial=false): sets trial_days=14 and includes in subscription_data. For returning users (has_had_trial=true): sets trial_days=0 and omits trial_period_days from subscription_data entirely. This allows new users to see '14 days free' in Stripe Checkout while returning users get charged immediately. Existing $15 startup fee logic on checkout.session.completed webhook is preserved unchanged."
 
   - task: "Song Suggestions Feature Flag Bug Fix"
     implemented: true
