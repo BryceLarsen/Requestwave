@@ -5435,9 +5435,9 @@ async def create_freemium_checkout_session(
             detail={"error_id": error_id, "message": "Internal server error. Please try again or contact support."}
         )
 
-# NEW: Checkout confirmation endpoint for return flow
+# NEW: Checkout confirmation endpoint for return flow (no authentication required)
 @api_router.get("/billing/confirm")
-async def confirm_checkout(session_id: str, musician_id: str = Depends(get_current_musician)):
+async def confirm_checkout(session_id: str):
     """Confirm checkout session and update user state - for return flow from Stripe"""
     import uuid
     import traceback
@@ -5447,17 +5447,22 @@ async def confirm_checkout(session_id: str, musician_id: str = Depends(get_curre
         if not session_id:
             raise HTTPException(status_code=400, detail={"error_id": error_id, "message": "session_id is required"})
         
-        logger.info(f"[{error_id}] Checkout confirmation started", extra={
-            "error_id": error_id,
-            "musician_id": musician_id,
-            "session_id": session_id
-        })
-        
         # Get session from Stripe
         import stripe
         stripe.api_key = STRIPE_API_KEY
         
         session = stripe.checkout.Session.retrieve(session_id)
+        
+        # Extract musician_id from session metadata
+        musician_id = session.metadata.get("musician_id")
+        if not musician_id:
+            raise HTTPException(status_code=400, detail={"error_id": error_id, "message": "Invalid session - missing musician_id in metadata"})
+        
+        logger.info(f"[{error_id}] Checkout confirmation started", extra={
+            "error_id": error_id,
+            "musician_id": musician_id,
+            "session_id": session_id
+        })
         
         if session.payment_status == "paid" and session.status == "complete":
             # Get subscription details
