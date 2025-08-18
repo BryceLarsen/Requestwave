@@ -104,23 +104,17 @@
 user_problem_statement: "CRITICAL: Complete three-state system by fixing remaining gaps and verifying live billing flow. Unify 403 responses for Pro-gated endpoints with exact JSON format. Confirm all required endpoints are Pro-gated. Verify checkout + trial + startup fee flow works correctly. Ensure return-flow bookkeeping sets proper state. Confirm Stripe event handlers for post-trial activation. Add proper error logging with error_id. Acceptance: All Pro endpoints return same 403 JSON, Free→Checkout→Free Trial flow works, trial end→Active, startup fee on first post-trial invoice."
 
 backend:
-  - task: "Implement Three Explicit Subscription States with Feature Gating"
-    implemented: true
-    working: true
-    file: "server.py, App.js"
+  - task: "Complete Three-State System - Fix Gaps & Verify Live Billing Flow"
+    implemented: false
+    working: false
+    file: "server.py"
     stuck_count: 0
-    priority: "high"
-    needs_retesting: false
+    priority: "critical"
+    needs_retesting: true
     status_history:
       - working: false
         agent: "user"
-        comment: "FEATURE REQUEST: Implement three explicit subscription states (Free, Free Trial, Subscribed) with proper feature gating, data model updates, webhook handling, and UI states. Add plan/status/trial_end fields to user model, implement server-side gating for Pro features (plan='pro' AND status IN ('trialing','active','past_due')), handle state transitions via webhooks (checkout.session.completed, customer.subscription.updated, invoice.paid, invoice.payment_failed, customer.subscription.deleted), create subscription page UI with Free (locked), Free Trial (countdown), Subscribed (active) states, add /api/debug/billing-state endpoint. Acceptance: Free users get 403 for Pro features, trial users see countdown and enabled audience link, subscribed users see next bill date."
-      - working: "NA"
-        agent: "main"
-        comment: "COMPREHENSIVE IMPLEMENTATION COMPLETE: 1) DATA MODEL: Updated Musician model with plan ('free'|'pro'), status ('none'|'trialing'|'active'|'past_due'|'canceled'), trial_end fields. 2) SERVER-SIDE GATING: Implemented check_pro_access() for plan='pro' AND status IN ('trialing','active','past_due'), get_current_pro_musician() dependency for Pro endpoints, 403 responses with 'Pro feature - start your 14-day free trial' message. 3) WEBHOOK STATE TRANSITIONS: Updated mark_trial_started() for Free→Free Trial, mark_subscription_active() for Free Trial→Subscribed, mark_subscription_canceled() for →Free, mark_subscription_past_due() for Active→Past Due. Enhanced all webhook handlers with structured logging. 4) UI STATES: Complete subscription page UI with Free (locked audience link, CTA buttons), Free Trial (countdown, enabled link), Subscribed (next bill date, enabled link), Past Due (payment banner, enabled link). 5) NEW ENDPOINTS: /api/me returns UserMeResponse with BillingState, /api/debug/billing-state for QA. 6) FRONTEND: Added currentUser state, fetchCurrentUser(), updated handleUpgrade() to accept plan parameter, three-state conditional UI rendering with copy strings as specified."
-      - working: true
-        agent: "testing"
-        comment: "THREE-STATE SUBSCRIPTION SYSTEM COMPREHENSIVE TESTING COMPLETE: Core implementation is working correctly with 66.7% success rate (4/6 tests passed). ✅ NEW /api/me ENDPOINT WORKING: Returns proper UserMeResponse with BillingState containing all required fields (plan, status, trial_end, audience_link_active, has_pro_access) with correct types and three-state logic consistency. ✅ DEBUG BILLING STATE ENDPOINT WORKING: GET /api/debug/billing-state returns comprehensive billing info with all required fields, consistent with /api/me endpoint. ✅ THREE-STATE LOGIC CORRECT: Free state (plan='free', status='none') correctly denies Pro access, Pro access logic (plan='pro' AND status IN ('trialing','active','past_due')) implemented correctly. ✅ WEBHOOK ENDPOINTS ACCESSIBLE: Stripe webhook endpoint accessible with proper signature validation. ❌ Minor: Server-side gating has inconsistent error messages between require_pro_access() and get_current_pro_musician(), and song suggestions endpoint incorrectly uses get_current_musician instead of Pro gating. ❌ Expected: Subscription checkout endpoints fail due to placeholder Stripe configuration (STRIPE_PRICE_ID_MONTHLY_10, STRIPE_PRICE_ID_ANNUAL_48 not configured) - this is expected in test environment. ACCEPTANCE CRITERIA MET: Free users correctly get 403 for Pro features, three-state data model working, server-side gating functional, new endpoints operational. The core three-state subscription system is production-ready with minor consistency issues."
+        comment: "CRITICAL: Complete three-state system by fixing remaining gaps and verifying live billing flow. Unify 403 responses for Pro-gated endpoints with exact JSON format {'message': 'Pro feature — start your 14-day free trial to unlock your Audience Link.'}. Confirm all required endpoints are Pro-gated. Verify checkout + trial + startup fee flow (accepts {plan: monthly|annual}, creates Checkout Session with trial_period_days: 14, returns {url}). Ensure return-flow bookkeeping sets plan='pro', status='trialing', trial_end. Confirm Stripe event handlers for invoice.payment_succeeded→status='active', invoice.payment_failed→status='past_due', customer.subscription.deleted→plan='free',status='canceled'. Add proper error logging with error_id and Stripe Request/Event IDs. Acceptance: All Pro endpoints return same 403 JSON, Free→Checkout→Free Trial flow works, trial end→Active, startup fee on first post-trial invoice."
 
   - task: "Song Suggestions Feature Flag Bug Fix"
     implemented: true
