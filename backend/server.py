@@ -543,7 +543,7 @@ async def get_current_pro_musician(credentials: HTTPAuthorizationCredentials = D
     if not await check_pro_access(musician_id):
         raise HTTPException(
             status_code=403, 
-            detail={"message": "Pro feature — start your 14-day free trial to unlock your Audience Link."}
+            detail="Pro feature — start your 14-day free trial to unlock your Audience Link."
         )
     
     return musician_id
