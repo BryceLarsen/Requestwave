@@ -2010,7 +2010,7 @@ async def stripe_webhook_handler(request: FastAPIRequest):
                         "stack_trace": traceback.format_exc()
                     })
         
-        # Handle invoice.payment_succeeded - keep access on
+        # Handle invoice.payment_succeeded - Free Trial → Subscribed state transition
         elif event_type == "invoice.payment_succeeded":
             customer_id = obj.get("customer")
             
@@ -2022,13 +2022,13 @@ async def stripe_webhook_handler(request: FastAPIRequest):
             
             if customer_id:
                 try:
-                    await mark_access(customer_id=customer_id, active=True)
-                    logger.info(f"[{webhook_id}] Access granted for successful payment", extra={
+                    await mark_subscription_active(customer_id)
+                    logger.info(f"[{webhook_id}] Subscription marked as active", extra={
                         "webhook_id": webhook_id,
                         "customer_id": customer_id
                     })
                 except Exception as e:
-                    logger.error(f"[{webhook_id}] Error granting access", extra={
+                    logger.error(f"[{webhook_id}] Error marking subscription active", extra={
                         "webhook_id": webhook_id,
                         "customer_id": customer_id,
                         "error": str(e),
