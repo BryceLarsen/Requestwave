@@ -945,6 +945,7 @@ const MusicianDashboard = () => {
 
   // Subscription management state (Freemium model)
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null); // NEW: Three-state billing info
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('annual'); // Default to annual (better value)
   const [upgrading, setUpgrading] = useState(false);
