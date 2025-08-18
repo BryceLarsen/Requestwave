@@ -978,6 +978,7 @@ const MusicianDashboard = () => {
     fetchSongs();
     fetchRequests();
     fetchSubscriptionStatus();
+    fetchCurrentUser(); // NEW: Fetch current user with billing state
     fetchSongSuggestions();
     fetchPlaylists(); // NEW: Fetch playlists on dashboard initialization
     // NEW: Fetch show-related data
