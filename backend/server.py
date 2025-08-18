@@ -2762,7 +2762,7 @@ async def get_song_suggestions(musician_id: str = Depends(get_current_pro_musici
 async def update_suggestion_status(
     suggestion_id: str,
     status_data: dict,  # {"status": "added|rejected"}
-    musician_id: str = Depends(get_current_musician)
+    musician_id: str = Depends(get_current_pro_musician)
 ):
     """Update song suggestion status (add to repertoire or reject)"""
     try:
