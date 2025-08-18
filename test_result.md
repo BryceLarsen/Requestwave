@@ -104,6 +104,21 @@
 user_problem_statement: "Fix the Stripe subscription checkout flow - users are getting errors when trying to sign up. Need to ensure Stripe is properly integrated in production with correct price IDs, webhook handling, and API keys. Focus on subscription page errors during signup process."
 
 backend:
+  - task: "Stripe Subscription Checkout Flow Fix"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reported: 'The subscription page is currently returning errors when users try to sign up. Please fix the checkout flow so that musicians can successfully subscribe.' Checkout flow failing in production."
+      - working: "NA"
+        agent: "main"
+        comment: "ISSUE ANALYSIS: Found multiple Stripe configuration issues: 1) Placeholder values in environment variables (STRIPE_WEBHOOK_SECRET, price IDs), 2) Inconsistent webhook URL references (/api/webhook/stripe vs /api/stripe/webhook), 3) Poor error handling for missing API keys. FIXES IMPLEMENTED: Enhanced _plan_price_id() function with better validation, added Stripe API key validation in checkout endpoint, improved webhook secret validation, fixed webhook URL consistency, updated annual pricing to $48. Created stripe_config_check.py script to help identify configuration issues."
+
   - task: "Playlist Creation Bug Fix"
     implemented: true
     working: true
