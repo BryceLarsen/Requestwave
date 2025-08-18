@@ -101,7 +101,7 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
-user_problem_statement: "CRITICAL: Complete three-state system by fixing remaining gaps and verifying live billing flow. Unify 403 responses for Pro-gated endpoints with exact JSON format. Confirm all required endpoints are Pro-gated. Verify checkout + trial + startup fee flow works correctly. Ensure return-flow bookkeeping sets proper state. Confirm Stripe event handlers for post-trial activation. Add proper error logging with error_id. Acceptance: All Pro endpoints return same 403 JSON, Free→Checkout→Free Trial flow works, trial end→Active, startup fee on first post-trial invoice."
+user_problem_statement: "FEATURE REQUEST: Add Cancel Subscription functionality and enforce no repeat free trial for returning users. Add trial_eligible boolean field, Cancel Subscription button with modal (Cancel now vs End of period), POST /api/billing/cancel endpoint with immediate/period_end options, enforce trial_eligible=false prevents repeat trials, update checkout logic to respect trial eligibility, update webhook handling for cancellation, update UI copy strings. Acceptance: Pro users can cancel immediately/period_end, revert to Free but keep data, re-subscribing users get no trial and immediate startup fee."
 
 backend:
   - task: "Complete Three-State System - Fix Gaps & Verify Live Billing Flow"
