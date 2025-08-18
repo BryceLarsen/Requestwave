@@ -5174,29 +5174,37 @@ async def create_freemium_checkout_session(
             "has_had_trial": has_had_trial
         })
         
-        # 6. Create Checkout Session (mode=subscription)
+        # 6. Create Checkout Session (mode=subscription) with custom messaging
         try:
             import stripe
             stripe.api_key = STRIPE_API_KEY
             
-            # Build subscription_data - only include trial_period_days if >= 1
-            # Note: removed proration_behavior as it requires billing_cycle_anchor
+            # Map plan to price ID and label for custom message
+            priceId = price_id  # Already validated by _plan_price_id()
+            planLabel = "annual" if plan == "annual" else "monthly"
+            
+            # Build subscription_data with trial period
             subscription_data = {
+                "trial_period_days": 14,  # Always 14 days for new checkouts
                 "metadata": {"rw_plan": plan, "musician_id": musician_id}
             }
             
-            # Only pass trial_period_days if >= 1 (Stripe minimum requirement)
-            if trial_days >= 1:
-                subscription_data["trial_period_days"] = trial_days
+            # Get app URL for success/cancel URLs
+            app_url = os.environ.get('FRONTEND_URL', 'https://livewave-music.emergent.host')
             
             session = stripe.checkout.Session.create(
                 mode="subscription",
-                success_url=success_url,
-                cancel_url=cancel_url,
-                customer_email=customer_email,
-                line_items=[{"price": price_id, "quantity": 1}],
+                line_items=[{"price": priceId, "quantity": 1}],
                 subscription_data=subscription_data,
-                allow_promotion_codes=False,
+                customer_email=customer_email,
+                success_url=f"{app_url}/dashboard/billing?session_id={{CHECKOUT_SESSION_ID}}",
+                cancel_url=f"{app_url}/dashboard/billing",
+                allow_promotion_codes=True,
+                custom_text={
+                    "submit": {
+                        "message": f"Enjoy 14 days free. You won't be charged today. After the trial, you'll be billed $15 startup + your first {planLabel} payment."
+                    }
+                },
                 metadata={"musician_id": musician_id, "plan": plan, "error_id": error_id}
             )
             
