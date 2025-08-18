@@ -2091,7 +2091,7 @@ async def stripe_webhook_handler(request: FastAPIRequest):
                         "stack_trace": traceback.format_exc()
                     })
         
-        # Handle customer.subscription.deleted - turn off access
+        # Handle customer.subscription.deleted - Free Trial → Free or Subscribed → Free
         elif event_type == "customer.subscription.deleted":
             customer_id = obj.get("customer")
             
@@ -2103,13 +2103,13 @@ async def stripe_webhook_handler(request: FastAPIRequest):
             
             if customer_id:
                 try:
-                    await mark_access(customer_id=customer_id, active=False)
-                    logger.info(f"[{webhook_id}] Access revoked for subscription deletion", extra={
+                    await mark_subscription_canceled(customer_id)
+                    logger.info(f"[{webhook_id}] Subscription canceled, user returned to Free", extra={
                         "webhook_id": webhook_id,
                         "customer_id": customer_id
                     })
                 except Exception as e:
-                    logger.error(f"[{webhook_id}] Error revoking access", extra={
+                    logger.error(f"[{webhook_id}] Error canceling subscription", extra={
                         "webhook_id": webhook_id,
                         "customer_id": customer_id,
                         "error": str(e),
