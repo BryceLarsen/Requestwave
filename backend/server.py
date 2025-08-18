@@ -168,10 +168,16 @@ class Musician(BaseModel):
     # NEW: Freemium model fields
     audience_link_active: bool = False
     has_had_trial: bool = False
-    trial_end: Optional[datetime] = None
+    
+    # NEW: Three explicit subscription states
+    plan: str = "free"  # "free" | "pro" (default "free")
+    status: str = "none"  # "none" | "trialing" | "active" | "past_due" | "canceled" (default "none")
+    trial_end: Optional[datetime] = None  # ISO timestamp (nullable)
+    
+    # Stripe integration fields
     stripe_customer_id: Optional[str] = None
     stripe_subscription_id: Optional[str] = None
-    subscription_status: Optional[str] = None  # active, canceled, incomplete_expired, etc.
+    subscription_status: Optional[str] = None  # Legacy - keep for backward compatibility
     subscription_current_period_end: Optional[datetime] = None
     payment_grace_period_end: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
