@@ -5152,7 +5152,7 @@ async def create_freemium_checkout_session(
         except ValueError as e:
             logger.error(f"[{error_id}] Price ID configuration error: {str(e)}")
             raise HTTPException(
-                status_code=500, 
+                status_code=400, 
                 detail={"error_id": error_id, "message": f"Price configuration error: {str(e)}"}
             )
         
