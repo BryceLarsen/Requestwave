@@ -70,14 +70,14 @@ PRICE_ANNUAL_48 = STRIPE_PRICE_ID_ANNUAL_48
 def _plan_price_id(plan: str) -> str:
     """Get Stripe price ID for a given plan"""
     if plan == "monthly":
-        price_id = PRICE_MONTHLY_5
+        price_id = STRIPE_PRICE_ID_MONTHLY_10
         if not price_id or price_id.startswith("price_YOUR_REAL"):
-            raise ValueError("Monthly plan price ID not configured. Please set PRICE_MONTHLY_5 environment variable with your real Stripe price ID.")
+            raise ValueError("Monthly plan price ID not configured. Please set STRIPE_PRICE_ID_MONTHLY_10 environment variable with your real Stripe price ID.")
         return price_id
     elif plan == "annual":
-        price_id = PRICE_ANNUAL_48
+        price_id = STRIPE_PRICE_ID_ANNUAL_48
         if not price_id or price_id.startswith("price_YOUR_REAL"):
-            raise ValueError("Annual plan price ID not configured. Please set PRICE_ANNUAL_48 environment variable with your real Stripe price ID.")
+            raise ValueError("Annual plan price ID not configured. Please set STRIPE_PRICE_ID_ANNUAL_48 environment variable with your real Stripe price ID.")
         return price_id
     else:
         raise ValueError(f"Invalid plan: {plan}. Must be 'monthly' or 'annual'.")
