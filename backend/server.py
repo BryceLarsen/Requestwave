@@ -1812,6 +1812,7 @@ async def mark_trial_started(customer_id: str, subscription_id: str):
                     "plan": "pro",
                     "status": "trialing",
                     "trial_end": datetime.utcnow() + timedelta(days=14),  # Default 14 days
+                    "trial_eligible": False,  # NEW: Prevent repeat trials
                     "audience_link_active": True,
                     "stripe_subscription_id": subscription_id,
                     "subscription_status": "trialing",
