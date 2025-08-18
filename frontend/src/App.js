@@ -1267,18 +1267,36 @@ const MusicianDashboard = () => {
     try {
       const plan = selectedPlan; // 'monthly' or 'annual'
       
-      const response = await axios.post(`${API}/subscription/checkout`, {
-        plan: plan,
-        success_url: `${window.location.origin}/dashboard?tab=subscription&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${window.location.origin}/dashboard?tab=subscription`
+      const res = await fetch(`${API}/subscription/checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          plan: plan,
+          success_url: `${window.location.origin}/dashboard?tab=subscription&session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${window.location.origin}/dashboard?tab=subscription`
+        })
       });
       
-      if (response.data.checkout_url) {
-        window.location.href = response.data.checkout_url;
+      const data = await res.json();
+      
+      if (!res.ok || !data?.url) {
+        throw new Error(data?.message || "No checkout URL received");
       }
+      
+      // Redirect to Stripe Checkout
+      window.location.assign(data.url);
+      
     } catch (error) {
-      console.error('Error creating checkout session:', error);
-      alert('Error processing subscription. Please try again.');
+      console.error('Checkout error:', error);
+      // Show user-friendly error message
+      if (error.message.includes('No checkout URL')) {
+        alert('Error creating checkout session. Please try again or contact support.');
+      } else {
+        alert(`Error processing subscription: ${error.message}`);
+      }
     } finally {
       setUpgrading(false);
     }
