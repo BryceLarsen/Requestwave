@@ -1274,9 +1274,7 @@ const MusicianDashboard = () => {
           "Authorization": `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
-          plan: plan,
-          success_url: `${window.location.origin}/dashboard?tab=subscription&session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `${window.location.origin}/dashboard?tab=subscription`
+          plan: plan
         })
       });
       
