@@ -5415,6 +5415,113 @@ async def create_freemium_checkout_session(
             detail={"error_id": error_id, "message": "Internal server error. Please try again or contact support."}
         )
 
+# NEW: Checkout confirmation endpoint for return flow
+@api_router.get("/billing/confirm")
+async def confirm_checkout(session_id: str, musician_id: str = Depends(get_current_musician)):
+    """Confirm checkout session and update user state - for return flow from Stripe"""
+    import uuid
+    import traceback
+    error_id = str(uuid.uuid4())[:8]
+    
+    try:
+        if not session_id:
+            raise HTTPException(status_code=400, detail={"error_id": error_id, "message": "session_id is required"})
+        
+        logger.info(f"[{error_id}] Checkout confirmation started", extra={
+            "error_id": error_id,
+            "musician_id": musician_id,
+            "session_id": session_id
+        })
+        
+        # Get session from Stripe
+        import stripe
+        stripe.api_key = STRIPE_API_KEY
+        
+        session = stripe.checkout.Session.retrieve(session_id)
+        
+        if session.payment_status == "paid" and session.status == "complete":
+            # Get subscription details
+            subscription_id = session.subscription
+            customer_id = session.customer
+            
+            if subscription_id and customer_id:
+                subscription = stripe.Subscription.retrieve(subscription_id)
+                
+                # Update user state: Free → Free Trial
+                trial_end = None
+                if subscription.trial_end:
+                    trial_end = datetime.fromtimestamp(subscription.trial_end)
+                
+                # Update database with trial state
+                await db.musicians.update_one(
+                    {"id": musician_id},
+                    {
+                        "$set": {
+                            "plan": "pro",
+                            "status": "trialing", 
+                            "trial_end": trial_end,
+                            "stripe_customer_id": customer_id,
+                            "stripe_subscription_id": subscription_id,
+                            "audience_link_active": True,
+                            "has_had_trial": True
+                        }
+                    }
+                )
+                
+                logger.info(f"[{error_id}] User state updated to Free Trial", extra={
+                    "error_id": error_id,
+                    "musician_id": musician_id,
+                    "trial_end": trial_end.isoformat() if trial_end else None
+                })
+                
+                return {
+                    "success": True,
+                    "plan": "pro",
+                    "status": "trialing",
+                    "trial_end": trial_end.isoformat() if trial_end else None,
+                    "message": "Free trial activated successfully"
+                }
+            else:
+                raise HTTPException(
+                    status_code=400, 
+                    detail={"error_id": error_id, "message": "Invalid session - missing subscription or customer"}
+                )
+        else:
+            raise HTTPException(
+                status_code=400, 
+                detail={"error_id": error_id, "message": f"Payment not completed - status: {session.payment_status}"}
+            )
+    
+    except stripe.error.StripeError as e:
+        stripe_request_id = getattr(e, 'request_id', 'unknown')
+        error_msg = str(e)
+        
+        logger.error(f"[{error_id}] Stripe error in confirmation", extra={
+            "error_id": error_id,
+            "stripe_request_id": stripe_request_id,
+            "stripe_error": error_msg,
+            "stack_trace": traceback.format_exc()
+        })
+        
+        raise HTTPException(
+            status_code=400, 
+            detail={"error_id": error_id, "message": f"Stripe error: {error_msg}"}
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[{error_id}] Unexpected error in confirmation", extra={
+            "error_id": error_id,
+            "error": str(e),
+            "stack_trace": traceback.format_exc()
+        })
+        
+        raise HTTPException(
+            status_code=500, 
+            detail={"error_id": error_id, "message": "Internal server error during confirmation"}
+        )
+
 @api_router.post("/subscription/cancel")
 async def cancel_freemium_subscription(musician_id: str = Depends(get_current_musician)):
     """Cancel current subscription (deactivate audience link)"""
