@@ -676,7 +676,7 @@ async def require_pro_access(musician_id: str):
     if not await check_pro_access(musician_id):
         raise HTTPException(
             status_code=403, 
-            detail={"message": "Pro feature — start your 14-day free trial to unlock your Audience Link."}
+            detail="Pro feature — start your 14-day free trial to unlock your Audience Link."
         )
 
 def parse_csv_content(content: bytes) -> List[Dict[str, Any]]:
