@@ -282,22 +282,35 @@ class StripeCheckoutTester:
                     error_data = response.json()
                     print(f"   📊 Error response data: {json.dumps(error_data, indent=2)}")
                     
-                    # Check if error response has proper structure
-                    if "message" in error_data:
-                        print(f"   ✅ Error response contains 'message' field")
-                        error_format_ok = True
+                    # Check FastAPI error response structure (detail.message format)
+                    detail = error_data.get("detail", {})
+                    if isinstance(detail, dict):
+                        has_message = "message" in detail
+                        has_error_id = "error_id" in detail
+                        
+                        if has_message:
+                            print(f"   ✅ Error response contains 'detail.message' field: {detail['message']}")
+                            error_format_ok = True
+                        else:
+                            print(f"   ❌ Error response missing 'detail.message' field")
+                            error_format_ok = False
+                        
+                        if has_error_id:
+                            print(f"   ✅ Error response contains 'detail.error_id' field: {detail['error_id']}")
+                        
+                        # Check if this is a configuration error (expected in test environment)
+                        message = detail.get("message", "")
+                        if "Price configuration error" in message and "not configured" in message:
+                            print(f"   ✅ EXPECTED: Stripe configuration error in test environment")
+                            print(f"   📊 This confirms the API response format is working correctly")
+                            self.log_result("Monthly Checkout API Response", True, f"✅ API response format correct (config error expected): {message}")
+                        elif error_format_ok:
+                            self.log_result("Monthly Checkout API Response", True, f"✅ Error response format correct: {message}")
+                        else:
+                            self.log_result("Monthly Checkout API Response", False, f"❌ Error response format incorrect")
                     else:
-                        print(f"   ❌ Error response missing 'message' field")
-                        error_format_ok = False
-                    
-                    # Check for error_id (optional but good practice)
-                    if "error_id" in error_data:
-                        print(f"   ✅ Error response contains 'error_id' field for tracking")
-                    
-                    if error_format_ok:
-                        self.log_result("Monthly Checkout API Response", True, f"✅ Error response format correct: {error_data.get('message', 'No message')}")
-                    else:
-                        self.log_result("Monthly Checkout API Response", False, f"❌ Error response format incorrect")
+                        print(f"   ❌ Error response 'detail' is not a dict: {type(detail)}")
+                        self.log_result("Monthly Checkout API Response", False, f"❌ Error response format incorrect - detail not dict")
                         
                 except json.JSONDecodeError:
                     print(f"   ❌ Error response is not valid JSON")
