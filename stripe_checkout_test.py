@@ -538,24 +538,29 @@ class StripeCheckoutTester:
                     error_data = response.json()
                     print(f"   📊 Error response: {json.dumps(error_data, indent=2)}")
                     
-                    # Check error response structure
-                    has_message = "message" in error_data
-                    has_error_id = "error_id" in error_data
-                    
-                    if has_message:
-                        print(f"   ✅ Error response contains 'message' field: {error_data['message']}")
+                    # Check FastAPI error response structure (detail.message format)
+                    detail = error_data.get("detail", {})
+                    if isinstance(detail, dict):
+                        has_message = "message" in detail
+                        has_error_id = "error_id" in detail
+                        
+                        if has_message:
+                            print(f"   ✅ Error response contains 'detail.message' field: {detail['message']}")
+                        else:
+                            print(f"   ❌ Error response missing 'detail.message' field")
+                        
+                        if has_error_id:
+                            print(f"   ✅ Error response contains 'detail.error_id' field: {detail['error_id']}")
+                        else:
+                            print(f"   ⚠️  Error response missing 'detail.error_id' field (optional but recommended)")
+                        
+                        if has_message:
+                            self.log_result("Error Response Structure", True, f"Error responses properly structured with detail.message: {detail['message']}")
+                        else:
+                            self.log_result("Error Response Structure", False, "Error responses missing required 'detail.message' field")
                     else:
-                        print(f"   ❌ Error response missing 'message' field")
-                    
-                    if has_error_id:
-                        print(f"   ✅ Error response contains 'error_id' field: {error_data['error_id']}")
-                    else:
-                        print(f"   ⚠️  Error response missing 'error_id' field (optional but recommended)")
-                    
-                    if has_message:
-                        self.log_result("Error Response Structure", True, f"Error responses properly structured with message: {error_data['message']}")
-                    else:
-                        self.log_result("Error Response Structure", False, "Error responses missing required 'message' field")
+                        print(f"   ❌ Error response 'detail' is not a dict: {type(detail)}")
+                        self.log_result("Error Response Structure", False, "Error response format incorrect - detail not dict")
                         
                 except json.JSONDecodeError:
                     print(f"   ❌ Error response is not valid JSON: {response.text}")
