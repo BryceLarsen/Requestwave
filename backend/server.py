@@ -5371,7 +5371,11 @@ async def create_freemium_checkout_session(
                 allow_promotion_codes=True,
                 custom_text={
                     "submit": {
-                        "message": f"Enjoy 14 days free. You won't be charged today. After the trial, you'll be billed $15 startup + your first {planLabel} payment."
+                        "message": (
+                            f"Enjoy 14 days free. You won't be charged today. After the trial, you'll be billed $15 startup + your first {planLabel} payment."
+                            if gets_trial else
+                            f"You'll be charged $15 startup fee + your first {planLabel} payment immediately upon subscription."
+                        )
                     }
                 },
                 metadata={"musician_id": musician_id, "plan": plan, "error_id": error_id}
