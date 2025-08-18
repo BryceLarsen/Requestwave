@@ -5319,8 +5319,13 @@ async def create_freemium_checkout_session(
                 detail={"error_id": error_id, "message": f"Price configuration error: {str(e)}"}
             )
         
+        # NEW: Respect trial_eligible to prevent repeat trials
+        trial_eligible = musician.get("trial_eligible", True)
         has_had_trial = musician.get("has_had_trial", False)
-        trial_days = 14 if not has_had_trial else 0
+        
+        # Determine if user gets trial (only if trial_eligible=True)
+        gets_trial = trial_eligible and not has_had_trial
+        trial_days = 14 if gets_trial else 0
         
         # 5. Structured logging - Configuration
         logger.info(f"[{error_id}] Stripe configuration", extra={
@@ -5330,7 +5335,9 @@ async def create_freemium_checkout_session(
             "price_id": price_id,
             "customer_email": customer_email,
             "trial_days": trial_days,
-            "has_had_trial": has_had_trial
+            "trial_eligible": trial_eligible,
+            "has_had_trial": has_had_trial,
+            "gets_trial": gets_trial
         })
         
         # 6. Create Checkout Session (mode=subscription) with custom messaging
@@ -5342,11 +5349,14 @@ async def create_freemium_checkout_session(
             priceId = price_id  # Already validated by _plan_price_id()
             planLabel = "annual" if plan == "annual" else "monthly"
             
-            # Build subscription_data with trial period
+            # Build subscription_data - only include trial_period_days if eligible for trial
             subscription_data = {
-                "trial_period_days": 14,  # Always 14 days for new checkouts
                 "metadata": {"rw_plan": plan, "musician_id": musician_id}
             }
+            
+            # Only add trial if user is eligible (prevents repeat trials)
+            if gets_trial:
+                subscription_data["trial_period_days"] = 14
             
             # Get app URL for success/cancel URLs
             app_url = os.environ.get('FRONTEND_URL', 'https://livewave-music.emergent.host')
