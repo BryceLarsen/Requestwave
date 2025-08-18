@@ -5176,8 +5176,8 @@ async def create_freemium_checkout_session(
             stripe.api_key = STRIPE_API_KEY
             
             # Build subscription_data - only include trial_period_days if >= 1
+            # Note: removed proration_behavior as it requires billing_cycle_anchor
             subscription_data = {
-                "proration_behavior": "none",
                 "metadata": {"rw_plan": plan, "musician_id": musician_id}
             }
             
