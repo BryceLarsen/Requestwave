@@ -2817,8 +2817,8 @@ async def update_suggestion_status(
         raise HTTPException(status_code=500, detail="Error updating suggestion status")
 
 @api_router.delete("/song-suggestions/{suggestion_id}")
-async def delete_song_suggestion(suggestion_id: str, musician_id: str = Depends(get_current_musician)):
-    """Delete a song suggestion"""
+async def delete_song_suggestion(suggestion_id: str, musician_id: str = Depends(get_current_pro_musician)):
+    """Delete a song suggestion (Pro feature)"""
     try:
         result = await db.song_suggestions.delete_one({"id": suggestion_id, "musician_id": musician_id})
         if result.deleted_count == 0:
