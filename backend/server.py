@@ -2194,6 +2194,8 @@ async def update_design_settings(design_data: DesignUpdate, musician_id: str = D
         update_data["design_settings.show_year"] = design_data.show_year
     if design_data.show_notes is not None:
         update_data["design_settings.show_notes"] = design_data.show_notes
+    if design_data.allow_song_suggestions is not None:
+        update_data["design_settings.allow_song_suggestions"] = design_data.allow_song_suggestions
     
     if update_data:
         await db.musicians.update_one(
