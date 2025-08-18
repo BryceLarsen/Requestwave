@@ -104,23 +104,17 @@
 user_problem_statement: "FEATURE REQUEST: Implement three explicit subscription states (Free, Free Trial, Subscribed) with proper feature gating, data model updates, webhook handling, and UI states. Add plan/status/trial_end fields, implement server-side gating for Pro features, handle state transitions via webhooks, and create comprehensive subscription page UI with Free (locked), Free Trial (countdown), and Subscribed (active) states. Include debug endpoint and proper 403 responses for unauthorized access."
 
 backend:
-  - task: "Complete Stripe Checkout Flow with Custom Trial Messaging"
-    implemented: true
-    working: true
+  - task: "Implement Three Explicit Subscription States with Feature Gating"
+    implemented: false
+    working: false
     file: "server.py, App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: false
         agent: "user"
-        comment: "FEATURE REQUEST: User wants complete Stripe checkout implementation with custom messaging. When user clicks Monthly/Annual, create Stripe Checkout Session with 14-day trial showing custom message: 'Enjoy 14 days free. You won't be charged today. After the trial, you'll be billed $15 startup + your first {monthly/annual} payment.' Need new price ID env vars (STRIPE_PRICE_ID_MONTHLY_10, STRIPE_PRICE_ID_ANNUAL_48, STRIPE_PRICE_ID_STARTUP_15), custom_text in checkout session, frontend plan selection, maintain startup fee webhook logic. Acceptance: Monthly shows 'first monthly payment', Annual shows 'first annual payment', 14-day trial, no upfront charge, return as Pro (trialing)."
-      - working: "NA"
-        agent: "main"
-        comment: "IMPLEMENTATION COMPLETE: Updated environment variables to use new naming convention (STRIPE_PRICE_ID_MONTHLY_10, STRIPE_PRICE_ID_ANNUAL_48, STRIPE_PRICE_ID_STARTUP_15). Enhanced checkout session creation with custom_text showing 'Enjoy 14 days free. You won't be charged today. After the trial, you'll be billed $15 startup + your first {monthly/annual} payment.' Frontend simplified to send only {plan: 'monthly'/'annual'} in request body. Backend generates success/cancel URLs automatically pointing to /dashboard/billing. Updated V2CheckoutRequest model to only require plan field. Set allow_promotion_codes: true, trial_period_days: 14 always for new checkouts. Legacy startup fee webhook logic preserved with PRICE_STARTUP_15 alias. Updated monthly pricing from $5 to $10."
-      - working: true
-        agent: "testing"
-        comment: "STRIPE CHECKOUT FLOW WITH CUSTOM TRIAL MESSAGING COMPREHENSIVE TESTING COMPLETE: Extensive testing confirms the complete Stripe checkout implementation is working correctly with all specified features. ✅ AUTHENTICATION: Successfully authenticated with brycelarsenmusic@gmail.com / RequestWave2024! credentials. ✅ SUBSCRIPTION STATUS ENDPOINT: GET /api/subscription/status returns all required fields (plan=active, audience_link_active=true, trial_active=false, status=active) with correct data types. ✅ REQUEST VALIDATION: POST /api/subscription/checkout correctly validates requests - rejects missing plan (422), invalid plan values (422), empty plan (422), and accepts valid monthly/annual plans. ✅ AUTHENTICATION REQUIRED: Checkout endpoint properly requires JWT authentication (403 for unauthenticated requests). ✅ SIMPLIFIED REQUEST MODEL: V2CheckoutRequest model correctly accepts only {plan: 'monthly'/'annual'} as specified. ✅ CUSTOM TRIAL MESSAGING IMPLEMENTATION: Code analysis confirms custom_text implementation with dynamic plan-specific messaging: 'Enjoy 14 days free. You won't be charged today. After the trial, you'll be billed $15 startup + your first {planLabel} payment.' where planLabel dynamically shows 'monthly' or 'annual'. ✅ CHECKOUT SESSION PARAMETERS: Verified mode='subscription', line_items with correct price IDs, subscription_data with trial_period_days=14, allow_promotion_codes=true, success/cancel URLs pointing to /dashboard/billing. ✅ ENVIRONMENT VARIABLE MAPPING: Confirmed new naming convention (STRIPE_PRICE_ID_MONTHLY_10, STRIPE_PRICE_ID_ANNUAL_48, STRIPE_PRICE_ID_STARTUP_15) implemented in code. ⚠️ CONFIGURATION ISSUE: Environment variables contain placeholder values ('YOUR_REAL_STRIPE_*'), causing 400 errors in testing, but this is expected in test environment. The implementation correctly detects and reports configuration errors with structured error messages including error_id. SUCCESS RATE: 80% (12/15 tests passed). The Stripe checkout flow implementation is production-ready and meets all specified requirements. The failures are due to expected Stripe configuration placeholders, not implementation issues."
+        comment: "FEATURE REQUEST: Implement three explicit subscription states (Free, Free Trial, Subscribed) with proper feature gating, data model updates, webhook handling, and UI states. Add plan/status/trial_end fields to user model, implement server-side gating for Pro features (plan='pro' AND status IN ('trialing','active','past_due')), handle state transitions via webhooks (checkout.session.completed, customer.subscription.updated, invoice.paid, invoice.payment_failed, customer.subscription.deleted), create subscription page UI with Free (locked), Free Trial (countdown), Subscribed (active) states, add /api/debug/billing-state endpoint. Acceptance: Free users get 403 for Pro features, trial users see countdown and enabled audience link, subscribed users see next bill date."
 
   - task: "Song Suggestions Feature Flag Bug Fix"
     implemented: true
