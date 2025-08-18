@@ -4921,6 +4921,13 @@ async def create_freemium_checkout_session(
         print(f"🚀 DEBUG: Checkout function called with plan={checkout_request.plan}")
         print(f"🚀 DEBUG: Function create_freemium_checkout_session is being executed")
         
+        # Validate Stripe configuration first
+        if not STRIPE_API_KEY or STRIPE_API_KEY.startswith("sk_live_YOUR_REAL"):
+            raise HTTPException(
+                status_code=500, 
+                detail="Stripe API key not configured. Please contact support to complete the subscription setup."
+            )
+        
         plan = checkout_request.plan
         success_url = checkout_request.success_url
         cancel_url = checkout_request.cancel_url
@@ -4935,7 +4942,10 @@ async def create_freemium_checkout_session(
             raise HTTPException(status_code=404, detail="Musician not found")
         
         # Get price ID using helper function
-        price_id = _plan_price_id(plan)
+        try:
+            price_id = _plan_price_id(plan)
+        except ValueError as e:
+            raise HTTPException(status_code=500, detail=str(e))
         has_had_trial = musician.get("has_had_trial", False)
         trial_days = 14 if not has_had_trial else 0
         
