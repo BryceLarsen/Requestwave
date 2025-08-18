@@ -104,6 +104,18 @@
 user_problem_statement: "Fix song suggestions feature flag bug - 'Suggest a song' button doesn't appear on Audience Requests page even when 'Song Suggestions' is enabled in Design tab. Fix feature-flag logic so button renders when toggle is on, works in both preview and production. Acceptance: Toggling 'Song Suggestions' on in Design immediately shows button on Requests page; toggling off hides it."
 
 backend:
+  - task: "Song Suggestions Feature Flag Bug Fix"
+    implemented: false
+    working: false
+    file: "App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reported: 'In the Requests page, the \"Suggest a song\" button doesn't appear on the Audience Requests page even though \"Song Suggestions\" is enabled in the Design tab. Fix the feature-flag logic so the button renders when the toggle is on, in both preview and production. Acceptance: Toggling \"Song Suggestions\" on in Design immediately shows the button on the Requests page; toggling off hides it.'"
+
   - task: "Stripe Subscription Checkout Flow Fix"
     implemented: true
     working: true
