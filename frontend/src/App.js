@@ -4951,129 +4951,36 @@ const MusicianDashboard = () => {
                       </div>
                     </div>
                   )}
-                          {subscriptionStatus.days_remaining && ` (${subscriptionStatus.days_remaining} days remaining)`}
-                        </p>
-                        <p className="text-gray-300 text-sm">
-                          Your audience link is active. You won't be charged until your trial ends.
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Grace Period Warning */}
-                    {subscriptionStatus.grace_period_active && (
-                      <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-500/30 rounded">
-                        <p className="text-yellow-300 font-medium">
-                          ⚠️ Payment Issue - Grace Period Active
-                        </p>
-                        <p className="text-gray-300 text-sm mt-1">
-                          Your payment failed, but your audience link is still active until{' '}
-                          {subscriptionStatus.grace_period_ends_at ? 
-                            new Date(subscriptionStatus.grace_period_ends_at).toLocaleDateString() : 
-                            'soon'}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Upgrade/Reactivate Section */}
-                  {(!subscriptionStatus.audience_link_active || subscriptionStatus.plan === 'free') && (
-                    <div className="bg-gradient-to-r from-purple-900/50 to-green-900/50 rounded-lg p-6">
-                      <h3 className="text-xl font-bold text-white mb-4">
-                        {subscriptionStatus.can_reactivate ? 'Reactivate Your Audience Link' : 'Activate Your Audience Link'}
-                      </h3>
-                      <p className="text-gray-300 mb-6">
-                        {subscriptionStatus.can_reactivate 
-                          ? 'Welcome back! Reactivate your audience link to start receiving requests again.'
-                          : 'Get unlimited song requests with a low monthly fee and 14-day free trial.'
-                        }
-                      </p>
-
-                      {/* Plan Selection */}
-                      <div className="grid md:grid-cols-2 gap-4 mb-6">
-                        <div 
-                          className={`p-4 rounded-lg border cursor-pointer transition ${
-                            selectedPlan === 'annual' 
-                              ? 'border-green-500 bg-green-900/20' 
-                              : 'border-gray-600 bg-gray-700/50'
-                          }`}
-                          onClick={() => setSelectedPlan('annual')}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-bold text-green-300">Annual Plan</h4>
-                            <span className="bg-green-600 text-white px-2 py-1 rounded text-xs font-bold">
-                              BEST VALUE
-                            </span>
-                          </div>
-                          <p className="text-2xl font-bold text-white">
-                            $48<span className="text-sm text-gray-400">/year</span>
-                          </p>
-                          <p className="text-gray-300 text-sm">Equivalent to $4/month</p>
-                          <p className="text-gray-400 text-sm mt-2">
-                            + $15 one-time startup fee
-                          </p>
-                        </div>
-
-                        <div 
-                          className={`p-4 rounded-lg border cursor-pointer transition ${
-                            selectedPlan === 'monthly' 
-                              ? 'border-purple-500 bg-purple-900/20' 
-                              : 'border-gray-600 bg-gray-700/50'
-                          }`}
-                          onClick={() => setSelectedPlan('monthly')}
-                        >
-                          <h4 className="font-bold text-purple-300">Monthly Plan</h4>
-                          <p className="text-2xl font-bold text-white">
-                            $5<span className="text-sm text-gray-400">/month</span>
-                          </p>
-                          <p className="text-gray-300 text-sm">Billed monthly</p>
-                          <p className="text-gray-400 text-sm mt-2">
-                            + $15 one-time startup fee
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="text-center">
-                        <button
-                          onClick={handleUpgrade}
-                          disabled={upgrading}
-                          className="bg-gradient-to-r from-purple-600 to-green-600 hover:from-purple-700 hover:to-green-700 px-8 py-3 rounded-lg font-bold text-white transition duration-300 disabled:opacity-50"
-                        >
-                          {upgrading ? 'Processing...' : 'Start Free Trial Now'}
-                        </button>
-                        <p className="text-gray-400 text-sm mt-2">
-                          {subscriptionStatus.can_reactivate 
-                            ? 'Immediate activation after payment'
-                            : '14-day free trial, then subscription begins'
+                  
+                  {/* Audience Link Copy Section */}
+                  <div className="bg-gray-700/50 rounded-lg p-6">
+                    <h3 className="text-lg font-bold text-white mb-4">Your Audience Link</h3>
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="text"
+                        value={`${window.location.origin}/${musician.slug}`}
+                        readOnly
+                        className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                      />
+                      <button
+                        onClick={() => {
+                          if (currentUser.billing.audience_link_active) {
+                            navigator.clipboard.writeText(`${window.location.origin}/${musician.slug}`);
+                            // Show toast notification
                           }
-                        </p>
-                      </div>
+                        }}
+                        disabled={!currentUser.billing.audience_link_active}
+                        className={`px-4 py-2 rounded-lg font-medium transition duration-300 ${
+                          currentUser.billing.audience_link_active
+                            ? 'bg-green-600 hover:bg-green-700 text-white'
+                            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                        }`}
+                        title={!currentUser.billing.audience_link_active ? "Start your 14-day free trial to unlock this." : "Copy audience link"}
+                      >
+                        Copy Link
+                      </button>
                     </div>
-                  )}
-
-                  {/* Active Subscription Management */}
-                  {subscriptionStatus.audience_link_active && subscriptionStatus.plan === 'active' && (
-                    <div className="bg-gray-700/50 rounded-lg p-6">
-                      <h3 className="text-lg font-bold text-white mb-4">Manage Subscription</h3>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-gray-300">
-                            Next billing: {subscriptionStatus.subscription_ends_at ? 
-                              new Date(subscriptionStatus.subscription_ends_at).toLocaleDateString() : 
-                              'Unknown'}
-                          </p>
-                          <p className="text-gray-400 text-sm">
-                            You can cancel anytime. Your data will remain saved.
-                          </p>
-                        </div>
-                        <button
-                          onClick={handleCancelSubscription}
-                          className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-medium text-white transition duration-300"
-                        >
-                          Cancel Subscription
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  </div>
 
                   {/* Plan Benefits */}
                   <div className="bg-gray-700/50 rounded-lg p-6">
@@ -5089,7 +4996,7 @@ const MusicianDashboard = () => {
                         </ul>
                       </div>
                       <div>
-                        <h4 className="font-medium text-purple-300 mb-2">🎵 Paid Subscription</h4>
+                        <h4 className="font-medium text-purple-300 mb-2">🎵 Pro Subscription</h4>
                         <ul className="text-gray-300 text-sm space-y-1">
                           <li>• Active audience link</li>
                           <li>• QR code access</li>
