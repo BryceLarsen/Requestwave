@@ -101,7 +101,7 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
-user_problem_statement: "CRITICAL PRODUCTION BUG: Subscribe button no longer shows error but nothing happens - no Stripe Checkout page opens. Need to fix both API response format (must return {url: stripe_checkout_url}) and frontend redirect logic. API should return HTTP 200 with proper JSON response, frontend should redirect to Stripe with window.location.assign(data.url), show loading state, and handle errors properly."
+user_problem_statement: "FEATURE REQUEST: Implement complete Stripe checkout flow with custom messaging. When user clicks Monthly/Annual, create Stripe Checkout Session with 14-day trial showing message 'Enjoy 14 days free. You won't be charged today. After the trial, you'll be billed $15 startup + your first {monthly/annual} payment.' Need to update price IDs, add custom_text to checkout session, update frontend to send plan selection, and maintain startup fee webhook logic."
 
 backend:
   - task: "CRITICAL: Production Subscribe Button No Stripe Redirect Fix"
