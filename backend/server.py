@@ -2749,8 +2749,8 @@ async def create_song_suggestion(suggestion_data: dict):
         raise HTTPException(status_code=500, detail="Error creating song suggestion")
 
 @api_router.get("/song-suggestions", response_model=List[SongSuggestion])
-async def get_song_suggestions(musician_id: str = Depends(get_current_musician)):
-    """Get all song suggestions for a musician"""
+async def get_song_suggestions(musician_id: str = Depends(get_current_pro_musician)):
+    """Get all song suggestions for a musician (Pro feature)"""
     try:
         suggestions = await db.song_suggestions.find({"musician_id": musician_id}).sort("created_at", DESCENDING).to_list(length=None)
         return [SongSuggestion(**suggestion) for suggestion in suggestions]
