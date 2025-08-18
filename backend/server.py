@@ -5548,6 +5548,138 @@ async def confirm_checkout(session_id: str):
             detail={"error_id": error_id, "message": "Internal server error during confirmation"}
         )
 
+# NEW: Cancel Subscription functionality
+class CancelSubscriptionRequest(BaseModel):
+    when: str  # "now" or "period_end"
+
+@api_router.post("/billing/cancel")
+async def cancel_subscription(
+    cancel_request: CancelSubscriptionRequest,
+    musician_id: str = Depends(get_current_pro_musician)
+):
+    """Cancel subscription immediately or at period end"""
+    import uuid
+    import traceback
+    error_id = str(uuid.uuid4())[:8]
+    
+    try:
+        logger.info(f"[{error_id}] Subscription cancellation started", extra={
+            "error_id": error_id,
+            "musician_id": musician_id,
+            "cancel_when": cancel_request.when
+        })
+        
+        # Validate cancel timing
+        if cancel_request.when not in ["now", "period_end"]:
+            raise HTTPException(
+                status_code=422, 
+                detail={"error_id": error_id, "message": "Invalid cancel timing. Must be 'now' or 'period_end'."}
+            )
+        
+        # Get musician and subscription details
+        musician = await db.musicians.find_one({"id": musician_id})
+        if not musician:
+            raise HTTPException(status_code=404, detail={"error_id": error_id, "message": "Musician not found"})
+        
+        stripe_subscription_id = musician.get("stripe_subscription_id")
+        if not stripe_subscription_id:
+            raise HTTPException(
+                status_code=400, 
+                detail={"error_id": error_id, "message": "No active subscription found to cancel"}
+            )
+        
+        # Cancel in Stripe
+        import stripe
+        stripe.api_key = STRIPE_API_KEY
+        
+        if cancel_request.when == "now":
+            # Cancel immediately
+            subscription = stripe.Subscription.delete(stripe_subscription_id)
+            
+            # Update local state immediately: Free state
+            await db.musicians.update_one(
+                {"id": musician_id},
+                {
+                    "$set": {
+                        "plan": "free",
+                        "status": "canceled",
+                        "trial_end": None,
+                        "audience_link_active": False,
+                        "subscription_status": "canceled"  # Legacy field
+                    },
+                    "$unset": {
+                        "stripe_subscription_id": ""
+                    }
+                }
+            )
+            
+            logger.info(f"[{error_id}] Subscription canceled immediately", extra={
+                "error_id": error_id,
+                "musician_id": musician_id,
+                "subscription_id": stripe_subscription_id
+            })
+            
+            return {
+                "success": True,
+                "message": "Subscription canceled immediately. Your account has been reverted to free mode.",
+                "plan": "free",
+                "status": "canceled"
+            }
+            
+        elif cancel_request.when == "period_end":
+            # Cancel at period end
+            subscription = stripe.Subscription.modify(
+                stripe_subscription_id,
+                cancel_at_period_end=True
+            )
+            
+            # Keep active locally until webhook updates
+            logger.info(f"[{error_id}] Subscription set to cancel at period end", extra={
+                "error_id": error_id,
+                "musician_id": musician_id,
+                "subscription_id": stripe_subscription_id,
+                "period_end": subscription.current_period_end
+            })
+            
+            return {
+                "success": True,
+                "message": "Subscription will be canceled at the end of your current billing period.",
+                "plan": "pro",
+                "status": "active",
+                "cancel_at_period_end": True,
+                "period_end": datetime.fromtimestamp(subscription.current_period_end).isoformat()
+            }
+    
+    except stripe.error.StripeError as e:
+        stripe_request_id = getattr(e, 'request_id', 'unknown')
+        error_msg = str(e)
+        
+        logger.error(f"[{error_id}] Stripe error in cancellation", extra={
+            "error_id": error_id,
+            "stripe_request_id": stripe_request_id,
+            "stripe_error": error_msg,
+            "stack_trace": traceback.format_exc()
+        })
+        
+        raise HTTPException(
+            status_code=400, 
+            detail={"error_id": error_id, "message": f"Stripe cancellation error: {error_msg}"}
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[{error_id}] Unexpected error in cancellation", extra={
+            "error_id": error_id,
+            "error": str(e),
+            "stack_trace": traceback.format_exc()
+        })
+        
+        raise HTTPException(
+            status_code=500, 
+            detail={"error_id": error_id, "message": "Internal server error during cancellation"}
+        )
+
 @api_router.post("/subscription/cancel")
 async def cancel_freemium_subscription(musician_id: str = Depends(get_current_musician)):
     """Cancel current subscription (deactivate audience link)"""
