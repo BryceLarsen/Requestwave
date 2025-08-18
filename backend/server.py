@@ -2203,7 +2203,10 @@ async def update_design_settings(design_data: DesignUpdate, musician_id: str = D
             {"$set": update_data}
         )
     
-    return {"message": "Design settings updated successfully"}
+    # Return updated design settings
+    updated_musician = await db.musicians.find_one({"id": musician_id})
+    updated_design_settings = updated_musician.get("design_settings", {})
+    return DesignSettings(**updated_design_settings)
 
 # Playlist Integration
 @api_router.post("/songs/playlist/import")
