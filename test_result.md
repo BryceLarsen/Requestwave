@@ -105,7 +105,7 @@ user_problem_statement: "FEATURE REQUEST: Add Cancel Subscription functionality 
 
 backend:
   - task: "Add Cancel Subscription & No Repeat Trial Enforcement"
-    implemented: false
+    implemented: true
     working: false
     file: "server.py, App.js"
     stuck_count: 0
@@ -115,6 +115,9 @@ backend:
       - working: false
         agent: "user"
         comment: "FEATURE REQUEST: Add Cancel Subscription functionality and enforce no repeat free trial for returning users. Add trial_eligible boolean field to Musician model, Cancel Subscription button with modal offering 'Cancel now' vs 'End of period' options, POST /api/billing/cancel endpoint with immediate/period_end cancellation logic, enforce trial_eligible=false prevents repeat trials, update checkout logic to respect trial eligibility (no trial_period_days if trial_eligible=false), update webhook handling for customer.subscription.deleted, update UI copy strings for Free/Trialing/Active/Past Due states. Acceptance: Pro users can cancel immediately or at period end and revert to Free while keeping data, re-subscribing users get no trial and pay immediate startup fee, brand-new users can only use trial once."
+      - working: "NA"
+        agent: "main"
+        comment: "COMPREHENSIVE IMPLEMENTATION COMPLETE: 1) DATA MODEL: Added trial_eligible boolean field (default true) to Musician model to prevent repeat trials. 2) CANCEL API: Implemented POST /api/billing/cancel with CancelSubscriptionRequest model, supports 'now' (immediate) and 'period_end' cancellation options, immediate cancellation sets plan='free'/status='canceled'/clears trial_end, period_end sets cancel_at_period_end=true in Stripe. 3) TRIAL ENFORCEMENT: Updated checkout logic to respect trial_eligible field - only provides trial_period_days: 14 if trial_eligible=true AND !has_had_trial, returning users get no trial and immediate billing. 4) WEBHOOK UPDATES: Enhanced mark_trial_started() to set trial_eligible=false on first subscription, updated mark_subscription_canceled() to clear stripe_subscription_id properly. 5) FRONTEND UI: Added Cancel Subscription buttons to Pro/Trial states, implemented comprehensive cancel modal with exact user copy explaining data retention and startup fee requirement for re-activation, modal offers 'Cancel Now' vs 'End of Period' options, enhanced handleCancelSubscription() with both modal trigger and cancellation logic. 6) CUSTOM MESSAGING: Updated Stripe checkout messages to reflect trial eligibility - trial users see '14 days free' message, returning users see 'immediate billing' message. All acceptance criteria implemented for complete cancel functionality with no-repeat trial enforcement."
 
   - task: "Song Suggestions Feature Flag Bug Fix"
     implemented: true
