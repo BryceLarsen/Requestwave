@@ -586,7 +586,7 @@ async def get_freemium_subscription_status(musician_id: str) -> SubscriptionStat
         plan = "trial"
         status = "trialing"
     elif subscription_status == "active":
-        plan = "active"
+        plan = "pro"  # Fixed: should be "pro" not "active"
         status = "active"
     elif subscription_status in ["canceled", "incomplete_expired"]:
         plan = "canceled"
