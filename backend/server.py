@@ -2035,7 +2035,7 @@ async def stripe_webhook_handler(request: FastAPIRequest):
                         "stack_trace": traceback.format_exc()
                     })
         
-        # Handle invoice.payment_failed - turn off access
+        # Handle invoice.payment_failed - Active → Past Due state transition
         elif event_type == "invoice.payment_failed":
             customer_id = obj.get("customer")
             
@@ -2047,13 +2047,13 @@ async def stripe_webhook_handler(request: FastAPIRequest):
             
             if customer_id:
                 try:
-                    await mark_access(customer_id=customer_id, active=False)
-                    logger.info(f"[{webhook_id}] Access revoked due to payment failure", extra={
+                    await mark_subscription_past_due(customer_id)
+                    logger.info(f"[{webhook_id}] Subscription marked as past due", extra={
                         "webhook_id": webhook_id,
                         "customer_id": customer_id
                     })
                 except Exception as e:
-                    logger.error(f"[{webhook_id}] Error revoking access", extra={
+                    logger.error(f"[{webhook_id}] Error marking subscription past due", extra={
                         "webhook_id": webhook_id,
                         "customer_id": customer_id,
                         "error": str(e),
