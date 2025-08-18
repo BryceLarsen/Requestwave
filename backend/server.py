@@ -394,8 +394,6 @@ class SubscriptionPackage(BaseModel):
 
 class V2CheckoutRequest(BaseModel):
     plan: str  # 'monthly' or 'annual'
-    success_url: str
-    cancel_url: str
 
 class SubscriptionStatus(BaseModel):
     plan: str  # "trial", "free", "active", "canceled", "expired"
