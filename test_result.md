@@ -101,7 +101,7 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
-user_problem_statement: "Check password status and forgot password functionality for brycelarsenmusic@gmail.com: User cannot login and suspects password issues after Pro activation. Forgot password feature is returning an error. Need to verify user account integrity and password reset functionality."
+user_problem_statement: "Fix the Stripe subscription checkout flow - users are getting errors when trying to sign up. Need to ensure Stripe is properly integrated in production with correct price IDs, webhook handling, and API keys. Focus on subscription page errors during signup process."
 
 backend:
   - task: "Playlist Creation Bug Fix"
