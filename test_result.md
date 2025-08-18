@@ -104,6 +104,18 @@
 user_problem_statement: "CRITICAL PRODUCTION BUG: POST /api/subscription/checkout returns 400 Bad Request on deployed site. UI shows 'Error processing subscription. Please try again.' Need comprehensive fix with structured logging, proper validation (422 for missing fields), environment sanity checks, and proper Stripe integration. Must work in PRODUCTION environment with proper error handling and logging."
 
 backend:
+  - task: "CRITICAL: Production Subscription Checkout 400 Error Fix"
+    implemented: false
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "CRITICAL PRODUCTION BUG: User reported 'Hitting POST /api/subscription/checkout on the deployed site returns 400 Bad Request and the UI shows \"Error processing subscription. Please try again.\"' Requires comprehensive fix with structured logging, proper validation (422 for missing fields), environment sanity checks, Stripe integration fixes, webhook handling, and proper error responses with error_id. Must work in PRODUCTION with live Stripe keys."
+
   - task: "Song Suggestions Feature Flag Bug Fix"
     implemented: true
     working: true
@@ -120,7 +132,7 @@ backend:
         comment: "BUG IDENTIFIED: Found root cause in public design settings endpoint GET /api/musicians/{slug}/design. The audience interface fetches design settings from this public endpoint but it was missing the 'allow_song_suggestions' field. Frontend conditional rendering {designSettings.allow_song_suggestions && ...} was checking for undefined value, so button never appeared. FIX IMPLEMENTED: Added 'allow_song_suggestions': design_settings.get('allow_song_suggestions', True) to the public endpoint response. This matches the DesignSettings model default value of True, ensuring the button shows by default and respects the musician's toggle setting."
       - working: true
         agent: "testing"
-        comment: "SONG SUGGESTIONS FEATURE FLAG BUG FIX COMPREHENSIVE TESTING COMPLETE: All critical bug fixes have been successfully verified and are working correctly. ✅ CRITICAL BUG FIX VERIFIED: Public design endpoint GET /api/musicians/{slug}/design now includes 'allow_song_suggestions' field with boolean value (True by default), resolving the original issue where the 'Suggest a Song' button never appeared. ✅ AUTHENTICATED DESIGN ENDPOINTS WORKING: Both GET /api/design/settings and PUT /api/design/settings properly support the allow_song_suggestions field - musicians can toggle the setting and changes persist correctly. ✅ PUBLIC ENDPOINT SYNC VERIFIED: Public design endpoint correctly reflects changes made through authenticated design settings endpoints, ensuring real-time synchronization between musician dashboard and audience interface. ✅ FRONTEND INTEGRATION SCENARIO SUCCESSFUL: Complete frontend integration testing confirms that designSettings.allow_song_suggestions is now available as a boolean field, enabling proper conditional rendering logic {designSettings.allow_song_suggestions && <SuggestSongButton />}. ✅ TOGGLE FUNCTIONALITY VERIFIED: Tested both allow_song_suggestions=true (button shows) and allow_song_suggestions=false (button hides) scenarios - both work correctly. ✅ AUTHENTICATION VERIFIED: Successfully tested with brycelarsenmusic@gmail.com / RequestWave2024! credentials as specified. SUCCESS RATE: 100% (5/5 tests passed). The Song Suggestions feature flag bug fix is production-ready and the 'Suggest a Song' button will now appear/disappear correctly based on the musician's Design tab setting."
+        comment: "SONG SUGGESTIONS FEATURE FLAG BUG FIX COMPREHENSIVE TESTING COMPLETE: Critical bug successfully resolved with 100% success rate (5/5 tests passed). ✅ PUBLIC DESIGN ENDPOINT FIX: GET /api/musicians/{slug}/design now includes allow_song_suggestions field with boolean value (True by default). ✅ AUTHENTICATED DESIGN ENDPOINTS: Both GET and PUT /api/design/settings properly support allow_song_suggestions field with persistence. ✅ PUBLIC ENDPOINT SYNCHRONIZATION: Public endpoint correctly reflects changes made through authenticated endpoints. ✅ FRONTEND INTEGRATION: designSettings.allow_song_suggestions is now available as boolean field for conditional rendering. ✅ TOGGLE FUNCTIONALITY: Both true (button shows) and false (button hides) scenarios work correctly. ROOT CAUSE CONFIRMED: Public design endpoint was missing allow_song_suggestions field, causing frontend conditional rendering to fail. FIX VERIFIED: Added allow_song_suggestions field to public design endpoint response, field properly synchronized between endpoints. ACCEPTANCE CRITERIA MET: Toggling 'Song Suggestions' on in Design immediately shows button on Requests page; toggling off hides it."
 
   - task: "Stripe Subscription Checkout Flow Fix"
     implemented: true
