@@ -586,7 +586,7 @@ class StripeCheckoutTester:
                     error_data = response.json()
                     print(f"   📊 Missing fields error: {json.dumps(error_data, indent=2)}")
                     
-                    if "message" in error_data:
+                    if "message" in error_data.get("detail", {}):
                         print(f"   ✅ Missing fields error properly structured")
                     else:
                         print(f"   ❌ Missing fields error not properly structured")
