@@ -101,7 +101,7 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
-user_problem_statement: "FEATURE REQUEST: Implement three explicit subscription states (Free, Free Trial, Subscribed) with proper feature gating, data model updates, webhook handling, and UI states. Add plan/status/trial_end fields, implement server-side gating for Pro features, handle state transitions via webhooks, and create comprehensive subscription page UI with Free (locked), Free Trial (countdown), and Subscribed (active) states. Include debug endpoint and proper 403 responses for unauthorized access."
+user_problem_statement: "CRITICAL: Complete three-state system by fixing remaining gaps and verifying live billing flow. Unify 403 responses for Pro-gated endpoints with exact JSON format. Confirm all required endpoints are Pro-gated. Verify checkout + trial + startup fee flow works correctly. Ensure return-flow bookkeeping sets proper state. Confirm Stripe event handlers for post-trial activation. Add proper error logging with error_id. Acceptance: All Pro endpoints return same 403 JSON, Free→Checkout→Free Trial flow works, trial end→Active, startup fee on first post-trial invoice."
 
 backend:
   - task: "Implement Three Explicit Subscription States with Feature Gating"
