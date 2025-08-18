@@ -1917,6 +1917,7 @@ async def get_musician_design(slug: str):
         "artist_photo": design_settings.get("artist_photo"),
         "show_year": design_settings.get("show_year", True),
         "show_notes": design_settings.get("show_notes", True),
+        "allow_song_suggestions": design_settings.get("allow_song_suggestions", True),  # Include song suggestions toggle
         "musician_name": musician["name"],
         "bio": musician.get("bio", "")
     }
