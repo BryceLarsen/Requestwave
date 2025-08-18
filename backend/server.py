@@ -425,6 +425,22 @@ class WebhookEvent(BaseModel):
     payment_status: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
 
+# NEW: Three-state billing information for /api/me endpoint
+class BillingState(BaseModel):
+    plan: str  # "free" | "pro"
+    status: str  # "none" | "trialing" | "active" | "past_due" | "canceled"
+    trial_end: Optional[datetime] = None
+    next_invoice_date: Optional[datetime] = None
+    audience_link_active: bool
+    has_pro_access: bool
+
+class UserMeResponse(BaseModel):
+    id: str
+    name: str
+    email: str
+    slug: str
+    billing: BillingState
+
 class CSVUploadResponse(BaseModel):
     success: bool
     message: str
