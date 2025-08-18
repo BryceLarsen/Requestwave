@@ -101,7 +101,7 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
-user_problem_statement: "CRITICAL PRODUCTION BUG: POST /api/subscription/checkout returning 400 with 'The proration_behavior parameter can only be passed if a billing_cycle_anchor exists.' Need to remove proration_behavior from subscription_data, keep trial_period_days: 14, let Stripe default billing cycle to trial end, and maintain $15 startup fee logic in checkout.session.completed webhook."
+user_problem_statement: "CRITICAL PRODUCTION BUG: Subscribe button no longer shows error but nothing happens - no Stripe Checkout page opens. Need to fix both API response format (must return {url: stripe_checkout_url}) and frontend redirect logic. API should return HTTP 200 with proper JSON response, frontend should redirect to Stripe with window.location.assign(data.url), show loading state, and handle errors properly."
 
 backend:
   - task: "CRITICAL: Production Proration Behavior Stripe Error Fix"
