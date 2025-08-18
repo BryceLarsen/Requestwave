@@ -1792,6 +1792,7 @@ async def mark_trial_started(customer_id: str, subscription_id: str):
                     "plan": "pro",
                     "status": "trialing",
                     "trial_end": trial_end,
+                    "trial_eligible": False,  # NEW: Prevent repeat trials
                     
                     # Legacy fields (keep for backward compatibility)
                     "audience_link_active": True,
