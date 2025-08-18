@@ -173,6 +173,7 @@ class Musician(BaseModel):
     plan: str = "free"  # "free" | "pro" (default "free")
     status: str = "none"  # "none" | "trialing" | "active" | "past_due" | "canceled" (default "none")
     trial_end: Optional[datetime] = None  # ISO timestamp (nullable)
+    trial_eligible: bool = True  # NEW: Prevents repeat free trials (default true for brand-new users)
     
     # Stripe integration fields
     stripe_customer_id: Optional[str] = None
