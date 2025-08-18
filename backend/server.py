@@ -5620,6 +5620,29 @@ async def test_endpoint_before_inclusion():
     """Simple test to verify endpoint registration works"""
     return {"message": "test endpoint before inclusion works", "timestamp": datetime.utcnow().isoformat()}
 
+# Debug endpoint for QA billing state
+@api_router.get("/debug/billing-state")
+async def debug_billing_state(musician_id: str = Depends(get_current_musician)):
+    """Debug endpoint for QA: return plan, status, trial_end, stripe_customer_id, stripe_subscription_id"""
+    try:
+        musician = await db.musicians.find_one({"id": musician_id})
+        if not musician:
+            raise HTTPException(status_code=404, detail="Musician not found")
+        
+        return {
+            "musician_id": musician_id,
+            "plan": musician.get("plan", "free"),
+            "status": musician.get("status", "none"),
+            "trial_end": musician.get("trial_end"),
+            "stripe_customer_id": musician.get("stripe_customer_id"),
+            "stripe_subscription_id": musician.get("stripe_subscription_id"),
+            "audience_link_active": await check_audience_link_access(musician_id),
+            "has_pro_access": await check_pro_access(musician_id),
+            "debug_timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Debug endpoint error: {str(e)}")
+
 # Include the main router
 app.include_router(api_router)
 
