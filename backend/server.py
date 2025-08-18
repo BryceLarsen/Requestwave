@@ -4923,66 +4923,130 @@ async def create_freemium_checkout_session(
     checkout_request: V2CheckoutRequest,
     musician_id: str = Depends(get_current_musician)
 ):
-    """FINALIZED: Create Stripe checkout session - subscription only, startup fee on first post-trial invoice"""
+    """Create Stripe checkout session with comprehensive validation and structured logging"""
+    import uuid
+    import traceback
+    error_id = str(uuid.uuid4())[:8]
+    stripe_request_id = None
+    
     try:
-        print(f"🚀 DEBUG: Checkout function called with plan={checkout_request.plan}")
-        print(f"🚀 DEBUG: Function create_freemium_checkout_session is being executed")
+        # Structured logging - Start
+        logger.info(f"[{error_id}] Checkout request started", extra={
+            "error_id": error_id,
+            "musician_id": musician_id,
+            "plan": checkout_request.plan,
+            "timestamp": datetime.utcnow().isoformat()
+        })
         
-        # Validate Stripe configuration first
-        if not STRIPE_API_KEY or STRIPE_API_KEY.startswith("sk_live_YOUR_REAL"):
+        # 1. Environment Sanity Checks (live mode)
+        stripe_key_prefix = STRIPE_API_KEY[:7] if STRIPE_API_KEY else "NOT_SET"
+        if not STRIPE_API_KEY:
+            logger.error(f"[{error_id}] STRIPE_API_KEY not configured")
             raise HTTPException(
                 status_code=500, 
-                detail="Stripe API key not configured. Please contact support to complete the subscription setup."
+                detail={"error_id": error_id, "message": "Stripe API key not configured. Please contact support."}
             )
         
+        if not STRIPE_API_KEY.startswith("sk_live_"):
+            logger.warning(f"[{error_id}] Using non-live Stripe key: {stripe_key_prefix}")
+            # Continue but log warning for production
+        
+        # 2. Request Validation (422 for missing/invalid fields)
         plan = checkout_request.plan
         success_url = checkout_request.success_url
         cancel_url = checkout_request.cancel_url
         
-        # Validate plan
-        if not plan or plan not in ['monthly', 'annual']:
-            raise HTTPException(status_code=400, detail="Invalid plan. Must be 'monthly' or 'annual'")
-            
-        # Get musician
+        validation_errors = []
+        if not plan:
+            validation_errors.append("plan is required")
+        elif plan not in ['monthly', 'annual']:
+            validation_errors.append("plan must be 'monthly' or 'annual'")
+        
+        if not success_url:
+            validation_errors.append("success_url is required")
+        if not cancel_url:
+            validation_errors.append("cancel_url is required")
+        
+        if validation_errors:
+            logger.error(f"[{error_id}] Validation errors: {validation_errors}")
+            raise HTTPException(
+                status_code=422, 
+                detail={"error_id": error_id, "message": "Validation failed", "errors": validation_errors}
+            )
+        
+        # 3. Get musician and customer email
         musician = await db.musicians.find_one({"id": musician_id})
         if not musician:
-            raise HTTPException(status_code=404, detail="Musician not found")
+            logger.error(f"[{error_id}] Musician not found: {musician_id}")
+            raise HTTPException(
+                status_code=404, 
+                detail={"error_id": error_id, "message": "Musician not found"}
+            )
         
-        # Get price ID using helper function
+        customer_email = musician.get("email")
+        if not customer_email:
+            logger.error(f"[{error_id}] No email found for musician: {musician_id}")
+            raise HTTPException(
+                status_code=422,
+                detail={"error_id": error_id, "message": "Customer email not found"}
+            )
+        
+        # 4. Get and validate Price ID from environment
         try:
             price_id = _plan_price_id(plan)
         except ValueError as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            logger.error(f"[{error_id}] Price ID configuration error: {str(e)}")
+            raise HTTPException(
+                status_code=500, 
+                detail={"error_id": error_id, "message": f"Price configuration error: {str(e)}"}
+            )
+        
         has_had_trial = musician.get("has_had_trial", False)
         trial_days = 14 if not has_had_trial else 0
         
-        # Log as required
-        stripe_key_prefix = STRIPE_API_KEY[:7] if STRIPE_API_KEY else "NOT_SET"
-        logger.info(f"Stripe live checkout: key={stripe_key_prefix} plan={plan} price={price_id}")
+        # 5. Structured logging - Configuration
+        logger.info(f"[{error_id}] Stripe configuration", extra={
+            "error_id": error_id,
+            "stripe_key_prefix": stripe_key_prefix,
+            "plan": plan,
+            "price_id": price_id,
+            "customer_email": customer_email,
+            "trial_days": trial_days,
+            "has_had_trial": has_had_trial
+        })
         
+        # 6. Create Checkout Session (mode=subscription)
         try:
             import stripe
             stripe.api_key = STRIPE_API_KEY
             
-            # Create subscription-mode checkout session (NO startup fee line item here)
             session = stripe.checkout.Session.create(
                 mode="subscription",
                 success_url=success_url,
                 cancel_url=cancel_url,
+                customer_email=customer_email,
                 line_items=[{"price": price_id, "quantity": 1}],
                 subscription_data={
                     "trial_period_days": trial_days,
                     "proration_behavior": "none",
-                    # Mark plan choice on subscription for later
                     "metadata": {"rw_plan": plan, "musician_id": musician_id}
                 },
                 allow_promotion_codes=False,
-                metadata={"musician_id": musician_id, "plan": plan}
+                metadata={"musician_id": musician_id, "plan": plan, "error_id": error_id}
             )
             
-            logger.info(f"Checkout session created: trial_period_days={trial_days}, plan={plan}, price_id={price_id}")
+            # Capture Stripe Request ID for logging
+            stripe_request_id = getattr(session, 'request_id', 'unknown')
             
-            # Record transaction
+            logger.info(f"[{error_id}] Checkout session created successfully", extra={
+                "error_id": error_id,
+                "stripe_session_id": session.id,
+                "stripe_request_id": stripe_request_id,
+                "session_url": session.url,
+                "trial_period_days": trial_days
+            })
+            
+            # 7. Record transaction
             transaction = PaymentTransaction(
                 musician_id=musician_id,
                 session_id=session.id,
@@ -4993,25 +5057,52 @@ async def create_freemium_checkout_session(
                 subscription_plan=plan,
                 metadata={
                     'stripe_session_id': session.id,
+                    'stripe_request_id': stripe_request_id,
                     'trial_days': trial_days,
-                    'price_id': price_id
+                    'price_id': price_id,
+                    'error_id': error_id
                 }
             )
             
             await db.payment_transactions.insert_one(transaction.dict())
             
-            return {"checkout_url": session.url}
+            # Return { url } as requested by user
+            return {"url": session.url}
             
         except stripe.error.StripeError as e:
-            msg = getattr(e, "user_message", None) or str(e)
-            logger.error(f"Stripe error creating session: {msg}")
-            raise HTTPException(status_code=400, detail=f"Stripe error: {msg}")
+            stripe_request_id = getattr(e, 'request_id', 'unknown')
+            error_msg = getattr(e, "user_message", None) or str(e)
+            
+            logger.error(f"[{error_id}] Stripe error", extra={
+                "error_id": error_id,
+                "stripe_request_id": stripe_request_id,
+                "stripe_error_type": type(e).__name__,
+                "stripe_error_message": error_msg,
+                "stack_trace": traceback.format_exc()
+            })
+            
+            raise HTTPException(
+                status_code=400, 
+                detail={"error_id": error_id, "message": f"Payment processing error: {error_msg}"}
+            )
             
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating checkout session: {str(e)}")
-        raise HTTPException(status_code=400, detail=f"Error creating checkout session: {str(e)}")
+        # Structured error logging with full stack trace
+        logger.error(f"[{error_id}] Unexpected error in checkout", extra={
+            "error_id": error_id,
+            "musician_id": musician_id,
+            "stripe_request_id": stripe_request_id,
+            "error_type": type(e).__name__,
+            "error_message": str(e),
+            "stack_trace": traceback.format_exc()
+        })
+        
+        raise HTTPException(
+            status_code=500, 
+            detail={"error_id": error_id, "message": "Internal server error. Please try again or contact support."}
+        )
 
 @api_router.post("/subscription/cancel")
 async def cancel_freemium_subscription(musician_id: str = Depends(get_current_musician)):
