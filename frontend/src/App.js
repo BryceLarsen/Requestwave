@@ -1263,6 +1263,18 @@ const MusicianDashboard = () => {
     }
   };
 
+  // NEW: Fetch current user with billing state for three-state subscription UI
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await axios.get(`${API}/me`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      setCurrentUser(response.data);
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+    }
+  };
+
   const handleUpgrade = async () => {
     setUpgrading(true);
     try {
