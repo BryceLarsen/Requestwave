@@ -101,7 +101,7 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
-user_problem_statement: "CRITICAL PRODUCTION BUG: POST /api/subscription/checkout returns 400 Bad Request on deployed site. UI shows 'Error processing subscription. Please try again.' Need comprehensive fix with structured logging, proper validation (422 for missing fields), environment sanity checks, and proper Stripe integration. Must work in PRODUCTION environment with proper error handling and logging."
+user_problem_statement: "CRITICAL PRODUCTION BUG: POST /api/subscription/checkout failing with 'The minimum number of trial period days is 1.' Code is passing trial_period_days: 0 to Stripe. Need to fix trial period logic to only pass trial_period_days when >= 1, set to 14 days for new users, and ensure proper trial behavior with startup fee on first invoice after trial."
 
 backend:
   - task: "CRITICAL: Production Subscription Checkout 400 Error Fix"
