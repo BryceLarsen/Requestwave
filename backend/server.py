@@ -532,15 +532,10 @@ async def get_current_pro_musician(credentials: HTTPAuthorizationCredentials = D
     
     return musician_id
 
-# NEW: Freemium model helper functions
+# NEW: Three-state subscription helper functions
 async def check_audience_link_access(musician_id: str) -> bool:
-    """Check if musician's audience link should be active"""
-    musician = await db.musicians.find_one({"id": musician_id})
-    if not musician:
-        return False
-    
-    # Always return True for now during development - will be updated after implementing subscription logic
-    return musician.get("audience_link_active", False)
+    """Check if musician's audience link should be active (authoritative server-side gating)"""
+    return await check_pro_access(musician_id)
 
 async def get_freemium_subscription_status(musician_id: str) -> SubscriptionStatus:
     """Get comprehensive subscription status for freemium model"""
