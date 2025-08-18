@@ -506,13 +506,31 @@ async def get_current_musician(credentials: HTTPAuthorizationCredentials = Depen
         raise HTTPException(status_code=401, detail="Invalid token")
 
 async def check_pro_access(musician_id: str) -> bool:
-    """Check if musician has Pro subscription access"""
+    """Check if musician has Pro subscription access (server-side gating)"""
     try:
-        # Use the same logic as get_subscription_status to determine Pro access
-        status = await get_subscription_status(musician_id)
-        return status.plan in ["trial", "pro"]
+        musician = await db.musicians.find_one({"id": musician_id})
+        if not musician:
+            return False
+        
+        plan = musician.get("plan", "free")
+        status = musician.get("status", "none")
+        
+        # Pro features allowed only if: plan="pro" AND status IN ("trialing","active","past_due")
+        return plan == "pro" and status in ("trialing", "active", "past_due")
     except:
         return False
+
+async def get_current_pro_musician(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+    """Get current authenticated musician ID and verify Pro access"""
+    musician_id = await get_current_musician(credentials)
+    
+    if not await check_pro_access(musician_id):
+        raise HTTPException(
+            status_code=403, 
+            detail={"message": "Pro feature — start your 14-day free trial to unlock your Audience Link."}
+        )
+    
+    return musician_id
 
 # NEW: Freemium model helper functions
 async def check_audience_link_access(musician_id: str) -> bool:
