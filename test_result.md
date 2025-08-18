@@ -105,9 +105,9 @@ user_problem_statement: "Fix song suggestions feature flag bug - 'Suggest a song
 
 backend:
   - task: "Song Suggestions Feature Flag Bug Fix"
-    implemented: false
+    implemented: true
     working: false
-    file: "App.js"
+    file: "server.py"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
@@ -115,6 +115,9 @@ backend:
       - working: false
         agent: "user"
         comment: "User reported: 'In the Requests page, the \"Suggest a song\" button doesn't appear on the Audience Requests page even though \"Song Suggestions\" is enabled in the Design tab. Fix the feature-flag logic so the button renders when the toggle is on, in both preview and production. Acceptance: Toggling \"Song Suggestions\" on in Design immediately shows the button on the Requests page; toggling off hides it.'"
+      - working: "NA"
+        agent: "main"
+        comment: "BUG IDENTIFIED: Found root cause in public design settings endpoint GET /api/musicians/{slug}/design. The audience interface fetches design settings from this public endpoint but it was missing the 'allow_song_suggestions' field. Frontend conditional rendering {designSettings.allow_song_suggestions && ...} was checking for undefined value, so button never appeared. FIX IMPLEMENTED: Added 'allow_song_suggestions': design_settings.get('allow_song_suggestions', True) to the public endpoint response. This matches the DesignSettings model default value of True, ensuring the button shows by default and respects the musician's toggle setting."
 
   - task: "Stripe Subscription Checkout Flow Fix"
     implemented: true
