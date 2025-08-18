@@ -1787,9 +1787,9 @@ async def stripe_webhook_handler(request: FastAPIRequest):
             return {"status": "error", "message": "Missing signature"}
         
         webhook_secret = STRIPE_WEBHOOK_SECRET
-        if not webhook_secret:
-            logger.error("Missing STRIPE_WEBHOOK_SECRET")
-            return {"status": "error", "message": "Missing webhook secret"}
+        if not webhook_secret or webhook_secret.startswith("whsec_YOUR_REAL"):
+            logger.error("Missing or invalid STRIPE_WEBHOOK_SECRET")
+            return {"status": "error", "message": "Invalid webhook secret configuration"}
         
         try:
             # Verify webhook signature
