@@ -1947,7 +1947,7 @@ async def stripe_webhook_handler(request: FastAPIRequest):
             "object_id": obj.get("id", "unknown")
         })
         
-        # Handle checkout.session.completed - turn on trial immediately
+        # Handle checkout.session.completed - turn on trial immediately + create startup fee
         if event_type == "checkout.session.completed":
             sub_id = obj.get("subscription")
             customer_id = obj.get("customer")
@@ -1961,14 +1961,34 @@ async def stripe_webhook_handler(request: FastAPIRequest):
             
             if sub_id and customer_id:
                 try:
+                    # 1. Mark trial as started
                     await mark_trial_started(customer_id, sub_id)
-                    logger.info(f"[{webhook_id}] Trial started successfully", extra={
+                    
+                    # 2. Create $15 startup fee invoice item (not finalized - will be on first post-trial invoice)
+                    startup_price_id = STRIPE_PRICE_ID_STARTUP_15
+                    if startup_price_id and not startup_price_id.startswith("price_YOUR_REAL"):
+                        stripe.InvoiceItem.create(
+                            customer=customer_id,
+                            price=startup_price_id,
+                            description="RequestWave Startup Fee - Applied to first invoice after trial"
+                        )
+                        
+                        logger.info(f"[{webhook_id}] Startup fee invoice item created", extra={
+                            "webhook_id": webhook_id,
+                            "customer_id": customer_id,
+                            "startup_price_id": startup_price_id
+                        })
+                    else:
+                        logger.warning(f"[{webhook_id}] Startup price ID not configured properly: {startup_price_id}")
+                    
+                    logger.info(f"[{webhook_id}] Trial started and startup fee created successfully", extra={
                         "webhook_id": webhook_id,
                         "customer_id": customer_id,
                         "subscription_id": sub_id
                     })
+                    
                 except Exception as e:
-                    logger.error(f"[{webhook_id}] Error starting trial", extra={
+                    logger.error(f"[{webhook_id}] Error processing checkout completion", extra={
                         "webhook_id": webhook_id,
                         "customer_id": customer_id,
                         "subscription_id": sub_id,
