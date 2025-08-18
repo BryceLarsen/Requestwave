@@ -104,23 +104,17 @@
 user_problem_statement: "FEATURE REQUEST: Implement complete Stripe checkout flow with custom messaging. When user clicks Monthly/Annual, create Stripe Checkout Session with 14-day trial showing message 'Enjoy 14 days free. You won't be charged today. After the trial, you'll be billed $15 startup + your first {monthly/annual} payment.' Need to update price IDs, add custom_text to checkout session, update frontend to send plan selection, and maintain startup fee webhook logic."
 
 backend:
-  - task: "CRITICAL: Production Subscribe Button No Stripe Redirect Fix"
-    implemented: true
-    working: true
-    file: "server.py"
+  - task: "Complete Stripe Checkout Flow with Custom Trial Messaging"
+    implemented: false
+    working: false
+    file: "server.py, App.js"
     stuck_count: 0
-    priority: "critical"
-    needs_retesting: false
+    priority: "high"
+    needs_retesting: true
     status_history:
       - working: false
         agent: "user"
-        comment: "CRITICAL PRODUCTION BUG: User reported 'On the deployed app, clicking Subscribe no longer shows an error, but nothing happens — no Stripe Checkout page opens.' Need to fix API response format (must return {url: stripe_checkout_url} with HTTP 200) and frontend redirect logic. Frontend should use window.location.assign(data.url), show loading state, handle errors properly. API should create Stripe session with proper parameters and return correct JSON format. Acceptance: Clicking Subscribe shows loading state, makes POST to /api/subscription/checkout, API returns {url}, browser redirects to Stripe Checkout showing '14 days free'."
-      - working: "NA"
-        agent: "main"
-        comment: "ISSUE ANALYSIS: Root cause - frontend expected response.data.checkout_url but backend returns {url: session.url}. Also frontend used axios instead of fetch as specified. SOLUTION IMPLEMENTED: Fixed handleUpgrade function to use fetch API, expect data.url response field, use window.location.assign(data.url) for redirect, added proper error handling for missing URL, enhanced error messages. Backend already returns correct {url: session.url} format. Loading states already implemented with upgrading state and disabled buttons showing 'Processing...' text. Authentication header added to fetch request."
-      - working: true
-        agent: "testing"
-        comment: "STRIPE CHECKOUT API RESPONSE VERIFICATION COMPLETE - CRITICAL SUCCESS: Comprehensive testing confirms the Subscribe button Stripe redirect fix is working correctly with 100% success rate (6/6 tests passed). ✅ AUTHENTICATION: Successfully authenticated with brycelarsenmusic@gmail.com / RequestWave2024! credentials as specified. ✅ API RESPONSE FORMAT VERIFIED: Backend correctly returns {\"url\": session.url} format on line 5231 of server.py, exactly matching frontend expectations after handleUpgrade fix. ✅ ERROR RESPONSE FORMAT: Proper FastAPI error structure {\"detail\": {\"error_id\": \"...\", \"message\": \"...\"}} with structured logging and Stripe Request IDs. ✅ AUTHENTICATION SECURITY: Endpoint properly requires JWT authentication (403/401 for unauthorized requests). ✅ SUBSCRIPTION STATUS: GET /api/subscription/status returns all required fields (plan, audience_link_active, trial_active, trial_end, status) with correct values. ✅ STRIPE SESSION PARAMETERS: Code analysis confirms mode='subscription', proper line_items with price IDs, subscription_data with trial_period_days=14, customer_email included, success_url/cancel_url properly set. ❌ EXPECTED CONFIG ISSUE: Stripe price IDs not configured in test environment (PRICE_MONTHLY_5, PRICE_ANNUAL_48), but this confirms error handling works correctly. CRITICAL FINDING: The backend API response format is exactly correct - returns {\"url\": stripe_checkout_session_url} on success, which matches the frontend fix that expects data.url. The Subscribe button redirect issue has been successfully resolved at the API level."
+        comment: "FEATURE REQUEST: User wants complete Stripe checkout implementation with custom messaging. When user clicks Monthly/Annual, create Stripe Checkout Session with 14-day trial showing custom message: 'Enjoy 14 days free. You won't be charged today. After the trial, you'll be billed $15 startup + your first {monthly/annual} payment.' Need new price ID env vars (STRIPE_PRICE_ID_MONTHLY_10, STRIPE_PRICE_ID_ANNUAL_48, STRIPE_PRICE_ID_STARTUP_15), custom_text in checkout session, frontend plan selection, maintain startup fee webhook logic. Acceptance: Monthly shows 'first monthly payment', Annual shows 'first annual payment', 14-day trial, no upfront charge, return as Pro (trialing)."
 
   - task: "Song Suggestions Feature Flag Bug Fix"
     implemented: true
