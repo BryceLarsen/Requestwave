@@ -101,7 +101,7 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
-user_problem_statement: "FEATURE REQUEST: Implement complete Stripe checkout flow with custom messaging. When user clicks Monthly/Annual, create Stripe Checkout Session with 14-day trial showing message 'Enjoy 14 days free. You won't be charged today. After the trial, you'll be billed $15 startup + your first {monthly/annual} payment.' Need to update price IDs, add custom_text to checkout session, update frontend to send plan selection, and maintain startup fee webhook logic."
+user_problem_statement: "FEATURE REQUEST: Implement three explicit subscription states (Free, Free Trial, Subscribed) with proper feature gating, data model updates, webhook handling, and UI states. Add plan/status/trial_end fields, implement server-side gating for Pro features, handle state transitions via webhooks, and create comprehensive subscription page UI with Free (locked), Free Trial (countdown), and Subscribed (active) states. Include debug endpoint and proper 403 responses for unauthorized access."
 
 backend:
   - task: "Complete Stripe Checkout Flow with Custom Trial Messaging"
