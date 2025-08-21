@@ -8007,6 +8007,7 @@ const OnStageInterface = () => {
                     </div>
                   )}
                 </div>
+              )}
             </div>
           ))
         )}
