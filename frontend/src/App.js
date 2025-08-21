@@ -3902,7 +3902,7 @@ const MusicianDashboard = () => {
                 </div>
               )}
             </div>
-          </div>
+          )}
         )}
 
         {/* Requests Tab */}
