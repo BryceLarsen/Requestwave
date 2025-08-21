@@ -2959,6 +2959,8 @@ const MusicianDashboard = () => {
                 </div>
               </div>
             </div>
+            )}
+          </div>
 
             {/* CSV Upload Section */}
             {showCsvUpload && (
