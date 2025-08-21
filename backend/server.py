@@ -1689,7 +1689,17 @@ async def register_musician(musician_data: MusicianRegister):
     
     # Create musician with freemium model fields
     hashed_password = hash_password(musician_data.password)
-    trial_end = datetime.utcnow() + timedelta(days=TRIAL_DAYS)
+    
+    if BILLING_ENABLED:
+        # In billing mode, start with trial
+        trial_end = datetime.utcnow() + timedelta(days=TRIAL_DAYS)
+        audience_link_active = True
+        has_had_trial = True
+    else:
+        # In free mode, give full access immediately
+        trial_end = None
+        audience_link_active = True
+        has_had_trial = False
     
     musician_dict = {
         "id": str(uuid.uuid4()),
