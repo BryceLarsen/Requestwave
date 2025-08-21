@@ -4907,6 +4907,18 @@ async def activate_playlist(
 @api_router.get("/subscription/status")
 async def freemium_subscription_status_endpoint(musician_id: str = Depends(get_current_musician)):
     """Get current subscription status for authenticated musician"""
+    if not BILLING_ENABLED:
+        # Return Pro-like state so the app is fully unlocked in free mode
+        return {
+            "plan": "pro",
+            "status": "active",
+            "trial_eligible": False,
+            "trial_end": None,
+            "audience_link_active": True,
+            "has_pro_access": True,
+            "next_invoice_date": None
+        }
+    
     try:
         status = await get_freemium_subscription_status(musician_id)
         return status
