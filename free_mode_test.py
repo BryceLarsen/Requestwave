@@ -22,8 +22,8 @@ import os
 import time
 from typing import Dict, Any, Optional
 
-# Configuration - Use environment variable for backend URL
-BACKEND_URL = os.getenv("REACT_APP_BACKEND_URL", "https://requestwave.app")
+# Configuration - Use local backend for testing
+BACKEND_URL = "http://localhost:8001"
 BASE_URL = f"{BACKEND_URL}/api"
 
 # Test user for registration testing
