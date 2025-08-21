@@ -647,6 +647,9 @@ def init_stripe_checkout(request: FastAPIRequest) -> StripeCheckout:
 
 async def require_pro_access(musician_id: str):
     """Require Pro access for endpoint, raise exception if not Pro"""
+    if not BILLING_ENABLED:
+        return  # No restrictions in free mode
+    
     if not await check_pro_access(musician_id):
         raise HTTPException(
             status_code=403, 
