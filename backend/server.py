@@ -4937,6 +4937,10 @@ async def create_freemium_checkout_session(
     checkout_request: V2CheckoutRequest,
     musician_id: str = Depends(get_current_musician)
 ):
+    """Create Stripe checkout session - disabled in free mode"""
+    if not BILLING_ENABLED:
+        raise HTTPException(status_code=501, detail="Billing disabled in Free mode")
+    
     """FINALIZED: Create Stripe checkout session - subscription only, startup fee on first post-trial invoice"""
     try:
         print(f"🚀 DEBUG: Checkout function called with plan={checkout_request.plan}")
