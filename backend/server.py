@@ -520,6 +520,9 @@ async def check_pro_access(musician_id: str) -> bool:
 # NEW: Freemium model helper functions
 async def check_audience_link_access(musician_id: str) -> bool:
     """Check if musician's audience link should be active"""
+    if not BILLING_ENABLED:
+        return True  # All audience links active in free mode
+    
     musician = await db.musicians.find_one({"id": musician_id})
     if not musician:
         return False
