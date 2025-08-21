@@ -4839,12 +4839,6 @@ const MusicianDashboard = () => {
                       <p className="text-gray-300 text-sm">Manage your RequestWave subscription</p>
                     </div>
                   </div>
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h2 className="text-xl font-bold">Subscription & Billing</h2>
-                  <p className="text-gray-300 text-sm">Manage your RequestWave subscription</p>
-                </div>
-              </div>
 
               {subscriptionStatus && (
                 <div className="space-y-6">
