@@ -46,8 +46,14 @@ JWT_SECRET = os.environ.get('JWT_SECRET', 'requestwave-secret-key')
 JWT_ALGORITHM = 'HS256'
 JWT_EXPIRATION_HOURS = 24
 
-# Stripe Configuration
-STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
+# Billing Feature Flag
+BILLING_ENABLED = os.getenv("BILLING_ENABLED", "false").lower() == "true"
+
+def billing_off_response():
+    return {"ok": True, "mode": "free", "message": "Billing disabled in Free mode"}
+
+# Stripe Configuration (only initialized when BILLING_ENABLED=true)
+STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY') if BILLING_ENABLED else None
 
 # Freemium Model Configuration
 STARTUP_FEE = 15.00  # One-time startup fee
