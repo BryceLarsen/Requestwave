@@ -1782,6 +1782,10 @@ async def mark_access(customer_id: str, active: bool):
 # SINGLE WEBHOOK ENDPOINT - POST /api/stripe/webhook (FINALIZED with startup fee logic)
 @api_router.post("/stripe/webhook")
 async def stripe_webhook_handler(request: FastAPIRequest):
+    """Stripe webhook handler - disabled in free mode"""
+    if not BILLING_ENABLED:
+        return Response(status_code=204)  # Return empty success response
+    
     """FINALIZED: Single Stripe webhook handler - handles startup fee on first post-trial invoice"""
     try:
         import stripe
