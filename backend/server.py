@@ -5405,7 +5405,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_origins=[
         "https://requestwave.app",
-        "https://musician-dashboard.preview.emergentagent.com"
+        "https://performance-pay-1.preview.emergentagent.com"
     ],
     allow_methods=["*"],
     allow_headers=["*"],

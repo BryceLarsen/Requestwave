@@ -29,7 +29,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration - Use the deployed URL from frontend/.env
-BASE_URL = "https://musician-dashboard.preview.emergentagent.com/api"
+BASE_URL = "https://performance-pay-1.preview.emergentagent.com/api"
 
 # Test credentials as specified in review request
 TEST_CREDENTIALS = {

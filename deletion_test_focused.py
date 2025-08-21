@@ -11,7 +11,7 @@ import random
 from typing import Dict, Any, List
 
 # Configuration
-BASE_URL = "https://musician-dashboard.preview.emergentagent.com/api"
+BASE_URL = "https://performance-pay-1.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
     "name": "Scale Test Musician",
     "email": "scale.test@requestwave.com", 
