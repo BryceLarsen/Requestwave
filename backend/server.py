@@ -5024,6 +5024,9 @@ async def create_freemium_checkout_session(
 @api_router.post("/subscription/cancel")
 async def cancel_freemium_subscription(musician_id: str = Depends(get_current_musician)):
     """Cancel current subscription (deactivate audience link)"""
+    if not BILLING_ENABLED:
+        raise HTTPException(status_code=501, detail="Billing disabled in Free mode")
+    
     try:
         musician = await db.musicians.find_one({"id": musician_id})
         if not musician:
