@@ -1305,6 +1305,11 @@ const MusicianDashboard = () => {
   };
 
   const handleCancelSubscription = async () => {
+    if (!BILLING_ENABLED) {
+      alert('Billing is disabled in Free mode');
+      return;
+    }
+    
     if (window.confirm('Are you sure you want to cancel your subscription? Your audience link will be deactivated, but your songs and request history will remain saved.')) {
       try {
         await axios.post(`${API}/subscription/cancel`);
