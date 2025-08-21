@@ -17,7 +17,6 @@ import re
 from pymongo import ASCENDING, DESCENDING
 import csv
 import io
-from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
 import base64
@@ -29,8 +28,16 @@ import json
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
+# Load environment variables first
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
+
+# Billing Feature Flag - Load this early
+BILLING_ENABLED = os.getenv("BILLING_ENABLED", "false").lower() == "true"
+
+# Conditional Stripe imports - only import when billing is enabled
+if BILLING_ENABLED:
+    from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 
 # MongoDB connection
 # mongo_url = os.environ['MONGO_URL']
