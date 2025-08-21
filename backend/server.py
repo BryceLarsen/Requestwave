@@ -1711,8 +1711,8 @@ async def register_musician(musician_data: MusicianRegister):
         "bio": "",
         "website": "",
         # NEW: Freemium model fields
-        "audience_link_active": True,  # Start with 30-day trial
-        "has_had_trial": True,
+        "audience_link_active": audience_link_active,
+        "has_had_trial": has_had_trial,
         "trial_end": trial_end,
         "stripe_customer_id": None,
         "stripe_subscription_id": None,
