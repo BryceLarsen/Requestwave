@@ -1278,6 +1278,11 @@ const MusicianDashboard = () => {
   };
 
   const handleUpgrade = async () => {
+    if (!BILLING_ENABLED) {
+      alert('Billing is disabled in Free mode');
+      return;
+    }
+    
     setUpgrading(true);
     try {
       const plan = selectedPlan; // 'monthly' or 'annual'
