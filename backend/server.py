@@ -71,6 +71,8 @@ STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET') if BILLING_ENABL
 
 def _plan_price_id(plan: str) -> str:
     """Get Stripe price ID for a given plan"""
+    if not BILLING_ENABLED:
+        raise ValueError("Billing is disabled in Free mode")
     if plan == "monthly":
         return PRICE_MONTHLY_5
     elif plan == "annual":
