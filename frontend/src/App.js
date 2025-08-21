@@ -1255,6 +1255,20 @@ const MusicianDashboard = () => {
   };
 
   const fetchSubscriptionStatus = async () => {
+    if (!BILLING_ENABLED) {
+      // In free mode, set everyone as having pro access
+      setSubscriptionStatus({
+        plan: "pro",
+        status: "active",
+        trial_eligible: false,
+        trial_end: null,
+        audience_link_active: true,
+        has_pro_access: true,
+        next_invoice_date: null
+      });
+      return;
+    }
+    
     try {
       const response = await axios.get(`${API}/subscription/status`);
       setSubscriptionStatus(response.data);
