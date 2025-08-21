@@ -225,7 +225,7 @@ class FreeModeAPITester:
             if checkout_response.status_code == 501:
                 try:
                     checkout_data_response = checkout_response.json()
-                    message = checkout_data_response.get("message", "")
+                    message = checkout_data_response.get("message", "") or checkout_data_response.get("detail", "")
                     if "Billing disabled in Free mode" in message:
                         print("   ✅ Checkout endpoint returns 501 with correct message")
                         checkout_success = True
