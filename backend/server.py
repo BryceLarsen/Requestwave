@@ -507,6 +507,9 @@ async def get_current_musician(credentials: HTTPAuthorizationCredentials = Depen
 
 async def check_pro_access(musician_id: str) -> bool:
     """Check if musician has Pro subscription access"""
+    if not BILLING_ENABLED:
+        return True  # Everyone has Pro access in free mode
+    
     try:
         # Use the same logic as get_subscription_status to determine Pro access
         status = await get_subscription_status(musician_id)
