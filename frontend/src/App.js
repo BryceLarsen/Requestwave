@@ -2822,7 +2822,7 @@ const MusicianDashboard = () => {
             {showMobileNav && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50">
                 <div className="py-2">
-                  {['songs', 'requests', 'analytics', 'profile', 'subscription', 'design'].map((tab) => (
+                  {['songs', 'requests', 'analytics', 'profile', ...(BILLING_ENABLED ? ['subscription'] : []), 'design'].map((tab) => (
                     <button
                       key={tab}
                       onClick={() => {
