@@ -62,12 +62,12 @@ ANNUAL_PLAN_FEE = 24.00  # Annual subscription (equivalent to $2/month)
 TRIAL_DAYS = 14  # 14-day trial (FINALIZED - consistent with checkout logic)
 GRACE_PERIOD_DAYS = 3  # Grace period for failed payments
 
-# Stripe Price IDs from environment
-PRICE_STARTUP_15 = os.environ.get('PRICE_STARTUP_15')
-PRICE_MONTHLY_5 = os.environ.get('PRICE_MONTHLY_5')
-PRICE_ANNUAL_24 = os.environ.get('PRICE_ANNUAL_24')
-PRICE_ANNUAL_48 = os.environ.get('PRICE_ANNUAL_48')
-STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
+# Stripe Price IDs from environment (only loaded when BILLING_ENABLED=true)
+PRICE_STARTUP_15 = os.environ.get('PRICE_STARTUP_15') if BILLING_ENABLED else None
+PRICE_MONTHLY_5 = os.environ.get('PRICE_MONTHLY_5') if BILLING_ENABLED else None
+PRICE_ANNUAL_24 = os.environ.get('PRICE_ANNUAL_24') if BILLING_ENABLED else None
+PRICE_ANNUAL_48 = os.environ.get('PRICE_ANNUAL_48') if BILLING_ENABLED else None
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET') if BILLING_ENABLED else None
 
 def _plan_price_id(plan: str) -> str:
     """Get Stripe price ID for a given plan"""
