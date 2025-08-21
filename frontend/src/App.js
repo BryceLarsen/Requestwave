@@ -4809,7 +4809,6 @@ const MusicianDashboard = () => {
         {activeTab === 'subscription' && (
           <div className="space-y-6">
             {!BILLING_ENABLED && (
-              /* Free Beta Mode - Show simple message */
               <div className="bg-gray-800 rounded-xl p-6">
                 <div className="flex justify-between items-center mb-6">
                   <div>
@@ -4833,8 +4832,13 @@ const MusicianDashboard = () => {
             
             {BILLING_ENABLED && (
               <div className="space-y-6">
-                {/* Subscription Status Card */}
                 <div className="bg-gray-800 rounded-xl p-6">
+                  <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <h2 className="text-xl font-bold">Subscription & Billing</h2>
+                      <p className="text-gray-300 text-sm">Manage your RequestWave subscription</p>
+                    </div>
+                  </div>
               <div className="flex justify-between items-center mb-6">
                 <div>
                   <h2 className="text-xl font-bold">Subscription & Billing</h2>
