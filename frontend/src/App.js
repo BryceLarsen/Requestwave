@@ -4808,37 +4808,14 @@ const MusicianDashboard = () => {
         {/* Subscription Tab - NEW: Freemium Model */}
         {activeTab === 'subscription' && (
           <div className="space-y-6">
-            {!BILLING_ENABLED && (
-              <div className="bg-gray-800 rounded-xl p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <div>
-                    <h2 className="text-xl font-bold">Free Beta</h2>
-                    <p className="text-gray-300 text-sm">All features are unlocked during Free Beta</p>
-                  </div>
-                </div>
-                <div className="p-4 rounded-lg border bg-green-900/20 border-green-500/30">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-bold text-green-300">All Features Unlocked</h3>
-                      <p className="text-gray-300 text-sm">
-                        Billing is disabled. Enjoy full access to all RequestWave features!
-                      </p>
-                    </div>
-                    <div className="w-4 h-4 rounded-full bg-green-500" />
-                  </div>
+            {/* Subscription Status Card */}
+            <div className="bg-gray-800 rounded-xl p-6">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-xl font-bold">Subscription & Billing</h2>
+                  <p className="text-gray-300 text-sm">Manage your RequestWave subscription</p>
                 </div>
               </div>
-            )}
-            
-            {BILLING_ENABLED && (
-              <div className="space-y-6">
-                <div className="bg-gray-800 rounded-xl p-6">
-                  <div className="flex justify-between items-center mb-6">
-                    <div>
-                      <h2 className="text-xl font-bold">Subscription & Billing</h2>
-                      <p className="text-gray-300 text-sm">Manage your RequestWave subscription</p>
-                    </div>
-                  </div>
 
               {subscriptionStatus && (
                 <div className="space-y-6">
