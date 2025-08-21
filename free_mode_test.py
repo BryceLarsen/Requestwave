@@ -248,7 +248,7 @@ class FreeModeAPITester:
             if cancel_response.status_code == 501:
                 try:
                     cancel_data_response = cancel_response.json()
-                    message = cancel_data_response.get("message", "")
+                    message = cancel_data_response.get("message", "") or cancel_data_response.get("detail", "")
                     if "Billing disabled in Free mode" in message:
                         print("   ✅ Cancel endpoint returns 501 with correct message")
                         cancel_success = True
