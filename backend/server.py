@@ -642,8 +642,11 @@ async def activate_audience_link(musician_id: str, reason: str = "subscription_a
         "timestamp": datetime.utcnow()
     })
 
-def init_stripe_checkout(request: FastAPIRequest) -> StripeCheckout:
+def init_stripe_checkout(request: FastAPIRequest):
     """Initialize Stripe checkout with webhook URL"""
+    if not BILLING_ENABLED:
+        raise ValueError("Billing is disabled in Free mode")
+    
     host_url = str(request.base_url).rstrip('/')
     webhook_url = f"{host_url}/api/webhook/stripe"
     return StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
