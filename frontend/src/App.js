@@ -8046,17 +8046,88 @@ const OnStageInterface = () => {
   }
   
   // Organize requests into sections
-  const upNextRequests = requests.filter(r => r.status === 'up_next')
+  let upNextRequests, activeRequests, completedRequests;
+  let displayMusician = musician;
+  let displayRequests = requests;
+  
+  if (!musician) {
+    // Demo mode for testing the new UI structure
+    displayMusician = { name: "Demo Artist", slug: "demo" };
+    displayRequests = [
+      {
+        id: 'demo-up-next-1',
+        song_title: 'Sweet Child O Mine',
+        song_artist: 'Guns N Roses',
+        requester_name: 'Sarah M.',
+        dedication: 'For my anniversary!',
+        created_at: new Date(Date.now() - 300000).toISOString(), // 5 mins ago
+        status: 'up_next',
+        type: 'request'
+      },
+      {
+        id: 'demo-up-next-2',
+        song_title: 'Bohemian Rhapsody',
+        song_artist: 'Queen',
+        requester_name: 'Mike D.',
+        dedication: '',
+        created_at: new Date(Date.now() - 240000).toISOString(), // 4 mins ago
+        status: 'up_next',
+        type: 'request'
+      },
+      {
+        id: 'demo-active-1',
+        song_title: 'Wonderwall',
+        song_artist: 'Oasis',
+        requester_name: 'Emily R.',
+        dedication: 'First dance song!',
+        created_at: new Date(Date.now() - 120000).toISOString(), // 2 mins ago
+        status: 'pending',
+        type: 'request'
+      },
+      {
+        id: 'demo-active-2',
+        song_title: 'Hotel California',
+        song_artist: 'Eagles',
+        requester_name: 'John K.',
+        dedication: '',
+        created_at: new Date(Date.now() - 60000).toISOString(), // 1 min ago
+        status: 'pending',
+        type: 'request'
+      },
+      {
+        id: 'demo-completed-1',
+        song_title: 'Stairway to Heaven',
+        song_artist: 'Led Zeppelin',
+        requester_name: 'Lisa P.',
+        dedication: 'Amazing performance!',
+        created_at: new Date(Date.now() - 600000).toISOString(), // 10 mins ago
+        status: 'played',
+        type: 'request'
+      },
+      {
+        id: 'demo-completed-2',
+        song_title: 'Freebird',
+        song_artist: 'Lynyrd Skynyrd',
+        requester_name: 'Tom S.',
+        dedication: '',
+        created_at: new Date(Date.now() - 900000).toISOString(), // 15 mins ago
+        status: 'rejected',
+        type: 'request'
+      }
+    ];
+  }
+  
+  upNextRequests = displayRequests.filter(r => r.status === 'up_next')
     .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); // oldest first
   
-  const activeRequests = requests.filter(r => !r.status || r.status === 'pending')
+  activeRequests = displayRequests.filter(r => !r.status || r.status === 'pending')
     .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); // oldest first
     
-  const completedRequests = requests.filter(r => r.status === 'played' || r.status === 'rejected')
+  completedRequests = displayRequests.filter(r => r.status === 'played' || r.status === 'rejected')
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // newest first
   
   const allItems = [
-    ...requests.map(r => ({ ...r, type: 'request' })),
+    ...displayRequests.map(r => ({ ...r, type: 'request' })),
     ...suggestions.map(s => ({ ...s, type: 'suggestion' }))
   ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   
