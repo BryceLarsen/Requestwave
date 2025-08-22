@@ -7632,7 +7632,7 @@ const AudienceInterface = () => {
                   </button>
                 )}
                 
-                {musician.apple_music_artist_url && (
+                {musician.apple_music_artist_url && musician.apple_music_artist_url.trim() !== '' && (
                   <button
                     onClick={() => handleSocialClick('apple_music')}
                     className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-3"
