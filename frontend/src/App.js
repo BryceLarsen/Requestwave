@@ -6339,6 +6339,11 @@ const AudienceInterface = () => {
   // NEW: Post-request state for tip/social modal
   const [showPostRequestModal, setShowPostRequestModal] = useState(false);
   const [currentRequestId, setCurrentRequestId] = useState(null);
+  
+  // NEW: Multi-step post-request flow
+  const [showTipChoiceModal, setShowTipChoiceModal] = useState(false);
+  const [showSocialFollowModal, setShowSocialFollowModal] = useState(false);
+  const [selectedTipAmount, setSelectedTipAmount] = useState('');
 
   // NEW: Tip functionality state
   const [showTipModal, setShowTipModal] = useState(false);
