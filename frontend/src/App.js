@@ -8017,14 +8017,6 @@ const OnStageInterface = () => {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            {newRequestCount > 0 && (
-              <div 
-                onClick={clearNewCount}
-                className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold animate-pulse cursor-pointer"
-              >
-                +{newRequestCount} New!
-              </div>
-            )}
             <div className={`w-3 h-3 rounded-full ${notificationsEnabled ? 'bg-green-500' : 'bg-red-500'}`}></div>
           </div>
         </div>
