@@ -316,13 +316,12 @@ class TipFlowTester:
                 paypal_format_correct = False
             
             # Test Venmo tip link
-            venmo_tip_data = {
+            venmo_params = {
                 "amount": 3.00,
-                "platform": "venmo",
                 "message": "Love your performance!"
             }
             
-            venmo_response = self.make_request("POST", f"/musicians/{self.musician_slug}/tip-links", venmo_tip_data)
+            venmo_response = self.make_request("GET", f"/musicians/{self.musician_slug}/tip-links", params=venmo_params)
             
             if venmo_response.status_code == 200:
                 venmo_result = venmo_response.json()
