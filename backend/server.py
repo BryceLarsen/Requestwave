@@ -1978,6 +1978,8 @@ async def get_profile(musician_id: str = Depends(get_current_musician)):
         # Payment usernames
         paypal_username=musician.get("paypal_username", ""),
         venmo_username=musician.get("venmo_username", ""),
+        zelle_email=musician.get("zelle_email", ""),
+        zelle_phone=musician.get("zelle_phone", ""),
         # NEW: Social media fields
         instagram_username=musician.get("instagram_username", ""),
         facebook_username=musician.get("facebook_username", ""),
