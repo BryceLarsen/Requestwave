@@ -556,13 +556,12 @@ class TipFlowTester:
                 paypal_switch_test = False
             
             # Then generate Venmo link (simulating user switching payment method)
-            venmo_data = {
+            venmo_params = {
                 "amount": 10.00,
-                "platform": "venmo",
                 "message": "Switching test - Venmo"
             }
             
-            venmo_response = self.make_request("POST", f"/musicians/{self.musician_slug}/tip-links", venmo_data)
+            venmo_response = self.make_request("GET", f"/musicians/{self.musician_slug}/tip-links", params=venmo_params)
             
             if venmo_response.status_code == 200:
                 venmo_result = venmo_response.json()
