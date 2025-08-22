@@ -855,6 +855,39 @@ backend:
         comment: "GENRE EXPANSION FULLY WORKING: Comprehensive testing confirms all new cultural and seasonal genres are working perfectly. ✅ GENRE LIST EXPANSION: All 4 new genres (Irish, Italian, Jam Band, Christmas) can be created and used in songs - verified through direct song creation with each genre. ✅ KEYWORD-BASED DETECTION: 100% success rate (14/14 tests) for keyword detection including 'irish/celtic/dublin' → Irish, 'christmas/xmas/holiday/santa/jingle' → Christmas, 'jam/improvisation/extended' → Jam Band, 'italian/amore/bella' → Italian. ✅ ARTIST-BASED DETECTION: 100% success rate (14/14 tests) for artist-based genre detection including Irish artists (The Dubliners, U2, Sinead O'Connor, The Cranberries, Flogging Molly), Italian artists (Pavarotti, Bocelli, Sinatra, Dean Martin), and Jam Band artists (Grateful Dead, Phish, Widespread Panic, Allman Brothers, Dave Matthews Band). ✅ CSV IMPORT COMPATIBILITY: Successfully imported 5 test songs via CSV with correct genre assignments - Irish Ballad→Irish, Bella Vita→Italian, Jam Session Live→Jam Band, Silent Night→Christmas, Jingle Bells Rock→Christmas. ✅ LST IMPORT COMPATIBILITY: Successfully imported 8 songs via LST format with proper genre detection including Irish Rover→Irish, Ripple→Jam Band, That's Amore→Italian, Celtic Woman→Irish, Volare→Italian. ✅ GENRE COUNT VERIFICATION: All 24 genres working correctly (up from 20) - Pop, Rock, Classic Rock, Folk, Country, Americana, Indie, Alternative, Singer-Songwriter, R&B, Soul, Funk, Blues, Jazz, Hip Hop, Reggae, Electronic, Dance, Latin, Acoustic, Irish, Italian, Jam Band, Christmas. SUCCESS RATE: 97.6% (40/41 tests passed). Musicians can now properly categorize their songs with these additional cultural and seasonal genres during songlist imports."
 
 frontend:
+  - task: "Tip System Toggle in Design Tab"
+    implemented: false
+    working: "NA" 
+    file: "App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "NEW FEATURE: Need to add Tip System Toggle to the Design tab with proper styling and functionality to update profile.tips_enabled field."
+  - task: "On Stage Request Toggle"
+    implemented: false
+    working: "NA"
+    file: "App.js" 
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "NEW FEATURE: Need to add live Request Toggle within On Stage mode interface to control profile.requests_enabled field in real-time."
+  - task: "Audience Request Flow Logic Updates"
+    implemented: false
+    working: "NA"
+    file: "App.js"
+    stuck_count: 0
+    priority: "high" 
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "NEW FEATURE: Need to update audience request flow to respect musician's tips_enabled and requests_enabled settings. Skip tip modal when tips disabled, show message when requests disabled."
   - task: "Musician Dashboard"
     implemented: true
     working: true
