@@ -266,7 +266,7 @@ class Tip(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     musician_id: str
     amount: float
-    platform: str  # "paypal" or "venmo"
+    platform: str  # "paypal", "venmo", or "zelle"
     tipper_name: Optional[str] = None
     message: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
