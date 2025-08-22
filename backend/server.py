@@ -3521,6 +3521,15 @@ async def upload_csv_songs(
             decade = calculate_decade(song_dict['year'])
             song_dict['decade'] = decade
             
+            # Auto-assign genres and moods if empty (using curated categories)
+            if not song_dict.get("genres") or len(song_dict["genres"]) == 0:
+                genre_mood_data = assign_genre_and_mood(song_data['title'], song_data['artist'])
+                song_dict["genres"] = [genre_mood_data["genre"]]
+                
+                # Also assign mood if empty
+                if not song_dict.get("moods") or len(song_dict["moods"]) == 0:
+                    song_dict["moods"] = [genre_mood_data["mood"]]
+            
             # Check for duplicates (same title and artist for this musician)
             existing = await db.songs.find_one({
                 "musician_id": musician_id,
