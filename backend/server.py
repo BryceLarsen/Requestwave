@@ -299,6 +299,9 @@ class MusicianPublic(BaseModel):
     tiktok_username: Optional[str] = None
     spotify_artist_url: Optional[str] = None
     apple_music_artist_url: Optional[str] = None
+    # NEW: Control settings for audience UI
+    tips_enabled: Optional[bool] = True
+    requests_enabled: Optional[bool] = True
 
 class MusicianProfile(BaseModel):
     name: str
