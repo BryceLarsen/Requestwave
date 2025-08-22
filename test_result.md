@@ -101,7 +101,7 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
-user_problem_statement: "Implement musician control toggles for tip system and live request management. Add a global 'Tip System Toggle' in the musician profile Design tab that allows musicians to completely disable the tipping system. Also add an 'On Stage Request Toggle' within the On Stage mode interface that allows musicians to temporarily disable new song requests. When tips are disabled, the audience request flow should skip the tip-choice modal and move directly to social media links. When requests are disabled, the audience should see a message instead of the request form but can still send comments."
+user_problem_statement: "PHASE 1 COMPLETE: Implement musician control toggles for tip system and live request management. PHASE 2 COMPLETE: Add Bryce's photo and welcome story to login page with Support RequestWave section featuring donation options (Venmo: adventuresound, PayPal: brycelarsenmusic, Zelle: brycelarsenmusic@gmail.com/5166800672) with default amounts $24, $48, $96."
 
 backend:
   - task: "Musician Control Toggles - Backend Implementation"
