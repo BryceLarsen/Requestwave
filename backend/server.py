@@ -2882,11 +2882,11 @@ async def toggle_song_visibility(
 
 # Genres and Moods endpoints
 @api_router.get("/genres")
-async def get_all_genres(musician_id: str = Depends(get_current_musician)):
+def get_all_genres(musician_id: str = Depends(get_current_musician)):
     """Get all unique genres used by this musician"""
     try:
         # Get all songs for this musician
-        songs = await db.songs.find({"musician_id": musician_id}).to_list(length=None)
+        songs = list(db.songs.find({"musician_id": musician_id}))
         
         # Extract all genres and create a unique set
         genres = set()
@@ -2901,11 +2901,11 @@ async def get_all_genres(musician_id: str = Depends(get_current_musician)):
         raise HTTPException(status_code=500, detail="Error getting genres")
 
 @api_router.get("/moods")  
-async def get_all_moods(musician_id: str = Depends(get_current_musician)):
+def get_all_moods(musician_id: str = Depends(get_current_musician)):
     """Get all unique moods used by this musician"""
     try:
         # Get all songs for this musician
-        songs = await db.songs.find({"musician_id": musician_id}).to_list(length=None)
+        songs = list(db.songs.find({"musician_id": musician_id}))
         
         # Extract all moods and create a unique set
         moods = set()
