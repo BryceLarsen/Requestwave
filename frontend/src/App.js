@@ -714,28 +714,6 @@ const MusicianDashboard = () => {
     setShowPostRequestModal(false);
     setShowTipModal(true);
   };
-  
-  // NEW: Handle tip choice flow
-  const handleTipChoice = (amount) => {
-    setSelectedTipAmount(amount);
-    setTipAmount(amount);
-    setTipPlatform(musician.venmo_username ? 'venmo' : 'paypal');
-    
-    setShowTipChoiceModal(false);
-    setShowTipModal(true);
-  };
-  
-  const handleNoTip = () => {
-    setShowTipChoiceModal(false);
-    setShowSocialFollowModal(true);
-  };
-  
-  const closeTipFlow = () => {
-    setShowTipChoiceModal(false);
-    setShowSocialFollowModal(false);
-    setCurrentRequestId(null);
-    setSelectedTipAmount('');
-  };
 
   const getTipPresetAmounts = () => [1, 5, 10, 20];
 
