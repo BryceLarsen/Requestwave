@@ -4473,7 +4473,7 @@ const MusicianDashboard = () => {
                     className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 sm:px-4 py-2 text-white text-sm sm:text-base"
                   />
                   <button
-                    onClick={async () => {
+                    onClick={async (event) => {
                       try {
                         await navigator.clipboard.writeText(audienceUrl);
                         // Provide visual feedback
