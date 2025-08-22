@@ -6797,10 +6797,28 @@ const AudienceInterface = () => {
       return;
     }
 
-    // Store the song and form data, but don't submit the request yet
-    // The request will be submitted after tip selection in the tip flow
+    // Check if requests are disabled
+    if (musician.requests_enabled === false) {
+      alert('Song requests are currently disabled. Please try again later.');
+      return;
+    }
+
+    // Store the song and form data
     setSelectedSong(song);
-    setShowTipChoiceModal(true);
+    
+    // Check if tips are enabled - if not, skip the tip modal and go straight to social follow
+    if (musician.tips_enabled === false) {
+      // Submit request without tip and skip tip modal
+      const submittedRequest = await submitRequestWithTip(song, 0);
+      if (submittedRequest) {
+        // Go straight to social follow modal
+        setShowTipChoiceModal(false);
+        setShowSocialFollowModal(true);
+      }
+    } else {
+      // Show tip choice modal as normal
+      setShowTipChoiceModal(true);
+    }
   };
   
   // NEW: Actually submit the request with tip information
