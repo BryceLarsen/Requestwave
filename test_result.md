@@ -859,38 +859,47 @@ backend:
 
 frontend:
   - task: "Tip System Toggle in Design Tab"
-    implemented: false
+    implemented: true
     working: "NA" 
     file: "App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: "NA"
           agent: "main"
           comment: "NEW FEATURE: Need to add Tip System Toggle to the Design tab with proper styling and functionality to update profile.tips_enabled field."
+        - working: "NA"
+          agent: "main"
+          comment: "IMPLEMENTATION COMPLETE: Added Tip System Toggle to Design tab using toggle switch component similar to Song Suggestions toggle. Modified handleDesignUpdate to also update profile.tips_enabled field via PUT /api/profile endpoint."
   - task: "On Stage Request Toggle"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "App.js" 
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: "NA"
           agent: "main"
           comment: "NEW FEATURE: Need to add live Request Toggle within On Stage mode interface to control profile.requests_enabled field in real-time."
+        - working: "NA"
+          agent: "main"
+          comment: "IMPLEMENTATION COMPLETE: Added Request Toggle switch to OnStageInterface header with real-time functionality. Toggle updates profile.requests_enabled via PUT /api/profile and updates local musician state immediately."
   - task: "Audience Request Flow Logic Updates"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "App.js"
     stuck_count: 0
     priority: "high" 
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: "NA"
           agent: "main"
           comment: "NEW FEATURE: Need to update audience request flow to respect musician's tips_enabled and requests_enabled settings. Skip tip modal when tips disabled, show message when requests disabled."
+        - working: "NA"
+          agent: "main"
+          comment: "IMPLEMENTATION COMPLETE: Modified handleRequest() to check musician.requests_enabled and skip tip modal when tips_enabled=false. Added conditional rendering in AudienceInterface to show requests disabled message with alternative actions (Suggest Song, Send Tip) when requests are disabled. Updated button visibility to respect settings."
   - task: "Musician Dashboard"
     implemented: true
     working: true
