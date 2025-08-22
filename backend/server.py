@@ -1995,7 +1995,10 @@ async def get_profile(musician_id: str = Depends(get_current_musician)):
         venmo_username=musician.get("venmo_username", ""),
         zelle_email=musician.get("zelle_email", ""),
         zelle_phone=musician.get("zelle_phone", ""),
-        # NEW: Social media fields
+        # Control settings
+        tips_enabled=musician.get("tips_enabled", True),
+        requests_enabled=musician.get("requests_enabled", True),
+        # Social media usernames
         instagram_username=musician.get("instagram_username", ""),
         facebook_username=musician.get("facebook_username", ""),
         tiktok_username=musician.get("tiktok_username", ""),
