@@ -2299,14 +2299,17 @@ const MusicianDashboard = () => {
   };
 
   const handleAddNewGenre = () => {
-    if (newGenre.trim() && !availableGenres.includes(newGenre.trim())) {
-      const updatedGenres = [...availableGenres, newGenre.trim()].sort();
-      setAvailableGenres(updatedGenres);
-      
+    if (newGenre.trim() && !filterOptions.genres?.includes(newGenre.trim())) {
       // Add to current song form
       if (!songForm.genres.includes(newGenre.trim())) {
         setSongForm({...songForm, genres: [...songForm.genres, newGenre.trim()]});
       }
+      
+      // Add to filterOptions for immediate use
+      setFilterOptions(prev => ({
+        ...prev,
+        genres: [...(prev.genres || []), newGenre.trim()].sort()
+      }));
       
       setNewGenre('');
       setShowAddGenre(false);
@@ -2314,14 +2317,17 @@ const MusicianDashboard = () => {
   };
 
   const handleAddNewMood = () => {
-    if (newMood.trim() && !availableMoods.includes(newMood.trim())) {
-      const updatedMoods = [...availableMoods, newMood.trim()].sort();
-      setAvailableMoods(updatedMoods);
-      
+    if (newMood.trim() && !filterOptions.moods?.includes(newMood.trim())) {
       // Add to current song form
       if (!songForm.moods.includes(newMood.trim())) {
         setSongForm({...songForm, moods: [...songForm.moods, newMood.trim()]});
       }
+      
+      // Add to filterOptions for immediate use
+      setFilterOptions(prev => ({
+        ...prev,
+        moods: [...(prev.moods || []), newMood.trim()].sort()
+      }));
       
       setNewMood('');
       setShowAddMood(false);
