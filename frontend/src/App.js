@@ -2279,47 +2279,6 @@ const MusicianDashboard = () => {
     }
   };
 
-  // NEW: Fetch available genres and moods for dropdowns from existing songs  
-  const fetchAvailableGenres = () => {
-    try {
-      // Extract genres from existing songs
-      const allGenres = new Set();
-      songs.forEach(song => {
-        if (song.genres && Array.isArray(song.genres)) {
-          song.genres.forEach(genre => {
-            if (genre && genre.trim()) {
-              allGenres.add(genre.trim());
-            }
-          });
-        }
-      });
-      setAvailableGenres(Array.from(allGenres).sort());
-    } catch (error) {
-      console.error('Error extracting genres:', error);
-      setAvailableGenres([]);
-    }
-  };
-
-  const fetchAvailableMoods = () => {
-    try {
-      // Extract moods from existing songs
-      const allMoods = new Set();
-      songs.forEach(song => {
-        if (song.moods && Array.isArray(song.moods)) {
-          song.moods.forEach(mood => {
-            if (mood && mood.trim()) {
-              allMoods.add(mood.trim());
-            }
-          });
-        }
-      });
-      setAvailableMoods(Array.from(allMoods).sort());
-    } catch (error) {
-      console.error('Error extracting moods:', error);
-      setAvailableMoods([]);
-    }
-  };
-
   const handleAddNewGenre = () => {
     if (newGenre.trim() && !filterOptions.genres?.includes(newGenre.trim())) {
       // Add to current song form
