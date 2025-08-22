@@ -2005,8 +2005,6 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
             update_data["slug"] = new_slug
         update_data["name"] = profile_data.name
     
-    if profile_data.venmo_link is not None:
-        update_data["venmo_link"] = profile_data.venmo_link
     if profile_data.bio is not None:
         update_data["bio"] = profile_data.bio
     if profile_data.website is not None:
