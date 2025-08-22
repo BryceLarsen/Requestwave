@@ -543,14 +543,14 @@ class OnStageBackendTester:
                 test_request = next((r for r in all_requests if r["id"] == request_id), None)
                 
                 if test_request and test_request["status"] == "up_next":
-                    persistence_tests.append(("GET /requests", True))
-                    print(f"   ✅ Persistence verified via GET /requests")
+                    persistence_tests.append(("GET /requests/musician", True))
+                    print(f"   ✅ Persistence verified via GET /requests/musician")
                 else:
-                    persistence_tests.append(("GET /requests", False))
-                    print(f"   ❌ Persistence failed via GET /requests")
+                    persistence_tests.append(("GET /requests/musician", False))
+                    print(f"   ❌ Persistence failed via GET /requests/musician")
             else:
-                persistence_tests.append(("GET /requests", False))
-                print(f"   ❌ GET /requests failed: {all_requests_response.status_code}")
+                persistence_tests.append(("GET /requests/musician", False))
+                print(f"   ❌ GET /requests/musician failed: {all_requests_response.status_code}")
             
             # Test 2: GET /requests/updates/{musician_id}
             updates_response = self.make_request("GET", f"/requests/updates/{self.musician_id}")
