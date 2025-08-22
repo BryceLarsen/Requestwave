@@ -4672,6 +4672,36 @@ const MusicianDashboard = () => {
                     />
                     <p className="text-gray-400 text-xs mt-1">Used for Venmo.com/yourusername tip links</p>
                   </div>
+                  
+                  <div>
+                    <label className="block text-gray-300 text-sm font-bold mb-2">
+                      Zelle Email
+                      <span className="text-green-400 ml-1">🏦</span>
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="your.email@bank.com"
+                      value={profile.zelle_email || ''}
+                      onChange={(e) => setProfile({...profile, zelle_email: e.target.value})}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                    />
+                    <p className="text-gray-400 text-xs mt-1">Email address linked to your Zelle account</p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-gray-300 text-sm font-bold mb-2">
+                      Zelle Phone
+                      <span className="text-green-400 ml-1">📞</span>
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="(555) 123-4567"
+                      value={profile.zelle_phone || ''}
+                      onChange={(e) => setProfile({...profile, zelle_phone: e.target.value})}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                    />
+                    <p className="text-gray-400 text-xs mt-1">Phone number linked to your Zelle account</p>
+                  </div>
                 </div>
               </div>
               
