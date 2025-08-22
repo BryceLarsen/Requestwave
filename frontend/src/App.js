@@ -6533,6 +6533,7 @@ const AudienceInterface = () => {
     setShowSocialFollowModal(false);
     setCurrentRequestId(null);
     setSelectedTipAmount('');
+    setSelectedSong(null); // Clear selected song when closing flow
   };
 
   // Color scheme mappings
