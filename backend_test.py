@@ -23,12 +23,12 @@ from typing import Dict, Any, Optional
 # Configuration
 BASE_URL = "https://performance-pay-1.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
-    "name": "Playlist Test Musician",
-    "email": "playlist.test@requestwave.com",
+    "name": "Venmo Test Musician",
+    "email": "venmo.test@requestwave.com", 
     "password": "SecurePassword123!"
 }
 
-# Pro account for playlist testing
+# Pro account for testing
 PRO_MUSICIAN = {
     "email": "brycelarsenmusic@gmail.com",
     "password": "RequestWave2024!"
