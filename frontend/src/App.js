@@ -6962,9 +6962,15 @@ const AudienceInterface = () => {
               )}
               
               {/* Social Media Links - Show when musician data is loaded and has social links */}
-              {musician && (musician.instagram_username || musician.facebook_username || musician.tiktok_username || musician.spotify_artist_url || musician.apple_music_artist_url) && (
+              {musician && (
+                (musician.instagram_username && musician.instagram_username.trim() !== '') || 
+                (musician.facebook_username && musician.facebook_username.trim() !== '') || 
+                (musician.tiktok_username && musician.tiktok_username.trim() !== '') || 
+                (musician.spotify_artist_url && musician.spotify_artist_url.trim() !== '') || 
+                (musician.apple_music_artist_url && musician.apple_music_artist_url.trim() !== '')
+              ) && (
                 <div className="flex items-center space-x-1 mt-2 flex-wrap">
-                  {musician.instagram_username && (
+                  {musician.instagram_username && musician.instagram_username.trim() !== '' && (
                     <a
                       href={`https://instagram.com/${musician.instagram_username}`}
                       target="_blank" 
