@@ -7753,6 +7753,20 @@ const AudienceInterface = () => {
                               @{musician.venmo_username}
                             </p>
                           </div>
+                        ) : tipPlatform === 'zelle' && (musician.zelle_email || musician.zelle_phone) ? (
+                          <div>
+                            <p className="font-medium">Zelle contact:</p>
+                            {musician.zelle_email && (
+                              <p className="bg-gray-700 px-2 py-1 rounded font-mono text-green-300 mb-1">
+                                📧 {musician.zelle_email}
+                              </p>
+                            )}
+                            {musician.zelle_phone && (
+                              <p className="bg-gray-700 px-2 py-1 rounded font-mono text-green-300">
+                                📞 {musician.zelle_phone}
+                              </p>
+                            )}
+                          </div>
                         ) : null}
                       </div>
                     </div>
