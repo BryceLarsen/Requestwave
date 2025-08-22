@@ -7514,7 +7514,7 @@ const AudienceInterface = () => {
                   </button>
                 )}
                 
-                {musician.spotify_artist_url && (
+                {musician.spotify_artist_url && musician.spotify_artist_url.trim() !== '' && (
                   <button
                     onClick={() => {
                       handleSocialClick('spotify');
