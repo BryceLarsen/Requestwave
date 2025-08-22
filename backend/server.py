@@ -2053,6 +2053,12 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
     if profile_data.zelle_phone is not None:
         update_data["zelle_phone"] = profile_data.zelle_phone
     
+    # Control settings
+    if profile_data.tips_enabled is not None:
+        update_data["tips_enabled"] = profile_data.tips_enabled
+    if profile_data.requests_enabled is not None:
+        update_data["requests_enabled"] = profile_data.requests_enabled
+    
     # NEW: Update social media fields
     if profile_data.instagram_username is not None:
         instagram_username = profile_data.instagram_username.strip()
