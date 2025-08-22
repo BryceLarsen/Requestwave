@@ -2093,7 +2093,10 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
         venmo_username=updated_musician.get("venmo_username", ""),
         zelle_email=updated_musician.get("zelle_email", ""),
         zelle_phone=updated_musician.get("zelle_phone", ""),
-        # NEW: Social media fields
+        # Control settings
+        tips_enabled=updated_musician.get("tips_enabled", True),
+        requests_enabled=updated_musician.get("requests_enabled", True),
+        # Social media usernames
         instagram_username=updated_musician.get("instagram_username", ""),
         facebook_username=updated_musician.get("facebook_username", ""),
         tiktok_username=updated_musician.get("tiktok_username", ""),
