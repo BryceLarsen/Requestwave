@@ -463,7 +463,7 @@ class RequestWaveAPITester:
                     "message": f"${amount} tip via Zelle"
                 }
                 
-                amount_response = self.make_request("POST", "/tips", tip_data)
+                amount_response = self.make_request("POST", f"/musicians/{login_data_response['musician']['slug']}/tips", tip_data)
                 
                 if amount_response.status_code == 200:
                     amount_result = amount_response.json()
