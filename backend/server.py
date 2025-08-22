@@ -210,6 +210,7 @@ class RequestCreate(BaseModel):
     requester_name: str
     requester_email: str
     dedication: str = ""
+    tip_amount: float = 0.0
 
 class Request(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
