@@ -312,7 +312,7 @@ class OnStageBackendTester:
             print("📊 Step 3: Verify status persists by fetching request")
             
             # Get all requests and find our test request
-            requests_response = self.make_request("GET", "/requests")
+            requests_response = self.make_request("GET", f"/requests/musician/{self.musician_id}")
             
             if requests_response.status_code == 200:
                 all_requests = requests_response.json()
