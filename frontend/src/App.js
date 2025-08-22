@@ -7886,6 +7886,16 @@ const OnStageInterface = () => {
     );
   }
   
+  // Organize requests into sections
+  const upNextRequests = requests.filter(r => r.status === 'up_next')
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); // oldest first
+  
+  const activeRequests = requests.filter(r => !r.status || r.status === 'pending')
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); // oldest first
+    
+  const completedRequests = requests.filter(r => r.status === 'played' || r.status === 'rejected')
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // newest first
+  
   const allItems = [
     ...requests.map(r => ({ ...r, type: 'request' })),
     ...suggestions.map(s => ({ ...s, type: 'suggestion' }))
