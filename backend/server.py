@@ -3267,7 +3267,7 @@ async def update_request_status(
     """Update request status (pending, up_next, accepted, played, rejected) - UPDATED: Added up_next status for On Stage mode"""
     status = status_data.status
     if status not in ["pending", "up_next", "accepted", "played", "rejected"]:
-        raise HTTPException(status_code=400, detail="Invalid status. Must be: pending, accepted, played, or rejected")
+        raise HTTPException(status_code=400, detail="Invalid status. Must be: pending, up_next, accepted, played, or rejected")
     
     # Verify request belongs to musician
     result = await db.requests.update_one(
