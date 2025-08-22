@@ -104,6 +104,20 @@
 user_problem_statement: "Test the new On Stage mode backend functionality with three request statuses. Specifically test: Request Status Updates (PUT /api/requests/{id}/status endpoint can handle the new 'up_next' status alongside existing 'pending', 'played', and 'rejected' statuses), Request Filtering (GET /api/requests/updates/{musician_id} returns requests with all status types including the new 'up_next' status), Status Validation (backend accepts 'up_next' as a valid status without errors), Demo User Setup (create a test musician and add sample requests with different statuses), and Response Format (ensure all request responses include the correct status field that the frontend can use to organize requests into the three sections: Up Next, Active Requests, Completed Requests)."
 
 backend:
+  - task: "On Stage Mode Backend Functionality with Three Request Statuses"
+    implemented: false
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "NEW TESTING REQUEST: Test the new On Stage mode backend functionality with three request statuses. Focus on testing Request Status Updates, Request Filtering, Status Validation, Demo User Setup, and Response Format for the improved On Stage interface with three distinct sections."
+      - working: false
+        agent: "testing"
+        comment: "ON STAGE MODE BACKEND ISSUES IDENTIFIED: Comprehensive testing reveals critical issues with the new On Stage mode functionality. ❌ CRITICAL STATUS VALIDATION ISSUE: Backend does not accept 'up_next' status - PUT /api/requests/{id}/status returns 400 error 'Invalid status. Must be: pending, accepted, played, or rejected'. The backend validation in line 3269 of server.py only allows ['pending', 'accepted', 'played', 'rejected'] but needs to include 'up_next' for the three-section organization. ❌ REQUEST FILTERING RESPONSE FORMAT ISSUE: GET /api/requests/updates/{musician_id} returns a dict with 'requests' key instead of a direct list, causing frontend parsing issues. The endpoint returns {'requests': [...], 'total_requests': N, 'last_updated': timestamp} but frontend expects direct array. ❌ THREE-SECTION ORGANIZATION BLOCKED: Cannot test three-section organization (Up Next, Active Requests, Completed Requests) because 'up_next' status is not accepted by backend. ✅ DEMO REQUEST CREATION: Successfully created 4 test requests for different statuses. ✅ BASIC STATUS UPDATES: 'pending', 'played', 'rejected' statuses work correctly. ✅ AUTHENTICATION: Pro account login and request management working. SUCCESS RATE: 42.9% (3/7 tests passed). IMMEDIATE ACTION REQUIRED: 1) Add 'up_next' to valid statuses in status validation, 2) Fix request updates endpoint response format for frontend compatibility."
   - task: "Free Mode Feature Flag Implementation (BILLING_ENABLED=false)"
     implemented: true
     working: true
