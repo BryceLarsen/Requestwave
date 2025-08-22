@@ -2248,6 +2248,57 @@ const MusicianDashboard = () => {
     }
   };
 
+  // NEW: Fetch available genres and moods for dropdowns
+  const fetchAvailableGenres = async () => {
+    try {
+      const response = await axios.get(`${API}/genres`);
+      setAvailableGenres(response.data.genres || []);
+    } catch (error) {
+      console.error('Error fetching genres:', error);
+      setAvailableGenres([]);
+    }
+  };
+
+  const fetchAvailableMoods = async () => {
+    try {
+      const response = await axios.get(`${API}/moods`);
+      setAvailableMoods(response.data.moods || []);
+    } catch (error) {
+      console.error('Error fetching moods:', error);
+      setAvailableMoods([]);
+    }
+  };
+
+  const handleAddNewGenre = () => {
+    if (newGenre.trim() && !availableGenres.includes(newGenre.trim())) {
+      const updatedGenres = [...availableGenres, newGenre.trim()].sort();
+      setAvailableGenres(updatedGenres);
+      
+      // Add to current song form
+      if (!songForm.genres.includes(newGenre.trim())) {
+        setSongForm({...songForm, genres: [...songForm.genres, newGenre.trim()]});
+      }
+      
+      setNewGenre('');
+      setShowAddGenre(false);
+    }
+  };
+
+  const handleAddNewMood = () => {
+    if (newMood.trim() && !availableMoods.includes(newMood.trim())) {
+      const updatedMoods = [...availableMoods, newMood.trim()].sort();
+      setAvailableMoods(updatedMoods);
+      
+      // Add to current song form
+      if (!songForm.moods.includes(newMood.trim())) {
+        setSongForm({...songForm, moods: [...songForm.moods, newMood.trim()]});
+      }
+      
+      setNewMood('');
+      setShowAddMood(false);
+    }
+  };
+
   const createPlaylist = async () => {
     if (!playlistName.trim()) {
       setPlaylistManagementError('Please enter a playlist name');
