@@ -284,25 +284,40 @@ class OnStageBackendTester:
             update_response = self.make_request("PUT", f"/requests/{request_id}/status", status_update_data)
             
             if update_response.status_code == 200:
-                updated_request = update_response.json()
+                update_result = update_response.json()
                 
-                # Verify all required fields are present
-                required_fields = ["id", "status", "song_title", "song_artist", "requester_name", "created_at"]
-                missing_fields = [field for field in required_fields if field not in updated_request]
+                # The status update endpoint returns a success message, not the full request
+                # We need to fetch the request to verify the update
+                verify_response = self.make_request("GET", f"/requests/musician/{self.musician_id}")
                 
-                if len(missing_fields) == 0:
-                    print(f"   ✅ All required fields present in response")
+                if verify_response.status_code == 200:
+                    all_requests = verify_response.json()
+                    updated_request = next((r for r in all_requests if r["id"] == request_id), None)
                     
-                    if updated_request["status"] == "up_next":
-                        print(f"   ✅ Status successfully updated to 'up_next'")
-                        print(f"   📊 Request details: {updated_request['song_title']} by {updated_request['song_artist']}")
-                        self.log_result("Request Status Update", True, "Successfully created request and updated to 'up_next' status")
+                    if updated_request:
+                        # Verify all required fields are present
+                        required_fields = ["id", "status", "song_title", "song_artist", "requester_name", "created_at"]
+                        missing_fields = [field for field in required_fields if field not in updated_request]
+                        
+                        if len(missing_fields) == 0:
+                            print(f"   ✅ All required fields present in response")
+                            
+                            if updated_request["status"] == "up_next":
+                                print(f"   ✅ Status successfully updated to 'up_next'")
+                                print(f"   📊 Request details: {updated_request['song_title']} by {updated_request['song_artist']}")
+                                self.log_result("Request Status Update", True, "Successfully created request and updated to 'up_next' status")
+                            else:
+                                print(f"   ❌ Status not 'up_next': {updated_request['status']}")
+                                self.log_result("Request Status Update", False, f"Status update failed - got '{updated_request['status']}'")
+                        else:
+                            print(f"   ❌ Missing required fields: {missing_fields}")
+                            self.log_result("Request Status Update", False, f"Response missing fields: {missing_fields}")
                     else:
-                        print(f"   ❌ Status not 'up_next': {updated_request['status']}")
-                        self.log_result("Request Status Update", False, f"Status update failed - got '{updated_request['status']}'")
+                        print(f"   ❌ Updated request not found")
+                        self.log_result("Request Status Update", False, "Updated request not found")
                 else:
-                    print(f"   ❌ Missing required fields: {missing_fields}")
-                    self.log_result("Request Status Update", False, f"Response missing fields: {missing_fields}")
+                    print(f"   ❌ Failed to verify update: {verify_response.status_code}")
+                    self.log_result("Request Status Update", False, f"Failed to verify update: {verify_response.status_code}")
             else:
                 print(f"   ❌ Status update failed: {update_response.status_code}")
                 print(f"   📊 Error response: {update_response.text}")
