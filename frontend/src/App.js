@@ -7501,7 +7501,7 @@ const AudienceInterface = () => {
                   </button>
                 )}
                 
-                {musician.facebook_username && (
+                {musician.facebook_username && musician.facebook_username.trim() !== '' && (
                   <button
                     onClick={() => {
                       handleSocialClick('facebook');
