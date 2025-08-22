@@ -1,109 +1,88 @@
 <analysis>
-The previous AI engineer successfully expanded the RequestWave application from an MVP to a freemium model. Key efforts initially focused on implementing Stripe payments, fixing complex backend routing conflicts (especially with webhooks and path parameters), and updating the frontend for a 14-day trial with corrected pricing. Significant UI/UX improvements included removing Pro badging, converting static buttons to toggles/dropdowns, and consolidating song management.
+The previous AI engineer successfully expanded the RequestWave application from an MVP to a feature-rich platform. A major early focus was implementing a freemium model with Stripe, alongside extensive playlist management capabilities. Significant effort was also dedicated to UI/UX improvements, consolidating features, and enhancing responsive design.
 
-Following this, the engineer addressed user-reported bugs and new feature requests. A major part of the work involved enabling playlist management: allowing users to search by playlist, then adding functionality to create, rename, delete, and mark playlists as public/private. This required extensive backend (API endpoints, database schema updates for , , , and  in playlist responses) and frontend changes (UI for managing songs within playlists, drag-and-drop reordering, and a collapsible My Playlists section).
+Throughout the trajectory, a recurring challenge involved diagnosing and fixing critical deployment and environment-related bugs. These included persistent issues with Stripe key configurations, incorrect environment variables, database mismatches (preview vs. production), and problematic URL routing for production deployments, particularly affecting user login, subscription status, and QR code functionality.
 
-A persistent challenge throughout the latter part of the trajectory was debugging deployment and account-related issues. Multiple attempts were made to fix user login, subscription status, and playlist visibility, which were consistently hampered by misconfigurations (incorrect Stripe keys, hardcoded preview URLs) and, critically, platform-level deployment bugs preventing environment variables from syncing to production, and later, authentication endpoint routing issues specific to the custom domain. The last major finding was a database environment mismatch, where the AI was operating on a preview database while the user was testing production. The AI manually activated the user's account multiple times to facilitate testing while platform issues were escalated.
+Key feature additions included a comprehensive 3-step audience request flow with integrated tipping (supporting PayPal, Venmo, Zelle, and pop-up blocker fallbacks), a complete overhaul of the On Stage mode with distinct sections, refined genre categorization for song imports, and meticulous UI cleanups like hiding blank social links. The trajectory concluded with the initiation of new musician control features: a global tip system toggle and a live request toggle for On Stage mode.
 </analysis>
 
 <product_requirements>
-The RequestWave application empowers musicians to manage songs, requests, and tips, monetizing performances with a freemium model and Stripe subscriptions.
+The RequestWave application empowers musicians to manage songs, requests, and tips, leveraging a freemium model and Stripe subscriptions. The product requirements have been actively developed:
 
-The product requirements evolved over the trajectory:
-1.  **Audience Interface Enhancements (Partial):** Display artist social media links as buttons and make the artist's bio collapsible on the audience search page.
-2.  **Comprehensive Freemium Model (Implemented):** Integrated Stripe for freemium. Artist dashboard is free, but audience links/QR codes are paywalled. Includes a 5 one-time startup fee, monthly (), and annual (8) subscriptions, with a 14-day free trial. The system minimizes Stripe transactions, re-charges startup fees for reactivations, manages  via webhooks, and enforces access with a page paused screen if inactive.
-3.  **Frontend UI Alignment (Implemented):** Updated frontend for 14-day trial messaging, corrected pricing (8/year, total 3 with startup), changed checkout button to Start Free Trial Now, and replaced requests used bar with an Upgrade Now button.
-4.  **Feature Access & UI Simplification (Implemented):** Made Song Suggestions a toggle switch and available to all users. Removed Pro badges/restrictions from the Design tab, artist photo upload, and Analytics tab.
-5.  **UI Consolidation (Implemented):** Consolidated five song management buttons into a single dropdown menu.
-6.  **Responsive Design (Implemented):** Implemented mobile responsiveness for navigation and welcome text.
-7.  **Quick Start Guide (Implemented):** Removed automatic popup on login, kept accessible via a '?' button.
-8.  **Playlist Management (Partially Implemented):** Introduced ability to create, rename, delete, set public/private, and add/remove/reorder songs within playlists, with corresponding UI.
+1.  **Freemium Model:** Implemented with a  feature flag. The free-ga branch offers full application functionality without requiring payment. All Stripe-related billing logic and UI are conditionally disabled or hidden, ensuring a seamless experience while preserving scaffolding for future re-enablement.
+2.  **On Stage Mode Enhancements:** Redesigned into three distinct sections: Up Next, Active Requests, and Completed Requests (which is collapsible). Requester names and notes are displayed with larger fonts for improved visibility. A new  status was introduced for request management.
+3.  **Music Management Refinement:** The default list of genres for song imports was refined to 15 specific categories (Pop, Rock, Country, R&B/Soul, Rap/Hip Hop, Latin, Christmas, Irish, Jazz/Standards, Funk, Classic Rock, Motown, Classical, Reggae, Jam Band). Musicians retain the flexibility to manually edit or add custom genres post-import.
+4.  **Audience Request & Tipping Flow:** A comprehensive 3-step modal-based flow for audience song requests was introduced. This includes: 1) the initial request form; 2) a tip choice modal offering , 0, or 0 options with PayPal, Venmo, and Zelle payment platforms (including a fallback message for pop-up blockers); and 3) a social media follow modal for the No Tip path. The Suggest a Song button is now always visible to the audience.
+5.  **Payment System Expansion:** Full Zelle integration (email and phone) was added, alongside existing PayPal and Venmo options, providing musicians with a robust 3-payment tipping system.
+6.  **UI/UX Improvements & Bug Fixes:** Removed a deprecated legacy Venmo link from the profile page. Social media links are now only displayed on the audience side if the artist has provided non-blank information. Critical bugs resolved include: tips not being correctly associated and displayed on On Stage request cards, persistent QR code URL mismatches, and mobile layout issues for the tip modal.
+7.  **New Features Underway:** Implementation of a global Tip System Toggle in the musician profile and a On Stage Request Toggle for live control by musicians.
 </product_requirements>
 
 <key_technical_concepts>
--   **Full-stack Architecture**: React frontend, FastAPI backend, MongoDB.
+-   **Full-stack Architecture**: React (frontend), FastAPI (backend), MongoDB.
 -   **Authentication**: JWT token-based.
--   **API Integration**: Stripe for subscriptions and webhooks.
--   **Backend Routing**: FastAPI's  with prefixing and route reordering.
--   **Data Validation**: Pydantic models.
--   **Frontend State Management**: React , .
--   **UI/UX**: Tailwind CSS, responsive design, custom toggle switches, drag-and-drop.
--   **Service Management**: Supervisor for process control.
+-   **API Integration**: Stripe (for freemium, guarded), PayPal, Venmo, Zelle (for tips).
+-   **Backend Routing**: FastAPI , conditional endpoint logic, Pydantic models.
+-   **Frontend State Management**: React , , , .
+-   **UI/UX**: Tailwind CSS, responsive design, modals, conditional rendering.
+-   **Feature Flags**:  for freemium model.
 </key_technical_concepts>
 
 <code_architecture>
-The application follows a standard full-stack structure.
+The application follows a standard full-stack structure:
 
 
 
 -   **/app/backend/server.py**: Core FastAPI backend.
-    -   **Importance**: Centralizes API endpoints for authentication, song/playlist management, request queue, profile updates, and payment integrations, interacting with MongoDB. It is the heart of the application's business logic.
+    -   **Importance**: Centralizes API endpoints for authentication, song/playlist/request management, profile updates, and payment integrations, interacting with MongoDB. It is the heart of the application's business logic.
     -   **Changes Made**:
-        -   **Freemium Model Implementation**: Updated  model fields (, , etc.). Configured Stripe price IDs from environment variables. New endpoints: , , . Stripe Webhook handler () implemented.  updated to 14.
-        -   **Routing Fixes**: Reordered Stripe webhook and subscription routes to resolve path conflicts.
-        -   **Playlist Management**:
-            -   Added  and  to  Pydantic model.
-            -   Modified  model to include , , , and .
-            -   Updated  to set , , .
-            -   Added  to retrieve specific playlist details, including , , , and .
-            -   Added  to replace a playlist's entire  list.
-            -   Added  to remove a single song from a playlist.
-            -   Added  for renaming and toggling public/private status.
-            -   Added  for soft deletion.
-            -   Updated  to filter out deleted playlists.
-            -   Updated  (public endpoint) to only return public and non-deleted playlists.
-            -   Modified  to accept an optional  query parameter for filtering songs by playlist.
+        -   **Freemium Model ()**: Added a global feature flag to conditionally import Stripe and guard billing-related endpoints (, , , ). Modified  logic and user registration to grant full access when  is false.
+        -   **On Stage Mode**: Added  status to  and  Pydantic models and updated validation logic to accept it.
+        -   **Genre Management**: Updated  list to 15 specific genres (Pop, Rock, Country, R&B/Soul, Rap/Hip Hop, Latin, Christmas, Irish, Jazz/Standards, Funk, Classic Rock, Motown, Classical, Reggae, Jam Band). Refined artist and keyword-based genre detection logic.
+        -   **Payment Integration (Tips)**: Removed  field. Added  and  fields to , , , and  models. Updated registration and profile update/retrieval endpoints to handle Zelle fields.
+        -   **Tip-Request Association**: Added  to  and  models, ensuring tip information is stored with requests.
+        -   **QR Code URL Fix**: Implemented a runtime hotfix to ensure the  environment variable (used for QR code generation) consistently matches the expected preview domain, overriding deployment-level misconfigurations.
+        -   **New Features (In Progress)**: Added  and  fields to , , and  models, and updated relevant profile response endpoints.
 
 -   **/app/frontend/src/App.js**: Main React component.
     -   **Importance**: Manages routing, global state, UI for musician/audience dashboards, and all frontend logic for backend interaction.
     -   **Changes Made**:
-        -   **Freemium Model UI**: Updated trial messaging (14-day), pricing (8), checkout button (Start Free Trial Now), and replaced requests used bar with Upgrade Now.
-        -   **Feature Access & UI**: Converted Song Suggestions to toggle; removed Pro badges from Design/Analytics tabs and photo upload.
-        -   **UI Consolidation**: Consolidated five song management buttons into a single dropdown.
-        -   **Responsive Design**: Implemented mobile navigation collapse.
-        -   **Quick Start Guide**: Removed auto-popup.
-        -   **Audience/Musician Search & Filter**:
-            -   Changed search input placeholder to Search Song Title or Artist for both Audience and Musician dashboards.
-            -   Replaced filter by Artist input with a playlist dropdown for both Audience and Musician dashboards.
-            -   Updated  to use  for filtering in both Audience and Musician components.
-            -   Renamed  to  across MusicianDashboard.
-        -   **Playlist Management UI**:
-            -   Added state variables for managing playlist editing (e.g., , ).
-            -   Implemented functions for opening/closing modals, saving/removing songs, and handling drag-reorder (, , , ).
-            -   Integrated Edit Playlist button/menu items.
-            -   Created  JSX for song reordering and removal with drag-and-drop.
-            -   Added states and functions for renaming (), toggling public/private status (), and deleting playlists (, ).
-            -   Updated the My Playlists section to be a compact, collapsible dropdown, including rename input, public/private toggle, and delete functionality, along with confirmation modals and toast notifications.
-        -   **Bug Fixes**: Systematically fixed multiple ESLint errors by moving , , , , ,  to their correct component contexts (mostly from  to ). Updated playlist access checks to include 'trial' and 'canceled' plans. Added  and  calls to initial  hooks to ensure data loads on mount.
-        -   **Utility**: Added a click-outside handler to close dropdowns.
+        -   **Freemium Model ()**: Reads the feature flag. Conditionally hides the Subscription tab and related UI elements. Stubbed billing-related functions (, , ).
+        -   **On Stage Mode**: Rewrote  to display Up Next, Active Requests, and Completed Requests sections, utilizing a new  component.
+        -   **Audience Request Flow**: Implemented a 3-step modal flow (, ).  was modified to initiate this flow instead of directly submitting.  and  functions were added to finalize request submission with tip details.
+        -   **Tipping UI**: Integrated /0/0 tip buttons, PayPal, Venmo, and Zelle payment options. Added a dynamic pop-up blocker fallback message displaying musician payment usernames. Improved mobile UX with smaller tip buttons and repositioned fallback message.
+        -   **UI Enhancements**: Suggest a Song button in the audience interface is now always visible. Removed legacy Venmo Link input from the profile form.
+        -   **Social Link Visibility**: Added  checks to all social media link conditional renderings to prevent blank buttons from appearing.
+        -   **QR Code URL Fix**: Introduced a  helper function to consistently derive the base URL from , ensuring audience links and QR codes use the same domain.
+        -   **Tip Display Fix**: Updated the  component to display the  included in each request.
 
 -   **/app/backend/.env**: Backend environment variables.
-    -   **Changes Made**: Updated , . Added , ,  (updated from ).  changed from  to .  updated to .  updated (placeholder). These changes were made locally to reflect expected production values, but their application in deployment was a recurring issue.
-
+    -   **Changes Made**:  was added.
 -   **/app/frontend/.env**: Frontend environment variables.
-    -   **Changes Made**:  updated from a preview URL to . This change was crucial but often failed to sync in deployment.
+    -   **Changes Made**:  was added.
+-   **/app/README.md**: Project documentation.
+    -   **Changes Made**: Added a section detailing the  feature flag and its usage.
+-   **/app/backend/.env.example**: Example backend environment variables.
+    -   **Changes Made**: Created, includes .
+-   **/app/frontend/.env.example**: Example frontend environment variables.
+    -   **Changes Made**: Created, includes .
 </code_architecture>
 
 <pending_tasks>
--   Frontend testing for the Phase 3 Analytics Dashboard.
--   Adding a prominent green tip button on the audience song search page (distinct from the post-request modal).
--   Completing the Audience Interface UI enhancements: integrating social media buttons and implementing a collapsible bio.
+-   Implement a global Tip System Toggle in the musician profile/settings.
+-   Implement an On Stage Request Toggle for live control within the On Stage mode.
 </pending_tasks>
 
 <current_work>
-The most recent work has primarily revolved around diagnosing and resolving critical deployment and account-related bugs impacting the application's core functionality in the production environment. While the AI engineer has implemented extensive features for playlist management (create, rename, delete, public/private toggle, song reorder/remove) and general UI improvements, these are not fully accessible to the user on the deployed version due to underlying infrastructure issues.
+The most recent work involves implementing new features that provide musicians with greater control over their audience interactions. Specifically, the AI engineer is working on:
 
-Specifically:
-1.  **Playlist Management:** The complete playlist management system, including song reordering and deletion, plus playlist-level rename/delete/visibility features, has been developed and successfully tested in the preview environment. The My Playlists section is now a compact, collapsible dropdown in the Songs tab.
-2.  **Account Status:** The user (brycelarsenmusic@gmail.com) repeatedly reported being in free mode and having their audience link paused, despite the AI engineer manually setting their account to Pro subscriber status and ensuring  is true in the database.
-3.  **Deployment Environment Mismatch:** It was discovered that the AI engineer's testing (and therefore the fixes) were being applied to a *preview* environment's database, while the user was testing the *deployed production* environment. This meant fixes were not taking effect where the user was experiencing issues.
-4.  **Configuration Issues:** Earlier, persistent problems were attributed to incorrect Stripe API keys in the backend's  and a hardcoded preview URL for  in the frontend's . These were addressed in the development environment and communicated to the user to apply in their deployment settings.
-5.  **Platform Bugs:** Despite efforts, environment variables failed to sync to production (indicated by an orange warning bar in the deployment UI). Furthermore, external API routing, especially for authentication endpoints (), was intermittently broken or returning 500 errors on the custom domain (requestwave.app), preventing login and other critical functions even after  began working.
-6.  **Current State:** The user can log in after temporarily removing the custom domain, but their account reverted to free mode. The AI engineer attempted to fix this via direct database updates, but the mismatch between preview and production databases caused the changes not to persist for the user. The core issue remains that database changes made during debugging are not reflected in the deployed environment the user is accessing.
+1.  **Tip System Toggle (Global Setting)**: This feature will add a switch in the musician's profile/settings page. When enabled, it will allow musicians to completely disable the tipping system. If tips are disabled, the audience request flow will skip the tip-choice modal, moving directly to the social media links page after a request is submitted, and all tip-related UI elements on the audience side will be hidden.
 
-The current situation is blocked by this environment mismatch and unresolved platform-level deployment issues.
+2.  **On Stage Request Toggle (Live Control)**: This feature will introduce a small switch within the On Stage mode interface. This switch will allow the musician to temporarily disable new song requests. When requests are turned off, the audience request page will not display the song request form. Instead, it will show a header and a message indicating that requests are currently off, but still allow audience members to send messages/comments to the artist.
+
+**Current Progress**: The initial backend data model updates for these features have been completed. The  and  fields have been successfully added to the , , and  Pydantic models in . Additionally, the backend API endpoints responsible for retrieving musician profile information have been updated to include these new fields in their responses. The next immediate step is to update the profile update processing logic to correctly handle the persistence of these new  and  settings when a musician modifies their profile.
 </current_work>
 
 <optional_next_step>
-Clarify the implications of forking on the current deployment connection, given the persistent deployment and environment issues.
+Update the backend profile update processing to handle the new  and  fields.
 </optional_next_step>

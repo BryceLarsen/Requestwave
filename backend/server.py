@@ -2188,11 +2188,11 @@ async def generate_musician_qr(musician_id: str = Depends(get_current_musician))
         raise HTTPException(status_code=404, detail="Musician not found")
     
     # Construct audience URL - Use correct frontend URL
-    base_url = os.environ.get('FRONTEND_URL', 'https://performance-pay-1.preview.emergentagent.com')
+    base_url = os.environ.get('FRONTEND_URL', 'https://requestwave-2.preview.emergentagent.com')
     
     # HOTFIX: Override deployment-level environment variable if it's using old domain
     if base_url == 'https://livewave-music.emergent.host':
-        base_url = 'https://performance-pay-1.preview.emergentagent.com'
+        base_url = 'https://requestwave-2.preview.emergentagent.com'
     
     # DEBUG: Log what we're actually getting
     print(f"DEBUG QR CODE: FRONTEND_URL = {repr(os.environ.get('FRONTEND_URL'))}")
@@ -2217,11 +2217,11 @@ async def generate_qr_flyer_endpoint(musician_id: str = Depends(get_current_musi
         raise HTTPException(status_code=404, detail="Musician not found")
     
     # Construct audience URL - Use correct frontend URL
-    base_url = os.environ.get('FRONTEND_URL', 'https://performance-pay-1.preview.emergentagent.com')
+    base_url = os.environ.get('FRONTEND_URL', 'https://requestwave-2.preview.emergentagent.com')
     
     # HOTFIX: Override deployment-level environment variable if it's using old domain
     if base_url == 'https://livewave-music.emergent.host':
-        base_url = 'https://performance-pay-1.preview.emergentagent.com'
+        base_url = 'https://requestwave-2.preview.emergentagent.com'
     
     audience_url = f"{base_url}/musician/{musician['slug']}"
     
@@ -5531,7 +5531,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_origins=[
         "https://requestwave.app",
-        "https://performance-pay-1.preview.emergentagent.com"
+        "https://requestwave-2.preview.emergentagent.com"
     ],
     allow_methods=["*"],
     allow_headers=["*"],

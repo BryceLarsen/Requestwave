@@ -8,7 +8,7 @@ import requests
 import json
 
 # Configuration
-BASE_URL = "https://performance-pay-1.preview.emergentagent.com/api"
+BASE_URL = "https://requestwave-2.preview.emergentagent.com/api"
 
 # Pro account credentials
 PRO_MUSICIAN = {

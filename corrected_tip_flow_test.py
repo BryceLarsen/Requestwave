@@ -15,7 +15,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://performance-pay-1.preview.emergentagent.com/api"
+BASE_URL = "https://requestwave-2.preview.emergentagent.com/api"
 
 # Test musician with complete payment and social media info
 TEST_MUSICIAN = {

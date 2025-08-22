@@ -25,7 +25,7 @@ import io
 from typing import Dict, Any, Optional, List
 
 # Configuration
-BASE_URL = "https://performance-pay-1.preview.emergentagent.com/api"
+BASE_URL = "https://requestwave-2.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {
