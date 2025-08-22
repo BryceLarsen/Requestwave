@@ -2030,6 +2030,10 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
         if venmo_username.startswith('@'):
             venmo_username = venmo_username[1:]
         update_data["venmo_username"] = venmo_username
+    if profile_data.zelle_email is not None:
+        update_data["zelle_email"] = profile_data.zelle_email
+    if profile_data.zelle_phone is not None:
+        update_data["zelle_phone"] = profile_data.zelle_phone
     
     # NEW: Update social media fields
     if profile_data.instagram_username is not None:
