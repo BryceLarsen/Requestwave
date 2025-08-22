@@ -8776,12 +8776,6 @@ const LandingPage = () => {
                 Thank you for being part of this project. My goal is to make live performance more interactive and enjoyable for both musicians and audiences, and your support helps make that possible.
               </p>
             </div>
-          </div>
-
-          {/* Right Column - Login Form */}
-          <div className="lg:sticky lg:top-8">
-            <AuthForm mode={authMode} onSwitch={setAuthMode} />
-          </div>
         </div>
       </div>
 
