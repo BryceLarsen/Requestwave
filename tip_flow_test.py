@@ -592,13 +592,12 @@ class TipFlowTester:
                 venmo_reverse_test = False
             
             # Then generate PayPal link (simulating user switching back)
-            paypal_data_2 = {
+            paypal_params_2 = {
                 "amount": 7.50,
-                "platform": "paypal",
                 "message": "Reverse switching test - PayPal"
             }
             
-            paypal_response_2 = self.make_request("POST", f"/musicians/{self.musician_slug}/tip-links", paypal_data_2)
+            paypal_response_2 = self.make_request("GET", f"/musicians/{self.musician_slug}/tip-links", params=paypal_params_2)
             
             if paypal_response_2.status_code == 200:
                 paypal_result_2 = paypal_response_2.json()
