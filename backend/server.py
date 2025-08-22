@@ -258,7 +258,7 @@ class Show(BaseModel):
 # NEW: Tip tracking model
 class TipCreate(BaseModel):
     amount: float
-    platform: str  # "paypal" or "venmo"
+    platform: str  # "paypal", "venmo", or "zelle"
     tipper_name: Optional[str] = None
     message: Optional[str] = None
 
