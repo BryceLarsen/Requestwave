@@ -310,6 +310,9 @@ class MusicianProfile(BaseModel):
     venmo_username: Optional[str] = ""
     zelle_email: Optional[str] = ""
     zelle_phone: Optional[str] = ""
+    # Control settings
+    tips_enabled: Optional[bool] = True
+    requests_enabled: Optional[bool] = True
     # Social media fields
     instagram_username: Optional[str] = ""
     facebook_username: Optional[str] = ""
