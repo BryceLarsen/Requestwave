@@ -25,8 +25,8 @@ from typing import Dict, Any, Optional
 # Configuration
 BASE_URL = "https://performance-pay-1.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
-    "name": "Venmo Test Musician",
-    "email": "venmo.test@requestwave.com", 
+    "name": "Zelle Test Musician",
+    "email": "zelle.test@requestwave.com", 
     "password": "SecurePassword123!"
 }
 
