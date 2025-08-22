@@ -311,13 +311,12 @@ class MusicianProfile(BaseModel):
 
 class ProfileUpdate(BaseModel):
     name: Optional[str] = None
-    venmo_link: Optional[str] = None  # Keep for backward compatibility
     bio: Optional[str] = None
     website: Optional[str] = None
     # Payment fields
     paypal_username: Optional[str] = None
     venmo_username: Optional[str] = None
-    # NEW: Social media fields
+    # Social media fields
     instagram_username: Optional[str] = None
     facebook_username: Optional[str] = None
     tiktok_username: Optional[str] = None
