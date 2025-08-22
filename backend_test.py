@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """
-COMPREHENSIVE TESTING FOR LEGACY VENMO LINK REMOVAL AND SUGGEST A SONG BUTTON
+COMPREHENSIVE TESTING FOR ZELLE PAYMENT INTEGRATION
 
-Testing the requested changes:
+Testing the complete Zelle payment integration that was just added to RequestWave:
 
 CRITICAL TEST AREAS:
-1. Legacy Venmo Link Removal - verify venmo_link field removed from profile form, only venmo_username remains
-2. Suggest a Song Button - verify button always visible regardless of allow_song_suggestions setting
-3. End-to-End Test - register musician, add songs, test audience page, verify suggest song functionality
+1. Backend Zelle Fields - Create musician with zelle_email and zelle_phone, verify profile API returns Zelle fields correctly
+2. Public Musician Data - Verify public musician endpoint includes Zelle fields for audience access
+3. Tip Analytics - Test tip submission with platform='zelle' to verify analytics tracking works
+4. Integration Test - Create musician with all three payment methods (PayPal, Venmo, Zelle)
+5. Edge Cases - Test musician with only Zelle, both zelle_email and zelle_phone, empty/null Zelle fields
 
 Test Credentials: brycelarsenmusic@gmail.com / RequestWave2024!
 
-Expected: Legacy venmo_link removed, suggest song button always visible, full functionality working.
+Expected: Complete Zelle payment system integrated and functional for the new 3-step tip flow.
 """
 
 import requests
