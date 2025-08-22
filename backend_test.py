@@ -431,7 +431,7 @@ class RequestWaveAPITester:
                 "message": "Great performance! Sent via Zelle."
             }
             
-            tip_response = self.make_request("POST", "/tips", zelle_tip_data)
+            tip_response = self.make_request("POST", f"/musicians/{login_data_response['musician']['slug']}/tips", zelle_tip_data)
             
             print(f"   📊 Tip recording response status: {tip_response.status_code}")
             print(f"   📊 Tip recording response: {tip_response.text[:200]}...")
