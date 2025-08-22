@@ -2250,23 +2250,35 @@ const MusicianDashboard = () => {
     }
   };
 
-  // NEW: Fetch available genres and moods for dropdowns
+  // NEW: Fetch available genres and moods for dropdowns from existing songs
   const fetchAvailableGenres = async () => {
     try {
-      const response = await axios.get(`${API}/genres`);
-      setAvailableGenres(response.data.genres || []);
+      // Extract genres from existing songs
+      const allGenres = new Set();
+      songs.forEach(song => {
+        if (song.genres) {
+          song.genres.forEach(genre => allGenres.add(genre));
+        }
+      });
+      setAvailableGenres(Array.from(allGenres).sort());
     } catch (error) {
-      console.error('Error fetching genres:', error);
+      console.error('Error extracting genres:', error);
       setAvailableGenres([]);
     }
   };
 
   const fetchAvailableMoods = async () => {
     try {
-      const response = await axios.get(`${API}/moods`);
-      setAvailableMoods(response.data.moods || []);
+      // Extract moods from existing songs
+      const allMoods = new Set();
+      songs.forEach(song => {
+        if (song.moods) {
+          song.moods.forEach(mood => allMoods.add(mood));
+        }
+      });
+      setAvailableMoods(Array.from(allMoods).sort());
     } catch (error) {
-      console.error('Error fetching moods:', error);
+      console.error('Error extracting moods:', error);
       setAvailableMoods([]);
     }
   };
