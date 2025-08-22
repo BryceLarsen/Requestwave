@@ -1074,10 +1074,34 @@ const MusicianDashboard = () => {
       const response = await axios.get(`${API}/songs?sort_by=${sortBy}`);
       setSongs(response.data);
       
-      // Extract available genres and moods from loaded songs
+      // Extract available genres and moods from loaded songs - UPDATE FILTER OPTIONS
       setTimeout(() => {
-        fetchAvailableGenres();
-        fetchAvailableMoods();
+        // Update filterOptions with extracted data from songs
+        const allGenres = new Set();
+        const allMoods = new Set();
+        
+        response.data.forEach(song => {
+          if (song.genres && Array.isArray(song.genres)) {
+            song.genres.forEach(genre => {
+              if (genre && genre.trim()) {
+                allGenres.add(genre.trim());
+              }
+            });
+          }
+          if (song.moods && Array.isArray(song.moods)) {
+            song.moods.forEach(mood => {
+              if (mood && mood.trim()) {
+                allMoods.add(mood.trim());
+              }
+            });
+          }
+        });
+        
+        setFilterOptions(prev => ({
+          ...prev,
+          genres: Array.from(allGenres).sort(),
+          moods: Array.from(allMoods).sort()
+        }));
       }, 100); // Small delay to ensure songs state is updated
       
     } catch (error) {
