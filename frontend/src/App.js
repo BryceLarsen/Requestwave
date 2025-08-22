@@ -6737,18 +6737,23 @@ const AudienceInterface = () => {
       return;
     }
 
+    // Store the song and form data, but don't submit the request yet
+    // The request will be submitted after tip selection in the tip flow
+    setSelectedSong(song);
+    setShowTipChoiceModal(true);
+  };
+  
+  // NEW: Actually submit the request with tip information
+  const submitRequestWithTip = async (song, tipAmount = 0) => {
     try {
       const response = await axios.post(`${API}/requests`, {
         song_id: song.id,
-        ...requestForm
+        ...requestForm,
+        tip_amount: parseFloat(tipAmount) || 0.0
       });
       
-      // Store request ID for post-request modal
+      // Store request ID for analytics
       setCurrentRequestId(response.data.id);
-      
-      // Close request modal and show tip choice modal
-      setSelectedSong(null);
-      setShowTipChoiceModal(true);
       
       // Reset form
       setRequestForm({
@@ -6756,6 +6761,8 @@ const AudienceInterface = () => {
         requester_email: '',
         dedication: ''
       });
+      
+      return response.data;
       
     } catch (error) {
       if (error.response?.status === 402) {
@@ -6766,6 +6773,7 @@ const AudienceInterface = () => {
         console.error('Error submitting request:', error);
         alert('Error submitting request. Please try again.');
       }
+      throw error;
     }
   };
 
