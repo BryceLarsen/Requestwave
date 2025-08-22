@@ -2060,7 +2060,6 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
     return MusicianProfile(
         name=updated_musician["name"],
         email=updated_musician["email"],
-        venmo_link=updated_musician.get("venmo_link", ""),
         bio=updated_musician.get("bio", ""),
         website=updated_musician.get("website", ""),
         # Payment usernames
