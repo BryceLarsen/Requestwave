@@ -290,6 +290,8 @@ class MusicianPublic(BaseModel):
     # NEW: Include social media fields for post-request modal
     paypal_username: Optional[str] = None
     venmo_username: Optional[str] = None
+    zelle_email: Optional[str] = None
+    zelle_phone: Optional[str] = None
     instagram_username: Optional[str] = None
     facebook_username: Optional[str] = None
     tiktok_username: Optional[str] = None
