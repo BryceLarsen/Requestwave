@@ -589,7 +589,7 @@ class OnStageBackendTester:
                 
                 if change_response.status_code == 200:
                     # Verify the change persisted
-                    verify_response = self.make_request("GET", "/requests")
+                    verify_response = self.make_request("GET", f"/requests/musician/{self.musician_id}")
                     if verify_response.status_code == 200:
                         verify_requests = verify_response.json()
                         verify_request = next((r for r in verify_requests if r["id"] == request_id), None)
