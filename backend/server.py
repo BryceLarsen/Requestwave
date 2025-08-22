@@ -318,6 +318,8 @@ class ProfileUpdate(BaseModel):
     # Payment fields
     paypal_username: Optional[str] = None
     venmo_username: Optional[str] = None
+    zelle_email: Optional[str] = None
+    zelle_phone: Optional[str] = None
     # Social media fields
     instagram_username: Optional[str] = None
     facebook_username: Optional[str] = None
