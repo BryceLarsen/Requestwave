@@ -7863,7 +7863,7 @@ const OnStageInterface = () => {
     }
   };
   
-  const handleAccept = (requestId) => updateRequestStatus(requestId, 'accepted');
+  const handleAccept = (requestId) => updateRequestStatus(requestId, 'up_next');
   const handlePlay = (requestId) => updateRequestStatus(requestId, 'played');
   const handleReject = (requestId) => updateRequestStatus(requestId, 'rejected');
   
