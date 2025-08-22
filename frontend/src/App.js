@@ -7318,6 +7318,179 @@ const AudienceInterface = () => {
           </div>
         )}
         
+        {/* NEW: Tip Choice Modal - Second Window */}
+        {showTipChoiceModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 w-full max-w-md border border-gray-700">
+              {/* Success Message */}
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-green-600 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
+                  ✅
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Your request has been sent!</h3>
+                <p className="text-gray-300 text-sm">If you'd like to leave a tip, we'll let the artist know.</p>
+              </div>
+              
+              {/* Tip Amount Choices */}
+              <div className="mb-6">
+                <p className="text-white font-medium mb-4 text-center">Choose tip amount:</p>
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  {['5', '10', '20'].map((amount) => (
+                    <button
+                      key={amount}
+                      onClick={() => handleTipChoice(amount)}
+                      className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 text-lg"
+                    >
+                      ${amount}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Platform Choice */}
+              <div className="mb-6">
+                <p className="text-white font-medium mb-3 text-center">Payment method:</p>
+                <div className="flex space-x-3">
+                  {musician.venmo_username && (
+                    <button
+                      onClick={() => {
+                        setTipPlatform('venmo');
+                        setTipAmount('5'); // Default amount
+                        handleTipChoice('5');
+                      }}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition duration-300 flex items-center justify-center space-x-2"
+                    >
+                      <span>💳</span>
+                      <span>Venmo</span>
+                    </button>
+                  )}
+                  {musician.paypal_username && (
+                    <button
+                      onClick={() => {
+                        setTipPlatform('paypal');
+                        setTipAmount('5'); // Default amount
+                        handleTipChoice('5');
+                      }}
+                      className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-3 rounded-lg transition duration-300 flex items-center justify-center space-x-2"
+                    >
+                      <span>💰</span>
+                      <span>PayPal</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex space-x-3">
+                <button
+                  onClick={handleNoTip}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 rounded-lg transition duration-300"
+                >
+                  No Tip
+                </button>
+                <button
+                  onClick={closeTipFlow}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-lg transition duration-300"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* NEW: Social Follow Modal - Third Window (No Tip Path) */}
+        {showSocialFollowModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 w-full max-w-md border border-gray-700">
+              {/* Header */}
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
+                  ❤️
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Even with no tip, a follow is just as good!</h3>
+                <p className="text-gray-300 text-sm">Support {musician.name || 'the artist'} on their social platforms</p>
+              </div>
+              
+              {/* Social Media Links */}
+              <div className="space-y-3 mb-6">
+                {musician.instagram_username && (
+                  <button
+                    onClick={() => {
+                      handleSocialClick('instagram');
+                      closeTipFlow();
+                    }}
+                    className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-medium py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-3"
+                  >
+                    <span className="text-xl">📷</span>
+                    <span>Follow on Instagram</span>
+                  </button>
+                )}
+                
+                {musician.tiktok_username && (
+                  <button
+                    onClick={() => {
+                      handleSocialClick('tiktok');
+                      closeTipFlow();
+                    }}
+                    className="w-full bg-black hover:bg-gray-900 text-white font-medium py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-3"
+                  >
+                    <span className="text-xl">🎵</span>
+                    <span>Follow on TikTok</span>
+                  </button>
+                )}
+                
+                {musician.facebook_username && (
+                  <button
+                    onClick={() => {
+                      handleSocialClick('facebook');
+                      closeTipFlow();
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-3"
+                  >
+                    <span className="text-xl">👥</span>
+                    <span>Follow on Facebook</span>
+                  </button>
+                )}
+                
+                {musician.spotify_artist_url && (
+                  <button
+                    onClick={() => {
+                      handleSocialClick('spotify');
+                      closeTipFlow();
+                    }}
+                    className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-3"
+                  >
+                    <span className="text-xl">🎧</span>
+                    <span>Listen on Spotify</span>
+                  </button>
+                )}
+                
+                {musician.apple_music_artist_url && (
+                  <button
+                    onClick={() => {
+                      handleSocialClick('apple_music');
+                      closeTipFlow();
+                    }}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-3"
+                  >
+                    <span className="text-xl">🍎</span>
+                    <span>Listen on Apple Music</span>
+                  </button>
+                )}
+              </div>
+              
+              {/* Close Button */}
+              <button
+                onClick={closeTipFlow}
+                className="w-full bg-gray-600 hover:bg-gray-700 text-gray-300 hover:text-white py-3 rounded-xl font-medium transition duration-300"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+        
         {/* NEW: Post-Request Success Modal - Linktree Style */}
         {showPostRequestModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
