@@ -3421,20 +3421,175 @@ const MusicianDashboard = () => {
                     </p>
                   </div>
                   
-                  <input
-                    type="text"
-                    placeholder="Genres (comma separated)"
-                    value={songForm.genres.join(', ')}
-                    onChange={(e) => setSongForm({...songForm, genres: e.target.value.split(',').map(g => g.trim())})}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 col-span-1 md:col-span-1"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Moods (comma separated)"
-                    value={songForm.moods.join(', ')}
-                    onChange={(e) => setSongForm({...songForm, moods: e.target.value.split(',').map(m => m.trim())})}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 col-span-1 md:col-span-1"
-                  />
+                  {/* NEW: Multi-select Genres Dropdown - EDIT MODAL */}
+                  <div className="col-span-1 md:col-span-1">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Genres</label>
+                    <div className="space-y-2">
+                      {/* Selected Genres Display */}
+                      <div className="flex flex-wrap gap-2 min-h-[2rem] p-2 bg-gray-700 border border-gray-600 rounded-lg">
+                        {songForm.genres.length === 0 ? (
+                          <span className="text-gray-400 text-sm">Select genres...</span>
+                        ) : (
+                          songForm.genres.map((genre, index) => (
+                            <span
+                              key={index}
+                              className="bg-blue-600 text-white px-2 py-1 rounded text-sm flex items-center space-x-1"
+                            >
+                              <span>{genre}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newGenres = songForm.genres.filter((_, i) => i !== index);
+                                  setSongForm({...songForm, genres: newGenres});
+                                }}
+                                className="text-blue-200 hover:text-white ml-1"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))
+                        )}
+                      </div>
+                      
+                      {/* Genre Selection Dropdown */}
+                      <select
+                        value=""
+                        onChange={(e) => {
+                          if (e.target.value && !songForm.genres.includes(e.target.value)) {
+                            setSongForm({...songForm, genres: [...songForm.genres, e.target.value]});
+                          }
+                        }}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+                      >
+                        <option value="">Add genre...</option>
+                        {availableGenres.filter(genre => !songForm.genres.includes(genre)).map(genre => (
+                          <option key={genre} value={genre}>{genre}</option>
+                        ))}
+                      </select>
+                      
+                      {/* Add New Genre */}
+                      {showAddGenre ? (
+                        <div className="flex space-x-2">
+                          <input
+                            type="text"
+                            value={newGenre}
+                            onChange={(e) => setNewGenre(e.target.value)}
+                            placeholder="New genre name"
+                            className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+                            onKeyPress={(e) => e.key === 'Enter' && handleAddNewGenre()}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleAddNewGenre}
+                            className="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg text-sm"
+                          >
+                            Add
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {setShowAddGenre(false); setNewGenre('');}}
+                            className="bg-gray-600 hover:bg-gray-700 px-3 py-2 rounded-lg text-sm"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setShowAddGenre(true)}
+                          className="text-green-400 hover:text-green-300 text-sm flex items-center space-x-1"
+                        >
+                          <span>+</span>
+                          <span>Add new genre</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* NEW: Multi-select Moods Dropdown - EDIT MODAL */}
+                  <div className="col-span-1 md:col-span-1">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Moods</label>
+                    <div className="space-y-2">
+                      {/* Selected Moods Display */}
+                      <div className="flex flex-wrap gap-2 min-h-[2rem] p-2 bg-gray-700 border border-gray-600 rounded-lg">
+                        {songForm.moods.length === 0 ? (
+                          <span className="text-gray-400 text-sm">Select moods...</span>
+                        ) : (
+                          songForm.moods.map((mood, index) => (
+                            <span
+                              key={index}
+                              className="bg-green-600 text-white px-2 py-1 rounded text-sm flex items-center space-x-1"
+                            >
+                              <span>{mood}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newMoods = songForm.moods.filter((_, i) => i !== index);
+                                  setSongForm({...songForm, moods: newMoods});
+                                }}
+                                className="text-green-200 hover:text-white ml-1"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))
+                        )}
+                      </div>
+                      
+                      {/* Mood Selection Dropdown */}
+                      <select
+                        value=""
+                        onChange={(e) => {
+                          if (e.target.value && !songForm.moods.includes(e.target.value)) {
+                            setSongForm({...songForm, moods: [...songForm.moods, e.target.value]});
+                          }
+                        }}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+                      >
+                        <option value="">Add mood...</option>
+                        {availableMoods.filter(mood => !songForm.moods.includes(mood)).map(mood => (
+                          <option key={mood} value={mood}>{mood}</option>
+                        ))}
+                      </select>
+                      
+                      {/* Add New Mood */}
+                      {showAddMood ? (
+                        <div className="flex space-x-2">
+                          <input
+                            type="text"
+                            value={newMood}
+                            onChange={(e) => setNewMood(e.target.value)}
+                            placeholder="New mood name"
+                            className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+                            onKeyPress={(e) => e.key === 'Enter' && handleAddNewMood()}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleAddNewMood}
+                            className="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg text-sm"
+                          >
+                            Add
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {setShowAddMood(false); setNewMood('');}}
+                            className="bg-gray-600 hover:bg-gray-700 px-3 py-2 rounded-lg text-sm"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setShowAddMood(true)}
+                          className="text-green-400 hover:text-green-300 text-sm flex items-center space-x-1"
+                        >
+                          <span>+</span>
+                          <span>Add new mood</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
                   <input
                     type="number"
                     placeholder="Year"
