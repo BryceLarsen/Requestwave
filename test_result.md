@@ -963,10 +963,10 @@ metadata:
 
 test_plan:
   current_focus: 
-    - "Free Mode Feature Flag Implementation (BILLING_ENABLED=false)"
+    - "On Stage Mode Backend Functionality with Three Request Statuses"
   stuck_tasks: []
   test_all: false
-  test_priority: "critical_first"
+  test_priority: "high_first"
 
 agent_communication:
   - agent: "testing"
