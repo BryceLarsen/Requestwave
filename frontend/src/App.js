@@ -6668,9 +6668,9 @@ const AudienceInterface = () => {
       // Store request ID for post-request modal
       setCurrentRequestId(response.data.id);
       
-      // Close request modal and show post-request options
+      // Close request modal and show tip choice modal
       setSelectedSong(null);
-      setShowPostRequestModal(true);
+      setShowTipChoiceModal(true);
       
       // Reset form
       setRequestForm({
