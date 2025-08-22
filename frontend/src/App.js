@@ -6488,25 +6488,44 @@ const AudienceInterface = () => {
   };
   
   // NEW: Handle tip choice flow
-  const handleTipChoice = (amount) => {
-    setSelectedTipAmount(amount);
-    setTipAmount(amount);
-    // Set default platform based on what's available
-    if (musician.venmo_username) {
-      setTipPlatform('venmo');
-    } else if (musician.paypal_username) {
-      setTipPlatform('paypal');
-    } else if (musician.zelle_email || musician.zelle_phone) {
-      setTipPlatform('zelle');
+  const handleTipChoice = async (amount) => {
+    try {
+      // Submit the request with the tip amount
+      const request = await submitRequestWithTip(selectedSong, amount);
+      
+      // Set up tip processing
+      setSelectedTipAmount(amount);
+      setTipAmount(amount);
+      // Set default platform based on what's available
+      if (musician.venmo_username) {
+        setTipPlatform('venmo');
+      } else if (musician.paypal_username) {
+        setTipPlatform('paypal');
+      } else if (musician.zelle_email || musician.zelle_phone) {
+        setTipPlatform('zelle');
+      }
+      
+      setShowTipChoiceModal(false);
+      setShowTipModal(true);
+      
+    } catch (error) {
+      // If request submission failed, close the modal
+      closeTipFlow();
     }
-    
-    setShowTipChoiceModal(false);
-    setShowTipModal(true);
   };
   
-  const handleNoTip = () => {
-    setShowTipChoiceModal(false);
-    setShowSocialFollowModal(true);
+  const handleNoTip = async () => {
+    try {
+      // Submit the request with no tip
+      await submitRequestWithTip(selectedSong, 0);
+      
+      setShowTipChoiceModal(false);
+      setShowSocialFollowModal(true);
+      
+    } catch (error) {
+      // If request submission failed, close the modal
+      closeTipFlow();
+    }
   };
   
   const closeTipFlow = () => {
