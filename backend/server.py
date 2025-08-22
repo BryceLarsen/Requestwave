@@ -1401,11 +1401,12 @@ def assign_genre_and_mood(song_title: str, artist: str) -> Dict[str, Any]:
     title_lower = song_title.lower()
     artist_lower = artist.lower()
     
-    # Curated Genre List (20 options)
+    # Curated Genre List (24 options)
     CURATED_GENRES = [
         "Pop", "Rock", "Classic Rock", "Folk", "Country", "Americana", "Indie", 
         "Alternative", "Singer-Songwriter", "R&B", "Soul", "Funk", "Blues", 
-        "Jazz", "Hip Hop", "Reggae", "Electronic", "Dance", "Latin", "Acoustic"
+        "Jazz", "Hip Hop", "Reggae", "Electronic", "Dance", "Latin", "Acoustic",
+        "Irish", "Italian", "Jam Band", "Christmas"
     ]
     
     # Genre assignment based on keywords - prioritize specific categories
