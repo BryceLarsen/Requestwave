@@ -297,13 +297,12 @@ class MusicianPublic(BaseModel):
 class MusicianProfile(BaseModel):
     name: str
     email: str
-    venmo_link: Optional[str] = ""  # Keep for backward compatibility
     bio: Optional[str] = ""
     website: Optional[str] = ""
     # Payment fields
     paypal_username: Optional[str] = ""
     venmo_username: Optional[str] = ""
-    # NEW: Social media fields
+    # Social media fields
     instagram_username: Optional[str] = ""
     facebook_username: Optional[str] = ""
     tiktok_username: Optional[str] = ""
