@@ -8709,8 +8709,184 @@ const OnStageInterface = () => {
 
 const LandingPage = () => {
   const [authMode, setAuthMode] = useState('login');
+  const [showSupport, setShowSupport] = useState(false);
+  const [supportAmount, setSupportAmount] = useState('24');
 
-  return <AuthForm mode={authMode} onSwitch={setAuthMode} />;
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid lg:grid-cols-2 gap-12 items-start">
+          
+          {/* Left Column - Story and Information */}
+          <div className="space-y-8">
+            {/* Header with Logo */}
+            <div className="text-center lg:text-left">
+              <img
+                src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png"
+                alt="RequestWave Logo"
+                className="w-32 h-32 mx-auto lg:mx-0 mb-4 object-contain"
+              />
+              <h1 className="text-4xl lg:text-5xl font-bold mb-2">
+                <span className="text-purple-400">Request</span><span className="text-green-400">Wave</span>
+              </h1>
+              <p className="text-xl text-purple-200">Connect with your audience through music</p>
+            </div>
+
+            {/* Bryce's Photo and Story */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-xl">
+              <div className="flex flex-col md:flex-row items-start space-y-4 md:space-y-0 md:space-x-6 mb-6">
+                <img
+                  src="https://customer-assets.emergentagent.com/job_requestwave-2/artifacts/oxuafhes_Bryce%20ASL%202.png"
+                  alt="Bryce Larsen"
+                  className="w-32 h-32 rounded-full object-cover mx-auto md:mx-0 flex-shrink-0"
+                />
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-4">Welcome to RequestWave</h2>
+                  <p className="text-purple-200 leading-relaxed">
+                    My name is <strong className="text-white">Bryce Larsen</strong>. I am a lifelong musician, performer, and educator who has spent years on stage fronting original and cover bands, looping solo acoustic sets, and teaching music in schools. At my shows, I have always looked for ways to connect the audience more directly with the music.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-4 text-purple-200 leading-relaxed">
+                <p>
+                  For years, I relied on Google Forms as a simple audience request system. The concept was strong, but the execution was tedious and awkward for both me and my audiences. It was clear the idea had potential, but the tools weren't built for live performance.
+                </p>
+                
+                <p>
+                  That is why I created <strong className="text-white">RequestWave</strong>. This app takes the same idea and finally makes it easy, fast, and enjoyable. It has already improved my own live shows, and I am excited to make it available to other performing musicians who want to give their audiences a voice.
+                </p>
+              </div>
+            </div>
+
+            {/* About the Subscription */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-xl">
+              <h3 className="text-2xl font-bold text-white mb-4">About the Subscription</h3>
+              <p className="text-purple-200 mb-4">RequestWave will eventually run on a small subscription model:</p>
+              <ul className="list-disc list-inside text-purple-200 space-y-2 mb-4">
+                <li><strong className="text-white">$15</strong> startup fee</li>
+                <li><strong className="text-white">$4</strong> per month if paid annually</li>
+                <li><strong className="text-white">$10</strong> per month if paid monthly</li>
+              </ul>
+              <p className="text-purple-200">
+                For now, my focus has been on making the app as functional and reliable as possible. Subscription coding will come later, but the priority today is giving musicians a tool that works.
+              </p>
+            </div>
+
+            {/* Supporting the Project */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-xl">
+              <h3 className="text-2xl font-bold text-white mb-4">Supporting the Project</h3>
+              <p className="text-purple-200 mb-4">
+                Building and hosting this app comes with ongoing costs. If you would like to support its development, you can Venmo me at <strong className="text-green-400">@adventuresound</strong>. As a thank you, any donation will be credited at twice its value once subscriptions go live. For example, a $25 donation today will receive a coupon for a full year subscription (a $48 value).
+              </p>
+              
+              <button
+                onClick={() => setShowSupport(true)}
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-3 rounded-lg transition duration-300 flex items-center justify-center space-x-2 mb-4"
+              >
+                <span>💰</span>
+                <span>Support RequestWave</span>
+              </button>
+              
+              <p className="text-purple-200 text-sm">
+                Thank you for being part of this project. My goal is to make live performance more interactive and enjoyable for both musicians and audiences, and your support helps make that possible.
+              </p>
+            </div>
+          </div>
+
+          {/* Right Column - Login Form */}
+          <div className="lg:sticky lg:top-8">
+            <AuthForm mode={authMode} onSwitch={setAuthMode} />
+          </div>
+        </div>
+      </div>
+
+      {/* Support Modal */}
+      {showSupport && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-800 rounded-xl p-8 w-full max-w-md">
+            <h2 className="text-2xl font-bold text-white text-center mb-6">
+              Support RequestWave
+            </h2>
+            
+            <p className="text-gray-300 text-center mb-6">
+              Choose your support amount. Your contribution will be credited at 2x value when subscriptions launch!
+            </p>
+            
+            {/* Amount Selection */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {['24', '48', '96'].map((amount) => (
+                <button
+                  key={amount}
+                  onClick={() => setSupportAmount(amount)}
+                  className={`p-4 rounded-lg border-2 transition duration-300 ${
+                    supportAmount === amount
+                      ? 'border-green-500 bg-green-900/30'
+                      : 'border-gray-600 hover:border-gray-500'
+                  }`}
+                >
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-white">${amount}</div>
+                    <div className="text-sm text-gray-400">
+                      ${parseInt(amount) * 2} credit
+                    </div>
+                  </div>
+                </button>
+              ))}
+              
+              <div className="col-span-2">
+                <input
+                  type="number"
+                  placeholder="Other amount"
+                  value={supportAmount !== '24' && supportAmount !== '48' && supportAmount !== '96' ? supportAmount : ''}
+                  onChange={(e) => setSupportAmount(e.target.value)}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
+                />
+              </div>
+            </div>
+            
+            {/* Payment Options */}
+            <div className="space-y-3 mb-6">
+              <button
+                onClick={() => {
+                  window.open(`https://venmo.com/adventuresound?txn=pay&amount=${supportAmount}&note=RequestWave Support`, '_blank');
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 flex items-center justify-center space-x-2"
+              >
+                <span>📱</span>
+                <span>Venmo (@adventuresound)</span>
+              </button>
+              
+              <button
+                onClick={() => {
+                  window.open(`https://www.paypal.me/brycelarsenmusic/${supportAmount}`, '_blank');
+                }}
+                className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-lg transition duration-300 flex items-center justify-center space-x-2"
+              >
+                <span>💳</span>
+                <span>PayPal (brycelarsenmusic)</span>
+              </button>
+              
+              <div className="bg-gray-700 rounded-lg p-3 text-center">
+                <p className="text-gray-300 text-sm mb-1">Zelle:</p>
+                <p className="text-white font-medium">brycelarsenmusic@gmail.com</p>
+                <p className="text-white font-medium">(516) 680-0672</p>
+              </div>
+            </div>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowSupport(false)}
+                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg transition duration-300"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 const App = () => {
