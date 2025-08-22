@@ -6119,7 +6119,7 @@ const MusicianDashboard = () => {
                       className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
                     >
                       <option value="">Add mood...</option>
-                      {availableMoods.filter(mood => !songForm.moods.includes(mood)).map(mood => (
+                      {filterOptions.moods?.filter(mood => !songForm.moods.includes(mood)).map(mood => (
                         <option key={mood} value={mood}>{mood}</option>
                       ))}
                     </select>
