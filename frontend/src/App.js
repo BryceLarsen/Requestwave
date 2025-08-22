@@ -1746,7 +1746,14 @@ const MusicianDashboard = () => {
     setDesignError('');
     
     try {
+      // Update design settings
       await axios.put(`${API}/design/settings`, designSettings);
+      
+      // Update profile settings (for tip system toggle)
+      await axios.put(`${API}/profile`, {
+        tips_enabled: profile.tips_enabled
+      });
+      
       alert('Design settings updated successfully!');
     } catch (error) {
       setDesignError(error.response?.data?.detail || 'Error updating design settings');
