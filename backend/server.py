@@ -223,7 +223,7 @@ class Request(BaseModel):
     # Tracking fields
     tip_clicked: bool = False
     social_clicks: List[str] = []  # Track which social links were clicked
-    status: str = "pending"  # pending, accepted, played, rejected, archived
+    status: str = "pending"  # pending, up_next, accepted, played, rejected, archived
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class SongSuggestion(BaseModel):
