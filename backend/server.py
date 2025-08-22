@@ -2069,6 +2069,8 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
         # Payment usernames
         paypal_username=updated_musician.get("paypal_username", ""),
         venmo_username=updated_musician.get("venmo_username", ""),
+        zelle_email=updated_musician.get("zelle_email", ""),
+        zelle_phone=updated_musician.get("zelle_phone", ""),
         # NEW: Social media fields
         instagram_username=updated_musician.get("instagram_username", ""),
         facebook_username=updated_musician.get("facebook_username", ""),
