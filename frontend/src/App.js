@@ -7475,7 +7475,7 @@ const AudienceInterface = () => {
               
               {/* Social Media Links */}
               <div className="space-y-3 mb-6">
-                {musician.instagram_username && (
+                {musician.instagram_username && musician.instagram_username.trim() !== '' && (
                   <button
                     onClick={() => {
                       handleSocialClick('instagram');
