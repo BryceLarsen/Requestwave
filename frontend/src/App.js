@@ -5471,7 +5471,7 @@ const MusicianDashboard = () => {
                 </div>
                 
                 {/* Song Suggestions Toggle - Available for all users */}
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-3 mb-4">
                   {/* Toggle Switch */}
                   <div className="relative inline-block w-10 mr-2 align-middle select-none">
                     <input
@@ -5499,6 +5499,39 @@ const MusicianDashboard = () => {
                     <span className="text-gray-400 cursor-help">ℹ️</span>
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 w-48 text-center">
                       Let your audience suggest songs that aren't in your current repertoire
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Tip System Toggle - NEW */}
+                <div className="flex items-center space-x-3">
+                  {/* Toggle Switch */}
+                  <div className="relative inline-block w-10 mr-2 align-middle select-none">
+                    <input
+                      type="checkbox"
+                      id="tips_enabled"
+                      checked={profile.tips_enabled !== false}
+                      onChange={(e) => setProfile({...profile, tips_enabled: e.target.checked})}
+                      className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 transform"
+                      style={{
+                        left: (profile.tips_enabled !== false) ? '16px' : '0px',
+                        backgroundColor: '#ffffff'
+                      }}
+                    />
+                    <label
+                      htmlFor="tips_enabled"
+                      className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer transition-colors duration-300 ${
+                        (profile.tips_enabled !== false) ? 'bg-green-500' : 'bg-gray-600'
+                      }`}
+                    ></label>
+                  </div>
+                  <label htmlFor="tips_enabled" className="text-white text-sm cursor-pointer">
+                    Tip System {(profile.tips_enabled !== false) ? 'ON' : 'OFF'}
+                  </label>
+                  <div className="group relative">
+                    <span className="text-gray-400 cursor-help">ℹ️</span>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 w-48 text-center">
+                      Allow your audience to tip you when making song requests
                     </div>
                   </div>
               </div>
