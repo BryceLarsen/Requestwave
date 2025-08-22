@@ -7695,7 +7695,7 @@ const AudienceInterface = () => {
                         key={amount}
                         type="button"
                         onClick={() => setTipAmount(amount.toString())}
-                        className={`py-2 px-3 rounded-lg font-medium transition duration-300 ${
+                        className={`py-1.5 px-2 text-sm rounded-lg font-medium transition duration-300 ${
                           tipAmount === amount.toString()
                             ? 'bg-green-600 text-white'
                             : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
