@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
 """
-COMPREHENSIVE PLAYLIST MANAGEMENT BACKEND TESTING
+COMPREHENSIVE GENRE SYSTEM TESTING FOR SIMPLIFIED SONGLIST IMPORTS
 
-Testing the comprehensive playlist management backend updates as requested:
+Testing the updated simplified genre system for songlist imports as requested:
 
-CRITICAL TEST ENDPOINTS:
-1. Test playlist creation with new defaults (is_public=false, is_deleted=false)
-2. PUT /api/playlists/{playlist_id}/name - rename functionality
-3. PUT /api/playlists/{playlist_id}/visibility - public/private toggle
-4. DELETE /api/playlists/{playlist_id} - soft delete (sets is_deleted=true)
-5. Test audience filtering (only public, non-deleted playlists)
-6. Test active playlist clearing when playlist is deleted or made private
+CRITICAL TEST AREAS:
+1. Genre List Simplification - confirm CURATED_GENRES has exactly 15 genres
+2. Consolidated Genre Detection - test consolidated genres (R&B/Soul, Rap/Hip Hop, Jazz/Standards)
+3. Artist-based Detection Updated - verify artists mapped to new consolidated genres
+4. Removed Genres - confirm old genres no longer assigned during imports
+5. Manual Override Still Works - verify musicians can manually change genres after import
 
 Test Credentials: brycelarsenmusic@gmail.com / RequestWave2024!
 
-Expected: All new playlist management features working correctly with proper field defaults and filtering.
+Expected: Simplified 15-genre system working correctly for imports while preserving manual editing flexibility.
 """
 
 import requests
