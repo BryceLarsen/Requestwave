@@ -1418,18 +1418,24 @@ def assign_genre_and_mood(song_title: str, artist: str) -> Dict[str, Any]:
         genre = "Classic Rock"
     elif any(artist in artist_lower for artist in ["johnny cash", "dolly parton", "chris stapleton", "kacey musgraves"]):
         genre = "Country"
-    elif any(artist in artist_lower for artist in ["bob dylan", "joni mitchell", "simon and garfunkel"]):
-        genre = "Folk"
-    elif any(artist in artist_lower for artist in ["john mayer", "james taylor", "jack johnson"]):
-        genre = "Singer-Songwriter"
-    elif any(artist in artist_lower for artist in ["stevie wonder", "marvin gaye", "alicia keys"]):
-        genre = "R&B"
-    elif any(artist in artist_lower for artist in ["bb king", "muddy waters", "eric clapton"]):
-        genre = "Blues"
-    elif any(artist in artist_lower for artist in ["miles davis", "ella fitzgerald", "frank sinatra"]):
-        genre = "Jazz"
-    elif any(artist in artist_lower for artist in ["bob marley", "jimmy buffett"]):
+    elif any(artist in artist_lower for artist in ["stevie wonder", "marvin gaye", "alicia keys", "beyonce", "john legend"]):
+        genre = "R&B/Soul"
+    elif any(artist in artist_lower for artist in ["eminem", "jay-z", "drake", "kendrick lamar", "tupac", "notorious big"]):
+        genre = "Rap/Hip Hop"
+    elif any(artist in artist_lower for artist in ["miles davis", "ella fitzgerald", "frank sinatra", "louis armstrong", "billie holiday"]):
+        genre = "Jazz/Standards"
+    elif any(artist in artist_lower for artist in ["james brown", "parliament", "sly stone", "prince"]):
+        genre = "Funk"
+    elif any(artist in artist_lower for artist in ["the temptations", "the supremes", "marvin gaye", "diana ross", "the four tops"]):
+        genre = "Motown"
+    elif any(artist in artist_lower for artist in ["mozart", "beethoven", "bach", "chopin", "vivaldi"]):
+        genre = "Classical"
+    elif any(artist in artist_lower for artist in ["bob marley", "jimmy buffett", "ub40"]):
         genre = "Reggae"
+    elif any(artist in artist_lower for artist in ["the dubliners", "u2", "sinead o'connor", "the cranberries", "flogging molly"]):
+        genre = "Irish"
+    elif any(artist in artist_lower for artist in ["grateful dead", "phish", "widespread panic", "allman brothers", "dave matthews band"]):
+        genre = "Jam Band"
     
     # Title-based genre detection
     elif any(word in title_lower for word in ["rock", "stone", "highway", "guitar"]):
@@ -1438,44 +1444,28 @@ def assign_genre_and_mood(song_title: str, artist: str) -> Dict[str, Any]:
         genre = "Classic Rock"
     elif any(word in title_lower for word in ["country", "truck", "whiskey", "cowboy", "honky"]):
         genre = "Country"
-    elif any(word in title_lower for word in ["folk", "mountain", "cabin", "prairie"]):
-        genre = "Folk"
-    elif any(word in title_lower for word in ["acoustic", "unplugged", "stripped"]):
-        genre = "Acoustic"
-    elif any(word in title_lower for word in ["hip", "rap", "beat", "street"]):
-        genre = "Hip Hop"
-    elif any(word in title_lower for word in ["jazz", "swing", "smooth"]):
-        genre = "Jazz"
-    elif any(word in title_lower for word in ["blues", "blue", "lonesome"]):
-        genre = "Blues"
-    elif any(word in title_lower for word in ["electronic", "digital", "synth", "techno"]):
-        genre = "Electronic"
-    elif any(word in title_lower for word in ["dance", "club", "party", "disco"]):
-        genre = "Dance"
+    elif any(word in title_lower for word in ["soul", "r&b", "rhythm", "blues"]):
+        genre = "R&B/Soul"
+    elif any(word in title_lower for word in ["hip", "rap", "beat", "street", "freestyle", "mic"]):
+        genre = "Rap/Hip Hop"
+    elif any(word in title_lower for word in ["jazz", "swing", "smooth", "standards", "bebop"]):
+        genre = "Jazz/Standards"
+    elif any(word in title_lower for word in ["funk", "funky", "groove", "bass"]):
+        genre = "Funk"
+    elif any(word in title_lower for word in ["motown", "detroit", "motor city"]):
+        genre = "Motown"
+    elif any(word in title_lower for word in ["classical", "symphony", "concerto", "opera"]):
+        genre = "Classical"
     elif any(word in title_lower for word in ["reggae", "island", "caribbean"]):
         genre = "Reggae"
-    elif any(word in title_lower for word in ["soul", "funky", "groove"]):
-        genre = "Soul"
-    elif any(word in title_lower for word in ["indie", "alternative", "underground"]):
-        genre = "Indie"
     elif any(word in title_lower for word in ["latin", "spanish", "salsa", "tango"]):
         genre = "Latin"
     elif any(word in title_lower for word in ["irish", "ireland", "celtic", "dublin", "gaelic"]):
         genre = "Irish"
-    elif any(word in title_lower for word in ["italian", "italy", "amore", "bella", "sicilian"]):
-        genre = "Italian"
     elif any(word in title_lower for word in ["jam", "improvisation", "extended", "live version"]):
         genre = "Jam Band"
     elif any(word in title_lower for word in ["christmas", "xmas", "holiday", "santa", "snow", "winter wonderland", "jingle"]):
         genre = "Christmas"
-    
-    # Artist-based genre detection for new genres
-    elif any(artist in artist_lower for artist in ["the dubliners", "u2", "sinead o'connor", "the cranberries", "flogging molly"]):
-        genre = "Irish"
-    elif any(artist in artist_lower for artist in ["pavarotti", "bocelli", "sinatra", "dean martin"]):
-        genre = "Italian"
-    elif any(artist in artist_lower for artist in ["grateful dead", "phish", "widespread panic", "allman brothers", "dave matthews band"]):
-        genre = "Jam Band"
     
     # Curated Mood List (20 options)
     CURATED_MOODS = [
