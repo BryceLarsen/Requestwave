@@ -7527,7 +7527,7 @@ const AudienceInterface = () => {
                   </button>
                 )}
                 
-                {musician.apple_music_artist_url && (
+                {musician.apple_music_artist_url && musician.apple_music_artist_url.trim() !== '' && (
                   <button
                     onClick={() => {
                       handleSocialClick('apple_music');
