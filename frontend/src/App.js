@@ -7975,14 +7975,74 @@ const OnStageInterface = () => {
   }
   
   if (!musician) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Musician not found</h1>
-          <p>Please check the URL and try again.</p>
-        </div>
-      </div>
-    );
+    // Demo mode for testing the new UI structure
+    const demoMusician = { name: "Demo Artist", slug: "demo" };
+    const demoRequests = [
+      {
+        id: 'demo-up-next-1',
+        song_title: 'Sweet Child O Mine',
+        song_artist: 'Guns N Roses',
+        requester_name: 'Sarah M.',
+        dedication: 'For my anniversary!',
+        created_at: new Date(Date.now() - 300000).toISOString(), // 5 mins ago
+        status: 'up_next',
+        type: 'request'
+      },
+      {
+        id: 'demo-up-next-2',
+        song_title: 'Bohemian Rhapsody',
+        song_artist: 'Queen',
+        requester_name: 'Mike D.',
+        dedication: '',
+        created_at: new Date(Date.now() - 240000).toISOString(), // 4 mins ago
+        status: 'up_next',
+        type: 'request'
+      },
+      {
+        id: 'demo-active-1',
+        song_title: 'Wonderwall',
+        song_artist: 'Oasis',
+        requester_name: 'Emily R.',
+        dedication: 'First dance song!',
+        created_at: new Date(Date.now() - 120000).toISOString(), // 2 mins ago
+        status: 'pending',
+        type: 'request'
+      },
+      {
+        id: 'demo-active-2',
+        song_title: 'Hotel California',
+        song_artist: 'Eagles',
+        requester_name: 'John K.',
+        dedication: '',
+        created_at: new Date(Date.now() - 60000).toISOString(), // 1 min ago
+        status: 'pending',
+        type: 'request'
+      },
+      {
+        id: 'demo-completed-1',
+        song_title: 'Stairway to Heaven',
+        song_artist: 'Led Zeppelin',
+        requester_name: 'Lisa P.',
+        dedication: 'Amazing performance!',
+        created_at: new Date(Date.now() - 600000).toISOString(), // 10 mins ago
+        status: 'played',
+        type: 'request'
+      },
+      {
+        id: 'demo-completed-2',
+        song_title: 'Freebird',
+        song_artist: 'Lynyrd Skynyrd',
+        requester_name: 'Tom S.',
+        dedication: '',
+        created_at: new Date(Date.now() - 900000).toISOString(), // 15 mins ago
+        status: 'rejected',
+        type: 'request'
+      }
+    ];
+    
+    // Override the state for demo
+    musician = demoMusician;
+    requests = demoRequests;
   }
   
   // Organize requests into sections
