@@ -190,8 +190,8 @@ class OnStageBackendTester:
             print(f"   📊 Response body: {update_response.text}")
             
             if update_response.status_code == 200:
-                updated_request = update_response.json()
-                new_status = updated_request.get("status")
+                update_result = update_response.json()
+                new_status = update_result.get("new_status")
                 
                 if new_status == "up_next":
                     print(f"   ✅ Status successfully updated to 'up_next'")
