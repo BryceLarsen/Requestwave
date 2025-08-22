@@ -4567,7 +4567,7 @@ const MusicianDashboard = () => {
                   </button>
                   <button
                     onClick={() => {
-                      const onStageUrl = `${window.location.origin}/on-stage/${musician.slug}`;
+                      const onStageUrl = `${getBaseUrl()}/on-stage/${musician.slug}`;
                       window.open(onStageUrl, '_blank');
                     }}
                     className="bg-red-600 hover:bg-red-700 px-3 sm:px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base flex-shrink-0"
