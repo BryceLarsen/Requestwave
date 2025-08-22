@@ -6981,7 +6981,7 @@ const AudienceInterface = () => {
                       <span className="hidden sm:inline">IG</span>
                     </a>
                   )}
-                  {musician.facebook_username && (
+                  {musician.facebook_username && musician.facebook_username.trim() !== '' && (
                     <a
                       href={musician.facebook_username.includes('facebook.com') ? 
                         (musician.facebook_username.startsWith('http') ? musician.facebook_username : `https://${musician.facebook_username}`) :
