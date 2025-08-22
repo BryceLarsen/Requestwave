@@ -7762,49 +7762,6 @@ const AudienceInterface = () => {
                   </div>
                 </div>
                 
-                {/* NEW: Popup Blocker Notice & Payment Info Fallback */}
-                <div className="bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-4">
-                  <div className="flex items-start space-x-2">
-                    <span className="text-yellow-400 text-lg">⚠️</span>
-                    <div>
-                      <p className="text-yellow-300 text-sm font-medium mb-2">
-                        If your payment app does not automatically open, you can do it yourself!
-                      </p>
-                      <div className="text-gray-300 text-sm space-y-1">
-                        {tipPlatform === 'paypal' && musician.paypal_username ? (
-                          <div>
-                            <p className="font-medium">PayPal username:</p>
-                            <p className="bg-gray-700 px-2 py-1 rounded font-mono text-green-300">
-                              {musician.paypal_username}
-                            </p>
-                          </div>
-                        ) : tipPlatform === 'venmo' && musician.venmo_username ? (
-                          <div>
-                            <p className="font-medium">Venmo username:</p>
-                            <p className="bg-gray-700 px-2 py-1 rounded font-mono text-purple-300">
-                              @{musician.venmo_username}
-                            </p>
-                          </div>
-                        ) : tipPlatform === 'zelle' && (musician.zelle_email || musician.zelle_phone) ? (
-                          <div>
-                            <p className="font-medium">Zelle contact:</p>
-                            {musician.zelle_email && (
-                              <p className="bg-gray-700 px-2 py-1 rounded font-mono text-green-300 mb-1">
-                                📧 {musician.zelle_email}
-                              </p>
-                            )}
-                            {musician.zelle_phone && (
-                              <p className="bg-gray-700 px-2 py-1 rounded font-mono text-green-300">
-                                📞 {musician.zelle_phone}
-                              </p>
-                            )}
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
                 {/* Optional message */}
                 <div>
                   <label className="block text-gray-300 text-sm font-bold mb-2">Message (optional)</label>
