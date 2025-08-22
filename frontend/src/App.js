@@ -7840,7 +7840,7 @@ const OnStageInterface = () => {
       
       // Show visual feedback
       const statusMessages = {
-        'accepted': '✅ Request accepted!',
+        'up_next': '⬆️ Added to Up Next!',
         'played': '🎵 Marked as played!',
         'rejected': '❌ Request rejected'
       };
