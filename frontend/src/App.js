@@ -7693,11 +7693,11 @@ const AudienceInterface = () => {
                 {/* Payment platform */}
                 <div>
                   <label className="block text-gray-300 text-sm font-bold mb-2">Payment method</label>
-                  <div className="flex space-x-2">
+                  <div className="grid grid-cols-1 gap-2">
                     <button
                       type="button"
                       onClick={() => setTipPlatform('paypal')}
-                      className={`flex-1 py-2 px-4 rounded-lg font-medium transition duration-300 ${
+                      className={`py-2 px-4 rounded-lg font-medium transition duration-300 ${
                         tipPlatform === 'paypal'
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
@@ -7708,13 +7708,24 @@ const AudienceInterface = () => {
                     <button
                       type="button"
                       onClick={() => setTipPlatform('venmo')}
-                      className={`flex-1 py-2 px-4 rounded-lg font-medium transition duration-300 ${
+                      className={`py-2 px-4 rounded-lg font-medium transition duration-300 ${
                         tipPlatform === 'venmo'
                           ? 'bg-purple-600 text-white'
                           : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                       }`}
                     >
                       📱 Venmo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTipPlatform('zelle')}
+                      className={`py-2 px-4 rounded-lg font-medium transition duration-300 ${
+                        tipPlatform === 'zelle'
+                          ? 'bg-green-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      🏦 Zelle
                     </button>
                   </div>
                 </div>
