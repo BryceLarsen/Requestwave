@@ -448,9 +448,7 @@ const MusicianDashboard = () => {
   const [editingSong, setEditingSong] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false); // NEW: Modal state for editing songs
 
-  // NEW: Available genres and moods for dropdowns
-  const [availableGenres, setAvailableGenres] = useState([]);
-  const [availableMoods, setAvailableMoods] = useState([]);
+  // NEW: Genre and mood editing state for Add New functionality
   const [showAddGenre, setShowAddGenre] = useState(false);
   const [showAddMood, setShowAddMood] = useState(false);
   const [newGenre, setNewGenre] = useState('');
