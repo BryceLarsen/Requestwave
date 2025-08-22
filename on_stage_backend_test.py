@@ -536,8 +536,8 @@ class OnStageBackendTester:
             
             persistence_tests = []
             
-            # Test 1: GET /requests (all requests)
-            all_requests_response = self.make_request("GET", "/requests")
+            # Test 1: GET /requests/musician/{musician_id} (all requests)
+            all_requests_response = self.make_request("GET", f"/requests/musician/{self.musician_id}")
             if all_requests_response.status_code == 200:
                 all_requests = all_requests_response.json()
                 test_request = next((r for r in all_requests if r["id"] == request_id), None)
