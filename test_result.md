@@ -105,16 +105,19 @@ user_problem_statement: "Implement musician control toggles for tip system and l
 
 backend:
   - task: "Musician Control Toggles - Backend Implementation"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: "NA"
           agent: "main"
           comment: "NEW FEATURE: Implementing tip system and request control toggles. Backend models already include tips_enabled and requests_enabled fields. Need to verify profile update processing works correctly and add API endpoints to check settings during audience interactions."
+        - working: "NA"
+          agent: "main"
+          comment: "IMPLEMENTATION COMPLETE: Backend already has tips_enabled and requests_enabled fields in MusicianProfile, ProfileUpdate, and Musician models. Profile update processing logic in handleUpdateProfile() already handles these fields correctly. Now need to test the functionality."
   - task: "Legacy Venmo Link Removal"
     implemented: true
     working: true
