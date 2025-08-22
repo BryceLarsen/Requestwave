@@ -622,20 +622,25 @@ const MusicianDashboard = () => {
           paymentUrl = response.data.venmo_link;
         }
 
-        if (paymentUrl) {
-          // Record the tip attempt for analytics
-          try {
-            await axios.post(`${API}/musicians/${musicianSlug}/tips`, {
-              amount: amount,
-              platform: tipPlatform,
-              tipper_name: requesterName || 'Anonymous',
-              message: tipMessage
-            });
-          } catch (error) {
-            console.log('Tip tracking failed:', error); // Non-critical
-          }
+        // Record the tip attempt for analytics
+        try {
+          await axios.post(`${API}/musicians/${musicianSlug}/tips`, {
+            amount: amount,
+            platform: tipPlatform,
+            tipper_name: requesterName || 'Anonymous',
+            message: tipMessage
+          });
+        } catch (error) {
+          console.log('Tip tracking failed:', error); // Non-critical
+        }
 
-          // Open payment link
+        if (tipPlatform === 'zelle') {
+          // For Zelle, we don't have universal links, so show instructions
+          const zelleContact = musician.zelle_email || musician.zelle_phone;
+          alert(`Use your bank app or Zelle app to send $${amount} to: ${zelleContact}\n\nMessage: ${tipMessage || 'Thanks for the music!'}`);
+          setShowTipModal(false);
+        } else if (paymentUrl) {
+          // Open payment link for PayPal/Venmo
           window.open(paymentUrl, '_blank');
           
           // Close modal
@@ -644,7 +649,7 @@ const MusicianDashboard = () => {
           // Show success message
           alert(`Opening ${tipPlatform === 'paypal' ? 'PayPal' : 'Venmo'} to send your $${amount} tip!`);
         } else {
-          alert(`${tipPlatform === 'paypal' ? 'PayPal' : 'Venmo'} is not set up for this musician`);
+          alert(`${tipPlatform === 'paypal' ? 'PayPal' : tipPlatform === 'venmo' ? 'Venmo' : 'Zelle'} is not set up for this musician`);
         }
       }
     } catch (error) {
