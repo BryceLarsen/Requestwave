@@ -7343,63 +7343,96 @@ const AudienceInterface = () => {
         </div>
 
         {/* Songs Grid/List */}
-        <div className={`${
-          designSettings.layout_mode === 'list' 
-            ? 'space-y-3 md:space-y-4' 
-            : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6'
-        }`}>
-          {filteredSongs.map((song) => (
-            <div
-              key={song.id}
-              className={`bg-gray-800 rounded-xl p-4 md:p-6 hover:bg-gray-700 transition duration-300 ${
-                designSettings.layout_mode === 'list' ? 'flex items-center space-x-4' : ''
-              }`}
-            >
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-lg md:text-xl mb-1 md:mb-2 truncate">{song.title}</h3>
-                <p className="text-gray-300 mb-2 md:mb-3 truncate">by {song.artist}</p>
-                
-                <div className="flex flex-wrap gap-1 md:gap-2 mb-3 md:mb-4">
-                  {song.genres.map((genre, idx) => (
-                    <span key={idx} className="bg-blue-600 text-xs px-2 py-1 rounded">{genre}</span>
-                  ))}
-                  {song.moods.map((mood, idx) => (
-                    <span key={idx} className="bg-green-600 text-xs px-2 py-1 rounded">{mood}</span>
-                  ))}
-                  {designSettings.show_year && song.year && (
-                    <span className="bg-gray-600 text-xs px-2 py-1 rounded">{song.year}</span>
-                  )}
-                  {/* NEW: Show decade if available */}
-                  {song.decade && (
-                    <span className="bg-orange-600 text-xs px-2 py-1 rounded">{song.decade}</span>
+        {musician?.requests_enabled === false ? (
+          /* Requests Disabled Message */
+          <div className="bg-orange-900/20 border border-orange-500/30 rounded-xl p-8 text-center">
+            <div className="text-5xl mb-4">🎤</div>
+            <h3 className="text-xl font-bold text-orange-300 mb-3">Song Requests Are Currently Off</h3>
+            <p className="text-gray-300 mb-6">
+              {musician.name} has temporarily disabled song requests. You can still:
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {/* Allow Song Suggestions Button */}
+              <button
+                onClick={() => setShowSuggestionModal(true)}
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-medium transition duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <span>💡</span>
+                <span>Suggest a Song</span>
+              </button>
+              
+              {/* Show Tip Button if tips are enabled */}
+              {musician?.tips_enabled !== false && (
+                <button
+                  onClick={() => setShowTipModal(true)}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-lg font-medium transition duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  <span>💰</span>
+                  <span>Send a Tip</span>
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Normal Songs Display */
+          <div className={`${
+            designSettings.layout_mode === 'list' 
+              ? 'space-y-3 md:space-y-4' 
+              : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6'
+          }`}>
+            {filteredSongs.map((song) => (
+              <div
+                key={song.id}
+                className={`bg-gray-800 rounded-xl p-4 md:p-6 hover:bg-gray-700 transition duration-300 ${
+                  designSettings.layout_mode === 'list' ? 'flex items-center space-x-4' : ''
+                }`}
+              >
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-lg md:text-xl mb-1 md:mb-2 truncate">{song.title}</h3>
+                  <p className="text-gray-300 mb-2 md:mb-3 truncate">by {song.artist}</p>
+                  
+                  <div className="flex flex-wrap gap-1 md:gap-2 mb-3 md:mb-4">
+                    {song.genres.map((genre, idx) => (
+                      <span key={idx} className="bg-blue-600 text-xs px-2 py-1 rounded">{genre}</span>
+                    ))}
+                    {song.moods.map((mood, idx) => (
+                      <span key={idx} className="bg-green-600 text-xs px-2 py-1 rounded">{mood}</span>
+                    ))}
+                    {designSettings.show_year && song.year && (
+                      <span className="bg-gray-600 text-xs px-2 py-1 rounded">{song.year}</span>
+                    )}
+                    {/* NEW: Show decade if available */}
+                    {song.decade && (
+                      <span className="bg-orange-600 text-xs px-2 py-1 rounded">{song.decade}</span>
+                    )}
+                  </div>
+                  
+                  {designSettings.show_notes && song.notes && (
+                    <p className="text-gray-400 text-xs md:text-sm italic mb-3 md:mb-4">"{song.notes}"</p>
                   )}
                 </div>
                 
-                {designSettings.show_notes && song.notes && (
-                  <p className="text-gray-400 text-xs md:text-sm italic mb-3 md:mb-4">"{song.notes}"</p>
-                )}
+                <button
+                  onClick={() => setSelectedSong(song)}
+                  className={`${colors.button} w-full md:w-auto px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold transition duration-300 text-sm md:text-base whitespace-nowrap`}
+                >
+                  Request Song
+                </button>
               </div>
-              
-              <button
-                onClick={() => setSelectedSong(song)}
-                className={`${colors.button} w-full md:w-auto px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold transition duration-300 text-sm md:text-base whitespace-nowrap`}
-              >
-                Request Song
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {filteredSongs.length === 0 && (
-          <div className="text-center py-12 md:py-16">
-            <div className="text-4xl md:text-6xl mb-4">🎵</div>
-            <p className="text-gray-400 text-lg md:text-xl mb-2">No songs match your search</p>
-            <button
-              onClick={clearFilters}
-              className={`${colors.button} px-6 py-2 rounded-lg font-medium transition duration-300`}
-            >
-              Clear Filters
-            </button>
+            ))}
+            
+            {filteredSongs.length === 0 && (
+              <div className="text-center py-12 md:py-16">
+                <div className="text-4xl md:text-6xl mb-4">🎵</div>
+                <p className="text-gray-400 text-lg md:text-xl mb-2">No songs match your search</p>
+                <button
+                  onClick={clearFilters}
+                  className={`${colors.button} px-6 py-2 rounded-lg font-medium transition duration-300`}
+                >
+                  Clear Filters
+                </button>
+              </div>
+            )}
           </div>
         )}
 
