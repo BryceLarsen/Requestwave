@@ -157,6 +157,8 @@ class Musician(BaseModel):
     # Payment information for tips
     paypal_username: Optional[str] = None  # PayPal.me username (without @)
     venmo_username: Optional[str] = None   # Venmo username (without @)
+    zelle_email: Optional[str] = None
+    zelle_phone: Optional[str] = None
     # NEW: Social media links for "follow me" section
     instagram_username: Optional[str] = None
     facebook_username: Optional[str] = None  
