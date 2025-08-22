@@ -615,22 +615,20 @@ class TipFlowTester:
             
             for amount in test_amounts:
                 # Test PayPal with this amount
-                paypal_amount_data = {
+                paypal_amount_params = {
                     "amount": amount,
-                    "platform": "paypal",
                     "message": f"Amount test ${amount}"
                 }
                 
-                paypal_amount_response = self.make_request("POST", f"/musicians/{self.musician_slug}/tip-links", paypal_amount_data)
+                paypal_amount_response = self.make_request("GET", f"/musicians/{self.musician_slug}/tip-links", params=paypal_amount_params)
                 
                 # Test Venmo with this amount
-                venmo_amount_data = {
+                venmo_amount_params = {
                     "amount": amount,
-                    "platform": "venmo",
                     "message": f"Amount test ${amount}"
                 }
                 
-                venmo_amount_response = self.make_request("POST", f"/musicians/{self.musician_slug}/tip-links", venmo_amount_data)
+                venmo_amount_response = self.make_request("GET", f"/musicians/{self.musician_slug}/tip-links", params=venmo_amount_params)
                 
                 if paypal_amount_response.status_code == 200 and venmo_amount_response.status_code == 200:
                     amount_tests_passed += 1
