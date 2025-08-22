@@ -665,7 +665,7 @@ class RequestWaveAPITester:
                     "message": tip_data["message"]
                 }
                 
-                tip_response = self.make_request("POST", "/tips", tip_request)
+                tip_response = self.make_request("POST", f"/musicians/{login_data_response['musician']['slug']}/tips", tip_request)
                 
                 if tip_response.status_code == 200:
                     tip_result = tip_response.json()
