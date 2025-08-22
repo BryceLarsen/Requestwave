@@ -725,7 +725,7 @@ class OnStageBackendTester:
             # Step 3: Retrieve all requests and organize by section
             print("📊 Step 3: Retrieve and organize requests by three sections")
             
-            all_requests_response = self.make_request("GET", "/requests")
+            all_requests_response = self.make_request("GET", f"/requests/musician/{self.musician_id}")
             
             if all_requests_response.status_code != 200:
                 self.log_result("Integration Test - Get Requests", False, f"Failed to get requests: {all_requests_response.status_code}")
