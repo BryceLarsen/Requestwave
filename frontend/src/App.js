@@ -6472,7 +6472,14 @@ const AudienceInterface = () => {
   const handleTipChoice = (amount) => {
     setSelectedTipAmount(amount);
     setTipAmount(amount);
-    setTipPlatform(musician.venmo_username ? 'venmo' : 'paypal');
+    // Set default platform based on what's available
+    if (musician.venmo_username) {
+      setTipPlatform('venmo');
+    } else if (musician.paypal_username) {
+      setTipPlatform('paypal');
+    } else if (musician.zelle_email || musician.zelle_phone) {
+      setTipPlatform('zelle');
+    }
     
     setShowTipChoiceModal(false);
     setShowTipModal(true);
