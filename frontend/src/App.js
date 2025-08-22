@@ -343,8 +343,6 @@ const AuthForm = ({ mode, onSwitch }) => {
               </div>
             </>
           )}
-        </div>
-      </div>
     </div>
   );
 };
