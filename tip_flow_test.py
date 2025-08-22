@@ -432,13 +432,12 @@ class TipFlowTester:
             
             for amount in test_amounts:
                 # Test PayPal
-                paypal_data = {
+                paypal_params = {
                     "amount": amount,
-                    "platform": "paypal",
                     "message": f"Test tip ${amount}"
                 }
                 
-                paypal_response = self.make_request("POST", f"/musicians/{self.musician_slug}/tip-links", paypal_data)
+                paypal_response = self.make_request("GET", f"/musicians/{self.musician_slug}/tip-links", params=paypal_params)
                 
                 if paypal_response.status_code == 200:
                     paypal_result = paypal_response.json()
