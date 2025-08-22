@@ -1969,7 +1969,6 @@ async def get_profile(musician_id: str = Depends(get_current_musician)):
     return MusicianProfile(
         name=musician["name"],
         email=musician["email"],
-        venmo_link=musician.get("venmo_link", ""),
         bio=musician.get("bio", ""),
         website=musician.get("website", ""),
         # Payment usernames
