@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """
-ON STAGE MODE BACKEND TESTING - THREE REQUEST STATUSES
+ON STAGE MODE BACKEND TESTING - UP_NEXT STATUS VALIDATION
 
-Testing the new On Stage mode backend functionality with three request statuses as requested:
+Testing the updated On Stage mode backend with the new "up_next" status as requested:
 
 CRITICAL TEST AREAS:
-1. Request Status Updates: Test PUT /api/requests/{id}/status endpoint can handle the new "up_next" status alongside existing "pending", "played", and "rejected" statuses
-2. Request Filtering: Verify GET /api/requests/updates/{musician_id} returns requests with all status types including the new "up_next" status
-3. Status Validation: Confirm the backend accepts "up_next" as a valid status without errors
-4. Demo User Setup: Create a test musician and add sample requests with different statuses (pending, up_next, played, rejected) to verify the three-section organization works correctly
-5. Response Format: Ensure all request responses include the correct status field that the frontend can use to organize requests into the three sections (Up Next, Active Requests, Completed Requests)
+1. Status Validation Fixed - PUT /api/requests/{id}/status accepts "up_next" status
+2. Request Status Update - Create test request and update to "up_next" status  
+3. Request Filtering - GET /api/requests/updates/{musician_id} returns "up_next" requests
+4. Status Persistence - "up_next" status stored and retrieved properly from database
+5. Integration Test - Multiple requests with different statuses including "up_next"
 
 Test Credentials: brycelarsenmusic@gmail.com / RequestWave2024!
 
-Expected: All On Stage mode functionality working correctly with three distinct request status sections.
+Expected: All "up_next" status functionality working correctly for three-section On Stage interface.
 """
 
 import requests
@@ -27,11 +27,11 @@ BASE_URL = "https://performance-pay-1.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {
-    "email": "brycelarsenmusic@gmail.com",
+    "email": "brycelarsenmusic@gmail.com", 
     "password": "RequestWave2024!"
 }
 
-class OnStageAPITester:
+class OnStageBackendTester:
     def __init__(self):
         self.base_url = BASE_URL
         self.auth_token = None
@@ -58,7 +58,7 @@ class OnStageAPITester:
             self.results["failed"] += 1
             self.results["errors"].append(f"{test_name}: {message}")
 
-    def make_request(self, method: str, endpoint: str, data: Any = None, files: Any = None, headers: Dict = None, params: Dict = None) -> requests.Response:
+    def make_request(self, method: str, endpoint: str, data: Any = None, headers: Dict = None, params: Dict = None) -> requests.Response:
         """Make HTTP request with proper headers"""
         url = f"{self.base_url}{endpoint}"
         
@@ -71,20 +71,11 @@ class OnStageAPITester:
         if headers:
             request_headers.update(headers)
         
-        # Remove Content-Type for file uploads
-        if files:
-            request_headers.pop("Content-Type", None)
-        
         try:
             if method.upper() == "GET":
-                response = requests.get(url, headers=request_headers, params=data or params)
+                response = requests.get(url, headers=request_headers, params=params)
             elif method.upper() == "POST":
-                if files:
-                    response = requests.post(url, headers={k: v for k, v in request_headers.items() if k != "Content-Type"}, files=files, data=data)
-                elif params:
-                    response = requests.post(url, headers=request_headers, params=params)
-                else:
-                    response = requests.post(url, headers=request_headers, json=data)
+                response = requests.post(url, headers=request_headers, json=data)
             elif method.upper() == "PUT":
                 response = requests.put(url, headers=request_headers, json=data)
             elif method.upper() == "DELETE":
@@ -97,634 +88,780 @@ class OnStageAPITester:
             print(f"Request failed: {e}")
             raise
 
-    def test_pro_musician_login(self):
-        """Test Pro musician login for On Stage testing"""
+    def setup_test_environment(self):
+        """Setup test environment with authentication and test data"""
         try:
-            print("🎵 ON STAGE SETUP: Login with Pro Account")
+            print("🎵 SETUP: Authenticating and preparing test environment")
             print("=" * 80)
             
+            # Step 1: Login with Pro account
+            print("📊 Step 1: Login with brycelarsenmusic@gmail.com")
             login_data = {
                 "email": PRO_MUSICIAN["email"],
                 "password": PRO_MUSICIAN["password"]
             }
             
-            response = self.make_request("POST", "/auth/login", login_data)
+            login_response = self.make_request("POST", "/auth/login", login_data)
             
-            if response.status_code == 200:
-                data = response.json()
-                if "token" in data and "musician" in data:
-                    self.auth_token = data["token"]
-                    self.musician_id = data["musician"]["id"]
-                    self.musician_slug = data["musician"]["slug"]
-                    print(f"   ✅ Successfully logged in as: {data['musician']['name']}")
-                    print(f"   📊 Musician ID: {self.musician_id}")
-                    print(f"   📊 Musician Slug: {self.musician_slug}")
-                    self.log_result("Pro Musician Login", True, f"Logged in as {data['musician']['name']}")
-                else:
-                    self.log_result("Pro Musician Login", False, f"Missing token or musician in response: {data}")
-            else:
-                self.log_result("Pro Musician Login", False, f"Status code: {response.status_code}, Response: {response.text}")
+            if login_response.status_code != 200:
+                self.log_result("Setup - Pro Login", False, f"Failed to login: {login_response.status_code}")
+                return False
+            
+            login_data_response = login_response.json()
+            self.auth_token = login_data_response["token"]
+            self.musician_id = login_data_response["musician"]["id"]
+            self.musician_slug = login_data_response["musician"]["slug"]
+            
+            print(f"   ✅ Successfully logged in as: {login_data_response['musician']['name']}")
+            print(f"   📊 Musician ID: {self.musician_id}")
+            print(f"   📊 Musician Slug: {self.musician_slug}")
+            
+            # Step 2: Get available songs for request testing
+            print("📊 Step 2: Get available songs for request testing")
+            
+            songs_response = self.make_request("GET", "/songs")
+            
+            if songs_response.status_code != 200:
+                self.log_result("Setup - Get Songs", False, f"Failed to get songs: {songs_response.status_code}")
+                return False
+            
+            songs = songs_response.json()
+            if len(songs) < 4:
+                self.log_result("Setup - Insufficient Songs", False, f"Need at least 4 songs, found {len(songs)}")
+                return False
+            
+            # Store first 4 song IDs for testing
+            self.test_song_ids = [songs[i]["id"] for i in range(4)]
+            print(f"   ✅ Using {len(self.test_song_ids)} songs for request testing")
+            
+            print("=" * 80)
+            return True
+            
         except Exception as e:
-            self.log_result("Pro Musician Login", False, f"Exception: {str(e)}")
+            self.log_result("Setup Test Environment", False, f"Exception: {str(e)}")
+            return False
 
-    def test_get_available_songs(self):
-        """Get available songs for creating test requests"""
+    def test_status_validation_fixed(self):
+        """Test 1: Status Validation Fixed - PUT /api/requests/{id}/status accepts 'up_next'"""
         try:
-            print("🎵 ON STAGE SETUP: Get Available Songs")
+            print("🎵 TEST 1: Status Validation Fixed - 'up_next' Status Acceptance")
             print("=" * 80)
             
-            if not self.auth_token:
-                self.log_result("Get Available Songs", False, "No auth token available")
-                return
+            # Step 1: Create a test request first
+            print("📊 Step 1: Create test request for status validation")
             
-            response = self.make_request("GET", "/songs")
+            request_data = {
+                "song_id": self.test_song_ids[0],
+                "requester_name": "Test Requester",
+                "requester_email": "test@example.com",
+                "dedication": "Testing up_next status validation"
+            }
             
-            if response.status_code == 200:
-                songs = response.json()
-                if len(songs) >= 4:
-                    self.test_song_ids = [songs[i]["id"] for i in range(4)]
-                    print(f"   ✅ Found {len(songs)} songs, using first 4 for testing")
-                    for i, song_id in enumerate(self.test_song_ids):
-                        song = songs[i]
-                        print(f"   📊 Song {i+1}: {song.get('title', 'Unknown')} by {song.get('artist', 'Unknown')} (ID: {song_id})")
-                    self.log_result("Get Available Songs", True, f"Retrieved {len(self.test_song_ids)} songs for testing")
-                else:
-                    self.log_result("Get Available Songs", False, f"Need at least 4 songs, found {len(songs)}")
-            else:
-                self.log_result("Get Available Songs", False, f"Status code: {response.status_code}, Response: {response.text}")
-        except Exception as e:
-            self.log_result("Get Available Songs", False, f"Exception: {str(e)}")
-
-    def test_create_demo_requests_with_different_statuses(self):
-        """Create demo requests with different statuses for On Stage testing"""
-        try:
-            print("🎵 ON STAGE TEST 1: Create Demo Requests with Different Statuses")
-            print("=" * 80)
-            
-            if not self.auth_token or not self.test_song_ids:
-                self.log_result("Create Demo Requests", False, "Missing auth token or song IDs")
-                return
-            
-            # Clear auth token for public request creation
+            # Create request via public endpoint (no auth needed)
             original_token = self.auth_token
             self.auth_token = None
             
-            # Create 4 requests with different statuses
-            request_data_list = [
+            create_response = self.make_request("POST", f"/musicians/{self.musician_slug}/requests", request_data)
+            
+            # Restore auth token
+            self.auth_token = original_token
+            
+            if create_response.status_code != 200:
+                self.log_result("Status Validation - Create Request", False, f"Failed to create request: {create_response.status_code}")
+                return
+            
+            created_request = create_response.json()
+            request_id = created_request["id"]
+            self.test_request_ids.append(request_id)
+            
+            print(f"   ✅ Created test request: {request_id}")
+            print(f"   📊 Initial status: {created_request.get('status', 'unknown')}")
+            
+            # Step 2: Test updating status to 'up_next'
+            print("📊 Step 2: Test updating status to 'up_next'")
+            
+            status_update_data = {
+                "status": "up_next"
+            }
+            
+            update_response = self.make_request("PUT", f"/requests/{request_id}/status", status_update_data)
+            
+            print(f"   📊 Status update response: {update_response.status_code}")
+            print(f"   📊 Response body: {update_response.text}")
+            
+            if update_response.status_code == 200:
+                updated_request = update_response.json()
+                new_status = updated_request.get("status")
+                
+                if new_status == "up_next":
+                    print(f"   ✅ Status successfully updated to 'up_next'")
+                    self.log_result("Status Validation - up_next Acceptance", True, "Backend now accepts 'up_next' status")
+                else:
+                    print(f"   ❌ Status not updated correctly. Expected: 'up_next', Got: '{new_status}'")
+                    self.log_result("Status Validation - up_next Acceptance", False, f"Status update failed - got '{new_status}' instead of 'up_next'")
+            else:
+                print(f"   ❌ Status update failed with status code: {update_response.status_code}")
+                if update_response.status_code == 400:
+                    error_detail = update_response.json().get("detail", "Unknown error")
+                    print(f"   📊 Error detail: {error_detail}")
+                    if "Invalid status" in error_detail:
+                        self.log_result("Status Validation - up_next Acceptance", False, "CRITICAL: Backend still does not accept 'up_next' status - validation not fixed")
+                    else:
+                        self.log_result("Status Validation - up_next Acceptance", False, f"Status update failed: {error_detail}")
+                else:
+                    self.log_result("Status Validation - up_next Acceptance", False, f"Unexpected error: {update_response.status_code}")
+            
+            # Step 3: Test other valid statuses still work
+            print("📊 Step 3: Verify other valid statuses still work")
+            
+            other_statuses = ["pending", "accepted", "played", "rejected"]
+            other_statuses_working = True
+            
+            for status in other_statuses:
+                status_data = {"status": status}
+                test_response = self.make_request("PUT", f"/requests/{request_id}/status", status_data)
+                
+                if test_response.status_code == 200:
+                    print(f"   ✅ Status '{status}' accepted")
+                else:
+                    print(f"   ❌ Status '{status}' rejected: {test_response.status_code}")
+                    other_statuses_working = False
+            
+            if other_statuses_working:
+                print(f"   ✅ All existing statuses still work correctly")
+            else:
+                print(f"   ❌ Some existing statuses broken")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Status Validation Fixed", False, f"Exception: {str(e)}")
+
+    def test_request_status_update(self):
+        """Test 2: Request Status Update - Create request and update to 'up_next'"""
+        try:
+            print("🎵 TEST 2: Request Status Update - Create and Update to 'up_next'")
+            print("=" * 80)
+            
+            # Step 1: Create a fresh test request
+            print("📊 Step 1: Create fresh test request")
+            
+            request_data = {
+                "song_id": self.test_song_ids[1],
+                "requester_name": "Up Next Tester",
+                "requester_email": "upnext@example.com",
+                "dedication": "Testing up_next status update workflow"
+            }
+            
+            # Create request via public endpoint
+            original_token = self.auth_token
+            self.auth_token = None
+            
+            create_response = self.make_request("POST", f"/musicians/{self.musician_slug}/requests", request_data)
+            
+            # Restore auth token
+            self.auth_token = original_token
+            
+            if create_response.status_code != 200:
+                self.log_result("Status Update - Create Request", False, f"Failed to create request: {create_response.status_code}")
+                return
+            
+            created_request = create_response.json()
+            request_id = created_request["id"]
+            self.test_request_ids.append(request_id)
+            
+            print(f"   ✅ Created test request: {request_id}")
+            print(f"   📊 Song: {created_request.get('song_title')} by {created_request.get('song_artist')}")
+            print(f"   📊 Initial status: {created_request.get('status')}")
+            
+            # Step 2: Update status to 'up_next'
+            print("📊 Step 2: Update status to 'up_next'")
+            
+            status_update_data = {
+                "status": "up_next"
+            }
+            
+            update_response = self.make_request("PUT", f"/requests/{request_id}/status", status_update_data)
+            
+            if update_response.status_code == 200:
+                updated_request = update_response.json()
+                
+                # Verify all required fields are present
+                required_fields = ["id", "status", "song_title", "song_artist", "requester_name", "created_at"]
+                missing_fields = [field for field in required_fields if field not in updated_request]
+                
+                if len(missing_fields) == 0:
+                    print(f"   ✅ All required fields present in response")
+                    
+                    if updated_request["status"] == "up_next":
+                        print(f"   ✅ Status successfully updated to 'up_next'")
+                        print(f"   📊 Request details: {updated_request['song_title']} by {updated_request['song_artist']}")
+                        self.log_result("Request Status Update", True, "Successfully created request and updated to 'up_next' status")
+                    else:
+                        print(f"   ❌ Status not 'up_next': {updated_request['status']}")
+                        self.log_result("Request Status Update", False, f"Status update failed - got '{updated_request['status']}'")
+                else:
+                    print(f"   ❌ Missing required fields: {missing_fields}")
+                    self.log_result("Request Status Update", False, f"Response missing fields: {missing_fields}")
+            else:
+                print(f"   ❌ Status update failed: {update_response.status_code}")
+                print(f"   📊 Error response: {update_response.text}")
+                self.log_result("Request Status Update", False, f"Status update failed: {update_response.status_code}")
+            
+            # Step 3: Verify status persists by fetching request again
+            print("📊 Step 3: Verify status persists by fetching request")
+            
+            # Get all requests and find our test request
+            requests_response = self.make_request("GET", "/requests")
+            
+            if requests_response.status_code == 200:
+                all_requests = requests_response.json()
+                test_request = next((r for r in all_requests if r["id"] == request_id), None)
+                
+                if test_request:
+                    if test_request["status"] == "up_next":
+                        print(f"   ✅ Status 'up_next' persisted correctly")
+                    else:
+                        print(f"   ❌ Status not persisted. Expected: 'up_next', Got: '{test_request['status']}'")
+                        self.log_result("Request Status Update - Persistence", False, "Status not persisted correctly")
+                else:
+                    print(f"   ❌ Test request not found in requests list")
+                    self.log_result("Request Status Update - Persistence", False, "Request not found after update")
+            else:
+                print(f"   ❌ Failed to fetch requests: {requests_response.status_code}")
+                self.log_result("Request Status Update - Persistence", False, "Could not verify persistence")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Request Status Update", False, f"Exception: {str(e)}")
+
+    def test_request_filtering(self):
+        """Test 3: Request Filtering - GET /api/requests/updates/{musician_id} returns 'up_next' requests"""
+        try:
+            print("🎵 TEST 3: Request Filtering - 'up_next' Requests in Updates Endpoint")
+            print("=" * 80)
+            
+            # Step 1: Create multiple requests with different statuses
+            print("📊 Step 1: Create multiple requests with different statuses")
+            
+            test_requests = [
                 {
                     "song_id": self.test_song_ids[0],
-                    "requester_name": "Alice Johnson",
-                    "requester_email": "alice@example.com",
-                    "dedication": "For my birthday celebration!",
-                    "expected_status": "pending"
+                    "requester_name": "Pending User",
+                    "requester_email": "pending@example.com",
+                    "dedication": "Pending request",
+                    "target_status": "pending"
                 },
                 {
-                    "song_id": self.test_song_ids[1],
-                    "requester_name": "Bob Smith",
-                    "requester_email": "bob@example.com",
-                    "dedication": "This song brings back memories",
-                    "expected_status": "up_next"
+                    "song_id": self.test_song_ids[1], 
+                    "requester_name": "Up Next User",
+                    "requester_email": "upnext@example.com",
+                    "dedication": "Up next request",
+                    "target_status": "up_next"
                 },
                 {
                     "song_id": self.test_song_ids[2],
-                    "requester_name": "Carol Davis",
-                    "requester_email": "carol@example.com",
-                    "dedication": "Love this song so much!",
-                    "expected_status": "played"
+                    "requester_name": "Played User", 
+                    "requester_email": "played@example.com",
+                    "dedication": "Played request",
+                    "target_status": "played"
+                }
+            ]
+            
+            created_request_ids = []
+            
+            # Create requests via public endpoint
+            original_token = self.auth_token
+            self.auth_token = None
+            
+            for req_data in test_requests:
+                create_data = {
+                    "song_id": req_data["song_id"],
+                    "requester_name": req_data["requester_name"],
+                    "requester_email": req_data["requester_email"],
+                    "dedication": req_data["dedication"]
+                }
+                
+                create_response = self.make_request("POST", f"/musicians/{self.musician_slug}/requests", create_data)
+                
+                if create_response.status_code == 200:
+                    created_request = create_response.json()
+                    created_request_ids.append({
+                        "id": created_request["id"],
+                        "target_status": req_data["target_status"],
+                        "requester_name": req_data["requester_name"]
+                    })
+                    print(f"   ✅ Created request: {req_data['requester_name']} -> {req_data['target_status']}")
+                else:
+                    print(f"   ❌ Failed to create request for {req_data['requester_name']}: {create_response.status_code}")
+            
+            # Restore auth token
+            self.auth_token = original_token
+            
+            # Step 2: Update requests to target statuses
+            print("📊 Step 2: Update requests to target statuses")
+            
+            for req_info in created_request_ids:
+                if req_info["target_status"] != "pending":  # pending is default
+                    status_data = {"status": req_info["target_status"]}
+                    update_response = self.make_request("PUT", f"/requests/{req_info['id']}/status", status_data)
+                    
+                    if update_response.status_code == 200:
+                        print(f"   ✅ Updated {req_info['requester_name']} to '{req_info['target_status']}'")
+                        self.test_request_ids.append(req_info["id"])
+                    else:
+                        print(f"   ❌ Failed to update {req_info['requester_name']}: {update_response.status_code}")
+            
+            # Step 3: Test GET /api/requests/updates/{musician_id} endpoint
+            print("📊 Step 3: Test requests updates endpoint")
+            
+            updates_response = self.make_request("GET", f"/requests/updates/{self.musician_id}")
+            
+            print(f"   📊 Updates endpoint status: {updates_response.status_code}")
+            print(f"   📊 Response preview: {updates_response.text[:200]}...")
+            
+            if updates_response.status_code == 200:
+                try:
+                    updates_data = updates_response.json()
+                    
+                    # Check if response is a dict with 'requests' key or direct list
+                    if isinstance(updates_data, dict) and 'requests' in updates_data:
+                        requests_list = updates_data['requests']
+                        print(f"   📊 Response format: dict with 'requests' key")
+                        print(f"   📊 Additional fields: {list(updates_data.keys())}")
+                    elif isinstance(updates_data, list):
+                        requests_list = updates_data
+                        print(f"   📊 Response format: direct list")
+                    else:
+                        print(f"   ❌ Unexpected response format: {type(updates_data)}")
+                        self.log_result("Request Filtering - Response Format", False, "Unexpected response format")
+                        return
+                    
+                    print(f"   ✅ Found {len(requests_list)} requests in updates")
+                    
+                    # Step 4: Verify 'up_next' requests are included
+                    print("📊 Step 4: Verify 'up_next' requests are included")
+                    
+                    status_counts = {}
+                    up_next_requests = []
+                    
+                    for request in requests_list:
+                        status = request.get("status", "unknown")
+                        status_counts[status] = status_counts.get(status, 0) + 1
+                        
+                        if status == "up_next":
+                            up_next_requests.append(request)
+                    
+                    print(f"   📊 Status distribution: {status_counts}")
+                    
+                    if len(up_next_requests) > 0:
+                        print(f"   ✅ Found {len(up_next_requests)} 'up_next' requests")
+                        
+                        # Verify structure of up_next requests
+                        sample_up_next = up_next_requests[0]
+                        required_fields = ["id", "status", "song_title", "song_artist", "requester_name"]
+                        missing_fields = [field for field in required_fields if field not in sample_up_next]
+                        
+                        if len(missing_fields) == 0:
+                            print(f"   ✅ 'up_next' request structure correct")
+                            print(f"   📊 Sample: {sample_up_next['song_title']} by {sample_up_next['song_artist']} (requested by {sample_up_next['requester_name']})")
+                            self.log_result("Request Filtering", True, "'up_next' requests properly included in updates endpoint")
+                        else:
+                            print(f"   ❌ 'up_next' request missing fields: {missing_fields}")
+                            self.log_result("Request Filtering", False, f"'up_next' request structure incomplete: {missing_fields}")
+                    else:
+                        print(f"   ❌ No 'up_next' requests found in updates")
+                        self.log_result("Request Filtering", False, "'up_next' requests not included in updates endpoint")
+                    
+                except json.JSONDecodeError:
+                    print(f"   ❌ Updates response is not valid JSON")
+                    self.log_result("Request Filtering", False, "Updates endpoint returned invalid JSON")
+            else:
+                print(f"   ❌ Updates endpoint failed: {updates_response.status_code}")
+                self.log_result("Request Filtering", False, f"Updates endpoint failed: {updates_response.status_code}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Request Filtering", False, f"Exception: {str(e)}")
+
+    def test_status_persistence(self):
+        """Test 4: Status Persistence - 'up_next' status stored and retrieved properly"""
+        try:
+            print("🎵 TEST 4: Status Persistence - Database Storage and Retrieval")
+            print("=" * 80)
+            
+            # Step 1: Create request and update to 'up_next'
+            print("📊 Step 1: Create request and update to 'up_next'")
+            
+            request_data = {
+                "song_id": self.test_song_ids[3],
+                "requester_name": "Persistence Tester",
+                "requester_email": "persistence@example.com",
+                "dedication": "Testing up_next persistence"
+            }
+            
+            # Create request via public endpoint
+            original_token = self.auth_token
+            self.auth_token = None
+            
+            create_response = self.make_request("POST", f"/musicians/{self.musician_slug}/requests", request_data)
+            
+            # Restore auth token
+            self.auth_token = original_token
+            
+            if create_response.status_code != 200:
+                self.log_result("Status Persistence - Create Request", False, f"Failed to create request: {create_response.status_code}")
+                return
+            
+            created_request = create_response.json()
+            request_id = created_request["id"]
+            self.test_request_ids.append(request_id)
+            
+            print(f"   ✅ Created test request: {request_id}")
+            
+            # Update to 'up_next'
+            status_update_data = {"status": "up_next"}
+            update_response = self.make_request("PUT", f"/requests/{request_id}/status", status_update_data)
+            
+            if update_response.status_code != 200:
+                self.log_result("Status Persistence - Update Status", False, f"Failed to update status: {update_response.status_code}")
+                return
+            
+            print(f"   ✅ Updated status to 'up_next'")
+            
+            # Step 2: Verify persistence through multiple retrieval methods
+            print("📊 Step 2: Verify persistence through multiple retrieval methods")
+            
+            persistence_tests = []
+            
+            # Test 1: GET /requests (all requests)
+            all_requests_response = self.make_request("GET", "/requests")
+            if all_requests_response.status_code == 200:
+                all_requests = all_requests_response.json()
+                test_request = next((r for r in all_requests if r["id"] == request_id), None)
+                
+                if test_request and test_request["status"] == "up_next":
+                    persistence_tests.append(("GET /requests", True))
+                    print(f"   ✅ Persistence verified via GET /requests")
+                else:
+                    persistence_tests.append(("GET /requests", False))
+                    print(f"   ❌ Persistence failed via GET /requests")
+            else:
+                persistence_tests.append(("GET /requests", False))
+                print(f"   ❌ GET /requests failed: {all_requests_response.status_code}")
+            
+            # Test 2: GET /requests/updates/{musician_id}
+            updates_response = self.make_request("GET", f"/requests/updates/{self.musician_id}")
+            if updates_response.status_code == 200:
+                updates_data = updates_response.json()
+                
+                # Handle both response formats
+                if isinstance(updates_data, dict) and 'requests' in updates_data:
+                    requests_list = updates_data['requests']
+                elif isinstance(updates_data, list):
+                    requests_list = updates_data
+                else:
+                    requests_list = []
+                
+                test_request = next((r for r in requests_list if r["id"] == request_id), None)
+                
+                if test_request and test_request["status"] == "up_next":
+                    persistence_tests.append(("GET /requests/updates", True))
+                    print(f"   ✅ Persistence verified via GET /requests/updates")
+                else:
+                    persistence_tests.append(("GET /requests/updates", False))
+                    print(f"   ❌ Persistence failed via GET /requests/updates")
+            else:
+                persistence_tests.append(("GET /requests/updates", False))
+                print(f"   ❌ GET /requests/updates failed: {updates_response.status_code}")
+            
+            # Step 3: Test status changes and persistence
+            print("📊 Step 3: Test status changes and persistence")
+            
+            # Change to different status and back
+            status_changes = ["accepted", "up_next", "played", "up_next"]
+            
+            for new_status in status_changes:
+                change_data = {"status": new_status}
+                change_response = self.make_request("PUT", f"/requests/{request_id}/status", change_data)
+                
+                if change_response.status_code == 200:
+                    # Verify the change persisted
+                    verify_response = self.make_request("GET", "/requests")
+                    if verify_response.status_code == 200:
+                        verify_requests = verify_response.json()
+                        verify_request = next((r for r in verify_requests if r["id"] == request_id), None)
+                        
+                        if verify_request and verify_request["status"] == new_status:
+                            print(f"   ✅ Status change to '{new_status}' persisted")
+                        else:
+                            print(f"   ❌ Status change to '{new_status}' not persisted")
+                            persistence_tests.append((f"Status change to {new_status}", False))
+                    else:
+                        print(f"   ❌ Could not verify status change to '{new_status}'")
+                        persistence_tests.append((f"Status change to {new_status}", False))
+                else:
+                    print(f"   ❌ Failed to change status to '{new_status}': {change_response.status_code}")
+                    persistence_tests.append((f"Status change to {new_status}", False))
+            
+            # Final assessment
+            successful_tests = [test for test in persistence_tests if test[1]]
+            failed_tests = [test for test in persistence_tests if not test[1]]
+            
+            if len(failed_tests) == 0:
+                self.log_result("Status Persistence", True, f"All {len(successful_tests)} persistence tests passed")
+            else:
+                self.log_result("Status Persistence", False, f"{len(failed_tests)} persistence tests failed: {[test[0] for test in failed_tests]}")
+            
+            print("=" * 80)
+            
+        except Exception as e:
+            self.log_result("Status Persistence", False, f"Exception: {str(e)}")
+
+    def test_integration_three_section_organization(self):
+        """Test 5: Integration Test - Multiple requests for three-section On Stage interface"""
+        try:
+            print("🎵 TEST 5: Integration Test - Three-Section On Stage Organization")
+            print("=" * 80)
+            
+            # Step 1: Create requests for all three sections
+            print("📊 Step 1: Create requests for three-section organization")
+            
+            section_requests = [
+                # Up Next section
+                {
+                    "requester_name": "Up Next User 1",
+                    "requester_email": "upnext1@example.com",
+                    "dedication": "Ready to play next",
+                    "target_status": "up_next",
+                    "section": "Up Next"
                 },
                 {
-                    "song_id": self.test_song_ids[3],
-                    "requester_name": "David Wilson",
-                    "requester_email": "david@example.com",
-                    "dedication": "Can you play this one please?",
-                    "expected_status": "rejected"
+                    "requester_name": "Up Next User 2", 
+                    "requester_email": "upnext2@example.com",
+                    "dedication": "Also ready for next",
+                    "target_status": "up_next",
+                    "section": "Up Next"
+                },
+                # Active Requests section
+                {
+                    "requester_name": "Pending User 1",
+                    "requester_email": "pending1@example.com", 
+                    "dedication": "Waiting for approval",
+                    "target_status": "pending",
+                    "section": "Active Requests"
+                },
+                {
+                    "requester_name": "Accepted User 1",
+                    "requester_email": "accepted1@example.com",
+                    "dedication": "Approved and waiting",
+                    "target_status": "accepted", 
+                    "section": "Active Requests"
+                },
+                # Completed Requests section
+                {
+                    "requester_name": "Played User 1",
+                    "requester_email": "played1@example.com",
+                    "dedication": "Already performed",
+                    "target_status": "played",
+                    "section": "Completed Requests"
+                },
+                {
+                    "requester_name": "Rejected User 1",
+                    "requester_email": "rejected1@example.com",
+                    "dedication": "Not available to play",
+                    "target_status": "rejected",
+                    "section": "Completed Requests"
                 }
             ]
             
             created_requests = []
             
-            for i, request_data in enumerate(request_data_list):
-                print(f"📊 Step {i+1}: Creating request for {request_data['requester_name']}")
-                
-                # Create request via public endpoint
+            # Create all requests
+            original_token = self.auth_token
+            self.auth_token = None
+            
+            for i, req_data in enumerate(section_requests):
                 create_data = {
-                    "song_id": request_data["song_id"],
-                    "requester_name": request_data["requester_name"],
-                    "requester_email": request_data["requester_email"],
-                    "dedication": request_data["dedication"]
+                    "song_id": self.test_song_ids[i % len(self.test_song_ids)],
+                    "requester_name": req_data["requester_name"],
+                    "requester_email": req_data["requester_email"],
+                    "dedication": req_data["dedication"]
                 }
                 
-                response = self.make_request("POST", f"/musicians/{self.musician_slug}/requests", create_data)
+                create_response = self.make_request("POST", f"/musicians/{self.musician_slug}/requests", create_data)
                 
-                if response.status_code == 200:
-                    request_result = response.json()
-                    request_id = request_result.get("id")
-                    if request_id:
-                        created_requests.append({
-                            "id": request_id,
-                            "requester_name": request_data["requester_name"],
-                            "expected_status": request_data["expected_status"]
-                        })
-                        print(f"   ✅ Created request ID: {request_id}")
-                    else:
-                        print(f"   ❌ No request ID in response: {request_result}")
+                if create_response.status_code == 200:
+                    created_request = create_response.json()
+                    created_requests.append({
+                        "id": created_request["id"],
+                        "target_status": req_data["target_status"],
+                        "section": req_data["section"],
+                        "requester_name": req_data["requester_name"]
+                    })
+                    print(f"   ✅ Created request: {req_data['requester_name']} -> {req_data['section']}")
                 else:
-                    print(f"   ❌ Failed to create request: {response.status_code}, Response: {response.text}")
+                    print(f"   ❌ Failed to create request for {req_data['requester_name']}: {create_response.status_code}")
             
             # Restore auth token
             self.auth_token = original_token
             
-            if len(created_requests) == 4:
-                self.test_request_ids = [req["id"] for req in created_requests]
-                print(f"   ✅ Successfully created {len(created_requests)} demo requests")
-                self.log_result("Create Demo Requests", True, f"Created {len(created_requests)} requests for status testing")
-                
-                # Store for later status updates
-                self.demo_requests = created_requests
-            else:
-                self.log_result("Create Demo Requests", False, f"Only created {len(created_requests)} out of 4 requests")
+            # Step 2: Update requests to target statuses
+            print("📊 Step 2: Update requests to target statuses")
             
-            print("=" * 80)
+            for req_info in created_requests:
+                if req_info["target_status"] != "pending":  # pending is default
+                    status_data = {"status": req_info["target_status"]}
+                    update_response = self.make_request("PUT", f"/requests/{req_info['id']}/status", status_data)
+                    
+                    if update_response.status_code == 200:
+                        print(f"   ✅ Updated {req_info['requester_name']} to '{req_info['target_status']}'")
+                        self.test_request_ids.append(req_info["id"])
+                    else:
+                        print(f"   ❌ Failed to update {req_info['requester_name']}: {update_response.status_code}")
             
-        except Exception as e:
-            self.log_result("Create Demo Requests", False, f"Exception: {str(e)}")
-            # Restore auth token in case of exception
-            if 'original_token' in locals():
-                self.auth_token = original_token
-
-    def test_status_validation_with_up_next(self):
-        """Test status validation including the new 'up_next' status"""
-        try:
-            print("🎵 ON STAGE TEST 2: Status Validation with 'up_next' Status")
-            print("=" * 80)
+            # Step 3: Retrieve all requests and organize by section
+            print("📊 Step 3: Retrieve and organize requests by three sections")
             
-            if not self.auth_token or not hasattr(self, 'demo_requests'):
-                self.log_result("Status Validation up_next", False, "Missing auth token or demo requests")
+            all_requests_response = self.make_request("GET", "/requests")
+            
+            if all_requests_response.status_code != 200:
+                self.log_result("Integration Test - Get Requests", False, f"Failed to get requests: {all_requests_response.status_code}")
                 return
             
-            # Test all valid statuses including the new 'up_next'
-            valid_statuses = ["pending", "up_next", "played", "rejected"]
-            status_test_results = []
+            all_requests = all_requests_response.json()
             
-            for i, status in enumerate(valid_statuses):
-                if i < len(self.demo_requests):
-                    request_id = self.demo_requests[i]["id"]
-                    requester_name = self.demo_requests[i]["requester_name"]
-                    
-                    print(f"📊 Testing status '{status}' on request from {requester_name}")
-                    
-                    status_data = {"status": status}
-                    response = self.make_request("PUT", f"/requests/{request_id}/status", status_data)
-                    
-                    print(f"   📊 PUT /requests/{request_id}/status response: {response.status_code}")
-                    
-                    if response.status_code == 200:
-                        result = response.json()
-                        if result.get("new_status") == status:
-                            print(f"   ✅ Status '{status}' accepted and updated successfully")
-                            status_test_results.append(True)
-                        else:
-                            print(f"   ❌ Status update failed - expected '{status}', got '{result.get('new_status')}'")
-                            status_test_results.append(False)
-                    else:
-                        print(f"   ❌ Status '{status}' rejected: {response.status_code}, Response: {response.text}")
-                        status_test_results.append(False)
-                        
-                        # Special check for 'up_next' - this is the new status we're testing
-                        if status == "up_next":
-                            print(f"   🚨 CRITICAL: 'up_next' status not accepted by backend!")
+            # Organize requests by section based on status
+            sections = {
+                "Up Next": [],
+                "Active Requests": [],
+                "Completed Requests": []
+            }
             
-            # Test invalid status to ensure validation is working
-            print(f"📊 Testing invalid status 'invalid_status' for validation")
-            if len(self.demo_requests) > 0:
-                request_id = self.demo_requests[0]["id"]
-                invalid_status_data = {"status": "invalid_status"}
-                response = self.make_request("PUT", f"/requests/{request_id}/status", invalid_status_data)
-                
-                if response.status_code in [400, 422]:
-                    print(f"   ✅ Invalid status properly rejected with {response.status_code}")
-                    invalid_status_handled = True
-                else:
-                    print(f"   ❌ Invalid status not properly rejected: {response.status_code}")
-                    invalid_status_handled = False
-            else:
-                invalid_status_handled = True  # Skip if no requests
-            
-            # Final assessment
-            all_valid_statuses_work = all(status_test_results)
-            up_next_specifically_works = len(status_test_results) > 1 and status_test_results[1]  # up_next is index 1
-            
-            if all_valid_statuses_work and invalid_status_handled:
-                self.log_result("Status Validation up_next", True, f"✅ All statuses including 'up_next' are properly validated and accepted")
-            elif up_next_specifically_works:
-                self.log_result("Status Validation up_next", True, f"✅ 'up_next' status works, some other statuses may have issues")
-            else:
-                failed_statuses = [valid_statuses[i] for i, result in enumerate(status_test_results) if not result]
-                self.log_result("Status Validation up_next", False, f"❌ Status validation failed for: {failed_statuses}")
-            
-            print("=" * 80)
-            
-        except Exception as e:
-            self.log_result("Status Validation up_next", False, f"Exception: {str(e)}")
-
-    def test_request_filtering_with_all_statuses(self):
-        """Test GET /api/requests/updates/{musician_id} returns requests with all status types"""
-        try:
-            print("🎵 ON STAGE TEST 3: Request Filtering with All Status Types")
-            print("=" * 80)
-            
-            if not self.musician_id:
-                self.log_result("Request Filtering All Statuses", False, "Missing musician ID")
-                return
-            
-            # Test the polling endpoint used by On Stage interface
-            print(f"📊 Testing GET /requests/updates/{self.musician_id}")
-            
-            response = self.make_request("GET", f"/requests/updates/{self.musician_id}")
-            
-            print(f"   📊 Request updates response: {response.status_code}")
-            
-            if response.status_code == 200:
-                requests_data = response.json()
-                
-                if isinstance(requests_data, list):
-                    print(f"   ✅ Retrieved {len(requests_data)} requests from updates endpoint")
-                    
-                    # Check if we have requests with different statuses
-                    statuses_found = set()
-                    status_counts = {}
-                    
-                    for request in requests_data:
-                        status = request.get("status", "unknown")
-                        statuses_found.add(status)
-                        status_counts[status] = status_counts.get(status, 0) + 1
-                    
-                    print(f"   📊 Statuses found: {list(statuses_found)}")
-                    for status, count in status_counts.items():
-                        print(f"   📊 {status}: {count} requests")
-                    
-                    # Check if up_next status is included
-                    up_next_included = "up_next" in statuses_found
-                    if up_next_included:
-                        print(f"   ✅ 'up_next' status found in request updates")
-                    else:
-                        print(f"   ⚠️  'up_next' status not found in request updates")
-                    
-                    # Check response format for On Stage interface
-                    if len(requests_data) > 0:
-                        sample_request = requests_data[0]
-                        required_fields = ["id", "status", "song_title", "song_artist", "requester_name", "created_at"]
-                        missing_fields = [field for field in required_fields if field not in sample_request]
-                        
-                        if len(missing_fields) == 0:
-                            print(f"   ✅ Request response format correct for On Stage interface")
-                            format_correct = True
-                        else:
-                            print(f"   ❌ Missing fields in request response: {missing_fields}")
-                            format_correct = False
-                    else:
-                        print(f"   ⚠️  No requests to check format")
-                        format_correct = True  # No requests is acceptable
-                    
-                    # Test that archived requests are excluded (as per the endpoint comment)
-                    archived_requests = [req for req in requests_data if req.get("status") == "archived"]
-                    if len(archived_requests) == 0:
-                        print(f"   ✅ Archived requests properly excluded from updates")
-                        archived_excluded = True
-                    else:
-                        print(f"   ❌ Found {len(archived_requests)} archived requests (should be excluded)")
-                        archived_excluded = False
-                    
-                    # Final assessment
-                    if format_correct and archived_excluded and len(statuses_found) > 0:
-                        if up_next_included:
-                            self.log_result("Request Filtering All Statuses", True, f"✅ Request filtering works correctly with all statuses including 'up_next'")
-                        else:
-                            self.log_result("Request Filtering All Statuses", True, f"✅ Request filtering works correctly, 'up_next' status may not be present in current data")
-                    else:
-                        issues = []
-                        if not format_correct:
-                            issues.append("incorrect response format")
-                        if not archived_excluded:
-                            issues.append("archived requests not excluded")
-                        if len(statuses_found) == 0:
-                            issues.append("no requests found")
-                        
-                        self.log_result("Request Filtering All Statuses", False, f"❌ Request filtering issues: {', '.join(issues)}")
-                
-                else:
-                    self.log_result("Request Filtering All Statuses", False, f"Expected list response, got: {type(requests_data)}")
-            else:
-                self.log_result("Request Filtering All Statuses", False, f"Request updates endpoint failed: {response.status_code}, Response: {response.text}")
-            
-            print("=" * 80)
-            
-        except Exception as e:
-            self.log_result("Request Filtering All Statuses", False, f"Exception: {str(e)}")
-
-    def test_three_section_organization(self):
-        """Test that requests can be organized into three sections based on status"""
-        try:
-            print("🎵 ON STAGE TEST 4: Three-Section Organization")
-            print("=" * 80)
-            
-            if not self.musician_id:
-                self.log_result("Three Section Organization", False, "Missing musician ID")
-                return
-            
-            # Get all requests for the musician
-            response = self.make_request("GET", f"/requests/updates/{self.musician_id}")
-            
-            if response.status_code != 200:
-                self.log_result("Three Section Organization", False, f"Failed to get requests: {response.status_code}")
-                return
-            
-            requests_data = response.json()
-            
-            if not isinstance(requests_data, list):
-                self.log_result("Three Section Organization", False, f"Expected list, got {type(requests_data)}")
-                return
-            
-            print(f"   📊 Organizing {len(requests_data)} requests into three sections")
-            
-            # Organize requests into three sections as per On Stage interface requirements
-            up_next_requests = []      # "up_next" status
-            active_requests = []       # "pending" status  
-            completed_requests = []    # "played" and "rejected" statuses
-            
-            for request in requests_data:
+            for request in all_requests:
                 status = request.get("status", "unknown")
                 
                 if status == "up_next":
-                    up_next_requests.append(request)
-                elif status == "pending":
-                    active_requests.append(request)
+                    sections["Up Next"].append(request)
+                elif status in ["pending", "accepted"]:
+                    sections["Active Requests"].append(request)
                 elif status in ["played", "rejected"]:
-                    completed_requests.append(request)
-                else:
-                    print(f"   ⚠️  Unknown status '{status}' found in request {request.get('id', 'unknown')}")
+                    sections["Completed Requests"].append(request)
             
-            # Display organization results
-            print(f"   📊 UP NEXT SECTION: {len(up_next_requests)} requests")
-            for req in up_next_requests:
-                print(f"      - {req.get('song_title', 'Unknown')} by {req.get('song_artist', 'Unknown')} (requested by {req.get('requester_name', 'Unknown')})")
+            # Step 4: Verify three-section organization
+            print("📊 Step 4: Verify three-section organization")
             
-            print(f"   📊 ACTIVE REQUESTS SECTION: {len(active_requests)} requests")
-            for req in active_requests:
-                print(f"      - {req.get('song_title', 'Unknown')} by {req.get('song_artist', 'Unknown')} (requested by {req.get('requester_name', 'Unknown')})")
+            organization_correct = True
             
-            print(f"   📊 COMPLETED REQUESTS SECTION: {len(completed_requests)} requests")
-            for req in completed_requests:
-                print(f"      - {req.get('song_title', 'Unknown')} by {req.get('song_artist', 'Unknown')} (requested by {req.get('requester_name', 'Unknown')}) - {req.get('status', 'unknown')}")
-            
-            # Verify that all requests are properly categorized
-            total_categorized = len(up_next_requests) + len(active_requests) + len(completed_requests)
-            all_categorized = total_categorized == len(requests_data)
-            
-            if all_categorized:
-                print(f"   ✅ All {len(requests_data)} requests properly categorized into three sections")
-            else:
-                print(f"   ❌ Categorization mismatch: {total_categorized} categorized vs {len(requests_data)} total")
-            
-            # Check if we have representation in each section (ideal for testing)
-            has_up_next = len(up_next_requests) > 0
-            has_active = len(active_requests) > 0
-            has_completed = len(completed_requests) > 0
-            
-            sections_represented = sum([has_up_next, has_active, has_completed])
-            
-            print(f"   📊 Sections with requests: {sections_represented}/3")
-            if has_up_next:
-                print(f"   ✅ Up Next section has requests")
-            if has_active:
-                print(f"   ✅ Active Requests section has requests")
-            if has_completed:
-                print(f"   ✅ Completed Requests section has requests")
-            
-            # Final assessment
-            if all_categorized and sections_represented >= 2:
-                self.log_result("Three Section Organization", True, f"✅ Requests properly organized into three sections ({sections_represented}/3 sections have data)")
-            elif all_categorized:
-                self.log_result("Three Section Organization", True, f"✅ Request organization logic works, limited test data in sections")
-            else:
-                self.log_result("Three Section Organization", False, f"❌ Request categorization failed - some requests not properly categorized")
-            
-            print("=" * 80)
-            
-        except Exception as e:
-            self.log_result("Three Section Organization", False, f"Exception: {str(e)}")
-
-    def test_response_format_for_frontend(self):
-        """Test that all request responses include correct status field for frontend"""
-        try:
-            print("🎵 ON STAGE TEST 5: Response Format for Frontend")
-            print("=" * 80)
-            
-            if not self.musician_id:
-                self.log_result("Response Format Frontend", False, "Missing musician ID")
-                return
-            
-            # Test multiple endpoints to ensure consistent response format
-            endpoints_to_test = [
-                {
-                    "name": "Request Updates (On Stage)",
-                    "endpoint": f"/requests/updates/{self.musician_id}",
-                    "method": "GET"
-                },
-                {
-                    "name": "Musician Requests",
-                    "endpoint": "/requests",
-                    "method": "GET"
+            for section_name, requests in sections.items():
+                print(f"   📊 {section_name}: {len(requests)} requests")
+                
+                if len(requests) > 0:
+                    for request in requests:
+                        print(f"      - {request['requester_name']}: {request['song_title']} ({request['status']})")
+                
+                # Verify we have requests in each section (from our test data)
+                expected_counts = {
+                    "Up Next": 2,
+                    "Active Requests": 2, 
+                    "Completed Requests": 2
                 }
-            ]
-            
-            format_test_results = []
-            
-            for endpoint_test in endpoints_to_test:
-                print(f"📊 Testing {endpoint_test['name']}: {endpoint_test['method']} {endpoint_test['endpoint']}")
                 
-                response = self.make_request(endpoint_test["method"], endpoint_test["endpoint"])
-                
-                if response.status_code == 200:
-                    try:
-                        data = response.json()
-                        
-                        if isinstance(data, list) and len(data) > 0:
-                            # Check first request for required fields
-                            sample_request = data[0]
-                            
-                            # Required fields for frontend On Stage interface
-                            required_fields = [
-                                "id",           # Request ID
-                                "status",       # Status for section organization
-                                "song_title",   # Song information
-                                "song_artist",  # Song information
-                                "requester_name", # Requester information
-                                "created_at"    # Timestamp for sorting
-                            ]
-                            
-                            # Optional but useful fields
-                            optional_fields = [
-                                "dedication",   # Dedication message
-                                "requester_email", # Contact info
-                                "song_id"       # For song lookup
-                            ]
-                            
-                            missing_required = [field for field in required_fields if field not in sample_request]
-                            present_optional = [field for field in optional_fields if field in sample_request]
-                            
-                            if len(missing_required) == 0:
-                                print(f"   ✅ All required fields present: {required_fields}")
-                                print(f"   📊 Optional fields present: {present_optional}")
-                                
-                                # Check status field specifically
-                                status_value = sample_request.get("status")
-                                valid_statuses = ["pending", "up_next", "played", "rejected", "archived"]
-                                
-                                if status_value in valid_statuses:
-                                    print(f"   ✅ Status field has valid value: '{status_value}'")
-                                    format_test_results.append(True)
-                                else:
-                                    print(f"   ❌ Status field has invalid value: '{status_value}'")
-                                    format_test_results.append(False)
-                            else:
-                                print(f"   ❌ Missing required fields: {missing_required}")
-                                format_test_results.append(False)
-                        
-                        elif isinstance(data, list) and len(data) == 0:
-                            print(f"   ⚠️  No requests found for format testing")
-                            format_test_results.append(True)  # Empty list is acceptable
-                        
-                        else:
-                            print(f"   ❌ Unexpected response format: {type(data)}")
-                            format_test_results.append(False)
-                    
-                    except json.JSONDecodeError:
-                        print(f"   ❌ Response is not valid JSON")
-                        format_test_results.append(False)
-                
+                if len(requests) >= expected_counts.get(section_name, 0):
+                    print(f"   ✅ {section_name} section populated correctly")
                 else:
-                    print(f"   ❌ Endpoint failed: {response.status_code}")
-                    format_test_results.append(False)
+                    print(f"   ❌ {section_name} section missing requests")
+                    organization_correct = False
             
-            # Test status update response format
-            print(f"📊 Testing Status Update Response Format")
+            # Step 5: Verify 'up_next' status enables three-section workflow
+            print("📊 Step 5: Verify 'up_next' status enables three-section workflow")
             
-            if hasattr(self, 'test_request_ids') and len(self.test_request_ids) > 0:
-                test_request_id = self.test_request_ids[0]
-                status_data = {"status": "pending"}  # Use a safe status
+            up_next_requests = sections["Up Next"]
+            
+            if len(up_next_requests) >= 2:
+                print(f"   ✅ 'up_next' section has {len(up_next_requests)} requests")
                 
-                response = self.make_request("PUT", f"/requests/{test_request_id}/status", status_data)
+                # Verify all up_next requests have correct status
+                all_up_next_correct = all(req["status"] == "up_next" for req in up_next_requests)
                 
-                if response.status_code == 200:
-                    result = response.json()
-                    
-                    # Check status update response format
-                    required_status_fields = ["success", "message", "new_status"]
-                    missing_status_fields = [field for field in required_status_fields if field not in result]
-                    
-                    if len(missing_status_fields) == 0:
-                        print(f"   ✅ Status update response format correct")
-                        format_test_results.append(True)
-                    else:
-                        print(f"   ❌ Status update missing fields: {missing_status_fields}")
-                        format_test_results.append(False)
+                if all_up_next_correct:
+                    print(f"   ✅ All 'Up Next' requests have correct 'up_next' status")
+                    self.log_result("Integration Test - Three-Section Organization", True, "Three-section On Stage organization working correctly with 'up_next' status")
                 else:
-                    print(f"   ❌ Status update failed: {response.status_code}")
-                    format_test_results.append(False)
+                    print(f"   ❌ Some 'Up Next' requests have incorrect status")
+                    self.log_result("Integration Test - Three-Section Organization", False, "Some 'Up Next' requests have incorrect status")
             else:
-                print(f"   ⚠️  No test requests available for status update format test")
-                format_test_results.append(True)  # Skip this test
-            
-            # Final assessment
-            all_formats_correct = all(format_test_results)
-            
-            if all_formats_correct:
-                self.log_result("Response Format Frontend", True, f"✅ All response formats correct for frontend On Stage interface")
-            else:
-                failed_tests = sum(1 for result in format_test_results if not result)
-                self.log_result("Response Format Frontend", False, f"❌ {failed_tests} response format issues found")
+                print(f"   ❌ 'Up Next' section has insufficient requests: {len(up_next_requests)}")
+                self.log_result("Integration Test - Three-Section Organization", False, "'up_next' status not working for three-section organization")
             
             print("=" * 80)
             
         except Exception as e:
-            self.log_result("Response Format Frontend", False, f"Exception: {str(e)}")
+            self.log_result("Integration Test - Three-Section Organization", False, f"Exception: {str(e)}")
 
     def cleanup_test_data(self):
         """Clean up test requests created during testing"""
         try:
-            print("🧹 CLEANUP: Removing Test Requests")
+            print("🧹 CLEANUP: Removing test requests")
             print("=" * 80)
             
-            if not self.auth_token or not hasattr(self, 'test_request_ids'):
-                print("   ⚠️  No cleanup needed - no test data created")
-                return
-            
-            cleaned_count = 0
+            cleanup_count = 0
             
             for request_id in self.test_request_ids:
                 try:
-                    # Try to delete the request
-                    response = self.make_request("DELETE", f"/requests/{request_id}")
-                    
-                    if response.status_code == 200:
+                    delete_response = self.make_request("DELETE", f"/requests/{request_id}")
+                    if delete_response.status_code == 200:
+                        cleanup_count += 1
                         print(f"   ✅ Deleted request: {request_id}")
-                        cleaned_count += 1
                     else:
-                        print(f"   ⚠️  Could not delete request {request_id}: {response.status_code}")
+                        print(f"   ⚠️  Failed to delete request {request_id}: {delete_response.status_code}")
                 except Exception as e:
                     print(f"   ⚠️  Error deleting request {request_id}: {str(e)}")
             
-            print(f"   📊 Cleaned up {cleaned_count}/{len(self.test_request_ids)} test requests")
+            print(f"   📊 Cleaned up {cleanup_count}/{len(self.test_request_ids)} test requests")
             print("=" * 80)
             
         except Exception as e:
-            print(f"   ❌ Cleanup error: {str(e)}")
+            print(f"   ⚠️  Cleanup error: {str(e)}")
 
     def run_all_tests(self):
-        """Run all On Stage mode tests"""
-        print("🎵 ON STAGE MODE BACKEND TESTING")
-        print("=" * 80)
-        print("Testing new On Stage mode functionality with three request statuses")
-        print("Focus: up_next status, request filtering, and three-section organization")
-        print("=" * 80)
+        """Run all On Stage mode backend tests"""
+        print("🎵 ON STAGE MODE BACKEND TESTING - UP_NEXT STATUS VALIDATION")
+        print("=" * 100)
+        print("Testing the updated On Stage mode backend with new 'up_next' status")
+        print("=" * 100)
         
-        # Setup tests
-        self.test_pro_musician_login()
-        if not self.auth_token:
-            print("❌ Cannot continue without authentication")
+        # Setup test environment
+        if not self.setup_test_environment():
+            print("❌ CRITICAL: Test environment setup failed - cannot proceed")
             return
         
-        self.test_get_available_songs()
-        if not self.test_song_ids:
-            print("❌ Cannot continue without songs for testing")
-            return
-        
-        # Core On Stage functionality tests
-        self.test_create_demo_requests_with_different_statuses()
-        self.test_status_validation_with_up_next()
-        self.test_request_filtering_with_all_statuses()
-        self.test_three_section_organization()
-        self.test_response_format_for_frontend()
+        # Run all tests
+        self.test_status_validation_fixed()
+        self.test_request_status_update()
+        self.test_request_filtering()
+        self.test_status_persistence()
+        self.test_integration_three_section_organization()
         
         # Cleanup
         self.cleanup_test_data()
         
         # Final results
-        print("\n" + "=" * 80)
-        print("🎵 ON STAGE MODE TESTING RESULTS")
-        print("=" * 80)
-        print(f"✅ Passed: {self.results['passed']}")
-        print(f"❌ Failed: {self.results['failed']}")
-        print(f"📊 Success Rate: {(self.results['passed'] / (self.results['passed'] + self.results['failed']) * 100):.1f}%")
+        print("🎵 ON STAGE MODE TESTING COMPLETE")
+        print("=" * 100)
+        print(f"✅ PASSED: {self.results['passed']}")
+        print(f"❌ FAILED: {self.results['failed']}")
+        print(f"📊 SUCCESS RATE: {(self.results['passed'] / (self.results['passed'] + self.results['failed']) * 100):.1f}%")
         
-        if self.results['errors']:
+        if self.results['failed'] > 0:
             print("\n❌ FAILED TESTS:")
             for error in self.results['errors']:
                 print(f"   - {error}")
         
-        print("=" * 80)
+        print("=" * 100)
 
 if __name__ == "__main__":
-    tester = OnStageAPITester()
+    tester = OnStageBackendTester()
     tester.run_all_tests()
