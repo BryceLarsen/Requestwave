@@ -693,7 +693,7 @@ class RequestWaveAPITester:
                     "message": f"Rapid tip {i+1} via {platform}"
                 }
                 
-                rapid_response = self.make_request("POST", "/tips", rapid_tip)
+                rapid_response = self.make_request("POST", f"/musicians/{login_data_response['musician']['slug']}/tips", rapid_tip)
                 
                 if rapid_response.status_code == 200:
                     rapid_tips.append(rapid_response.json())
