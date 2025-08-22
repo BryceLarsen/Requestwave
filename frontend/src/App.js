@@ -4673,21 +4673,6 @@ const MusicianDashboard = () => {
                     <p className="text-gray-400 text-xs mt-1">Used for Venmo.com/yourusername tip links</p>
                   </div>
                 </div>
-                
-                {/* Legacy Venmo Link Field for backward compatibility */}
-                <div className="mt-4">
-                  <label className="block text-gray-300 text-sm font-bold mb-2">
-                    Legacy Venmo Link 
-                    <span className="text-gray-500 text-xs">(deprecated - use username above)</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="@yourusername or venmo.com/yourusername"
-                    value={profile.venmo_link}
-                    onChange={(e) => setProfile({...profile, venmo_link: e.target.value})}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
-                  />
-                </div>
               </div>
               
               <div>
