@@ -101,7 +101,7 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
-user_problem_statement: "Test the new BILLING_ENABLED=false feature flag implementation in the free-ga branch. Specifically test: Environment Variable Setup, Subscription Status Endpoint, Billing Endpoint Stubs, Stripe Webhook, Pro Access Functions, User Registration, and Audience Link Access to confirm the backend properly implements the free version of the app where all features are unlocked without any Stripe dependencies."
+user_problem_statement: "Test the new On Stage mode backend functionality with three request statuses. Specifically test: Request Status Updates (PUT /api/requests/{id}/status endpoint can handle the new 'up_next' status alongside existing 'pending', 'played', and 'rejected' statuses), Request Filtering (GET /api/requests/updates/{musician_id} returns requests with all status types including the new 'up_next' status), Status Validation (backend accepts 'up_next' as a valid status without errors), Demo User Setup (create a test musician and add sample requests with different statuses), and Response Format (ensure all request responses include the correct status field that the frontend can use to organize requests into the three sections: Up Next, Active Requests, Completed Requests)."
 
 backend:
   - task: "Free Mode Feature Flag Implementation (BILLING_ENABLED=false)"
