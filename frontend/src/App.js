@@ -1075,6 +1075,13 @@ const MusicianDashboard = () => {
     try {
       const response = await axios.get(`${API}/songs?sort_by=${sortBy}`);
       setSongs(response.data);
+      
+      // Extract available genres and moods from loaded songs
+      setTimeout(() => {
+        fetchAvailableGenres();
+        fetchAvailableMoods();
+      }, 100); // Small delay to ensure songs state is updated
+      
     } catch (error) {
       console.error('Error fetching songs:', error);
     }
