@@ -7931,97 +7931,105 @@ const OnStageInterface = () => {
         </div>
       </div>
       
-      {/* Live Requests */}
-      <div className="space-y-4">
-        {allItems.length === 0 ? (
-          <div className="bg-gray-800 rounded-xl p-8 text-center">
-            <div className="text-6xl mb-4">🎵</div>
-            <h2 className="text-xl font-bold mb-2">Waiting for requests...</h2>
-            <p className="text-gray-400">New requests will appear here in real-time</p>
-          </div>
-        ) : (
-          allItems.map((item, index) => (
-            <div key={`${item.type}-${item.id}`} className={`bg-gray-800 rounded-xl p-6 border-l-4 ${
-              item.type === 'request' ? 'border-purple-500' : 'border-green-500'
-            }`}>
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center space-x-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                    item.type === 'request' ? 'bg-purple-600' : 'bg-green-600'
-                  }`}>
-                    {item.type === 'request' ? '🎵 REQUEST' : '💡 SUGGESTION'}
-                  </span>
-                  <span className="text-gray-400 text-sm">
-                    {formatTime(item.created_at)}
-                  </span>
-                </div>
-                {index === 0 && (
-                  <span className="bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold animate-pulse">
-                    NEW
-                  </span>
-                )}
-              </div>
-              
-              <div className="mb-3">
-                <h3 className="text-xl font-bold mb-1">
-                  {item.song_title || item.title}
-                </h3>
-                <p className="text-gray-300">
-                  by {item.song_artist || item.artist}
-                </p>
-              </div>
-              
-              <div className="flex justify-between items-center text-sm mb-4">
-                <div className="text-gray-400">
-                  <span className="font-medium">From:</span> {item.requester_name || 'Anonymous'}
-                </div>
-                {item.dedication && (
-                  <div className="text-purple-300 max-w-xs truncate">
-                    💌 "{item.dedication}"
-                  </div>
-                )}
-              </div>
-              
-              {/* NEW: Request Action Buttons */}
-              {item.type === 'request' && (
-                <div className="flex space-x-2 mt-4">
-                  {!item.status || item.status === 'pending' ? (
-                    <>
-                      <button
-                        onClick={() => handleAccept(item.id)}
-                        className="flex-1 bg-green-600 hover:bg-green-700 active:bg-green-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
-                      >
-                        ✅ Accept
-                      </button>
-                      <button
-                        onClick={() => handlePlay(item.id)}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
-                      >
-                        🎵 Play
-                      </button>
-                      <button
-                        onClick={() => handleReject(item.id)}
-                        className="flex-1 bg-red-600 hover:bg-red-700 active:bg-red-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
-                      >
-                        ❌ Reject
-                      </button>
-                    </>
-                  ) : (
-                    <div className={`w-full py-3 px-4 rounded-lg font-bold text-center ${
-                      item.status === 'accepted' ? 'bg-green-800 text-green-200' :
-                      item.status === 'played' ? 'bg-blue-800 text-blue-200' :
-                      'bg-red-800 text-red-200'
-                    }`}>
-                      {item.status === 'accepted' ? '✅ Accepted' :
-                       item.status === 'played' ? '🎵 Played' :
-                       '❌ Rejected'}
-                    </div>
-                  )}
-                </div>
-              )}
+      {/* Live Requests - Three Section Layout */}
+      <div className="space-y-6">
+        
+        {/* UP NEXT Section */}
+        {upNextRequests.length > 0 && (
+          <div className="bg-gradient-to-r from-blue-900 to-purple-900 rounded-xl p-4 border-2 border-blue-500">
+            <div className="flex items-center space-x-2 mb-4">
+              <span className="text-2xl">⬆️</span>
+              <h2 className="text-xl font-bold text-blue-200">Up Next ({upNextRequests.length})</h2>
             </div>
-          ))
+            <div className="space-y-3">
+              {upNextRequests.map((item, index) => (
+                <RequestCard 
+                  key={item.id} 
+                  item={item} 
+                  index={index}
+                  onPlay={handlePlay}
+                  onReject={handleReject}
+                  showMoveButtons={false}
+                  isUpNext={true}
+                />
+              ))}
+            </div>
+          </div>
         )}
+
+        {/* ACTIVE REQUESTS Section */}
+        <div className="bg-gray-800 rounded-xl p-4 border-2 border-purple-500">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-2xl">🎵</span>
+              <h2 className="text-xl font-bold text-purple-200">Active Requests ({activeRequests.length})</h2>
+            </div>
+            {newRequestCount > 0 && (
+              <div 
+                onClick={clearNewCount}
+                className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold animate-pulse cursor-pointer"
+              >
+                +{newRequestCount} New!
+              </div>
+            )}
+          </div>
+          
+          {activeRequests.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-6xl mb-4">🎵</div>
+              <h3 className="text-lg font-bold mb-2 text-gray-300">No active requests</h3>
+              <p className="text-gray-400">New requests will appear here in real-time</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {activeRequests.map((item, index) => (
+                <RequestCard 
+                  key={item.id} 
+                  item={item} 
+                  index={index}
+                  onAccept={handleAccept}
+                  onPlay={handlePlay}
+                  onReject={handleReject}
+                  showMoveButtons={true}
+                  isUpNext={false}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* COMPLETED REQUESTS Section */}
+        {completedRequests.length > 0 && (
+          <div className="bg-gray-800 rounded-xl border-2 border-gray-600">
+            <div 
+              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-700 transition-colors rounded-t-xl"
+              onClick={() => setCompletedSectionCollapsed(!completedSectionCollapsed)}
+            >
+              <div className="flex items-center space-x-2">
+                <span className="text-2xl">✅</span>
+                <h2 className="text-xl font-bold text-gray-300">Completed Requests ({completedRequests.length})</h2>
+              </div>
+              <span className={`text-xl transition-transform ${completedSectionCollapsed ? 'rotate-90' : 'rotate-0'}`}>
+                ▶️
+              </span>
+            </div>
+            
+            {!completedSectionCollapsed && (
+              <div className="p-4 pt-0 space-y-3 max-h-96 overflow-y-auto">
+                {completedRequests.map((item, index) => (
+                  <RequestCard 
+                    key={item.id} 
+                    item={item} 
+                    index={index}
+                    showMoveButtons={false}
+                    isCompleted={true}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        
       </div>
       
       {/* Footer */}
