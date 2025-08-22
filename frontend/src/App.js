@@ -7634,6 +7634,105 @@ const AudienceInterface = () => {
     </div>
   );
 };
+// Request Card Component for On Stage Interface
+const RequestCard = ({ item, index, onAccept, onPlay, onReject, showMoveButtons, isUpNext, isCompleted }) => {
+  const isNewRequest = index === 0 && !isCompleted && !isUpNext;
+  
+  return (
+    <div className={`bg-gray-700 rounded-lg p-4 border-l-4 transition-all duration-300 ${
+      isUpNext ? 'border-blue-400 bg-blue-900/20' :
+      isCompleted ? 'border-gray-500 bg-gray-800/50' :
+      'border-purple-400'
+    }`}>
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex items-center space-x-2">
+          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+            isUpNext ? 'bg-blue-600' :
+            isCompleted ? 'bg-gray-600' :
+            'bg-purple-600'
+          }`}>
+            {isUpNext ? '⬆️ UP NEXT' : 
+             isCompleted ? (item.status === 'played' ? '🎵 PLAYED' : '❌ REJECTED') :
+             '🎵 REQUEST'}
+          </span>
+          <span className="text-gray-400 text-sm">
+            {formatTime(item.created_at)}
+          </span>
+        </div>
+        {isNewRequest && (
+          <span className="bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold animate-pulse">
+            NEW
+          </span>
+        )}
+      </div>
+      
+      {/* Song Info - LARGER FONTS */}
+      <div className="mb-4">
+        <h3 className={`font-bold mb-2 ${isUpNext || isCompleted ? 'text-xl' : 'text-2xl'}`}>
+          {item.song_title || item.title}
+        </h3>
+        <p className={`text-gray-300 ${isUpNext || isCompleted ? 'text-base' : 'text-lg'}`}>
+          by {item.song_artist || item.artist}
+        </p>
+      </div>
+      
+      {/* Requester Info - LARGER FONTS */}
+      <div className="mb-4">
+        <div className={`text-gray-300 mb-2 ${isUpNext || isCompleted ? 'text-sm' : 'text-lg'}`}>
+          <span className="font-bold">From:</span> <span className="font-medium">{item.requester_name || 'Anonymous'}</span>
+        </div>
+        {item.dedication && (
+          <div className={`text-purple-300 italic ${isUpNext || isCompleted ? 'text-sm' : 'text-base'}`}>
+            💌 "{item.dedication}"
+          </div>
+        )}
+      </div>
+      
+      {/* Action Buttons */}
+      {showMoveButtons && (!item.status || item.status === 'pending') && (
+        <div className="flex space-x-2">
+          <button
+            onClick={() => onAccept(item.id)}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
+          >
+            ⬆️ Add to Up Next
+          </button>
+          <button
+            onClick={() => onPlay(item.id)}
+            className="flex-1 bg-green-600 hover:bg-green-700 active:bg-green-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
+          >
+            🎵 Play Now
+          </button>
+          <button
+            onClick={() => onReject(item.id)}
+            className="flex-1 bg-red-600 hover:bg-red-700 active:bg-red-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
+          >
+            ❌ Reject
+          </button>
+        </div>
+      )}
+      
+      {/* Up Next Section Buttons */}
+      {isUpNext && (
+        <div className="flex space-x-2">
+          <button
+            onClick={() => onPlay(item.id)}
+            className="flex-1 bg-green-600 hover:bg-green-700 active:bg-green-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
+          >
+            🎵 Play Now
+          </button>
+          <button
+            onClick={() => onReject(item.id)}
+            className="flex-1 bg-red-600 hover:bg-red-700 active:bg-red-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
+          >
+            ❌ Remove
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // NEW: On Stage Interface Component for Live Performances
 const OnStageInterface = () => {
   const { slug } = useParams();
