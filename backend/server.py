@@ -302,6 +302,8 @@ class MusicianProfile(BaseModel):
     # Payment fields
     paypal_username: Optional[str] = ""
     venmo_username: Optional[str] = ""
+    zelle_email: Optional[str] = ""
+    zelle_phone: Optional[str] = ""
     # Social media fields
     instagram_username: Optional[str] = ""
     facebook_username: Optional[str] = ""
