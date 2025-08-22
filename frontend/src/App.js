@@ -7602,7 +7602,7 @@ const AudienceInterface = () => {
                   </button>
                 )}
                 
-                {musician.tiktok_username && (
+                {musician.tiktok_username && musician.tiktok_username.trim() !== '' && (
                   <button
                     onClick={() => handleSocialClick('tiktok')}
                     className="w-full bg-black hover:bg-gray-900 text-white font-medium py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-3"
