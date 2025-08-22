@@ -889,7 +889,17 @@ frontend:
         - working: "NA"
           agent: "main"
           comment: "IMPLEMENTATION COMPLETE: Added Request Toggle switch to OnStageInterface header with real-time functionality. Toggle updates profile.requests_enabled via PUT /api/profile and updates local musician state immediately."
-  - task: "Audience Request Flow Logic Updates"
+  - task: "Login Page Enhancement - Phase 2"
+    implemented: true
+    working: true
+    file: "App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "PHASE 2 COMPLETE: Successfully enhanced login page with Bryce's photo, complete welcome story, subscription information, and Support RequestWave modal with payment options (Venmo, PayPal, Zelle) and default amounts ($24, $48, $96). New 2-column responsive layout with branded styling."
     implemented: true
     working: "NA"
     file: "App.js"
