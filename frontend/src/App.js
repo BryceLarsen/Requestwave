@@ -8476,6 +8476,51 @@ const OnStageInterface = () => {
             </div>
           </div>
           <div className="flex items-center space-x-4">
+            {/* Request Toggle Switch */}
+            <div className="flex items-center space-x-2">
+              <span className="text-gray-300 text-sm">Requests:</span>
+              <div className="relative inline-block w-8 align-middle select-none">
+                <input
+                  type="checkbox"
+                  id="requests_enabled_toggle"
+                  checked={musician.requests_enabled !== false}
+                  onChange={async (e) => {
+                    const newValue = e.target.checked;
+                    try {
+                      // Update profile in real-time
+                      await axios.put(`${API}/profile`, {
+                        requests_enabled: newValue
+                      });
+                      
+                      // Update local musician state
+                      setMusician(prev => ({...prev, requests_enabled: newValue}));
+                      
+                      console.log('Request toggle updated:', newValue);
+                    } catch (error) {
+                      console.error('Error updating request toggle:', error);
+                      // Revert the toggle if update failed
+                      e.target.checked = !newValue;
+                    }
+                  }}
+                  className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-2 appearance-none cursor-pointer transition-transform duration-200 transform"
+                  style={{
+                    left: (musician.requests_enabled !== false) ? '12px' : '0px',
+                    backgroundColor: '#ffffff'
+                  }}
+                />
+                <label
+                  htmlFor="requests_enabled_toggle"
+                  className={`toggle-label block overflow-hidden h-5 rounded-full cursor-pointer transition-colors duration-200 ${
+                    (musician.requests_enabled !== false) ? 'bg-green-500' : 'bg-red-500'
+                  }`}
+                ></label>
+              </div>
+              <span className={`text-xs font-bold ${(musician.requests_enabled !== false) ? 'text-green-400' : 'text-red-400'}`}>
+                {(musician.requests_enabled !== false) ? 'ON' : 'OFF'}
+              </span>
+            </div>
+            
+            {/* Notification Indicator */}
             <div className={`w-3 h-3 rounded-full ${notificationsEnabled ? 'bg-green-500' : 'bg-red-500'}`}></div>
           </div>
         </div>
