@@ -8695,22 +8695,26 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
       <div className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-2 gap-12 items-start">
-          
-          {/* Left Column - Story and Information */}
-          <div className="space-y-8">
-            {/* Header with Logo */}
-            <div className="text-center lg:text-left">
-              <img
-                src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png"
-                alt="RequestWave Logo"
-                className="w-32 h-32 mx-auto lg:mx-0 mb-4 object-contain"
-              />
-              <h1 className="text-4xl lg:text-5xl font-bold mb-2">
-                <span className="text-purple-400">Request</span><span className="text-green-400">Wave</span>
-              </h1>
-              <p className="text-xl text-purple-200">Connect with your audience through music</p>
-            </div>
+        {/* Header with Logo */}
+        <div className="text-center mb-8">
+          <img
+            src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png"
+            alt="RequestWave Logo"
+            className="w-32 h-32 mx-auto mb-4 object-contain"
+          />
+          <h1 className="text-4xl lg:text-5xl font-bold mb-2">
+            <span className="text-purple-400">Request</span><span className="text-green-400">Wave</span>
+          </h1>
+          <p className="text-xl text-purple-200">Connect with your audience through music</p>
+        </div>
+
+        {/* Sign In Form - Now at the top */}
+        <div className="max-w-md mx-auto mb-12">
+          <AuthForm mode={authMode} onSwitch={setAuthMode} />
+        </div>
+
+        {/* Story and Information - Now below the login form */}
+        <div className="max-w-4xl mx-auto space-y-8">
 
             {/* Bryce's Photo and Story */}
             <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-xl">
