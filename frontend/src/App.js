@@ -973,6 +973,8 @@ const MusicianDashboard = () => {
     fetchSubscriptionStatus();
     fetchSongSuggestions();
     fetchPlaylists(); // NEW: Fetch playlists on dashboard initialization
+    fetchAvailableGenres(); // NEW: Fetch available genres for dropdowns
+    fetchAvailableMoods(); // NEW: Fetch available moods for dropdowns
     // NEW: Fetch show-related data
     fetchCurrentShow();
     fetchShows();
