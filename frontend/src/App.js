@@ -7622,7 +7622,7 @@ const AudienceInterface = () => {
                   </button>
                 )}
                 
-                {musician.spotify_artist_url && (
+                {musician.spotify_artist_url && musician.spotify_artist_url.trim() !== '' && (
                   <button
                     onClick={() => handleSocialClick('spotify')}
                     className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-3"
