@@ -2880,6 +2880,45 @@ async def toggle_song_visibility(
         logger.error(f"Error toggling song visibility: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error toggling song visibility: {str(e)}")
 
+# Genres and Moods endpoints
+@api_router.get("/genres")
+async def get_all_genres(musician_id: str = Depends(get_current_musician)):
+    """Get all unique genres used by this musician"""
+    try:
+        # Get all songs for this musician
+        songs = await db.songs.find({"musician_id": musician_id}).to_list(length=None)
+        
+        # Extract all genres and create a unique set
+        genres = set()
+        for song in songs:
+            if song.get("genres"):
+                genres.update(song["genres"])
+        
+        # Return sorted list
+        return {"genres": sorted(list(genres))}
+    except Exception as e:
+        logger.error(f"Error getting genres: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error getting genres")
+
+@api_router.get("/moods")  
+async def get_all_moods(musician_id: str = Depends(get_current_musician)):
+    """Get all unique moods used by this musician"""
+    try:
+        # Get all songs for this musician
+        songs = await db.songs.find({"musician_id": musician_id}).to_list(length=None)
+        
+        # Extract all moods and create a unique set
+        moods = set()
+        for song in songs:
+            if song.get("moods"):
+                moods.update(song["moods"])
+        
+        # Return sorted list
+        return {"moods": sorted(list(moods))}
+    except Exception as e:
+        logger.error(f"Error getting moods: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error getting moods")
+
 @api_router.get("/musicians/{slug}/songs", response_model=List[Song])
 async def get_musician_songs(
     slug: str,
