@@ -104,6 +104,17 @@
 user_problem_statement: "Implement musician control toggles for tip system and live request management. Add a global 'Tip System Toggle' in the musician profile Design tab that allows musicians to completely disable the tipping system. Also add an 'On Stage Request Toggle' within the On Stage mode interface that allows musicians to temporarily disable new song requests. When tips are disabled, the audience request flow should skip the tip-choice modal and move directly to social media links. When requests are disabled, the audience should see a message instead of the request form but can still send comments."
 
 backend:
+  - task: "Musician Control Toggles - Backend Implementation"
+    implemented: false
+    working: "NA"
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "NEW FEATURE: Implementing tip system and request control toggles. Backend models already include tips_enabled and requests_enabled fields. Need to verify profile update processing works correctly and add API endpoints to check settings during audience interactions."
   - task: "Legacy Venmo Link Removal"
     implemented: true
     working: true
