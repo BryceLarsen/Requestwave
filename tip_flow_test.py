@@ -332,7 +332,7 @@ class TipFlowTester:
                 
                 # Verify link format
                 venmo_link = venmo_result.get('venmo_link', '')
-                if 'venmo.com' in venmo_link and 'testmusician123' in venmo_link:
+                if 'venmo://paycharge' in venmo_link and 'testmusician123' in venmo_link:
                     print(f"   ✅ Venmo link format correct")
                     venmo_format_correct = True
                 else:
