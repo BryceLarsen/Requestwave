@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
 """
-COMPREHENSIVE GENRE SYSTEM TESTING FOR SIMPLIFIED SONGLIST IMPORTS
+COMPREHENSIVE TESTING FOR LEGACY VENMO LINK REMOVAL AND SUGGEST A SONG BUTTON
 
-Testing the updated simplified genre system for songlist imports as requested:
+Testing the requested changes:
 
 CRITICAL TEST AREAS:
-1. Genre List Simplification - confirm CURATED_GENRES has exactly 15 genres
-2. Consolidated Genre Detection - test consolidated genres (R&B/Soul, Rap/Hip Hop, Jazz/Standards)
-3. Artist-based Detection Updated - verify artists mapped to new consolidated genres
-4. Removed Genres - confirm old genres no longer assigned during imports
-5. Manual Override Still Works - verify musicians can manually change genres after import
+1. Legacy Venmo Link Removal - verify venmo_link field removed from profile form, only venmo_username remains
+2. Suggest a Song Button - verify button always visible regardless of allow_song_suggestions setting
+3. End-to-End Test - register musician, add songs, test audience page, verify suggest song functionality
 
 Test Credentials: brycelarsenmusic@gmail.com / RequestWave2024!
 
-Expected: Simplified 15-genre system working correctly for imports while preserving manual editing flexibility.
+Expected: Legacy venmo_link removed, suggest song button always visible, full functionality working.
 """
 
 import requests
