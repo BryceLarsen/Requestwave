@@ -2635,6 +2635,16 @@ async def create_song(song_data: SongCreate, musician_id: str = Depends(get_curr
     decade = calculate_decade(song_data.year)
     
     song_dict = song_data.dict()
+    
+    # Auto-assign genres and moods if empty (using curated categories)
+    if not song_dict.get("genres") or len(song_dict["genres"]) == 0:
+        genre_mood_data = assign_genre_and_mood(song_data.title, song_data.artist)
+        song_dict["genres"] = [genre_mood_data["genre"]]
+        
+        # Also assign mood if empty
+        if not song_dict.get("moods") or len(song_dict["moods"]) == 0:
+            song_dict["moods"] = [genre_mood_data["mood"]]
+    
     song_dict.update({
         "id": str(uuid.uuid4()),
         "musician_id": musician_id,
