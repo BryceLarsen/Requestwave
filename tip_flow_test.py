@@ -447,13 +447,12 @@ class TipFlowTester:
                     print(f"   ❌ PayPal ${amount} link failed: {paypal_response.status_code}")
                 
                 # Test Venmo
-                venmo_data = {
+                venmo_params = {
                     "amount": amount,
-                    "platform": "venmo", 
                     "message": f"Test tip ${amount}"
                 }
                 
-                venmo_response = self.make_request("POST", f"/musicians/{self.musician_slug}/tip-links", venmo_data)
+                venmo_response = self.make_request("GET", f"/musicians/{self.musician_slug}/tip-links", params=venmo_params)
                 
                 if venmo_response.status_code == 200:
                     venmo_result = venmo_response.json()
