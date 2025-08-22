@@ -329,6 +329,9 @@ class ProfileUpdate(BaseModel):
     venmo_username: Optional[str] = None
     zelle_email: Optional[str] = None
     zelle_phone: Optional[str] = None
+    # Control settings
+    tips_enabled: Optional[bool] = None
+    requests_enabled: Optional[bool] = None
     # Social media fields
     instagram_username: Optional[str] = None
     facebook_username: Optional[str] = None
