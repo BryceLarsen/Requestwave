@@ -7592,7 +7592,7 @@ const AudienceInterface = () => {
               
               {/* Social Media Links - Linktree Style */}
               <div className="space-y-3">
-                {musician.instagram_username && (
+                {musician.instagram_username && musician.instagram_username.trim() !== '' && (
                   <button
                     onClick={() => handleSocialClick('instagram')}
                     className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-medium py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-3"
