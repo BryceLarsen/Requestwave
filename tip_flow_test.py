@@ -576,13 +576,12 @@ class TipFlowTester:
             print("📊 Step 3: Test switching from Venmo to PayPal")
             
             # Generate Venmo link first
-            venmo_data_2 = {
+            venmo_params_2 = {
                 "amount": 7.50,
-                "platform": "venmo",
                 "message": "Reverse switching test - Venmo"
             }
             
-            venmo_response_2 = self.make_request("POST", f"/musicians/{self.musician_slug}/tip-links", venmo_data_2)
+            venmo_response_2 = self.make_request("GET", f"/musicians/{self.musician_slug}/tip-links", params=venmo_params_2)
             
             if venmo_response_2.status_code == 200:
                 venmo_result_2 = venmo_response_2.json()
