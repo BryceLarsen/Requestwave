@@ -1461,6 +1461,22 @@ def assign_genre_and_mood(song_title: str, artist: str) -> Dict[str, Any]:
         genre = "Indie"
     elif any(word in title_lower for word in ["latin", "spanish", "salsa", "tango"]):
         genre = "Latin"
+    elif any(word in title_lower for word in ["irish", "ireland", "celtic", "dublin", "gaelic"]):
+        genre = "Irish"
+    elif any(word in title_lower for word in ["italian", "italy", "amore", "bella", "sicilian"]):
+        genre = "Italian"
+    elif any(word in title_lower for word in ["jam", "improvisation", "extended", "live version"]):
+        genre = "Jam Band"
+    elif any(word in title_lower for word in ["christmas", "xmas", "holiday", "santa", "snow", "winter wonderland", "jingle"]):
+        genre = "Christmas"
+    
+    # Artist-based genre detection for new genres
+    elif any(artist in artist_lower for artist in ["the dubliners", "u2", "sinead o'connor", "the cranberries", "flogging molly"]):
+        genre = "Irish"
+    elif any(artist in artist_lower for artist in ["pavarotti", "bocelli", "sinatra", "dean martin"]):
+        genre = "Italian"
+    elif any(artist in artist_lower for artist in ["grateful dead", "phish", "widespread panic", "allman brothers", "dave matthews band"]):
+        genre = "Jam Band"
     
     # Curated Mood List (20 options)
     CURATED_MOODS = [
