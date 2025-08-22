@@ -7644,6 +7644,7 @@ const OnStageInterface = () => {
   const [newRequestCount, setNewRequestCount] = useState(0);
   const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [completedSectionCollapsed, setCompletedSectionCollapsed] = useState(false);
   
   // Audio for notifications
   const notificationSound = useRef(null);
