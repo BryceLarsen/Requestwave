@@ -288,13 +288,12 @@ class TipFlowTester:
             print("📊 Step 3: Test tip link generation for both payment methods")
             
             # Test PayPal tip link
-            paypal_tip_data = {
+            paypal_params = {
                 "amount": 5.00,
-                "platform": "paypal",
                 "message": "Thanks for the great music!"
             }
             
-            paypal_response = self.make_request("POST", f"/musicians/{self.musician_slug}/tip-links", paypal_tip_data)
+            paypal_response = self.make_request("GET", f"/musicians/{self.musician_slug}/tip-links", params=paypal_params)
             
             if paypal_response.status_code == 200:
                 paypal_result = paypal_response.json()
