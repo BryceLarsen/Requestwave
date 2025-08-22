@@ -1960,7 +1960,10 @@ async def get_musician_by_slug(slug: str):
         facebook_username=musician.get("facebook_username"),
         tiktok_username=musician.get("tiktok_username"),
         spotify_artist_url=musician.get("spotify_artist_url"),
-        apple_music_artist_url=musician.get("apple_music_artist_url")
+        apple_music_artist_url=musician.get("apple_music_artist_url"),
+        # NEW: Include control settings for audience UI
+        tips_enabled=musician.get("tips_enabled", True),
+        requests_enabled=musician.get("requests_enabled", True)
     )
 
 @api_router.get("/musicians/{slug}/design")
