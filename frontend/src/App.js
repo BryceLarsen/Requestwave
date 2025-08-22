@@ -7016,7 +7016,7 @@ const AudienceInterface = () => {
                       <span className="hidden sm:inline">Spotify</span>
                     </a>
                   )}
-                  {musician.apple_music_artist_url && (
+                  {musician.apple_music_artist_url && musician.apple_music_artist_url.trim() !== '' && (
                     <a
                       href={musician.apple_music_artist_url}
                       target="_blank"
