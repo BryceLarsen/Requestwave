@@ -7612,7 +7612,7 @@ const AudienceInterface = () => {
                   </button>
                 )}
                 
-                {musician.facebook_username && (
+                {musician.facebook_username && musician.facebook_username.trim() !== '' && (
                   <button
                     onClick={() => handleSocialClick('facebook')}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-3"
