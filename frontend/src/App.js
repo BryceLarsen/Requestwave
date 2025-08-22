@@ -7495,91 +7495,71 @@ const AudienceInterface = () => {
         {/* NEW: Tip Choice Modal - Second Window */}
         {showTipChoiceModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 w-full max-w-md border border-gray-700">
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 w-full max-w-lg border border-gray-700">
               {/* Success Message */}
               <div className="text-center mb-6">
                 <div className="w-16 h-16 bg-green-600 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
                   ✅
-                </div>
+                </div>  
                 <h3 className="text-xl font-bold text-white mb-2">Your request has been sent!</h3>
                 <p className="text-gray-300 text-sm">If you'd like to leave a tip, we'll let the artist know.</p>
               </div>
               
-              {/* Tip Amount Choices */}
-              <div className="mb-6">
-                <p className="text-white font-medium mb-4 text-center">Choose tip amount:</p>
-                <div className="grid grid-cols-3 gap-3 mb-4">
-                  {['5', '10', '20'].map((amount) => (
+              {/* Tip Amount Choices - One Row */}
+              <div className="mb-4">
+                <p className="text-white font-medium mb-3 text-center">Choose tip amount:</p>
+                <div className="flex gap-2 mb-4">
+                  {['5', '10', '20', '50', '100'].map((amount) => (
                     <button
                       key={amount}
                       onClick={() => handleTipChoice(amount)}
-                      className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 text-lg"
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-2 rounded-lg transition duration-300 text-sm"
                     >
                       ${amount}
                     </button>
                   ))}
                 </div>
-              </div>
-              
-              {/* Platform Choice */}
-              <div className="mb-6">
-                <p className="text-white font-medium mb-3 text-center">Payment method:</p>
-                <div className="grid grid-cols-1 gap-3">
-                  {musician.venmo_username && (
+                
+                {/* Other Amount Input */}
+                <div className="mb-4">
+                  <input
+                    type="number"
+                    placeholder="Other amount"
+                    value={selectedTipAmount}
+                    onChange={(e) => setSelectedTipAmount(e.target.value)}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-center"
+                    min="1"
+                    max="500"
+                  />
+                  {selectedTipAmount && selectedTipAmount !== '' && (
                     <button
-                      onClick={() => {
-                        setTipPlatform('venmo');
-                        setTipAmount('5'); // Default amount
-                        handleTipChoice('5');
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition duration-300 flex items-center justify-center space-x-2"
+                      onClick={() => handleTipChoice(selectedTipAmount)}
+                      className="w-full mt-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg transition duration-300"
                     >
-                      <span>💳</span>
-                      <span>Venmo</span>
-                    </button>
-                  )}
-                  {musician.paypal_username && (
-                    <button
-                      onClick={() => {
-                        setTipPlatform('paypal');
-                        setTipAmount('5'); // Default amount
-                        handleTipChoice('5');
-                      }}
-                      className="bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-3 rounded-lg transition duration-300 flex items-center justify-center space-x-2"
-                    >
-                      <span>💰</span>
-                      <span>PayPal</span>
-                    </button>
-                  )}
-                  {(musician.zelle_email || musician.zelle_phone) && (
-                    <button
-                      onClick={() => {
-                        setTipPlatform('zelle');
-                        setTipAmount('5'); // Default amount
-                        handleTipChoice('5');
-                      }}
-                      className="bg-green-600 hover:bg-green-700 text-white font-medium py-3 rounded-lg transition duration-300 flex items-center justify-center space-x-2"
-                    >
-                      <span>🏦</span>
-                      <span>Zelle</span>
+                      Tip ${selectedTipAmount}
                     </button>
                   )}
                 </div>
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="flex space-x-3">
+                
+                {/* No Tip Button */}
                 <button
                   onClick={handleNoTip}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 rounded-lg transition duration-300"
+                  className="w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 rounded-lg transition duration-300 mb-4"
                 >
                   No Tip
                 </button>
+              </div>
+              
+              {/* Skip Button */}
+              <div className="text-center">
                 <button
-                  onClick={closeTipFlow}
-                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-lg transition duration-300"
+                  onClick={() => {
+                    setShowTipChoiceModal(false);
+                    setShowSocialFollowModal(true);
+                  }}
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-6 rounded-lg transition duration-300"
                 >
-                  Close
+                  Skip
                 </button>
               </div>
             </div>
