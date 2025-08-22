@@ -6034,7 +6034,7 @@ const MusicianDashboard = () => {
                       className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
                     >
                       <option value="">Add genre...</option>
-                      {availableGenres.filter(genre => !songForm.genres.includes(genre)).map(genre => (
+                      {filterOptions.genres?.filter(genre => !songForm.genres.includes(genre)).map(genre => (
                         <option key={genre} value={genre}>{genre}</option>
                       ))}
                     </select>
