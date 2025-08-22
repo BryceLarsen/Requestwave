@@ -539,13 +539,12 @@ class TipFlowTester:
             print("📊 Step 2: Test switching from PayPal to Venmo")
             
             # First generate PayPal link
-            paypal_data = {
+            paypal_params = {
                 "amount": 10.00,
-                "platform": "paypal",
                 "message": "Switching test - PayPal"
             }
             
-            paypal_response = self.make_request("POST", f"/musicians/{self.musician_slug}/tip-links", paypal_data)
+            paypal_response = self.make_request("GET", f"/musicians/{self.musician_slug}/tip-links", params=paypal_params)
             
             if paypal_response.status_code == 200:
                 paypal_result = paypal_response.json()
