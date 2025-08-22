@@ -8026,6 +8026,12 @@ const RequestCard = ({ item, index, onAccept, onPlay, onReject, showMoveButtons,
             💌 "{item.dedication}"
           </div>
         )}
+        {/* Tip Amount Display */}
+        {item.tip_amount && item.tip_amount > 0 && (
+          <div className={`text-green-400 font-bold mt-2 ${isUpNext || isCompleted ? 'text-sm' : 'text-base'}`}>
+            💰 ${item.tip_amount.toFixed(2)} tip included!
+          </div>
+        )}
       </div>
       
       {/* Action Buttons */}
