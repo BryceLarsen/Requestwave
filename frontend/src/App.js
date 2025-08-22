@@ -8059,17 +8059,17 @@ const OnStageInterface = () => {
     );
   }
   
-  upNextRequests = displayRequests.filter(r => r.status === 'up_next')
+  const upNextRequests = requests.filter(r => r.status === 'up_next')
     .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); // oldest first
   
-  activeRequests = displayRequests.filter(r => !r.status || r.status === 'pending')
+  const activeRequests = requests.filter(r => !r.status || r.status === 'pending')
     .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); // oldest first
     
-  completedRequests = displayRequests.filter(r => r.status === 'played' || r.status === 'rejected')
+  const completedRequests = requests.filter(r => r.status === 'played' || r.status === 'rejected')
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // newest first
   
   const allItems = [
-    ...displayRequests.map(r => ({ ...r, type: 'request' })),
+    ...requests.map(r => ({ ...r, type: 'request' })),
     ...suggestions.map(s => ({ ...s, type: 'suggestion' }))
   ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   
