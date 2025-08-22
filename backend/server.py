@@ -45,7 +45,7 @@ if BILLING_ENABLED:
 # db = client[os.environ['DB_NAME']]
 mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ.get('DB_NAME', 'livewave-music-test_database')]
+db = client[os.environ.get('DB_NAME', 'requestwave_production')]
 
 
 # JWT Configuration
