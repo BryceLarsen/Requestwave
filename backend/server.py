@@ -167,6 +167,9 @@ class Musician(BaseModel):
     apple_music_artist_url: Optional[str] = None
     bio: Optional[str] = None
     website: Optional[str] = None
+    # NEW: Control settings
+    tips_enabled: bool = True
+    requests_enabled: bool = True
     # NEW: Current active show tracking
     current_show_id: Optional[str] = None
     current_show_name: Optional[str] = None
