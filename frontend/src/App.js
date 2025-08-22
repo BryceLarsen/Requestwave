@@ -7380,7 +7380,7 @@ const AudienceInterface = () => {
               {/* Platform Choice */}
               <div className="mb-6">
                 <p className="text-white font-medium mb-3 text-center">Payment method:</p>
-                <div className="flex space-x-3">
+                <div className="grid grid-cols-1 gap-3">
                   {musician.venmo_username && (
                     <button
                       onClick={() => {
@@ -7388,7 +7388,7 @@ const AudienceInterface = () => {
                         setTipAmount('5'); // Default amount
                         handleTipChoice('5');
                       }}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition duration-300 flex items-center justify-center space-x-2"
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition duration-300 flex items-center justify-center space-x-2"
                     >
                       <span>💳</span>
                       <span>Venmo</span>
@@ -7401,10 +7401,23 @@ const AudienceInterface = () => {
                         setTipAmount('5'); // Default amount
                         handleTipChoice('5');
                       }}
-                      className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-3 rounded-lg transition duration-300 flex items-center justify-center space-x-2"
+                      className="bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-3 rounded-lg transition duration-300 flex items-center justify-center space-x-2"
                     >
                       <span>💰</span>
                       <span>PayPal</span>
+                    </button>
+                  )}
+                  {(musician.zelle_email || musician.zelle_phone) && (
+                    <button
+                      onClick={() => {
+                        setTipPlatform('zelle');
+                        setTipAmount('5'); // Default amount
+                        handleTipChoice('5');
+                      }}
+                      className="bg-green-600 hover:bg-green-700 text-white font-medium py-3 rounded-lg transition duration-300 flex items-center justify-center space-x-2"
+                    >
+                      <span>🏦</span>
+                      <span>Zelle</span>
                     </button>
                   )}
                 </div>
