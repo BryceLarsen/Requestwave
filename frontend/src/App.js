@@ -8144,7 +8144,7 @@ const OnStageInterface = () => {
             />
             <div>
               <h1 className="text-xl font-bold">🎤 On Stage</h1>
-              <p className="text-gray-400 text-sm">{musician.name}</p>
+              <p className="text-gray-400 text-sm">{displayMusician.name}</p>
             </div>
           </div>
           <div className="flex items-center space-x-4">
