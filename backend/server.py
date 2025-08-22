@@ -221,6 +221,7 @@ class Request(BaseModel):
     requester_name: str
     requester_email: str
     dedication: str = ""
+    tip_amount: float = 0.0
     # Artist-controlled show grouping (not provided by audience)
     show_name: Optional[str] = None  # Artist can assign later
     # Tracking fields
