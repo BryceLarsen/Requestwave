@@ -7129,16 +7129,14 @@ const AudienceInterface = () => {
                 <span>Random Song</span>
               </button>
               
-              {/* NEW: Song Suggestion Button - Only show if enabled by musician */}
-              {designSettings.allow_song_suggestions && (
-                <button
-                  onClick={() => setShowSuggestionModal(true)}
-                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
-                >
-                  <span>💡</span>
-                  <span>Suggest a Song</span>
-                </button>
-              )}
+              {/* NEW: Song Suggestion Button - Always show for audience members */}
+              <button
+                onClick={() => setShowSuggestionModal(true)}
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <span>💡</span>
+                <span>Suggest a Song</span>
+              </button>
             </div>
           )}
         </div>
