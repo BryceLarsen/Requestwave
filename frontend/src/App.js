@@ -8046,9 +8046,7 @@ const OnStageInterface = () => {
   }
   
   // Organize requests into sections
-  let upNextRequests, activeRequests, completedRequests;
-  let displayMusician = musician;
-  let displayRequests = requests;
+  // Organize requests into sections
   
   if (!musician) {
     return (
