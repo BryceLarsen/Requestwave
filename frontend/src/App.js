@@ -1003,6 +1003,13 @@ const MusicianDashboard = () => {
     }
   }, [showProfile]);
 
+  // NEW: Also fetch profile when activeTab is 'profile' to populate the Profile tab form
+  useEffect(() => {
+    if (activeTab === 'profile') {
+      fetchProfile();
+    }
+  }, [activeTab]);
+
   // NEW: Fetch playlists when subscription status changes
   useEffect(() => {
     if (subscriptionStatus) {
