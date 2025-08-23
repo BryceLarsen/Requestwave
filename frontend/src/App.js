@@ -4659,7 +4659,22 @@ const MusicianDashboard = () => {
 
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <div>
+          <ProfileTabContent />
+        )}
+
+      </div>
+    );
+  };
+
+  // NEW: Profile Tab Component with automatic data loading
+  const ProfileTabContent = () => {
+    // Ensure profile data is loaded when this component renders
+    React.useEffect(() => {
+      fetchProfile();
+    }, []);
+
+    return (
+      <div>
             {/* Audience Link */}
             <div className="bg-purple-800/50 rounded-xl p-6 mb-8">
               <div className="flex justify-between items-start mb-4">
