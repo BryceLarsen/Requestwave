@@ -4303,13 +4303,45 @@ const MusicianDashboard = () => {
                               {request.status === 'pending' && (
                                 <div className="flex space-x-1">
                                   <button
-                                    onClick={() => updateRequestStatus(request.id, 'played')}
+                                    onClick={() => {
+                                      // Use the correct updateRequestStatus from On Stage interface
+                                      const updateStatus = async (requestId, status) => {
+                                        try {
+                                          const token = localStorage.getItem('token');
+                                          await axios.put(`${API}/requests/${requestId}/status`, 
+                                            { status },
+                                            { headers: { 'Authorization': `Bearer ${token}` } }
+                                          );
+                                          fetchRequests();
+                                        } catch (error) {
+                                          console.error('Error updating request status:', error);
+                                          alert('Error updating request status');
+                                        }
+                                      };
+                                      updateStatus(request.id, 'played');
+                                    }}
                                     className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 rounded"
                                   >
                                     Play
                                   </button>
                                   <button
-                                    onClick={() => updateRequestStatus(request.id, 'rejected')}
+                                    onClick={() => {
+                                      // Use the correct updateRequestStatus from On Stage interface
+                                      const updateStatus = async (requestId, status) => {
+                                        try {
+                                          const token = localStorage.getItem('token');
+                                          await axios.put(`${API}/requests/${requestId}/status`, 
+                                            { status },
+                                            { headers: { 'Authorization': `Bearer ${token}` } }
+                                          );
+                                          fetchRequests();
+                                        } catch (error) {
+                                          console.error('Error updating request status:', error);
+                                          alert('Error updating request status');
+                                        }
+                                      };
+                                      updateStatus(request.id, 'rejected');
+                                    }}
                                     className="bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
                                   >
                                     Reject
