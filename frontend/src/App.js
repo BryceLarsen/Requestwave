@@ -1244,9 +1244,13 @@ const MusicianDashboard = () => {
 
   const fetchProfile = async () => {
     try {
+      console.log('Fetching profile data...');
       const response = await axios.get(`${API}/profile`);
+      console.log('Profile data received:', response.data);
       setProfile(response.data);
+      console.log('Profile state updated with:', response.data);
     } catch (error) {
+      console.error('Error fetching profile:', error);
       setProfileError('Error loading profile');
     }
   };
