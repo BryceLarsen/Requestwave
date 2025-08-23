@@ -1033,6 +1033,8 @@ const MusicianDashboard = () => {
         // Payment fields
         paypal_username: musician.paypal_username || '',
         venmo_username: musician.venmo_username || '',
+        zelle_email: musician.zelle_email || '', // FIX: Add missing Zelle fields
+        zelle_phone: musician.zelle_phone || '', // FIX: Add missing Zelle fields
         // Social media fields
         instagram_username: musician.instagram_username || '',
         facebook_username: musician.facebook_username || '',
