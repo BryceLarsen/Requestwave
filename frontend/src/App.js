@@ -1006,6 +1006,7 @@ const MusicianDashboard = () => {
   // NEW: Also fetch profile when activeTab is 'profile' to populate the Profile tab form
   useEffect(() => {
     if (activeTab === 'profile') {
+      console.log('Profile tab activated - fetching profile data...');
       fetchProfile();
     }
   }, [activeTab]);
