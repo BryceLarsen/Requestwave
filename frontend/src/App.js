@@ -8463,13 +8463,13 @@ const RequestCard = ({ item, index, onAccept, onPlay, onReject, showMoveButtons,
         </p>
       </div>
       
-      {/* Requester Info - LARGER FONTS */}
+      {/* Requester Info - MUCH LARGER & BOLDER FONTS */}
       <div className="mb-4">
-        <div className={`text-gray-300 mb-2 ${isUpNext || isCompleted ? 'text-sm' : 'text-lg'}`}>
-          <span className="font-bold">From:</span> <span className="font-medium">{item.requester_name || 'Anonymous'}</span>
+        <div className={`text-white mb-2 ${isUpNext || isCompleted ? 'text-lg font-bold' : 'text-2xl font-black'}`}>
+          <span className="text-gray-300 font-semibold">From:</span> <span className="font-black text-yellow-300">{item.requester_name || 'Anonymous'}</span>
         </div>
         {item.dedication && (
-          <div className={`text-purple-300 italic ${isUpNext || isCompleted ? 'text-sm' : 'text-base'}`}>
+          <div className={`text-purple-200 italic font-bold ${isUpNext || isCompleted ? 'text-base' : 'text-xl'}`}>
             💌 "{item.dedication}"
           </div>
         )}
