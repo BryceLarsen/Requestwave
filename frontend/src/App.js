@@ -2863,10 +2863,7 @@ const MusicianDashboard = () => {
           {['songs', 'requests', 'analytics', 'profile', ...(BILLING_ENABLED ? ['subscription'] : []), 'design'].map((tab) => (
             <button
               key={tab}
-              onClick={() => {
-                console.log('Setting activeTab to:', tab);
-                setActiveTab(tab);
-              }}
+              onClick={() => setActiveTab(tab)}
               className={`px-3 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0 ${
                 activeTab === tab
                   ? 'bg-purple-600 text-white'
