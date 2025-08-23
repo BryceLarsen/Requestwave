@@ -1928,8 +1928,28 @@ const MusicianDashboard = () => {
     }
   };
 
-  // REMOVED: Old updateRequestStatus function that used wrong API format
-  // The On Stage interface now uses the correct function at line 8722+
+  // FIXED: Unified updateRequestStatus function for all interfaces
+  const updateRequestStatus = async (requestId, status) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please log in again to update request status');
+        return;
+      }
+      
+      await axios.put(`${API}/requests/${requestId}/status`, 
+        { status },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      
+      // Refresh request data
+      fetchRequests();
+      
+    } catch (error) {
+      console.error('Error updating request status:', error);
+      alert('Error updating request status');
+    }
+  };
 
   const clearRequestSelection = () => {
     setSelectedRequests(new Set());
