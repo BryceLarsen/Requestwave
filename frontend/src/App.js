@@ -1928,14 +1928,8 @@ const MusicianDashboard = () => {
     }
   };
 
-  const updateRequestStatus = async (requestId, status) => {
-    try {
-      await axios.put(`${API}/requests/${requestId}/status?status=${status}`);
-      fetchRequests();
-    } catch (error) {
-      console.error('Error updating request:', error);
-    }
-  };
+  // REMOVED: Old updateRequestStatus function that used wrong API format
+  // The On Stage interface now uses the correct function at line 8722+
 
   const clearRequestSelection = () => {
     setSelectedRequests(new Set());
