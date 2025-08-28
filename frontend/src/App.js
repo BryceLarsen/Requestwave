@@ -2916,7 +2916,10 @@ const MusicianDashboard = () => {
             >
               <div className="flex items-center space-x-2">
                 <span className="font-medium">
-                  {activeTab === 'analytics' ? 'Analytics' : activeTab === 'design' ? 'Design' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                  {activeTab === 'analytics' ? 'Analytics' : 
+                   activeTab === 'design' ? 'Design' : 
+                   activeTab === 'onstage' ? 'On Stage' : 
+                   activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
                 </span>
                 {activeTab === 'requests' && requests.filter(r => r.status === 'pending').length > 0 && (
                   <span className="bg-red-500 text-white rounded-full px-2 py-1 text-xs">
