@@ -7640,11 +7640,19 @@ const AudienceInterface = () => {
               />
             )}
             <div className="flex-1 min-w-0">
-              <h1 className={`text-xl md:text-2xl font-bold ${colors.accent} truncate`}>
-                {designSettings.musician_name}
-              </h1>
+              <button
+                onClick={() => setShowProfileDialog(true)}
+                className="flex items-center space-x-2 hover:bg-gray-700/50 rounded-lg px-2 py-1 transition duration-300 w-full text-left"
+              >
+                <h1 className={`text-xl md:text-2xl font-bold ${colors.accent} truncate`}>
+                  {designSettings.musician_name}
+                </h1>
+                <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
               {designSettings.bio && (
-                <div className="flex items-start space-x-2">
+                <div className="flex items-start space-x-2 px-2">
                   <p className={`text-gray-300 text-sm md:text-base flex-1 ${bioExpanded ? '' : 'line-clamp-2'}`} style={bioExpanded ? {} : {
                     display: '-webkit-box',
                     WebkitLineClamp: 1,
@@ -7660,75 +7668,6 @@ const AudienceInterface = () => {
                     >
                       {bioExpanded ? '▲' : '▼'}
                     </button>
-                  )}
-                </div>
-              )}
-              
-              {/* Social Media Links - Show when musician data is loaded and has social links */}
-              {musician && (
-                (musician.instagram_username && musician.instagram_username.trim() !== '') || 
-                (musician.facebook_username && musician.facebook_username.trim() !== '') || 
-                (musician.tiktok_username && musician.tiktok_username.trim() !== '') || 
-                (musician.spotify_artist_url && musician.spotify_artist_url.trim() !== '') || 
-                (musician.apple_music_artist_url && musician.apple_music_artist_url.trim() !== '')
-              ) && (
-                <div className="flex items-center space-x-1 mt-2 flex-wrap">
-                  {musician.instagram_username && musician.instagram_username.trim() !== '' && (
-                    <a
-                      href={`https://instagram.com/${musician.instagram_username}`}
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="bg-pink-600 hover:bg-pink-700 px-2 py-1 rounded text-xs font-medium transition duration-300 flex items-center space-x-1"
-                    >
-                      <span>📸</span>
-                      <span className="hidden sm:inline">IG</span>
-                    </a>
-                  )}
-                  {musician.facebook_username && musician.facebook_username.trim() !== '' && (
-                    <a
-                      href={musician.facebook_username.includes('facebook.com') ? 
-                        (musician.facebook_username.startsWith('http') ? musician.facebook_username : `https://${musician.facebook_username}`) :
-                        `https://facebook.com/${musician.facebook_username}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-xs font-medium transition duration-300 flex items-center space-x-1"
-                    >
-                      <span>📘</span>
-                      <span className="hidden sm:inline">FB</span>
-                    </a>
-                  )}
-                  {musician.tiktok_username && musician.tiktok_username.trim() !== '' && (
-                    <a
-                      href={`https://tiktok.com/@${musician.tiktok_username}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-black hover:bg-gray-800 px-2 py-1 rounded text-xs font-medium transition duration-300 flex items-center space-x-1"
-                    >
-                      <span>🎵</span>
-                      <span className="hidden sm:inline">TT</span>
-                    </a>
-                  )}
-                  {musician.spotify_artist_url && musician.spotify_artist_url.trim() !== '' && (
-                    <a
-                      href={musician.spotify_artist_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-green-600 hover:bg-green-700 px-2 py-1 rounded text-xs font-medium transition duration-300 flex items-center space-x-1"
-                    >
-                      <span>🎶</span>
-                      <span className="hidden sm:inline">Spotify</span>
-                    </a>
-                  )}
-                  {musician.apple_music_artist_url && musician.apple_music_artist_url.trim() !== '' && (
-                    <a
-                      href={musician.apple_music_artist_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-xs font-medium transition duration-300 flex items-center space-x-1"
-                    >
-                      <span>🍎</span>
-                      <span className="hidden sm:inline">Apple</span>
-                    </a>
                   )}
                 </div>
               )}
