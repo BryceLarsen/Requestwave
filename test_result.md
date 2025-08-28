@@ -57,8 +57,8 @@
 ##   test_priority: "high_first"  # or "sequential" or "stuck_first"
 ##
 ## agent_communication:
-##     -agent: "main"  # or "testing" or "user"
-##     -message: "Communication message between agents"
+##     -agent: "main"
+##     -message: "PHASE 3 COMPLETE: Fixed mobile navigation Help button visibility (already working), addressing remaining bugs: 1) Song Suggestions appearing in all tabs instead of only Requests tab, 2) Audience Link Box banner text removal and View button addition, 3) Onboarding demo playlist broken link fix. Current focus: Song Suggestions placement fix."
 
 # Protocol Guidelines for Main agent
 #
