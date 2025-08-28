@@ -9973,6 +9973,14 @@ const App = () => {
       if (sessionId && !musician) {
         console.log('Found Emergent session ID, authenticating...', sessionId);
         
+        // Log OAuth attempt (non-PII telemetry)
+        console.log('oauth_authentication_attempt', {
+          environment: process.env.NODE_ENV || 'development',
+          user_agent: navigator.userAgent,
+          referrer: document.referrer,
+          timestamp: new Date().toISOString()
+        });
+        
         try {
           // Call backend to authenticate with Emergent session
           const response = await axios.post(`${API}/auth/emergent-oauth`, {}, {
@@ -9988,10 +9996,26 @@ const App = () => {
             // Clear the fragment from URL
             window.location.hash = '';
             
+            // Log OAuth success (non-PII telemetry)
+            console.log('oauth_success', {
+              environment: process.env.NODE_ENV || 'development',
+              user_agent: navigator.userAgent,
+              timestamp: new Date().toISOString()
+            });
+            
             console.log('Emergent OAuth authentication successful');
           }
         } catch (error) {
           console.error('Emergent OAuth authentication failed:', error);
+          
+          // Log OAuth error (non-PII telemetry)
+          console.log('oauth_error', {
+            environment: process.env.NODE_ENV || 'development',
+            user_agent: navigator.userAgent,
+            error_type: error.response?.status || 'network_error',
+            timestamp: new Date().toISOString()
+          });
+          
           alert('Authentication failed. Please try logging in again.');
         }
       }
