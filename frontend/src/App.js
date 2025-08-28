@@ -621,6 +621,9 @@ const MusicianDashboard = () => {
   const [suggestionsSectionCollapsed, setSuggestionsSectionCollapsed] = useState(false);
   const [suggestionError, setSuggestionError] = useState('');
   
+  // NEW: Archived shows state
+  const [archivedShowsCollapsed, setArchivedShowsCollapsed] = useState(true);
+  
   // NEW: Post-request state for tracking clicks
   const [currentRequestId, setCurrentRequestId] = useState(null);
   const [showPostRequestModal, setShowPostRequestModal] = useState(false);
