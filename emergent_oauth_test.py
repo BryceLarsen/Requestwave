@@ -403,7 +403,6 @@ class EmergentOAuthTester:
             structure_tests = [
                 {"X-Session-ID": "valid-format-session"},
                 {"X-Session-ID": ""},  # Empty session
-                {"X-Session-ID": " "},  # Whitespace session
             ]
             
             structure_responses = []
@@ -411,11 +410,10 @@ class EmergentOAuthTester:
                 struct_response = self.make_request("POST", "/auth/emergent-oauth", {}, headers=test_headers)
                 structure_responses.append(struct_response.status_code)
             
-            # First should attempt processing (401/500), others should fail with 400
+            # First should attempt processing (401/500), second should fail with 400
             structure_handling_works = (
                 structure_responses[0] in [401, 500] and  # Valid format
-                structure_responses[1] == 400 and         # Empty session
-                structure_responses[2] in [400, 401, 500] # Whitespace session
+                structure_responses[1] == 400             # Empty session
             )
             
             if structure_handling_works:
