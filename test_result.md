@@ -1143,10 +1143,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Musician Control Toggles - Backend Implementation"
-    - "Tip System Toggle in Design Tab" 
-    - "On Stage Request Toggle"
-    - "Audience Request Flow Logic Updates"
+    - "Demo CSV Endpoint for Onboarding"
+    - "Song Suggestions Backend Endpoints" 
+    - "Profile and Audience Link Functionality"
+    - "General System Health and Authentication"
   stuck_tasks:
   test_all: false
   test_priority: "high_first"
