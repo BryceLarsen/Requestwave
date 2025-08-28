@@ -2948,7 +2948,10 @@ const MusicianDashboard = () => {
                       }`}
                     >
                       <span>
-                        {tab === 'analytics' ? 'Analytics' : tab === 'design' ? 'Design' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                        {tab === 'analytics' ? 'Analytics' : 
+                         tab === 'design' ? 'Design' : 
+                         tab === 'onstage' ? 'On Stage' : 
+                         tab.charAt(0).toUpperCase() + tab.slice(1)}
                       </span>
                       {tab === 'requests' && requests.filter(r => r.status === 'pending').length > 0 && (
                         <span className="bg-red-500 text-white rounded-full px-2 py-1 text-xs">
