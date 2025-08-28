@@ -5133,7 +5133,7 @@ const MusicianDashboard = () => {
                 <div className="flex items-center space-x-2 sm:space-x-4 flex-1">
                   <input
                     type="text"
-                    value={audienceUrl}
+                    value={productionAudienceUrl}
                     readOnly
                     className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 sm:px-4 py-2 text-white text-sm sm:text-base"
                   />
