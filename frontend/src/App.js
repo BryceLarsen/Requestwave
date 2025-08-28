@@ -125,6 +125,17 @@ const AuthForm = ({ mode, onSwitch }) => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // NEW: Log OAuth button rendered (telemetry)
+  useEffect(() => {
+    console.log('oauth_button_rendered', {
+      mode: mode,
+      environment: process.env.NODE_ENV || 'development',
+      user_agent: navigator.userAgent,
+      referrer: document.referrer,
+      timestamp: new Date().toISOString()
+    });
+  }, [mode]);
+
   // NEW: Emergent OAuth handler with telemetry
   const handleEmergentOAuth = () => {
     // Log OAuth button click (non-PII telemetry)
