@@ -125,8 +125,16 @@ const AuthForm = ({ mode, onSwitch }) => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // NEW: Emergent OAuth handler
+  // NEW: Emergent OAuth handler with telemetry
   const handleEmergentOAuth = () => {
+    // Log OAuth button click (non-PII telemetry)
+    console.log('oauth_click', {
+      environment: process.env.NODE_ENV || 'development',
+      user_agent: navigator.userAgent,
+      referrer: document.referrer,
+      timestamp: new Date().toISOString()
+    });
+    
     // Get current preview URL for redirect
     const currentUrl = window.location.origin;
     const redirectUrl = `${currentUrl}/profile`;
