@@ -5169,7 +5169,7 @@ const MusicianDashboard = () => {
                         console.error('Failed to copy text: ', err);
                         // Fallback for browsers that don't support clipboard API
                         const textArea = document.createElement('textarea');
-                        textArea.value = productionAudienceUrl;
+                        textArea.value = audienceUrl;
                         document.body.appendChild(textArea);
                         textArea.select();
                         document.execCommand('copy');
