@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 """
-COMPREHENSIVE TESTING FOR ZELLE PAYMENT INTEGRATION
-
-Testing the complete Zelle payment integration that was just added to RequestWave:
+Backend Testing Suite for RequestWave Email Configuration and Contact Form
+Testing the updated email addresses and functionality as requested.
 
 CRITICAL TEST AREAS:
-1. Backend Zelle Fields - Create musician with zelle_email and zelle_phone, verify profile API returns Zelle fields correctly
-2. Public Musician Data - Verify public musician endpoint includes Zelle fields for audience access
-3. Tip Analytics - Test tip submission with platform='zelle' to verify analytics tracking works
-4. Integration Test - Create musician with all three payment methods (PayPal, Venmo, Zelle)
-5. Edge Cases - Test musician with only Zelle, both zelle_email and zelle_phone, empty/null Zelle fields
+1. Password Reset Email Configuration Test - POST /api/auth/forgot-password endpoint
+2. Contact Form Backend Test - POST /api/contact endpoint  
+3. Password Reset Token System Test - POST /api/auth/reset-password endpoint
+4. General Email System Test - Email logging and error handling
 
-Test Credentials: brycelarsenmusic@gmail.com / RequestWave2024!
+CONTEXT: Just updated email addresses for password reset and contact form functionality:
+1. Password reset emails now reply-to: requestwave@adventuresoundlive.com
+2. Contact form updated to send emails to: requestwave@adventuresoundlive.com  
+3. Contact form now has proper HTML email template and error handling
 
-Expected: Complete Zelle payment system integrated and functional for the new 3-step tip flow.
+Expected: Complete email system working with updated addresses and proper token-based password reset.
 """
 
 import requests
