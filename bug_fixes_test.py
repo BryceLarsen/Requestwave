@@ -510,7 +510,7 @@ class BugFixesTester:
                     print(f"   ❌ Audience link not accessible: {audience_response.status_code}")
                     audience_link_works = False
             else:
-                print(f"   ❌ Cannot test audience link (no slug)")
+                print(f"   ❌ Cannot test audience link (no slug from authentication)")
                 audience_link_works = False
             
             # Step 4: Test profile update functionality
