@@ -5925,15 +5925,13 @@ const MusicianDashboard = () => {
         {/* NEW: Phase 3 - Analytics Tab */}
         {activeTab === 'analytics' && (
           <div className="space-y-6">
-            {/* Analytics Header */}
+            {/* Streamlined Analytics Header */}
             <div className="bg-gray-800 rounded-xl p-6">
-              <div className="flex justify-between items-center mb-4">
-                <div>
-                  <h2 className="text-2xl font-bold">Analytics Dashboard</h2>
-                  <p className="text-gray-300">Insights into your audience and performance</p>
-                </div>
+              {/* Description and Timeframe Controls */}
+              <div className="mb-4">
+                <p className="text-gray-300 mb-4">Insights into your audience and performance</p>
                 
-                {/* Timeframe Selector */}
+                {/* Timeframe Selector - Aligned Left */}
                 <div className="flex space-x-2">
                   {['daily', 'weekly', 'monthly'].map((timeframe) => (
                     <button
