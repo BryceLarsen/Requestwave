@@ -9937,7 +9937,48 @@ const LandingPage = () => {
 };
 
 const App = () => {
-  const { musician } = useAuth();
+  const { musician, login } = useAuth();
+
+  // NEW: Check for Emergent OAuth session on app load
+  useEffect(() => {
+    const checkEmergentSession = async () => {
+      // Check for session_id in URL fragment
+      const fragment = window.location.hash.substring(1);
+      const params = new URLSearchParams(fragment);
+      const sessionId = params.get('session_id');
+      
+      if (sessionId && !musician) {
+        console.log('Found Emergent session ID, authenticating...', sessionId);
+        
+        try {
+          // Call backend to authenticate with Emergent session
+          const response = await axios.post(`${API}/auth/emergent-oauth`, {}, {
+            headers: {
+              'X-Session-ID': sessionId
+            }
+          });
+          
+          if (response.data.success) {
+            // Login with returned data
+            login(response.data);
+            
+            // Clear the fragment from URL
+            window.location.hash = '';
+            
+            console.log('Emergent OAuth authentication successful');
+          }
+        } catch (error) {
+          console.error('Emergent OAuth authentication failed:', error);
+          alert('Authentication failed. Please try logging in again.');
+        }
+      }
+    };
+    
+    // Only check on initial load or when musician is null
+    if (!musician) {
+      checkEmergentSession();
+    }
+  }, [musician, login]);
 
   return (
     <Router>
