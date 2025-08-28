@@ -4698,154 +4698,181 @@ const MusicianDashboard = () => {
           </div>
         )}
 
-        {/* NEW: Song Suggestions Section (when toggled on) - Only show in Requests tab */}
-        {activeTab === 'requests' && showSuggestions && (
-          <div className="bg-gray-700 rounded-xl p-6 mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-green-400">💡 Song Suggestions from Audience</h3>
-              <button
-                onClick={fetchSongSuggestions}
-                className="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
+        {/* NEW: Song Suggestions Section - Always Visible Folder (like All Requests) */}
+        {activeTab === 'requests' && (
+          <div className="bg-gray-800 rounded-xl p-6 mb-6" id="song-suggestions-section">
+            <details open={!suggestionsSectionCollapsed}>
+              <summary 
+                className="cursor-pointer list-none"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSuggestionsSectionCollapsed(!suggestionsSectionCollapsed);
+                }}
               >
-                Refresh
-              </button>
-            </div>
-
-            {/* Batch Actions Bar for Suggestions */}
-            {selectedSuggestions.size > 0 && (
-              <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4 mb-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-green-200 font-medium">
-                    {selectedSuggestions.size} suggestion(s) selected
-                  </span>
-                  <div className="flex items-center space-x-3">
-                    <button
-                      onClick={() => batchSuggestionAction('added')}
-                      className="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
-                    >
-                      ✓ Add to Repertoire
-                    </button>
-                    <button
-                      onClick={() => batchSuggestionAction('rejected')}
-                      className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
-                    >
-                      ❌ Reject All
-                    </button>
-                    <button
-                      onClick={batchDeleteSuggestions}
-                      className="bg-gray-600 hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
-                    >
-                      🗑️ Delete Selected
-                    </button>
-                    <button
-                      onClick={clearSuggestionSelection}
-                      className="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
-                    >
-                      Clear Selection
-                    </button>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-2">
+                    <span className={`transition-transform ${suggestionsSectionCollapsed ? '' : 'rotate-90'}`}>▶</span>
+                    <h3 className="text-lg font-bold text-green-400">💡 Song Suggestions</h3>
+                    {songSuggestions.filter(s => s.status === 'pending').length > 0 && (
+                      <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                        {songSuggestions.filter(s => s.status === 'pending').length}
+                      </span>
+                    )}
                   </div>
-                </div>
-              </div>
-            )}
-
-            {suggestionError && (
-              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200">
-                {suggestionError}
-              </div>
-            )}
-
-            {songSuggestions.length === 0 ? (
-              <div className="text-center py-6 text-gray-400">
-                <p>No song suggestions yet.</p>
-                <p className="text-sm mt-2">Suggestions will appear here when your audience suggests new songs for your repertoire.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {/* Select All Header */}
-                <div className="flex items-center space-x-3 p-3 bg-gray-600 rounded-lg">
-                  <input
-                    type="checkbox"
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        selectAllSuggestions(songSuggestions.filter(s => s.status === 'pending'));
-                      } else {
-                        clearSuggestionSelection();
-                      }
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fetchSongSuggestions();
                     }}
-                    className="rounded bg-gray-600 border-gray-500 text-green-600 focus:ring-green-500 focus:ring-offset-0"
-                    title="Select all pending suggestions"
-                  />
-                  <span className="text-green-300 font-medium">
-                    Select All Pending ({songSuggestions.filter(s => s.status === 'pending').length} suggestions)
-                  </span>
+                    className="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
+                  >
+                    Refresh
+                  </button>
                 </div>
+              </summary>
 
-                {songSuggestions.map((suggestion) => (
-                  <div key={suggestion.id} className="bg-gray-600 p-4 rounded-lg flex items-center space-x-3">
-                    {/* Selection Checkbox */}
-                    <input
-                      type="checkbox"
-                      checked={selectedSuggestions.has(suggestion.id)}
-                      onChange={() => toggleSuggestionSelection(suggestion.id)}
-                      className="rounded bg-gray-600 border-gray-500 text-green-600 focus:ring-green-500 focus:ring-offset-0"
-                      disabled={suggestion.status !== 'pending'}
-                      title={suggestion.status === 'pending' ? 'Select suggestion' : 'Cannot select processed suggestions'}
-                    />
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <span className="font-medium text-blue-400">{suggestion.suggested_title}</span>
-                        <span className="text-gray-400">by {suggestion.suggested_artist}</span>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          suggestion.status === 'pending' ? 'bg-yellow-600/20 text-yellow-400' :
-                          suggestion.status === 'added' ? 'bg-green-600/20 text-green-400' :
-                          'bg-red-600/20 text-red-400'
-                        }`}>
-                          {suggestion.status}
+              {/* Suggestion Content - Only show when expanded */}
+              {!suggestionsSectionCollapsed && (
+                <div className="mt-4">
+                  {/* Batch Actions Bar for Suggestions */}
+                  {selectedSuggestions.size > 0 && (
+                    <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4 mb-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-green-200 font-medium">
+                          {selectedSuggestions.size} suggestion(s) selected
                         </span>
-                      </div>
-                      <p className="text-sm text-gray-300">
-                        Suggested by: <span className="text-white">{suggestion.requester_name}</span>
-                        {suggestion.message && (
-                          <span className="italic ml-2">"{suggestion.message}"</span>
-                        )}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {formatTimestamp(suggestion.created_at)}
-                      </p>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      {suggestion.status === 'pending' && (
-                        <div className="flex space-x-1">
+                        <div className="flex items-center space-x-3">
                           <button
-                            onClick={() => handleSuggestionAction(suggestion.id, 'added', suggestion.suggested_title)}
-                            className="bg-green-600 hover:bg-green-700 text-xs px-3 py-1 rounded transition duration-300"
-                            title="Add to your repertoire"
+                            onClick={() => batchSuggestionAction('added')}
+                            className="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
                           >
-                            ✓ Add
+                            ✓ Add to Repertoire
                           </button>
                           <button
-                            onClick={() => handleSuggestionAction(suggestion.id, 'rejected', suggestion.suggested_title)}
-                            className="bg-red-600 hover:bg-red-700 text-xs px-3 py-1 rounded transition duration-300"
-                            title="Reject suggestion"
+                            onClick={() => batchSuggestionAction('rejected')}
+                            className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
                           >
-                            ❌ Reject
+                            ❌ Reject All
+                          </button>
+                          <button
+                            onClick={batchDeleteSuggestions}
+                            className="bg-gray-600 hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
+                          >
+                            🗑️ Delete All
+                          </button>
+                          <button
+                            onClick={() => setSelectedSuggestions(new Set())}
+                            className="text-gray-400 hover:text-white text-sm"
+                          >
+                            Cancel
                           </button>
                         </div>
-                      )}
-                      <button
-                        onClick={() => handleDeleteSuggestion(suggestion.id, suggestion.suggested_title)}
-                        className="bg-gray-600 hover:bg-red-600 text-white text-xs px-2 py-1 rounded transition duration-300"
-                        title="Delete this suggestion permanently"
-                      >
-                        🗑️
-                      </button>
+                      </div>
                     </div>
+                  )}
+
+                  {/* Suggestions List */}
+                  <div className="space-y-3">
+                    {songSuggestions.length > 0 ? (
+                      songSuggestions.map((suggestion) => (
+                        <div
+                          key={suggestion.id}
+                          className={`bg-gray-700 rounded-lg p-4 border-l-4 transition-colors ${
+                            suggestion.status === 'pending' ? 'border-yellow-400' :
+                            suggestion.status === 'added' ? 'border-green-400' :
+                            'border-red-400'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              {suggestion.status === 'pending' && (
+                                <input
+                                  type="checkbox"
+                                  checked={selectedSuggestions.has(suggestion.id)}
+                                  onChange={(e) => {
+                                    const newSelected = new Set(selectedSuggestions);
+                                    if (e.target.checked) {
+                                      newSelected.add(suggestion.id);
+                                    } else {
+                                      newSelected.delete(suggestion.id);
+                                    }
+                                    setSelectedSuggestions(newSelected);
+                                  }}
+                                  className="rounded text-purple-600 focus:ring-purple-500"
+                                />
+                              )}
+                              
+                              <div>
+                                <h4 className="font-bold text-lg text-white">
+                                  {suggestion.suggested_title}
+                                </h4>
+                                <p className="text-gray-300">{suggestion.suggested_artist}</p>
+                                <p className="text-sm text-gray-400 mt-1">
+                                  Suggested by: <strong className="text-white">{suggestion.requester_name}</strong>
+                                </p>
+                                {suggestion.message && (
+                                  <p className="text-sm text-gray-300 mt-1 italic">
+                                    "{suggestion.message}"
+                                  </p>
+                                )}
+                                <div className="flex items-center space-x-2 mt-2">
+                                  <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                                    suggestion.status === 'pending' ? 'bg-yellow-600' :
+                                    suggestion.status === 'added' ? 'bg-green-600' :
+                                    'bg-red-600'
+                                  }`}>
+                                    {suggestion.status.toUpperCase()}
+                                  </span>
+                                  <span className="text-gray-400 text-xs">
+                                    {formatTimestamp(suggestion.created_at)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2">
+                              {suggestion.status === 'pending' && (
+                                <div className="flex space-x-1">
+                                  <button
+                                    onClick={() => handleSuggestionAction(suggestion.id, 'added', suggestion.suggested_title)}
+                                    className="bg-green-600 hover:bg-green-700 text-xs px-3 py-1 rounded transition duration-300"
+                                    title="Add to your repertoire"
+                                  >
+                                    ✓ Add
+                                  </button>
+                                  <button
+                                    onClick={() => handleSuggestionAction(suggestion.id, 'rejected', suggestion.suggested_title)}
+                                    className="bg-red-600 hover:bg-red-700 text-xs px-3 py-1 rounded transition duration-300"
+                                    title="Reject suggestion"
+                                  >
+                                    ❌ Reject
+                                  </button>
+                                </div>
+                              )}
+                              <button
+                                onClick={() => handleDeleteSuggestion(suggestion.id, suggestion.suggested_title)}
+                                className="bg-gray-600 hover:bg-red-600 text-white text-xs px-2 py-1 rounded transition duration-300"
+                                title="Delete this suggestion permanently"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8">
+                        <div className="text-4xl mb-3">💡</div>
+                        <p className="text-gray-400">No song suggestions yet</p>
+                        <p className="text-gray-500 text-sm mt-1">
+                          Audience members can suggest songs from your public page
+                        </p>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              )}
+            </details>
           </div>
         )}
         
