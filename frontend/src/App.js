@@ -323,10 +323,10 @@ const AuthForm = ({ mode, onSwitch }) => {
               Having trouble signing in?<br />
               Contact{' '}
               <a 
-                href="mailto:support@adventuresoundlive.com"
+                href="mailto:requestwave@adventuresoundlive.com"
                 className="text-purple-300 hover:text-white underline transition duration-300"
               >
-                support@adventuresoundlive.com
+                requestwave@adventuresoundlive.com
               </a>{' '}
               for help.
             </p>
