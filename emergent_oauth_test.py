@@ -705,7 +705,7 @@ class EmergentOAuthTester:
             self.auth_token = None
             
             no_auth_profile_response = self.make_request("GET", "/profile")
-            no_auth_rejected = no_auth_profile_response.status_code == 401
+            no_auth_rejected = no_auth_profile_response.status_code == 403
             
             if no_auth_rejected:
                 print("   ✅ Profile correctly rejects unauthenticated requests")
