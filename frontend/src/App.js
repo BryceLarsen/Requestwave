@@ -3953,35 +3953,37 @@ const MusicianDashboard = () => {
                             </div>
                             
                             {editingPlaylist !== playlist.id && (
-                              <div className="flex items-center space-x-1 ml-2 flex-shrink-0">
-                                {/* Quick Action Buttons */}
-                                <button
-                                  onClick={() => openEditPlaylistSongsModal(playlist.id)}
-                                  className="bg-purple-600 hover:bg-purple-700 px-2 py-1 rounded text-xs text-white transition duration-300"
-                                  title="Edit songs"
-                                >
-                                  ✏️
-                                </button>
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-1 sm:space-x-1 ml-2 flex-shrink-0">
+                                {/* Mobile: Stack buttons vertically, Desktop: Side by side */}
+                                <div className="flex items-center space-x-1">
+                                  <button
+                                    onClick={() => openEditPlaylistSongsModal(playlist.id)}
+                                    className="bg-purple-600 hover:bg-purple-700 px-2 py-1 rounded text-xs text-white transition duration-300"
+                                    title="Edit songs"
+                                  >
+                                    ✏️
+                                  </button>
+                                  
+                                  <button
+                                    onClick={() => togglePlaylistVisibility(playlist.id, playlist.is_public)}
+                                    className={`px-2 py-1 rounded text-xs transition duration-300 ${
+                                      playlist.is_public
+                                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                        : 'bg-gray-600 hover:bg-gray-500 text-white'
+                                    }`}
+                                    title={playlist.is_public ? 'Make private' : 'Make public'}
+                                  >
+                                    {playlist.is_public ? '🔒' : '🌐'}
+                                  </button>
+                                </div>
                                 
-                                <button
-                                  onClick={() => togglePlaylistVisibility(playlist.id, playlist.is_public)}
-                                  className={`px-2 py-1 rounded text-xs transition duration-300 ${
-                                    playlist.is_public
-                                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                                      : 'bg-gray-600 hover:bg-gray-500 text-white'
-                                  }`}
-                                  title={playlist.is_public ? 'Make private' : 'Make public'}
-                                >
-                                  {playlist.is_public ? '🔒' : '🌐'}
-                                </button>
-                                
-                                {/* 3-Dot Menu */}
-                                <div className="relative">
+                                {/* 3-Dot Menu - Full width on mobile */}
+                                <div className="relative w-full sm:w-auto">
                                   <button
                                     onClick={() => {
                                       setOpenDropdownId(openDropdownId === playlist.id ? null : playlist.id);
                                     }}
-                                    className="bg-gray-600 hover:bg-gray-500 px-2 py-1 rounded text-xs text-white transition duration-300"
+                                    className="w-full sm:w-auto bg-gray-600 hover:bg-gray-500 px-2 py-1 rounded text-xs text-white transition duration-300"
                                     title="More options"
                                   >
                                     ⋮
