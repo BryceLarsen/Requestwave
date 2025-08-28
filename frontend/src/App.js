@@ -5498,6 +5498,181 @@ const MusicianDashboard = () => {
               )}
             </div>
 
+            {/* NEW: Account Management Section */}
+            <div className="bg-gray-800 rounded-xl p-6 mb-6">
+              <h3 className="text-xl font-bold mb-4">🔐 Account Management</h3>
+              
+              <div className="space-y-6">
+                {/* Change Email Section */}
+                <div className="border-b border-gray-700 pb-6">
+                  <h4 className="font-bold text-green-300 mb-4">Change Email</h4>
+                  
+                  {!showChangeEmail ? (
+                    <button
+                      onClick={() => setShowChangeEmail(true)}
+                      className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-medium transition duration-300"
+                    >
+                      Change Email Address
+                    </button>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-gray-300 text-sm font-bold mb-2">New Email</label>
+                          <input
+                            type="email"
+                            value={changeEmailForm.new_email}
+                            onChange={(e) => setChangeEmailForm({...changeEmailForm, new_email: e.target.value})}
+                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                            placeholder="new@email.com"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-gray-300 text-sm font-bold mb-2">Confirm New Email</label>
+                          <input
+                            type="email"
+                            value={changeEmailForm.confirm_email}
+                            onChange={(e) => setChangeEmailForm({...changeEmailForm, confirm_email: e.target.value})}
+                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                            placeholder="new@email.com"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-gray-300 text-sm font-bold mb-2">Current Password</label>
+                        <input
+                          type="password"
+                          value={changeEmailForm.current_password}
+                          onChange={(e) => setChangeEmailForm({...changeEmailForm, current_password: e.target.value})}
+                          className="w-full max-w-xs bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                          placeholder="Enter current password"
+                        />
+                      </div>
+                      
+                      {changeEmailError && (
+                        <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3">
+                          <p className="text-red-300 text-sm">{changeEmailError}</p>
+                        </div>
+                      )}
+                      
+                      <div className="flex space-x-3">
+                        <button
+                          onClick={handleChangeEmail}
+                          disabled={changingEmail}
+                          className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-medium transition duration-300 disabled:opacity-50"
+                        >
+                          {changingEmail ? 'Updating...' : 'Update Email'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowChangeEmail(false);
+                            setChangeEmailForm({ new_email: '', confirm_email: '', current_password: '' });
+                            setChangeEmailError('');
+                          }}
+                          className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg font-medium transition duration-300"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Change Password Section */}
+                <div>
+                  <h4 className="font-bold text-green-300 mb-4">Change Password</h4>
+                  
+                  {!showChangePassword ? (
+                    <button
+                      onClick={() => setShowChangePassword(true)}
+                      className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-medium transition duration-300"
+                    >
+                      Change Password
+                    </button>
+                  ) : (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-gray-300 text-sm font-bold mb-2">Current Password</label>
+                        <input
+                          type="password"
+                          value={changePasswordForm.current_password}
+                          onChange={(e) => setChangePasswordForm({...changePasswordForm, current_password: e.target.value})}
+                          className="w-full max-w-xs bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                          placeholder="Enter current password"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-gray-300 text-sm font-bold mb-2">New Password</label>
+                          <input
+                            type="password"
+                            value={changePasswordForm.new_password}
+                            onChange={(e) => setChangePasswordForm({...changePasswordForm, new_password: e.target.value})}
+                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                            placeholder="Enter new password"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-gray-300 text-sm font-bold mb-2">Confirm New Password</label>
+                          <input
+                            type="password"
+                            value={changePasswordForm.confirm_password}
+                            onChange={(e) => setChangePasswordForm({...changePasswordForm, confirm_password: e.target.value})}
+                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                            placeholder="Confirm new password"
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Password Strength Indicator */}
+                      {changePasswordForm.new_password && (
+                        <div className="text-sm">
+                          <p className="text-gray-300 mb-2">Password Requirements:</p>
+                          <ul className="space-y-1">
+                            <li className={changePasswordForm.new_password.length >= 8 ? 'text-green-400' : 'text-red-400'}>
+                              {changePasswordForm.new_password.length >= 8 ? '✓' : '✗'} At least 8 characters
+                            </li>
+                            <li className={/[A-Za-z]/.test(changePasswordForm.new_password) ? 'text-green-400' : 'text-red-400'}>
+                              {/[A-Za-z]/.test(changePasswordForm.new_password) ? '✓' : '✗'} Contains letters
+                            </li>
+                            <li className={/\d/.test(changePasswordForm.new_password) ? 'text-green-400' : 'text-red-400'}>
+                              {/\d/.test(changePasswordForm.new_password) ? '✓' : '✗'} Contains numbers
+                            </li>
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {changePasswordError && (
+                        <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3">
+                          <p className="text-red-300 text-sm">{changePasswordError}</p>
+                        </div>
+                      )}
+                      
+                      <div className="flex space-x-3">
+                        <button
+                          onClick={handleChangePassword}
+                          disabled={changingPassword}
+                          className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-medium transition duration-300 disabled:opacity-50"
+                        >
+                          {changingPassword ? 'Updating...' : 'Update Password'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowChangePassword(false);
+                            setChangePasswordForm({ current_password: '', new_password: '', confirm_password: '' });
+                            setChangePasswordError('');
+                          }}
+                          className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg font-medium transition duration-300"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Account Deletion Section */}
             <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-6">
               <h3 className="text-lg font-bold text-red-300 mb-4">⚠️ Danger Zone</h3>
