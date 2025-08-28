@@ -3015,16 +3015,8 @@ const MusicianDashboard = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [openDropdownId]);
 
-  // Get base URL for audience links - always use production domain
-  const getBaseUrl = () => {
-    // PRODUCTION FIX: Always use requestwave.app for audience URLs
-    return 'https://requestwave.app';
-  };
-
-  const audienceUrl = `${getBaseUrl()}/musician/${musician.slug}`;
-  
-  // PRODUCTION FIX: Ensure audience URL always uses production domain
-  const productionAudienceUrl = audienceUrl.replace(/https:\/\/[^\/]+/, 'https://requestwave.app');
+  // Use centralized audience URL helper
+  const audienceUrl = getAudienceUrl(musician.slug);
 
   if (loading) {
     return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Loading...</div>;
