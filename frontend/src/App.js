@@ -3180,9 +3180,8 @@ const MusicianDashboard = () => {
         {/* Songs Tab */}
         {activeTab === 'songs' && (
           <div>
-            {/* Song Management Header */}
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Song Management</h2>
+            {/* Streamlined Header - No Title */}
+            <div className="flex justify-end items-center mb-6">
               <div className="flex gap-2">
                 {/* Song Management Dropdown */}
                 <div className="relative song-management-dropdown">
@@ -3200,6 +3199,17 @@ const MusicianDashboard = () => {
                   {showSongManagementDropdown && (
                     <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50">
                       <div className="py-2">
+                        {/* Export CSV - Moved from header */}
+                        <button
+                          onClick={() => {
+                            exportSongsToCSV();
+                            setShowSongManagementDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
+                        >
+                          <span className="text-blue-400">📊</span>
+                          <span>Export CSV</span>
+                        </button>
                         {/* Auto-fill All */}
                         <button
                           onClick={() => {
