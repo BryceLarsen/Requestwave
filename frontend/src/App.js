@@ -4515,12 +4515,12 @@ const MusicianDashboard = () => {
               </div>
             )}
             
-            {/* Shows Folders (MOVED ABOVE ALL REQUESTS) */}
-            {shows.length > 0 && (
+            {/* Active Shows Folders (MOVED ABOVE ALL REQUESTS) */}
+            {shows.filter(show => show.status !== 'archived').length > 0 && (
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-4">🎭 Shows</h3>
                 <div className="space-y-3">
-                  {shows.map((show) => (
+                  {shows.filter(show => show.status !== 'archived').map((show) => (
                     <details key={show.id} className="bg-gray-700 rounded-lg">
                       <summary className="cursor-pointer p-4 font-medium hover:bg-gray-600 rounded-lg transition duration-300 flex justify-between items-center">
                         <div className="flex items-center space-x-3">
