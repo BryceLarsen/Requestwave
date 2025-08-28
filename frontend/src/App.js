@@ -6494,7 +6494,7 @@ const MusicianDashboard = () => {
                         <h4 className="font-bold text-green-300 mb-2">🔥 Get Our Starter Pack!</h4>
                         <p className="text-gray-300 text-sm mb-3">
                           <a 
-                            href="https://docs.google.com/spreadsheets/d/1BgV_lF3PnUGSNmYc8L9Y1Qfv2m5s3tPFcVR5gZ8QX7t/export?format=csv"
+                            href="/RequestWave_Popular_Songs.csv"
                             download="RequestWave_Popular_Songs.csv"
                             className="text-green-300 underline hover:text-green-200"
                           >
