@@ -4828,6 +4828,83 @@ async def delete_show(
         logger.error(f"Error deleting show: {str(e)}")
         raise HTTPException(status_code=500, detail="Error deleting show")
 
+# NEW: Show Archive/Restore Management
+@api_router.put("/shows/{show_id}/archive")
+async def archive_show(
+    show_id: str,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Archive a show (moves to archived section, preserves requests)"""
+    try:
+        # Verify show belongs to musician
+        show = await db.shows.find_one({"id": show_id, "musician_id": musician_id})
+        if not show:
+            raise HTTPException(status_code=404, detail="Show not found")
+        
+        # Check if show is currently active
+        if show.get("status") == "archived":
+            raise HTTPException(status_code=400, detail="Show is already archived")
+        
+        # Archive the show
+        await db.shows.update_one(
+            {"id": show_id},
+            {"$set": {
+                "status": "archived",
+                "archived_at": datetime.utcnow()
+            }}
+        )
+        
+        # If this was the current active show, clear it from musician
+        musician = await db.musicians.find_one({"id": musician_id})
+        if musician and musician.get("current_show_id") == show_id:
+            await db.musicians.update_one(
+                {"id": musician_id},
+                {"$set": {"current_show_id": None, "current_show_name": None}}
+            )
+        
+        logger.info(f"Archived show {show_id} for musician {musician_id}")
+        return {"success": True, "message": f"Show '{show['name']}' archived successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error archiving show: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error archiving show")
+
+@api_router.put("/shows/{show_id}/restore")
+async def restore_show(
+    show_id: str,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Restore an archived show to active status"""
+    try:
+        # Verify show belongs to musician
+        show = await db.shows.find_one({"id": show_id, "musician_id": musician_id})
+        if not show:
+            raise HTTPException(status_code=404, detail="Show not found")
+        
+        # Check if show is archived
+        if show.get("status") != "archived":
+            raise HTTPException(status_code=400, detail="Show is not archived")
+        
+        # Restore the show
+        await db.shows.update_one(
+            {"id": show_id},
+            {"$set": {
+                "status": "active",
+                "restored_at": datetime.utcnow()
+            }}
+        )
+        
+        logger.info(f"Restored show {show_id} for musician {musician_id}")
+        return {"success": True, "message": f"Show '{show['name']}' restored successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error restoring show: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error restoring show")
+
 # NEW: Playlist endpoints (Pro feature)
 @api_router.post("/playlists", response_model=PlaylistResponse)
 async def create_playlist(
