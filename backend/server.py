@@ -2119,6 +2119,119 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
         apple_music_artist_url=updated_musician.get("apple_music_artist_url", "")
     )
 
+# NEW: Change Email endpoint
+@api_router.put("/account/change-email")
+async def change_email(
+    email_data: dict,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Change musician's email address"""
+    try:
+        # Validate required fields
+        new_email = email_data.get("new_email", "").strip().lower()
+        confirm_email = email_data.get("confirm_email", "").strip().lower()
+        current_password = email_data.get("current_password", "")
+        
+        if not new_email or not confirm_email or not current_password:
+            raise HTTPException(status_code=400, detail="All fields are required")
+        
+        # Validate email format
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, new_email):
+            raise HTTPException(status_code=400, detail="Invalid email format")
+        
+        # Check if emails match
+        if new_email != confirm_email:
+            raise HTTPException(status_code=400, detail="Email addresses do not match")
+        
+        # Get current musician
+        musician = await db.musicians.find_one({"id": musician_id})
+        if not musician:
+            raise HTTPException(status_code=404, detail="Musician not found")
+        
+        # Verify current password
+        if not bcrypt.checkpw(current_password.encode('utf-8'), musician["password_hash"].encode('utf-8')):
+            raise HTTPException(status_code=400, detail="Current password is incorrect")
+        
+        # Check if new email is already in use
+        existing_user = await db.musicians.find_one({"email": new_email, "id": {"$ne": musician_id}})
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email address is already in use")
+        
+        # Update email
+        await db.musicians.update_one(
+            {"id": musician_id},
+            {"$set": {"email": new_email}}
+        )
+        
+        return {"success": True, "message": "Email address updated successfully. Please log in again with your new email."}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error changing email: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error updating email address")
+
+# NEW: Change Password endpoint  
+@api_router.put("/account/change-password")
+async def change_password(
+    password_data: dict,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Change musician's password"""
+    try:
+        # Validate required fields
+        current_password = password_data.get("current_password", "")
+        new_password = password_data.get("new_password", "")
+        confirm_password = password_data.get("confirm_password", "")
+        
+        if not current_password or not new_password or not confirm_password:
+            raise HTTPException(status_code=400, detail="All fields are required")
+        
+        # Check if new passwords match
+        if new_password != confirm_password:
+            raise HTTPException(status_code=400, detail="New passwords do not match")
+        
+        # Validate password strength
+        if len(new_password) < 8:
+            raise HTTPException(status_code=400, detail="Password must be at least 8 characters long")
+        
+        # Check for at least one number and one letter
+        import re
+        if not re.search(r'[A-Za-z]', new_password) or not re.search(r'\d', new_password):
+            raise HTTPException(status_code=400, detail="Password must contain at least one letter and one number")
+        
+        # Get current musician
+        musician = await db.musicians.find_one({"id": musician_id})
+        if not musician:
+            raise HTTPException(status_code=404, detail="Musician not found")
+        
+        # Verify current password
+        if not bcrypt.checkpw(current_password.encode('utf-8'), musician["password_hash"].encode('utf-8')):
+            raise HTTPException(status_code=400, detail="Current password is incorrect")
+        
+        # Check if new password is different from current
+        if bcrypt.checkpw(new_password.encode('utf-8'), musician["password_hash"].encode('utf-8')):
+            raise HTTPException(status_code=400, detail="New password must be different from current password")
+        
+        # Hash new password
+        new_password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        
+        # Update password
+        await db.musicians.update_one(
+            {"id": musician_id},
+            {"$set": {"password_hash": new_password_hash}}
+        )
+        
+        return {"success": True, "message": "Password updated successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error changing password: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error updating password")
+
 # Password Reset endpoints
 @api_router.post("/auth/forgot-password")
 async def forgot_password(reset_data: PasswordReset):
