@@ -8042,26 +8042,6 @@ const AudienceInterface = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              {designSettings.bio && (
-                <div className="flex items-start space-x-2 px-2">
-                  <p className={`text-gray-300 text-sm md:text-base flex-1 ${bioExpanded ? '' : 'line-clamp-2'}`} style={bioExpanded ? {} : {
-                    display: '-webkit-box',
-                    WebkitLineClamp: 1,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden'
-                  }}>
-                    {designSettings.bio}
-                  </p>
-                  {designSettings.bio.length > 80 && (
-                    <button
-                      onClick={() => setBioExpanded(!bioExpanded)}
-                      className="text-gray-400 hover:text-white transition duration-300 text-sm flex-shrink-0"
-                    >
-                      {bioExpanded ? '▲' : '▼'}
-                    </button>
-                  )}
-                </div>
-              )}
             </div>
             <div className="flex items-center space-x-2">
               <img
