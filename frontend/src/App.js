@@ -4053,13 +4053,6 @@ const MusicianDashboard = () => {
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold">Your Songs ({filteredSongs.length})</h2>
                   <div className="flex space-x-2">
-                    <button
-                      onClick={() => exportSongsToCSV()}
-                      className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
-                    >
-                      Export CSV
-                    </button>
-                    
                     {/* NEW: Sort By Dropdown */}
                     <select
                       value={sortBy}
