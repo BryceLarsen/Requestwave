@@ -7508,12 +7508,6 @@ const AudienceInterface = () => {
               >
                 💰 Tip
               </button>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`md:hidden ${colors.primary} px-4 py-2 rounded-lg font-medium transition duration-300`}
-              >
-                Filters
-              </button>
             </div>
           </div>
         </div>
