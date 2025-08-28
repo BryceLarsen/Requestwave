@@ -595,6 +595,7 @@ const MusicianDashboard = () => {
   // NEW: Song suggestions state
   const [songSuggestions, setSongSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestionsSectionCollapsed, setSuggestionsSectionCollapsed] = useState(false);
   const [suggestionError, setSuggestionError] = useState('');
   
   // NEW: Post-request state for tracking clicks
