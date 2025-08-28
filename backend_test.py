@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 """
-Backend Testing Suite for RequestWave Email Configuration and Contact Form
-Testing the updated email addresses and functionality as requested.
+RequestWave Backend Testing Suite - Email Configuration and Contact Form System
+Testing the updated contact form and email configuration as per review request.
 
-CRITICAL TEST AREAS:
-1. Password Reset Email Configuration Test - POST /api/auth/forgot-password endpoint
-2. Contact Form Backend Test - POST /api/contact endpoint  
-3. Password Reset Token System Test - POST /api/auth/reset-password endpoint
-4. General Email System Test - Email logging and error handling
+TESTING REQUIREMENTS:
+1. Contact Form Email Test - POST /api/contact endpoint with sample contact data
+2. Password Reset Email Update Test - POST /api/auth/forgot-password endpoint  
+3. Auth Proxy Pages Accessibility Test - /login.html, /signup.html, /reset-password.html
+4. Email Template Validation - RequestWave branding and proper HTML structure
 
-CONTEXT: Just updated email addresses for password reset and contact form functionality:
-1. Password reset emails now reply-to: requestwave@adventuresoundlive.com
-2. Contact form updated to send emails to: requestwave@adventuresoundlive.com  
-3. Contact form now has proper HTML email template and error handling
+CONTEXT: Just updated email addresses and created branded auth proxy pages for RequestWave:
+- Contact form sends emails to requestwave@adventuresoundlive.com
+- Password reset emails have updated reply-to: requestwave@adventuresoundlive.com
+- Branded auth pages are accessible with RequestWave branding
+- Email templates working with proper branding
 
-Expected: Complete email system working with updated addresses and proper token-based password reset.
+Test data: name="Test User", email="test@requestwave.com", message="Testing contact functionality", musician_id="test-musician-123"
 """
 
 import requests
@@ -29,25 +30,29 @@ class RequestWaveEmailTester:
     def __init__(self):
         # Get backend URL from environment
         self.backend_url = os.getenv('REACT_APP_BACKEND_URL', 'https://stagepro-app.preview.emergentagent.com')
-        if not self.backend_url.endswith('/api'):
-            self.backend_url = f"{self.backend_url}/api"
+        self.api_url = f"{self.backend_url}/api" if not self.backend_url.endswith('/api') else self.backend_url
         
         self.session = requests.Session()
         self.session.headers.update({
             'Content-Type': 'application/json',
-            'User-Agent': 'RequestWave-Backend-Tester/1.0'
+            'User-Agent': 'RequestWave-Email-Tester/1.0'
         })
         
-        # Test data
-        self.test_email = "test@example.com"
+        # Test data as specified in review request
         self.test_contact_data = {
             "name": "Test User",
-            "email": "test@example.com", 
-            "message": "Testing contact form functionality",
-            "musician_id": "test-123"
+            "email": "test@requestwave.com", 
+            "message": "Testing contact functionality",
+            "musician_id": "test-musician-123"
         }
         
-        print(f"🚀 RequestWave Email Testing Suite")
+        self.test_results = []
+        self.total_tests = 0
+        self.passed_tests = 0
+        
+        print(f"🚀 RequestWave Email Configuration Testing Suite")
+        print(f"📍 Backend URL: {self.backend_url}")
+        print(f"📍 API URL: {self.api_url}")
         print(f"📡 Backend URL: {self.backend_url}")
         print(f"🕐 Test Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 80)
