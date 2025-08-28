@@ -7,6 +7,29 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const BILLING_ENABLED = process.env.REACT_APP_BILLING_ENABLED === 'true';
 
+// PRODUCTION SOURCE OF TRUTH: Audience URL base domain
+const AUDIENCE_BASE_URL = 'https://requestwave.app';
+
+// Environment guard for production
+const validateProductionConfig = () => {
+  if (AUDIENCE_BASE_URL !== 'https://requestwave.app') {
+    console.error('❌ PRODUCTION CONFIG ERROR: AUDIENCE_BASE_URL must be https://requestwave.app in production');
+    console.error('Current value:', AUDIENCE_BASE_URL);
+  }
+};
+
+// Single helper function for all audience URL generation
+const getAudienceUrl = (slug) => {
+  if (!slug) {
+    console.error('getAudienceUrl called with invalid slug:', slug);
+    return AUDIENCE_BASE_URL;
+  }
+  return `${AUDIENCE_BASE_URL}/musician/${slug}`;
+};
+
+// Initialize production validation
+validateProductionConfig();
+
 // Auth Context
 const AuthContext = createContext();
 
