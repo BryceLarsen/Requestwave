@@ -7070,7 +7070,7 @@ const MusicianDashboard = () => {
                         <h4 className="font-bold text-green-300 mb-2">🔥 Get Our Starter Pack!</h4>
                         <p className="text-gray-300 text-sm mb-3">
                           <a 
-                            href={`${import.meta.env.VITE_REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL}/api/demo-csv`}
+                            href={`${process.env.REACT_APP_BACKEND_URL}/api/demo-csv`}
                             download="RequestWave_Popular_Songs.csv"
                             className="text-green-300 underline hover:text-green-200"
                           >
