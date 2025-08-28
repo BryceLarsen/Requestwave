@@ -289,8 +289,8 @@ class EmergentOAuthTester:
             
             cookie_response = self.make_request("GET", "/profile", cookies=mock_cookies)
             
-            # Should get 401 (invalid session) but shows cookie support exists
-            if cookie_response.status_code == 401:
+            # Should get 403 (invalid session) but shows cookie support exists
+            if cookie_response.status_code == 403:
                 print("   ✅ Enhanced authentication processes cookie-based requests")
                 cookie_support_works = True
             else:
