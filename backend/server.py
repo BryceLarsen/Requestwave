@@ -2551,33 +2551,52 @@ async def forgot_password(reset_data: PasswordReset):
     }
 
 @api_router.post("/auth/reset-password")
-async def reset_password(reset_data: PasswordResetConfirm):
-    """Confirm password reset with code"""
-    # Find valid reset code
-    reset_request = await db.password_resets.find_one({
-        "email": reset_data.email,
-        "reset_code": reset_data.reset_code,
-        "expires_at": {"$gt": datetime.utcnow()},
-        "used": False
-    })
-    
-    if not reset_request:
-        raise HTTPException(status_code=400, detail="Invalid or expired reset code")
-    
-    # Update musician's password
-    hashed_password = hash_password(reset_data.new_password)
-    await db.musicians.update_one(
-        {"email": reset_data.email},
-        {"$set": {"password": hashed_password}}
-    )
-    
-    # Mark reset code as used
-    await db.password_resets.update_one(
-        {"email": reset_data.email, "reset_code": reset_data.reset_code},
-        {"$set": {"used": True}}
-    )
-    
-    return {"message": "Password reset successful"}
+async def reset_password(request_data: dict):
+    """Confirm password reset with token (single-use, 60-minute expiry)"""
+    try:
+        reset_token = request_data.get("reset_token", "")
+        new_password = request_data.get("new_password", "")
+        
+        if not reset_token or not new_password:
+            raise HTTPException(status_code=400, detail="Reset token and new password are required")
+        
+        # Find valid reset token (60-minute expiry, single-use)
+        reset_request = await db.password_resets.find_one({
+            "reset_token": reset_token,
+            "expires_at": {"$gt": datetime.utcnow()},
+            "used": False
+        })
+        
+        if not reset_request:
+            raise HTTPException(status_code=400, detail="Invalid or expired reset link")
+        
+        # Validate password strength
+        if len(new_password) < 8:
+            raise HTTPException(status_code=400, detail="Password must be at least 8 characters long")
+        
+        # Update musician's password
+        hashed_password = hash_password(new_password)
+        await db.musicians.update_one(
+            {"email": reset_request["email"]},
+            {"$set": {"password_hash": hashed_password}}
+        )
+        
+        # Mark token as used (single-use)
+        await db.password_resets.update_one(
+            {"reset_token": reset_token},
+            {"$set": {"used": True, "used_at": datetime.utcnow()}}
+        )
+        
+        # Log successful password reset (non-PII)
+        logger.info(f"password_reset_success: email_domain={reset_request['email'].split('@')[1]}")
+        
+        return {"message": "Password reset successful", "success": True}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error during password reset: {str(e)}")
+        raise HTTPException(status_code=500, detail="Password reset failed")
 
 # QR Code endpoints
 @api_router.get("/debug/env")
