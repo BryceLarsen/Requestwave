@@ -5612,7 +5612,7 @@ async def get_freemium_checkout_status(
 ):
     """Get checkout session status and update musician's subscription if paid"""
     try:
-        base_url = os.environ.get('FRONTEND_URL', 'https://livewave-music.emergent.host')
+        base_url = os.environ.get('FRONTEND_URL', 'https://requestwave.app')
         webhook_url = f"{base_url}/api/webhook/stripe"
         stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
         
