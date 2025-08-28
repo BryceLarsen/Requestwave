@@ -4479,8 +4479,11 @@ const MusicianDashboard = () => {
               </details>
             </div>
             
-            {/* NEW: Song Suggestions Section (when toggled on) */}
-            {showSuggestions && (
+          </div>
+        )}
+
+        {/* NEW: Song Suggestions Section (when toggled on) */}
+        {showSuggestions && (
           <div className="bg-gray-700 rounded-xl p-6 mb-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold text-green-400">💡 Song Suggestions from Audience</h3>
