@@ -4508,16 +4508,28 @@ const MusicianDashboard = () => {
                             ({requests.filter(r => r.show_name === show.name).length} requests)
                           </span>
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleDeleteShow(show.id, show.name);
-                          }}
-                          className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded transition duration-300 ml-4"
-                          title={`Delete show "${show.name}" and all requests permanently`}
-                        >
-                          🗑️ Delete Show
+                        <div className="flex items-center space-x-1">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleArchiveShow(show.id, show.name);
+                            }}
+                            className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1 rounded transition duration-300"
+                            title={`Archive show "${show.name}" (moves to bottom, preserves requests)`}
+                          >
+                            📦 Archive
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDeleteShow(show.id, show.name);
+                            }}
+                            className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded transition duration-300"
+                            title={`Delete show "${show.name}" and all requests permanently`}
+                          >
+                            🗑️ Delete
                         </button>
                       </summary>
                       <div className="px-4 pb-4 space-y-2">
