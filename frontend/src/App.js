@@ -916,6 +916,37 @@ const MusicianDashboard = () => {
     }
   };
 
+  // NEW: Show archive management functions
+  const handleArchiveShow = async (showId, showName) => {
+    if (confirm(`Archive show "${showName}"? The show and its requests will be moved to the archived section.`)) {
+      try {
+        await axios.put(`${API}/shows/${showId}/archive`);
+        fetchGroupedRequests();
+        fetchShows();
+        fetchCurrentShow(); // Update current show status
+        alert(`Show "${showName}" archived successfully!`);
+      } catch (error) {
+        console.error('Error archiving show:', error);
+        alert('Error archiving show. Please try again.');
+      }
+    }
+  };
+
+  const handleRestoreShow = async (showId, showName) => {
+    if (confirm(`Restore show "${showName}" from archive? It will be moved back to the active shows section.`)) {
+      try {
+        await axios.put(`${API}/shows/${showId}/restore`);
+        fetchGroupedRequests();
+        fetchShows();
+        fetchCurrentShow(); // Update current show status
+        alert(`Show "${showName}" restored successfully!`);
+      } catch (error) {
+        console.error('Error restoring show:', error);
+        alert('Error restoring show. Please try again.');
+      }
+    }
+  };
+
   // NEW: Song suggestions management functions
   const fetchSongSuggestions = async () => {
     try {
