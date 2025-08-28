@@ -4709,7 +4709,7 @@ const MusicianDashboard = () => {
                             `Trial ends: ${subscriptionStatus.trial_end ? new Date(subscriptionStatus.trial_end).toLocaleDateString() : 'Soon'}` :
                             subscriptionStatus.plan === 'active' ? 
                             'Unlimited requests' :
-                            'Start your 14-day trial'
+                            ''  // REMOVED: "Start your 14-day trial" banner text
                           }
                         </div>
                       </>
