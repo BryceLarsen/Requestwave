@@ -4980,6 +4980,101 @@ const MusicianDashboard = () => {
             </div>
           </div>
         )}
+        
+        {/* NEW: Archived Shows Section - Bottom of Requests Tab */}
+        {activeTab === 'requests' && shows.filter(show => show.status === 'archived').length > 0 && (
+          <div className="bg-gray-800 rounded-xl p-6 mb-6">
+            <details open={!archivedShowsCollapsed}>
+              <summary 
+                className="cursor-pointer list-none"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setArchivedShowsCollapsed(!archivedShowsCollapsed);
+                }}
+              >
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-2">
+                    <span className={`transition-transform ${archivedShowsCollapsed ? '' : 'rotate-90'}`}>▶</span>
+                    <h3 className="text-lg font-bold text-gray-400">📦 Archived Shows</h3>
+                    <span className="bg-gray-500 text-white text-xs px-2 py-1 rounded-full">
+                      {shows.filter(show => show.status === 'archived').length}
+                    </span>
+                  </div>
+                </div>
+              </summary>
+
+              {/* Archived Shows Content */}
+              {!archivedShowsCollapsed && (
+                <div className="mt-4 space-y-3">
+                  {shows.filter(show => show.status === 'archived').map((show) => (
+                    <details key={show.id} className="bg-gray-700 rounded-lg">
+                      <summary className="cursor-pointer p-4 font-medium hover:bg-gray-600 rounded-lg transition duration-300 flex justify-between items-center">
+                        <div className="flex items-center space-x-3">
+                          <span>📁 {show.name} ({show.date || 'No date'})</span>
+                          <span className="text-gray-400 text-xs">
+                            Archived • {requests.filter(r => r.show_name === show.name).length} requests
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleRestoreShow(show.id, show.name);
+                            }}
+                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition duration-300"
+                            title={`Restore show "${show.name}" to active status`}
+                          >
+                            🔄 Restore
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDeleteShow(show.id, show.name);
+                            }}
+                            className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded transition duration-300"
+                            title={`Delete show "${show.name}" and all requests permanently`}
+                          >
+                            🗑️ Delete
+                          </button>
+                        </div>
+                      </summary>
+                      
+                      {/* Archived Show Requests */}
+                      <div className="px-4 pb-4 space-y-2">
+                        {requests.filter(r => r.show_name === show.name).map((request) => (
+                          <div key={request.id} className="bg-gray-600 p-3 rounded flex items-center justify-between opacity-75">
+                            <div>
+                              <h4 className="font-medium text-white">{request.song_title}</h4>
+                              <p className="text-gray-300 text-sm">{request.song_artist}</p>
+                              <p className="text-gray-400 text-xs">
+                                From: {request.requester_name} • {formatTimestamp(request.created_at)}
+                              </p>
+                            </div>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              request.status === 'played' ? 'bg-green-600/50 text-green-200' :
+                              request.status === 'rejected' ? 'bg-red-600/50 text-red-200' :
+                              'bg-gray-600/50 text-gray-300'
+                            }`}>
+                              {request.status.toUpperCase()}
+                            </span>
+                          </div>
+                        ))}
+                        
+                        {requests.filter(r => r.show_name === show.name).length === 0 && (
+                          <div className="text-center py-4 text-gray-500">
+                            <p className="text-sm">No requests in this archived show</p>
+                          </div>
+                        )}
+                      </div>
+                    </details>
+                  ))}
+                </div>
+              )}
+            </details>
+          </div>
+        )}
 
         {/* On Stage Tab - Dedicated tab for live performance management */}
         {activeTab === 'onstage' && (
