@@ -322,8 +322,8 @@ class BugFixesTester:
             print("📊 Step 3: Test song suggestion status updates")
             
             if create_works and suggestion_id:
-                # Test accepting the suggestion
-                accept_data = {"status": "accepted"}
+                # Test accepting the suggestion (backend expects "added" not "accepted")
+                accept_data = {"status": "added"}
                 accept_response = self.make_request("PUT", f"/song-suggestions/{suggestion_id}/status", accept_data)
                 
                 print(f"   📊 Accept response status: {accept_response.status_code}")
