@@ -2992,18 +2992,10 @@ const MusicianDashboard = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [openDropdownId]);
 
-  // Get base URL for audience links - should match backend FRONTEND_URL
+  // Get base URL for audience links - always use production domain
   const getBaseUrl = () => {
-    // For production, always use the configured backend's domain
-    // For development, fallback to current domain
-    const backendUrl = process.env.REACT_APP_BACKEND_URL;
-    if (backendUrl && backendUrl !== 'http://localhost:8001') {
-      // Extract domain from backend URL (remove /api if present)
-      const url = new URL(backendUrl);
-      return `${url.protocol}//${url.host}`;
-    }
-    // Fallback to current origin for development
-    return window.location.origin;
+    // PRODUCTION FIX: Always use requestwave.app for audience URLs
+    return 'https://requestwave.app';
   };
 
   const audienceUrl = `${getBaseUrl()}/musician/${musician.slug}`;
