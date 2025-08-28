@@ -2474,7 +2474,7 @@ async def forgot_password(reset_data: PasswordReset):
         
         # Get production base URL
         frontend_url = os.environ.get('FRONTEND_URL', 'https://requestwave.app')
-        reset_url = f"{frontend_url}/reset-password"
+        reset_url = f"{frontend_url}/reset-password.html"
         
         # Prepare email data for Emergent
         email_data = {
