@@ -7057,6 +7057,9 @@ const AudienceInterface = () => {
   // NEW: Bio expansion state
   const [bioExpanded, setBioExpanded] = useState(false);
   
+  // NEW: Profile dialog state  
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
+  
   // NEW: Access control state
   const [accessDenied, setAccessDenied] = useState(false);
   const [accessMessage, setAccessMessage] = useState('');
