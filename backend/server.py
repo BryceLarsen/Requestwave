@@ -2234,7 +2234,7 @@ async def change_password(
 
 # NEW: Emergent OAuth authentication endpoints
 @api_router.post("/auth/emergent-oauth")
-async def emergent_oauth_login(request: Request, response: Response):
+async def emergent_oauth_login(request: FastAPIRequest, response: Response):
     """Handle Emergent OAuth session authentication"""
     try:
         # Get session ID from X-Session-ID header
