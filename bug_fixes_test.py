@@ -471,11 +471,11 @@ class BugFixesTester:
             else:
                 required_fields_present = False
             
-            # Step 3: Test audience link generation
+            # Step 3: Test audience link generation (use slug from authentication)
             print("📊 Step 3: Test audience link generation")
             
-            if profile_accessible and 'slug' in profile_data:
-                musician_slug = profile_data['slug']
+            if profile_accessible and self.musician_slug:
+                musician_slug = self.musician_slug  # Use slug from authentication
                 
                 # Test public musician endpoint (audience link)
                 temp_token = self.auth_token
