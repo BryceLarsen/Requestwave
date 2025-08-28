@@ -297,6 +297,21 @@ const AuthForm = ({ mode, onSwitch }) => {
               </button>
             )}
           </div>
+          
+          {/* NEW: Having Trouble? Support Block */}
+          <div className="mt-6 pt-4 border-t border-white/20 text-center">
+            <p className="text-purple-200 text-sm">
+              Having trouble signing in?<br />
+              Contact{' '}
+              <a 
+                href="mailto:support@adventuresoundlive.com"
+                className="text-purple-300 hover:text-white underline transition duration-300"
+              >
+                support@adventuresoundlive.com
+              </a>{' '}
+              for help.
+            </p>
+          </div>
         </>
       ) : (
             <>
