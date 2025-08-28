@@ -8,7 +8,7 @@ import json
 from datetime import datetime, timedelta
 
 # Configuration
-BASE_URL = "https://requestwave-2.preview.emergentagent.com/api"
+BASE_URL = "https://stagepro-app.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {

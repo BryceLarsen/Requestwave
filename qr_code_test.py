@@ -26,7 +26,7 @@ from io import BytesIO
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://requestwave-2.preview.emergentagent.com/api"
+BASE_URL = "https://stagepro-app.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
     "name": "QR Code Test Musician",
     "email": "qrcode.test@requestwave.com", 
@@ -181,7 +181,7 @@ class QRCodeURLTester:
                         # Check if it matches expected pattern
                         expected_patterns = [
                             "https://requestwave.app",
-                            "https://requestwave-2.preview.emergentagent.com"
+                            "https://stagepro-app.preview.emergentagent.com"
                         ]
                         
                         frontend_url_detected = base_url
@@ -583,7 +583,7 @@ class QRCodeURLTester:
                 
                 # From the environment files we saw:
                 # backend/.env: FRONTEND_URL=https://requestwave.app
-                # frontend/.env: REACT_APP_BACKEND_URL=https://requestwave-2.preview.emergentagent.com
+                # frontend/.env: REACT_APP_BACKEND_URL=https://stagepro-app.preview.emergentagent.com
                 
                 # The frontend should be using the same base URL as the backend's FRONTEND_URL
                 if qr_audience_url:

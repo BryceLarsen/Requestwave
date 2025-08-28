@@ -5581,7 +5581,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_origins=[
         "https://requestwave.app",
-        "https://requestwave-2.preview.emergentagent.com",
+        "https://stagepro-app.preview.emergentagent.com",
         os.environ.get('FRONTEND_URL', '').replace('http://', 'https://'),  # Dynamic production URL
         "https://requestwave.emergent.host"  # Potential production domain
     ],
