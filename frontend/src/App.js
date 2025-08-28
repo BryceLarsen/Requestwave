@@ -2885,7 +2885,10 @@ const MusicianDashboard = () => {
                   : 'text-gray-400 hover:text-white'
               }`}
             >
-              {tab === 'analytics' ? 'Analytics' : tab === 'design' ? 'Design' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'analytics' ? 'Analytics' : 
+               tab === 'design' ? 'Design' : 
+               tab === 'onstage' ? 'On Stage' : 
+               tab.charAt(0).toUpperCase() + tab.slice(1)}
               {tab === 'requests' && requests.filter(r => r.status === 'pending').length > 0 && (
                 <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-xs">
                   {requests.filter(r => r.status === 'pending').length}
