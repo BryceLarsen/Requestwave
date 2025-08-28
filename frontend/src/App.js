@@ -5155,7 +5155,7 @@ const MusicianDashboard = () => {
                   <button
                     onClick={async (event) => {
                       try {
-                        await navigator.clipboard.writeText(productionAudienceUrl);
+                        await navigator.clipboard.writeText(audienceUrl);
                         // Provide visual feedback
                         const button = event.target;
                         const originalText = button.textContent;
