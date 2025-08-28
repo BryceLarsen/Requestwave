@@ -4685,6 +4685,37 @@ const MusicianDashboard = () => {
                 <div>
                   <h2 className="text-xl font-bold mb-2">Your Audience Link</h2>
                   <p className="text-purple-200 mb-4">Share this link with your audience for song requests:</p>
+                </div>
+                {subscriptionStatus && (
+                  <div className="text-right">
+                    {subscriptionStatus.plan === 'free' || !subscriptionStatus.audience_link_active ? (
+                      <button
+                        onClick={() => setActiveTab('subscription')}
+                        className="bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-lg font-bold transition duration-300 text-sm"
+                      >
+                        Upgrade Now
+                      </button>
+                    ) : (
+                      <>
+                        <div className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          subscriptionStatus.plan === 'trialing' ? 'bg-blue-600' :
+                          subscriptionStatus.plan === 'active' ? 'bg-green-600' : 'bg-orange-600'
+                        }`}>
+                          {subscriptionStatus.plan === 'trialing' ? 'TRIAL' :
+                           subscriptionStatus.plan === 'active' ? 'PRO' : 'FREE'}
+                        </div>
+                        <div className="text-purple-200 text-xs mt-1">
+                          {subscriptionStatus.plan === 'trialing' ? 
+                            `Trial ends: ${subscriptionStatus.trial_end ? new Date(subscriptionStatus.trial_end).toLocaleDateString() : 'Soon'}` :
+                            subscriptionStatus.plan === 'active' ? 
+                            'Unlimited requests' :
+                            ''  // REMOVED: "Start your 14-day trial" banner text
+                          }
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
               
               <div className="flex flex-col space-y-4 lg:space-y-0 lg:flex-row lg:items-center lg:space-x-4">
