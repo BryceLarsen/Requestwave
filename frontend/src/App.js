@@ -8202,37 +8202,15 @@ const AudienceInterface = () => {
             )}
           </p>
           
-          {/* Random Song Button and Song Suggestion */}
+          {/* Random Song Button */}
           {filteredSongs.length > 0 && musician?.requests_enabled !== false && (
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex justify-center sm:justify-end">
               <button
                 onClick={handleRandomSong}
                 className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 <span>🎲</span>
                 <span>Random Song</span>
-              </button>
-              
-              {/* NEW: Song Suggestion Button - Always show for audience members */}
-              <button
-                onClick={() => setShowSuggestionModal(true)}
-                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                <span>💡</span>
-                <span>Suggest a Song</span>
-              </button>
-            </div>
-          )}
-          
-          {/* Show Song Suggestion Button even when requests are disabled */}
-          {musician?.requests_enabled === false && (
-            <div className="flex justify-center sm:justify-end">
-              <button
-                onClick={() => setShowSuggestionModal(true)}
-                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                <span>💡</span>
-                <span>Suggest a Song</span>
               </button>
             </div>
           )}
