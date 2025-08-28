@@ -2999,6 +2999,9 @@ const MusicianDashboard = () => {
   };
 
   const audienceUrl = `${getBaseUrl()}/musician/${musician.slug}`;
+  
+  // PRODUCTION FIX: Ensure audience URL always uses production domain
+  const productionAudienceUrl = audienceUrl.replace(/https:\/\/[^\/]+/, 'https://requestwave.app');
 
   if (loading) {
     return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Loading...</div>;
