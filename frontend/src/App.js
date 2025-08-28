@@ -3871,7 +3871,7 @@ const MusicianDashboard = () => {
                       }}
                       className="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-sm font-medium transition duration-300"
                     >
-                      + New
+                      Manage
                     </button>
                     <span className={`transition-transform duration-200 ${playlistsExpanded ? 'rotate-180' : ''}`}>
                       ▼
