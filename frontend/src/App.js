@@ -8609,6 +8609,173 @@ const AudienceInterface = () => {
             </div>
           </div>
         )}
+        
+        {/* NEW: Profile Dialog Modal */}
+        {showProfileDialog && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              {/* Dialog Header */}
+              <div className="sticky top-0 bg-gray-800 px-6 py-4 border-b border-gray-700 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white">Artist Profile</h2>
+                <button
+                  onClick={() => setShowProfileDialog(false)}
+                  className="text-gray-400 hover:text-white text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+              
+              {/* Dialog Content */}
+              <div className="p-6 space-y-6">
+                {/* Large Artist Photo */}
+                {designSettings.artist_photo && (
+                  <div className="text-center">
+                    <img
+                      src={designSettings.artist_photo}
+                      alt={designSettings.musician_name}
+                      className="w-32 h-32 md:w-48 md:h-48 rounded-full object-cover mx-auto"
+                    />
+                  </div>
+                )}
+                
+                {/* Artist Name */}
+                <div className="text-center">
+                  <h1 className="text-2xl md:text-3xl font-bold text-white">
+                    {designSettings.musician_name}
+                  </h1>
+                </div>
+                
+                {/* Banner Image (if available) */}
+                {designSettings.banner_image && (
+                  <div className="rounded-lg overflow-hidden">
+                    <img
+                      src={designSettings.banner_image}
+                      alt="Artist Banner"
+                      className="w-full h-48 object-cover"
+                    />
+                  </div>
+                )}
+                
+                {/* Bio */}
+                {designSettings.bio && (
+                  <div>
+                    <h3 className="text-lg font-bold text-white mb-3">About</h3>
+                    <p className="text-gray-300 leading-relaxed">
+                      {designSettings.bio}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Social Links */}
+                {musician && ((musician.instagram_username && musician.instagram_username.trim() !== '') || 
+                  (musician.facebook_username && musician.facebook_username.trim() !== '') || 
+                  (musician.tiktok_username && musician.tiktok_username.trim() !== '') || 
+                  (musician.website && musician.website.trim() !== '')) && (
+                  <div>
+                    <h3 className="text-lg font-bold text-white mb-3">Connect</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {musician.instagram_username && musician.instagram_username.trim() !== '' && (
+                        <a
+                          href={`https://instagram.com/${musician.instagram_username}`}
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="bg-pink-600 hover:bg-pink-700 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center space-x-2 text-center"
+                        >
+                          <span>📸</span>
+                          <span>Instagram</span>
+                        </a>
+                      )}
+                      {musician.facebook_username && musician.facebook_username.trim() !== '' && (
+                        <a
+                          href={musician.facebook_username.includes('facebook.com') ? 
+                            (musician.facebook_username.startsWith('http') ? musician.facebook_username : `https://${musician.facebook_username}`) :
+                            `https://facebook.com/${musician.facebook_username}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center space-x-2 text-center"
+                        >
+                          <span>📘</span>
+                          <span>Facebook</span>
+                        </a>
+                      )}
+                      {musician.tiktok_username && musician.tiktok_username.trim() !== '' && (
+                        <a
+                          href={`https://tiktok.com/@${musician.tiktok_username}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-black hover:bg-gray-800 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center space-x-2 text-center"
+                        >
+                          <span>🎵</span>
+                          <span>TikTok</span>
+                        </a>
+                      )}
+                      {musician.website && musician.website.trim() !== '' && (
+                        <a
+                          href={musician.website.startsWith('http') ? musician.website : `https://${musician.website}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-gray-600 hover:bg-gray-700 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center space-x-2 text-center"
+                        >
+                          <span>🌐</span>
+                          <span>Website</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Streaming Links */}
+                {musician && ((musician.spotify_artist_url && musician.spotify_artist_url.trim() !== '') || 
+                  (musician.apple_music_artist_url && musician.apple_music_artist_url.trim() !== '')) && (
+                  <div>
+                    <h3 className="text-lg font-bold text-white mb-3">Listen</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {musician.spotify_artist_url && musician.spotify_artist_url.trim() !== '' && (
+                        <a
+                          href={musician.spotify_artist_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-green-600 hover:bg-green-700 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center space-x-2 text-center"
+                        >
+                          <span>🎶</span>
+                          <span>Spotify</span>
+                        </a>
+                      )}
+                      {musician.apple_music_artist_url && musician.apple_music_artist_url.trim() !== '' && (
+                        <a
+                          href={musician.apple_music_artist_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-gray-700 hover:bg-gray-600 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center space-x-2 text-center"
+                        >
+                          <span>🍎</span>
+                          <span>Apple Music</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Tip Options - follow current tip settings */}
+                {musician?.tips_enabled !== false && (
+                  <div>
+                    <h3 className="text-lg font-bold text-white mb-3">Support</h3>
+                    <button
+                      onClick={() => {
+                        setShowProfileDialog(false);
+                        setShowTipModal(true);
+                      }}
+                      className="w-full bg-green-600 hover:bg-green-700 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2"
+                    >
+                      <span>💰</span>
+                      <span>Leave a Tip</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
