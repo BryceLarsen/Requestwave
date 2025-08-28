@@ -2232,6 +2232,214 @@ async def change_password(
         logger.error(f"Error changing password: {str(e)}")
         raise HTTPException(status_code=500, detail="Error updating password")
 
+# NEW: Emergent OAuth authentication endpoints
+@api_router.post("/auth/emergent-oauth")
+async def emergent_oauth_login(request: Request, response: Response):
+    """Handle Emergent OAuth session authentication"""
+    try:
+        # Get session ID from X-Session-ID header
+        session_id = request.headers.get("X-Session-ID")
+        if not session_id:
+            raise HTTPException(status_code=400, detail="Missing X-Session-ID header")
+        
+        # Call Emergent auth API to get user data
+        import requests
+        auth_response = requests.get(
+            "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+            headers={"X-Session-ID": session_id}
+        )
+        
+        if auth_response.status_code != 200:
+            raise HTTPException(status_code=401, detail="Invalid session ID")
+        
+        auth_data = auth_response.json()
+        
+        # Extract user info from Emergent response
+        emergent_user_id = auth_data["id"]
+        email = auth_data["email"]
+        name = auth_data["name"]
+        picture = auth_data.get("picture", "")
+        session_token = auth_data["session_token"]
+        
+        # Check if musician exists with this email
+        musician = await db.musicians.find_one({"email": email})
+        
+        if musician:
+            # Existing musician - update session token
+            await db.musicians.update_one(
+                {"id": musician["id"]},
+                {"$set": {
+                    "emergent_session_token": session_token,
+                    "emergent_user_id": emergent_user_id,
+                    "profile_picture": picture,  # Update profile picture from Google
+                    "last_login": datetime.utcnow()
+                }}
+            )
+            
+            musician_id = musician["id"]
+            musician_name = musician["name"]
+            musician_slug = musician["slug"]
+            
+        else:
+            # New musician - create account
+            musician_id = str(uuid.uuid4())
+            slug = create_slug(name)
+            
+            # Ensure slug uniqueness
+            counter = 1
+            original_slug = slug
+            while await db.musicians.find_one({"slug": slug}):
+                slug = f"{original_slug}-{counter}"
+                counter += 1
+            
+            # Create new musician account
+            musician_data = {
+                "id": musician_id,
+                "name": name,
+                "email": email,
+                "slug": slug,
+                "bio": "",
+                "website": "",
+                "paypal_username": "",
+                "venmo_username": "",
+                "zelle_email": "",
+                "zelle_phone": "",
+                "instagram_username": "",
+                "facebook_username": "",
+                "tiktok_username": "",
+                "spotify_artist_url": "",
+                "apple_music_artist_url": "",
+                "tips_enabled": True,
+                "requests_enabled": True,
+                "profile_picture": picture,
+                "emergent_session_token": session_token,
+                "emergent_user_id": emergent_user_id,
+                "created_at": datetime.utcnow(),
+                "last_login": datetime.utcnow(),
+                # In free mode, give everyone pro access
+                "subscription_status": "active" if not BILLING_ENABLED else "trial",
+                "audience_link_active": True,
+                "trial_start_date": datetime.utcnow() if BILLING_ENABLED else None,
+                "trial_end_date": datetime.utcnow() + timedelta(days=14) if BILLING_ENABLED else None
+            }
+            
+            await db.musicians.insert_one(musician_data)
+            
+            musician_name = name
+            musician_slug = slug
+        
+        # Store session token with 7-day expiry
+        session_data = {
+            "session_token": session_token,
+            "musician_id": musician_id,
+            "emergent_user_id": emergent_user_id,
+            "email": email,
+            "created_at": datetime.utcnow(),
+            "expires_at": datetime.utcnow() + timedelta(days=7)
+        }
+        
+        await db.sessions.update_one(
+            {"session_token": session_token},
+            {"$set": session_data},
+            upsert=True
+        )
+        
+        # Set HttpOnly cookie with session token
+        response.set_cookie(
+            key="session_token",
+            value=session_token,
+            max_age=7 * 24 * 3600,  # 7 days
+            httponly=True,
+            secure=True,
+            samesite="none",
+            path="/"
+        )
+        
+        # Generate JWT for backwards compatibility
+        token = jwt.encode({
+            "musician_id": musician_id, 
+            "exp": datetime.utcnow() + timedelta(hours=24)
+        }, JWT_SECRET, algorithm="HS256")
+        
+        return {
+            "success": True,
+            "token": token,  # JWT for existing API compatibility
+            "session_token": session_token,  # Emergent session token
+            "musician": {
+                "id": musician_id,
+                "name": musician_name,
+                "email": email,
+                "slug": musician_slug,
+                "profile_picture": picture
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error during Emergent OAuth login: {str(e)}")
+        raise HTTPException(status_code=500, detail="Authentication failed")
+
+# NEW: Enhanced authentication dependency supporting both JWT and Emergent sessions
+async def get_current_musician_enhanced(request: Request) -> str:
+    """Get current musician ID supporting both JWT and Emergent session authentication"""
+    # Try session token from cookie first (Emergent OAuth)
+    session_token = request.cookies.get("session_token")
+    if session_token:
+        session = await db.sessions.find_one({
+            "session_token": session_token,
+            "expires_at": {"$gt": datetime.utcnow()}
+        })
+        if session:
+            return session["musician_id"]
+    
+    # Fallback to JWT authentication
+    authorization: str = request.headers.get("Authorization")
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise HTTPException(status_code=401, detail="Invalid authentication scheme")
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid authorization header format")
+    
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        return payload["musician_id"]
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+# Update existing protected endpoints to use enhanced authentication
+@api_router.get("/profile", response_model=MusicianProfile)
+async def get_profile_enhanced(musician_id: str = Depends(get_current_musician_enhanced)):
+    """Get current musician profile (supports both auth methods)"""
+    musician = await db.musicians.find_one({"id": musician_id})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    return MusicianProfile(
+        name=musician["name"],
+        email=musician["email"],
+        bio=musician.get("bio", ""),
+        website=musician.get("website", ""),
+        # Payment usernames
+        paypal_username=musician.get("paypal_username", ""),
+        venmo_username=musician.get("venmo_username", ""),
+        zelle_email=musician.get("zelle_email", ""),
+        zelle_phone=musician.get("zelle_phone", ""),
+        # Control settings
+        tips_enabled=musician.get("tips_enabled", True),
+        requests_enabled=musician.get("requests_enabled", True),
+        # Social media usernames
+        instagram_username=musician.get("instagram_username", ""),
+        facebook_username=musician.get("facebook_username", ""),
+        tiktok_username=musician.get("tiktok_username", ""),
+        spotify_artist_url=musician.get("spotify_artist_url", ""),
+        apple_music_artist_url=musician.get("apple_music_artist_url", "")
+    )
+
 # Password Reset endpoints
 @api_router.post("/auth/forgot-password")
 async def forgot_password(reset_data: PasswordReset):
