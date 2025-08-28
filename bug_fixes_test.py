@@ -263,10 +263,14 @@ class BugFixesTester:
             # Step 1: Test POST /api/song-suggestions (create suggestion)
             print("📊 Step 1: Test song suggestion creation")
             
+            # Use timestamp to ensure unique suggestions
+            import time
+            timestamp = str(int(time.time()))
+            
             suggestion_data = {
                 "musician_slug": self.musician_slug,
-                "suggested_title": "Test Song Suggestion",
-                "suggested_artist": "Test Artist",
+                "suggested_title": f"Test Song Suggestion {timestamp}",
+                "suggested_artist": f"Test Artist {timestamp}",
                 "requester_name": "Bug Fix Tester",
                 "requester_email": "bugfix@test.com",
                 "message": "Testing song suggestions after bug fixes"
