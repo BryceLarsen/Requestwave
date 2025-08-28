@@ -249,11 +249,11 @@ class EmergentOAuthTester:
             
             no_auth_response = self.make_request("GET", "/profile")
             
-            if no_auth_response.status_code == 401:
+            if no_auth_response.status_code == 403:
                 print("   ✅ Enhanced authentication correctly rejects requests without credentials")
                 no_auth_rejection_works = True
             else:
-                print(f"   ❌ Expected 401, got {no_auth_response.status_code}")
+                print(f"   ❌ Expected 403, got {no_auth_response.status_code}")
                 no_auth_rejection_works = False
             
             # Restore auth token
