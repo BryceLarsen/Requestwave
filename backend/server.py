@@ -2480,7 +2480,7 @@ async def forgot_password(reset_data: PasswordReset):
         email_data = {
             "to": reset_data.email,
             "from": "no-reply@emergentagent.com",
-            "reply_to": "support@adventuresoundlive.com",
+            "reply_to": "requestwave@adventuresoundlive.com",
             "subject": "Reset your RequestWave password",
             "html_body": f"""
             <!DOCTYPE html>
