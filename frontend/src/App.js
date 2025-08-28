@@ -513,6 +513,9 @@ const MusicianDashboard = () => {
   // Quick Start Guide (manual access only)
   const [showQuickStart, setShowQuickStart] = useState(false);
   
+  // NEW: Filters visibility state
+  const [showFilters, setShowFilters] = useState(false);
+  
   // NEW: Auto-fill metadata state
   const [autoFillLoading, setAutoFillLoading] = useState(false);
   
