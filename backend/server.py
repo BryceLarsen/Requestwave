@@ -2676,15 +2676,7 @@ async def get_design_settings(musician_id: str = Depends(get_current_musician)):
 
 @api_router.put("/design/settings")
 async def update_design_settings(design_data: DesignUpdate, musician_id: str = Depends(get_current_musician)):
-    """Update design settings (Pro feature only)"""
-    # Check if user has pro subscription
-    subscription_status = await get_subscription_status(musician_id)
-    if subscription_status.plan not in ["trial", "pro"]:
-        raise HTTPException(
-            status_code=402, 
-            detail="Design customization is a Pro feature. Upgrade to access these settings."
-        )
-    
+    """Update design settings (now available to all users)"""
     musician = await db.musicians.find_one({"id": musician_id})
     if not musician:
         raise HTTPException(status_code=404, detail="Musician not found")
