@@ -1193,6 +1193,66 @@ agent_communication:
         agent: "testing"
         comment: "NEW FEATURES COMPREHENSIVE TESTING COMPLETE: ✅ POST /requests creates requests without tip amounts with correct initial values (tip_clicked=false, social_clicks=[], status=pending). ✅ Request auto-assignment to current active show verified working. ✅ Requests correctly NOT auto-assigned after show is stopped. All request creation functionality working as specified in requirements."
 
+  - task: "Demo CSV Endpoint for Onboarding"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "BUG FIX: Created new /api/demo-csv endpoint to fix broken onboarding demo playlist link. Endpoint should return proper CSV content with Content-Disposition header and 50+ songs in Title,Artist,Genre,Mood,Year,Notes format."
+      - working: true
+        agent: "testing"
+        comment: "DEMO CSV ENDPOINT FULLY WORKING: Comprehensive testing confirms the new demo CSV endpoint is working perfectly. ✅ ENDPOINT ACCESSIBILITY: GET /api/demo-csv returns 200 status and is publicly accessible without authentication. ✅ CONTENT-DISPOSITION HEADER: Proper 'attachment; filename=RequestWave_Popular_Songs.csv' header for download functionality. ✅ CSV FORMAT VALIDATION: Returns proper CSV with correct headers ['Title', 'Artist', 'Genre', 'Mood', 'Year', 'Notes'] matching expected format. ✅ SONG COUNT REQUIREMENT: Contains 53 songs (exceeds 50+ requirement) with quality sample data. ✅ DATA QUALITY: Sample songs have all required fields populated (e.g., 'Don't Stop Believin'' by Journey, 'Sweet Caroline' by Neil Diamond). The demo CSV endpoint successfully fixes the broken onboarding demo playlist link and provides users with a comprehensive song list for import testing."
+
+  - task: "Song Suggestions Backend Endpoints"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "BUG FIX: Verified song suggestions endpoints still working after frontend changes. Need to test POST /api/song-suggestions (create), GET /api/song-suggestions (list), and PUT /api/song-suggestions/{id}/status (accept/reject)."
+      - working: true
+        agent: "testing"
+        comment: "SONG SUGGESTIONS BACKEND FULLY WORKING: Comprehensive testing confirms all song suggestion endpoints are working correctly after frontend changes. ✅ SUGGESTION CREATION: POST /api/song-suggestions successfully creates suggestions with unique titles (using timestamps to avoid duplicates). ✅ SUGGESTION LISTING: GET /api/song-suggestions returns all suggestions for authenticated musician, created suggestions appear in list immediately. ✅ STATUS UPDATES: PUT /api/song-suggestions/{id}/status works correctly with 'added' and 'rejected' statuses (note: backend expects 'added' not 'accepted'). ✅ VALIDATION: Properly rejects invalid suggestions missing required fields with appropriate error codes. ✅ WORKFLOW COMPLETE: Full suggestion workflow functional from creation to acceptance/rejection. The song suggestions backend remains fully functional with no regressions from frontend changes."
+
+  - task: "Profile and Audience Link Functionality"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "BUG FIX: Verified profile endpoint returns proper audience URL and all required fields for View button functionality. Need to test GET /api/profile and audience link generation."
+      - working: true
+        agent: "testing"
+        comment: "PROFILE AND AUDIENCE LINK FULLY WORKING: Comprehensive testing confirms profile and audience link functionality is working correctly. ✅ PROFILE ENDPOINT: GET /api/profile returns all required fields (name, email) and optional fields (bio, website, payment info, social media). Note: slug not included in MusicianProfile model but available from authentication. ✅ AUDIENCE LINK GENERATION: Public musician endpoint GET /api/musicians/{slug} accessible and returns all required fields for audience interface including payment and social media fields. ✅ PROFILE UPDATES: PUT /api/profile successfully updates profile information and changes are reflected immediately. ✅ VIEW BUTTON SUPPORT: All necessary fields present for View button functionality in audience interface. The profile and audience link system is fully functional with proper data flow between private profile management and public audience access."
+
+  - task: "General System Health and Authentication"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "BUG FIX: Verified general system health including authentication endpoints and basic musician dashboard functionality after recent bug fixes."
+      - working: true
+        agent: "testing"
+        comment: "GENERAL SYSTEM HEALTH EXCELLENT: Comprehensive testing confirms all core system functionality is working perfectly. ✅ AUTHENTICATION: Login endpoint working correctly, JWT tokens generated and validated properly, unauthorized access properly blocked. ✅ DASHBOARD FUNCTIONALITY: Songs endpoint returns 2053 songs, requests endpoint functional, playlists endpoint returns 3 playlists - all core dashboard features working. ✅ ERROR HANDLING: Invalid login attempts properly rejected, unauthorized access blocked with appropriate status codes. ✅ SYSTEM RESPONSIVENESS: 5/5 quick requests successful with average response time of 0.021s, excellent system performance. ✅ TOKEN VALIDATION: Protected endpoints properly validate JWT tokens and reject invalid/expired tokens. The system is in excellent health with no regressions from recent bug fixes."
+
   - task: "Post-Request Features - Click Tracking System"
     implemented: true
     working: true
