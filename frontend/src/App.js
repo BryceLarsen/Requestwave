@@ -8781,6 +8781,7 @@ const OnStageInterface = () => {
     }
   };
   
+  // On Stage request management handlers
   const handleAccept = (requestId) => updateRequestStatus(requestId, 'up_next');
   const handlePlay = (requestId) => updateRequestStatus(requestId, 'played');
   const handleReject = (requestId) => updateRequestStatus(requestId, 'rejected');
