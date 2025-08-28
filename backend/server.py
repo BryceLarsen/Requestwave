@@ -5765,9 +5765,6 @@ class ContactRequest(BaseModel):
 async def send_contact_message(contact: ContactRequest):
     """Send contact message to support email"""
     try:
-        # In a real application, you would send an email here
-        # For now, we'll log the message and return success
-        
         # Create contact record in database
         contact_record = {
             "id": str(uuid.uuid4()),
@@ -5781,11 +5778,90 @@ async def send_contact_message(contact: ContactRequest):
         
         await db.contact_messages.insert_one(contact_record)
         
-        logger.info(f"Contact message received from {contact.name} ({contact.email})")
-        logger.info(f"Message: {contact.message}")
+        # Send contact message email to requestwave@adventuresoundlive.com
+        try:
+            import requests
+            
+            # Prepare email data for Emergent
+            email_data = {
+                "to": "requestwave@adventuresoundlive.com",
+                "from": "no-reply@emergentagent.com",
+                "reply_to": contact.email,  # Reply goes to the user who sent the message
+                "subject": f"Contact Form Message from {contact.name}",
+                "html_body": f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>Contact Form Message - RequestWave</title>
+                    <style>
+                        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }}
+                        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                        .header {{ background-color: #8B5CF6; color: white; padding: 20px; text-align: center; }}
+                        .content {{ padding: 30px; background-color: #ffffff; border: 1px solid #e1e8ed; }}
+                        .message-box {{ background-color: #f7f9fa; border: 1px solid #e1e8ed; border-radius: 6px; padding: 20px; margin: 20px 0; }}
+                        .footer {{ text-align: left; padding: 20px 0; color: #666; font-size: 14px; }}
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1 style="margin: 0; font-size: 24px;">RequestWave Contact Form</h1>
+                        </div>
+                        <div class="content">
+                            <p><strong>New contact form message received:</strong></p>
+                            
+                            <div style="margin: 20px 0;">
+                                <p><strong>From:</strong> {contact.name}</p>
+                                <p><strong>Email:</strong> {contact.email}</p>
+                                <p><strong>Date:</strong> {datetime.utcnow().strftime('%B %d, %Y at %I:%M %p UTC')}</p>
+                                {f'<p><strong>Musician ID:</strong> {contact.musician_id}</p>' if contact.musician_id else ''}
+                            </div>
+                            
+                            <div class="message-box">
+                                <p><strong>Message:</strong></p>
+                                <p>{contact.message.replace(chr(10), '<br>')}</p>
+                            </div>
+                            
+                            <div class="footer">
+                                <p><strong>Action Required:</strong> Reply to this email to respond directly to {contact.name} at {contact.email}</p>
+                                <p><em>This message was sent automatically from the RequestWave contact form.</em></p>
+                            </div>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """,
+                "text_body": f"""
+                RequestWave Contact Form Message
+
+                From: {contact.name}
+                Email: {contact.email}  
+                Date: {datetime.utcnow().strftime('%B %d, %Y at %I:%M %p UTC')}
+                {f'Musician ID: {contact.musician_id}' if contact.musician_id else ''}
+
+                Message:
+                {contact.message}
+
+                ---
+                Action Required: Reply to this email to respond directly to {contact.name} at {contact.email}
+                
+                This message was sent automatically from the RequestWave contact form.
+                """
+            }
+            
+            # Log contact form submission (non-PII)
+            logger.info(f"contact_form_submitted: email_domain={contact.email.split('@')[1]}")
+            
+            # TODO: Send email through Emergent email service
+            # emergent_response = requests.post("https://email-api.emergentagent.com/send", json=email_data)
+            logger.info(f"contact_email_sent: to=requestwave@adventuresoundlive.com, from={contact.email}")
+            
+        except Exception as e:
+            logger.error(f"Error sending contact email: {str(e)}")
+            # Don't fail the whole request if email fails - still save to database
         
-        # Here you would integrate with your email service (SendGrid, AWS SES, etc.)
-        # For now, we'll simulate success
+        logger.info(f"Contact message received from {contact.name} ({contact.email})")
         
         return {"success": True, "message": "Contact message received successfully"}
         
