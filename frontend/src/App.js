@@ -4530,7 +4530,8 @@ const MusicianDashboard = () => {
                             title={`Delete show "${show.name}" and all requests permanently`}
                           >
                             🗑️ Delete
-                        </button>
+                          </button>
+                        </div>
                       </summary>
                       <div className="px-4 pb-4 space-y-2">
                         {requests.filter(r => r.show_name === show.name).map((request) => (
