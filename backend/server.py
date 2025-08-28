@@ -2381,7 +2381,7 @@ async def emergent_oauth_login(request: FastAPIRequest, response: Response):
         raise HTTPException(status_code=500, detail="Authentication failed")
 
 # NEW: Enhanced authentication dependency supporting both JWT and Emergent sessions
-async def get_current_musician_enhanced(request: Request) -> str:
+async def get_current_musician_enhanced(request: FastAPIRequest) -> str:
     """Get current musician ID supporting both JWT and Emergent session authentication"""
     # Try session token from cookie first (Emergent OAuth)
     session_token = request.cookies.get("session_token")
