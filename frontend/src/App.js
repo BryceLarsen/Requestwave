@@ -4925,23 +4925,6 @@ const MusicianDashboard = () => {
         {/* On Stage Tab - Dedicated tab for live performance management */}
         {activeTab === 'onstage' && (
           <div className="space-y-6">
-            {/* On Stage Header */}
-            <div className="bg-gray-800 rounded-xl p-6">
-              <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center space-x-3">
-                  <h2 className="text-2xl font-bold">🎤 On Stage</h2>
-                  <div className="bg-green-600 px-3 py-1 rounded-full text-sm font-medium">
-                    Live
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm text-gray-400">
-                    Real-time request management for live performances
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* Three-Panel Layout: Up Next | Active Requests | Completed Requests */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
