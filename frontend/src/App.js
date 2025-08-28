@@ -4808,6 +4808,13 @@ const MusicianDashboard = () => {
                 )}
                 
                 <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                  {/* NEW: View button to open audience page */}
+                  <button
+                    onClick={() => window.open(audienceUrl, '_blank')}
+                    className="bg-green-600 hover:bg-green-700 px-3 sm:px-4 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0"
+                  >
+                    View
+                  </button>
                   <button
                     onClick={generateQRCode}
                     className="bg-blue-600 hover:bg-blue-700 px-3 sm:px-4 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0"
