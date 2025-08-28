@@ -516,6 +516,9 @@ const MusicianDashboard = () => {
   // NEW: Filters visibility state
   const [showFilters, setShowFilters] = useState(false);
   
+  // NEW: On Stage tab state
+  const [completedSectionCollapsed, setCompletedSectionCollapsed] = useState(false);
+  
   // NEW: Auto-fill metadata state
   const [autoFillLoading, setAutoFillLoading] = useState(false);
   
