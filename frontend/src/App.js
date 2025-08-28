@@ -3069,7 +3069,7 @@ const MusicianDashboard = () => {
                   <div className="flex justify-center">
                     <button
                       onClick={() => setShowFilters(!showFilters)}
-                      className={`${colors.primary} px-4 py-2 rounded-lg font-medium transition duration-300 text-sm`}
+                      className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-medium transition duration-300 text-sm text-white"
                     >
                       View Filters
                     </button>
