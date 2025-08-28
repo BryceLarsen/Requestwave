@@ -4764,14 +4764,6 @@ const MusicianDashboard = () => {
                   >
                     Copy
                   </button>
-                  
-                  {/* NEW: View button to open audience page */}
-                  <button
-                    onClick={() => window.open(audienceUrl, '_blank')}
-                    className="bg-blue-600 hover:bg-blue-700 px-3 sm:px-4 py-2 rounded-lg transition duration-300 text-sm sm:text-base flex-shrink-0"
-                  >
-                    View
-                  </button>
                 </div>
                 
                 {/* NEW: Active Playlist Selector (Pro Feature) */}
