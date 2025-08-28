@@ -4378,17 +4378,21 @@ const MusicianDashboard = () => {
         {/* Requests Tab */}
         {activeTab === 'requests' && (
           <div className="bg-gray-800 rounded-xl p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold">Song Requests</h2>
-              
-              {/* Show Management Controls */}
-              <div className="flex items-center space-x-3">
+            {/* NEW: Redesigned Header with Action Buttons */}
+            <div className="mb-6">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 {/* Song Suggestions Button */}
                 <button
-                  onClick={() => setShowSuggestions(!showSuggestions)}
-                  className={`px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-2 ${
-                    showSuggestions ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
+                  onClick={() => {
+                    // Auto-scroll to Song Suggestions section
+                    setTimeout(() => {
+                      const suggestionSection = document.getElementById('song-suggestions-section');
+                      if (suggestionSection) {
+                        suggestionSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }, 100);
+                  }}
+                  className="flex-1 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700"
                 >
                   <span>💡</span>
                   <span>Song Suggestions</span>
@@ -4399,14 +4403,15 @@ const MusicianDashboard = () => {
                   )}
                 </button>
                 
+                {/* Start/Stop Show Button */}
                 {currentShow ? (
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-green-600 px-3 py-2 rounded-lg">
+                  <div className="flex-1 flex items-center justify-between bg-green-600 px-4 py-3 rounded-lg">
+                    <div className="flex items-center space-x-2">
                       <span className="text-sm font-medium">🎤 Live: {currentShow.name}</span>
                     </div>
                     <button
                       onClick={handleStopShow}
-                      className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
+                      className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm font-medium transition duration-300"
                     >
                       Stop Show
                     </button>
@@ -4414,7 +4419,7 @@ const MusicianDashboard = () => {
                 ) : (
                   <button
                     onClick={() => setShowStartModal(true)}
-                    className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-2"
+                    className="flex-1 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700"
                   >
                     <span>🎭</span>
                     <span>Start a Show</span>
