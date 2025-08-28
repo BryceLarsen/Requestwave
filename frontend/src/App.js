@@ -1403,6 +1403,113 @@ const MusicianDashboard = () => {
     }
   };
 
+  // NEW: Account management handler functions
+  const handleChangeEmail = async () => {
+    setChangeEmailError('');
+    
+    // Validation
+    if (!changeEmailForm.new_email || !changeEmailForm.confirm_email || !changeEmailForm.current_password) {
+      setChangeEmailError('All fields are required');
+      return;
+    }
+    
+    if (changeEmailForm.new_email !== changeEmailForm.confirm_email) {
+      setChangeEmailError('Email addresses do not match');
+      return;
+    }
+    
+    if (changeEmailForm.new_email === musician.email) {
+      setChangeEmailError('New email must be different from current email');
+      return;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(changeEmailForm.new_email)) {
+      setChangeEmailError('Please enter a valid email address');
+      return;
+    }
+    
+    setChangingEmail(true);
+    
+    try {
+      await axios.put(`${API}/profile/change-email`, {
+        new_email: changeEmailForm.new_email,
+        current_password: changeEmailForm.current_password
+      });
+      
+      // Update local musician data
+      const updatedMusician = { ...musician, email: changeEmailForm.new_email };
+      setMusician(updatedMusician);
+      localStorage.setItem('musician', JSON.stringify(updatedMusician));
+      
+      // Reset form and close
+      setChangeEmailForm({ new_email: '', confirm_email: '', current_password: '' });
+      setShowChangeEmail(false);
+      
+      alert('Email address updated successfully!');
+    } catch (error) {
+      console.error('Error changing email:', error);
+      setChangeEmailError(error.response?.data?.detail || 'Error updating email address');
+    } finally {
+      setChangingEmail(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setChangePasswordError('');
+    
+    // Validation
+    if (!changePasswordForm.current_password || !changePasswordForm.new_password || !changePasswordForm.confirm_password) {
+      setChangePasswordError('All fields are required');
+      return;
+    }
+    
+    if (changePasswordForm.new_password !== changePasswordForm.confirm_password) {
+      setChangePasswordError('New passwords do not match');
+      return;
+    }
+    
+    if (changePasswordForm.new_password.length < 8) {
+      setChangePasswordError('New password must be at least 8 characters long');
+      return;
+    }
+    
+    if (!/[A-Za-z]/.test(changePasswordForm.new_password)) {
+      setChangePasswordError('New password must contain at least one letter');
+      return;
+    }
+    
+    if (!/\d/.test(changePasswordForm.new_password)) {
+      setChangePasswordError('New password must contain at least one number');
+      return;
+    }
+    
+    if (changePasswordForm.current_password === changePasswordForm.new_password) {
+      setChangePasswordError('New password must be different from current password');
+      return;
+    }
+    
+    setChangingPassword(true);
+    
+    try {
+      await axios.put(`${API}/profile/change-password`, {
+        current_password: changePasswordForm.current_password,
+        new_password: changePasswordForm.new_password
+      });
+      
+      // Reset form and close
+      setChangePasswordForm({ current_password: '', new_password: '', confirm_password: '' });
+      setShowChangePassword(false);
+      
+      alert('Password updated successfully!');
+    } catch (error) {
+      console.error('Error changing password:', error);
+      setChangePasswordError(error.response?.data?.detail || 'Error updating password');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   const checkPaymentStatus = async (sessionId) => {
     try {
       const response = await axios.get(`${API}/subscription/checkout/status/${sessionId}`);
