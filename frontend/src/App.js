@@ -8334,18 +8334,17 @@ const AudienceInterface = () => {
                 <div className="text-4xl md:text-6xl mb-4">🎵</div>
                 <p className="text-gray-400 text-lg md:text-xl mb-2">No songs match your search</p>
                 
-                {/* NEW: Empty Search → Suggestion Prompt */}
+                {/* NEW: Empty Search → Big Green Suggestion Button */}
                 {searchQuery && (
-                  <div className="mb-4">
-                    <p className="text-gray-300 mb-3">
-                      Can't find the song you want?{' '}
-                      <button
-                        onClick={() => setShowSuggestionModal(true)}
-                        className="text-green-400 hover:text-green-300 underline font-medium transition duration-300"
-                      >
-                        Suggest a song
-                      </button>
-                    </p>
+                  <div className="mb-6">
+                    <p className="text-gray-300 text-lg mb-4">Can't find the song you want?</p>
+                    <button
+                      onClick={() => setShowSuggestionModal(true)}
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl transform hover:scale-105 w-full sm:w-auto"
+                    >
+                      <span className="text-2xl">💡</span>
+                      <span>Suggest a Song</span>
+                    </button>
                   </div>
                 )}
                 
