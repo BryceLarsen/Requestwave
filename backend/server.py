@@ -5701,7 +5701,7 @@ async def test_subscription_endpoint():
     return {"message": "Test subscription endpoint working", "timestamp": datetime.utcnow().isoformat()}
 
 @api_router.post("/test/upgrade")
-async def test_upgrade_endpoint(request: Request, musician_id: str = Depends(get_current_musician)):
+async def test_upgrade_endpoint(request: FastAPIRequest, musician_id: str = Depends(get_current_musician)):
     """Test upgrade endpoint with Request parameter"""
     return {
         "message": "Test upgrade endpoint working",
