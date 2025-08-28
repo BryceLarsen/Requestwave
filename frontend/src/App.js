@@ -952,6 +952,24 @@ const MusicianDashboard = () => {
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
   const [deletingAccount, setDeletingAccount] = useState(false);
 
+  // NEW: Account management state for email and password changes
+  const [showChangeEmail, setShowChangeEmail] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [changeEmailForm, setChangeEmailForm] = useState({
+    new_email: '',
+    confirm_email: '',
+    current_password: ''
+  });
+  const [changePasswordForm, setChangePasswordForm] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: ''
+  });
+  const [changeEmailError, setChangeEmailError] = useState('');
+  const [changePasswordError, setChangePasswordError] = useState('');
+  const [changingEmail, setChangingEmail] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+
   // Design settings state
   const [designSettings, setDesignSettings] = useState({
     color_scheme: 'purple',
