@@ -7977,6 +7977,22 @@ const AudienceInterface = () => {
               <div className="text-center py-12 md:py-16">
                 <div className="text-4xl md:text-6xl mb-4">🎵</div>
                 <p className="text-gray-400 text-lg md:text-xl mb-2">No songs match your search</p>
+                
+                {/* NEW: Empty Search → Suggestion Prompt */}
+                {searchQuery && (
+                  <div className="mb-4">
+                    <p className="text-gray-300 mb-3">
+                      Can't find the song you want?{' '}
+                      <button
+                        onClick={() => setShowSuggestionModal(true)}
+                        className="text-green-400 hover:text-green-300 underline font-medium transition duration-300"
+                      >
+                        Suggest a song
+                      </button>
+                    </p>
+                  </div>
+                )}
+                
                 <button
                   onClick={clearFilters}
                   className={`${colors.button} px-6 py-2 rounded-lg font-medium transition duration-300`}
