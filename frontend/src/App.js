@@ -7034,7 +7034,7 @@ const MusicianDashboard = () => {
                       className="w-10 h-10 object-contain"
                     />
                     <h2 className="text-2xl font-bold text-white">
-                      🎬 <span className="text-purple-200">Request</span><span className="text-green-200">Wave</span> Quick Start Guide
+                      🎵 Quick Start Guide for RequestWave
                     </h2>
                   </div>
                   <button
@@ -7044,7 +7044,7 @@ const MusicianDashboard = () => {
                     ×
                   </button>
                 </div>
-                <p className="text-purple-100 mt-2">Welcome to the stage! Get set up in just a few steps.</p>
+                <p className="text-purple-100 mt-2">Welcome to RequestWave — your all-in-one tool for managing live song requests, tips, and audience interaction. Here's how to get started fast:</p>
               </div>
 
               {/* Content */}
@@ -7055,28 +7055,27 @@ const MusicianDashboard = () => {
                     {/* Step 1 */}
                     <div className="bg-gray-700 rounded-lg p-6">
                       <h3 className="text-xl font-bold text-purple-300 mb-4 flex items-center">
-                        🎵 Step 1: Add Your Songs
+                        🎵 Step 1: Build Your Song Library
                       </h3>
-                      <p className="text-gray-300 mb-3">Get started by building your repertoire:</p>
+                      <p className="text-gray-300 mb-3">Head to the Songs tab to load your repertoire.</p>
                       
                       <div className="space-y-2 mb-4">
-                        <p className="text-gray-300 text-sm">• Click <span className="text-blue-300">Auto-fill All</span> to automatically enrich your existing songs with metadata.</p>
-                        <p className="text-gray-300 text-sm">• Click <span className="text-green-300">Add New Song</span> for manual entry.</p>
-                        <p className="text-gray-300 text-sm">• Click <span className="text-green-300">Upload CSV</span> if you have a list already.</p>
-                        <p className="text-gray-300 text-sm">• Click <span className="text-orange-300">Upload LST</span> for setlist files (Song - Artist format).</p>
-                        <p className="text-gray-300 text-sm">• Use <span className="text-green-300">Import Playlist</span> to bring songs from Spotify or Apple Music.</p>
+                        <p className="text-gray-300 text-sm">• <span className="text-blue-300">Import Playlist</span>: Bring in songs directly from Spotify.</p>
+                        <p className="text-gray-300 text-sm">• <span className="text-green-300">Upload CSV</span>: Drop in your song list (you can export from spreadsheets or download our sample file).</p>
+                        <p className="text-gray-300 text-sm">• <span className="text-green-300">Add New Song</span>: Enter songs manually if you just need to add a few.</p>
+                        <p className="text-gray-300 text-sm">• <span className="text-purple-300">Manage Playlists</span>: Organize songs into playlists you can use for different shows. Rename, delete, and set an active playlist from the Profile tab.</p>
                       </div>
 
                       {/* Download CSV Button */}
                       <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
-                        <h4 className="font-bold text-green-300 mb-2">🔥 Get Our Starter Pack!</h4>
+                        <h4 className="font-bold text-green-300 mb-2">🔥 Try our Starter Pack</h4>
                         <p className="text-gray-300 text-sm mb-3">
                           <a 
                             href={`${process.env.REACT_APP_BACKEND_URL}/api/demo-csv`}
                             download="RequestWave_Popular_Songs.csv"
                             className="text-green-300 underline hover:text-green-200"
                           >
-                            Grab our curated list of 50+ crowd favorites to practice with. Download it, then head to the <span className="text-green-300">Songs</span> tab and hit <span className="text-green-300">Upload CSV</span> to see the magic happen!
+                            Download the curated CSV of 50+ crowd favorites, then upload it into the <span className="text-green-300">Songs</span> tab to instantly see how RequestWave organizes your library.
                           </a>
                         </p>
                       </div>
@@ -7085,19 +7084,14 @@ const MusicianDashboard = () => {
                     {/* Step 2 */}
                     <div className="bg-gray-700 rounded-lg p-6">
                       <h3 className="text-xl font-bold text-green-300 mb-4 flex items-center">
-                        🎨 Step 2: Customize Your Page
+                        🎨 Step 2: Customize Your Artist Page
                       </h3>
-                      <div>
-                        <h4 className="font-bold text-purple-200 mb-2">Customize Your Page</h4>
-                        <p className="text-gray-300 text-sm">• Go to the <span className="text-green-300">Design</span> tab to choose your theme and layout.</p>
-                        <p className="text-gray-300 text-sm">• Add social links, tip options (PayPal/Venmo), and artist photo.</p>
-                        <p className="text-gray-300 text-sm">• Select which playlist is active from the <span className="text-green-300">Profile</span> tab.</p>
-                      </div>
+                      <p className="text-gray-300 mb-3">Make the audience experience yours.</p>
                       
-                      <div className="mt-4">
-                        <h4 className="font-bold text-purple-200 mb-2">Share Your Link</h4>
-                        <p className="text-gray-300 text-sm">• Find your Audience Link in the <span className="text-green-300">Profile</span> tab.</p>
-                        <p className="text-gray-300 text-sm">• Use the <span className="text-green-300">QR Code</span> or tap <span className="text-green-300">Print Flyer</span> to create something shareable.</p>
+                      <div className="space-y-2">
+                        <p className="text-gray-300 text-sm">• <span className="text-green-300">Design tab</span>: Choose your theme, colors, and layout.</p>
+                        <p className="text-gray-300 text-sm">• <span className="text-green-300">Profile tab</span>: Add your photo, social links, and connect tip options (PayPal, Venmo, Zelle).</p>
+                        <p className="text-gray-300 text-sm">• <span className="text-blue-300">Audience Link box</span>: Copy your shareable link, scan the QR code, or print a flyer.</p>
                       </div>
                     </div>
                   </div>
@@ -7107,24 +7101,36 @@ const MusicianDashboard = () => {
                     {/* Step 3 */}
                     <div className="bg-gray-700 rounded-lg p-6">
                       <h3 className="text-xl font-bold text-blue-300 mb-4 flex items-center">
-                        📱 Step 3: Go Live!
+                        📱 Step 3: Go Live
                       </h3>
-                      <p className="text-gray-300 text-sm mb-4">During your performance:</p>
+                      <p className="text-gray-300 text-sm mb-4">During your show, use RequestWave to handle requests in real time.</p>
                       <div className="space-y-2">
-                        <p className="text-gray-300 text-sm">• Share your QR code or link with the audience</p>
-                        <p className="text-gray-300 text-sm">• Watch requests come in real-time in the <span className="text-blue-300">Requests</span> tab</p>
-                        <p className="text-gray-300 text-sm">• Mark requests as "Playing", "Played", or "Skipped"</p>
-                        <p className="text-gray-300 text-sm">• Use the <span className="text-yellow-300">On Stage</span> mode for a cleaner view</p>
-                        <p className="text-gray-300 text-sm">• Check out the <span className="text-purple-300">Song Suggestions</span> feature for requests outside your repertoire</p>
+                        <p className="text-gray-300 text-sm">• Share your QR code or link with the crowd.</p>
+                        <p className="text-gray-300 text-sm">• Fans browse your library and submit requests or dedications.</p>
+                        <p className="text-gray-300 text-sm">• Requests appear instantly in the <span className="text-blue-300">Requests</span> tab.</p>
+                        <p className="text-gray-300 text-sm">• Use the <span className="text-purple-300">Song Suggestions</span> folder to see audience picks outside your repertoire (always visible, collapsible like "All Requests").</p>
+                        <p className="text-gray-300 text-sm">• In <span className="text-yellow-300">On Stage</span> mode, see a clean 3-section view:</p>
+                        <div className="ml-4 space-y-1">
+                          <p className="text-gray-300 text-sm">• <span className="text-blue-300">Up Next</span>: your active queue</p>
+                          <p className="text-gray-300 text-sm">• <span className="text-purple-300">Requests</span>: incoming songs</p>
+                          <p className="text-gray-300 text-sm">• <span className="text-green-300">Played/Rejected</span>: history log</p>
+                        </div>
+                        <p className="text-gray-300 text-sm">• Mark songs as Up Next, Played, or Rejected. Played songs automatically move down the list to keep the queue clear.</p>
                       </div>
                     </div>
                     
-                    <div className="mt-4 bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+                    {/* Step 4 */}
+                    <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
                       <h3 className="text-lg font-bold text-blue-300 mb-3 flex items-center">
-                        📊 Track Your Success
+                        📊 Step 4: Track Your Success
                       </h3>
-                      <p className="text-gray-300 text-sm">Head to Analytics to see your top-requested songs, request volume, and audience insights.</p>
-                      <p className="text-gray-300 text-sm">View by day, week, or month. Export data if you want to keep a log of your shows.</p>
+                      <p className="text-gray-300 text-sm">After the show, head to Analytics to see:</p>
+                      <div className="space-y-1 mt-2">
+                        <p className="text-gray-300 text-sm">• Top requested songs</p>
+                        <p className="text-gray-300 text-sm">• Total requests by day, week, or month</p>
+                        <p className="text-gray-300 text-sm">• Tip activity and audience engagement</p>
+                        <p className="text-gray-300 text-sm">• Export data to keep a log of your performances</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -7132,9 +7138,9 @@ const MusicianDashboard = () => {
                 {/* Contact Section */}
                 <div className="mt-8 bg-gray-700 rounded-lg p-6">
                   <h3 className="text-lg font-bold text-white mb-4 flex items-center">
-                    🔧 Need Help? Contact Support
+                    🔧 Need Help?
                   </h3>
-                  <p className="text-gray-300 text-sm mb-4">Still stuck? Send us a message — we're always here to help!</p>
+                  <p className="text-gray-300 text-sm mb-4">If you ever get stuck, just reach out — we're here to help.</p>
                   
                   <form onSubmit={handleContactSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
