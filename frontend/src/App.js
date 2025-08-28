@@ -125,6 +125,17 @@ const AuthForm = ({ mode, onSwitch }) => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // NEW: Emergent OAuth handler
+  const handleEmergentOAuth = () => {
+    // Get current preview URL for redirect
+    const currentUrl = window.location.origin;
+    const redirectUrl = `${currentUrl}/profile`;
+    
+    // Redirect to Emergent OAuth
+    const emergentOAuthUrl = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+    window.location.href = emergentOAuthUrl;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
