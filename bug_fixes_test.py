@@ -342,8 +342,8 @@ class BugFixesTester:
                 # Test rejecting another suggestion (create one first)
                 reject_suggestion_data = {
                     "musician_slug": self.musician_slug,
-                    "suggested_title": "Test Reject Song",
-                    "suggested_artist": "Test Reject Artist",
+                    "suggested_title": f"Test Reject Song {timestamp}",
+                    "suggested_artist": f"Test Reject Artist {timestamp}",
                     "requester_name": "Bug Fix Tester",
                     "requester_email": "bugfix@test.com",
                     "message": "Testing rejection"
