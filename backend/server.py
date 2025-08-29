@@ -2648,12 +2648,12 @@ async def generate_qr_flyer_endpoint(musician_id: str = Depends(get_current_musi
     if not musician:
         raise HTTPException(status_code=404, detail="Musician not found")
     
-    # Construct audience URL - Use correct frontend URL
-    base_url = os.environ.get('FRONTEND_URL', 'https://requestwave.app')
+    # Construct audience URL - Use environment-based frontend URL with production fallback
+    base_url = os.environ.get('AUDIENCE_BASE_URL') or os.environ.get('FRONTEND_URL', 'https://requestwave.app')
     
-    # PRODUCTION HOTFIX: Always use requestwave.app for production deployment
+    # PRODUCTION DEPLOYMENT FIX: Always use requestwave.app for production deployment
     # Override any environment variable that points to old domains
-    if 'preview.emergentagent.com' in base_url or 'emergent.host' in base_url:
+    if 'preview.emergentagent.com' in base_url or 'emergent.host' in base_url or 'livewave' in base_url:
         base_url = 'https://requestwave.app'
     
     audience_url = f"{base_url}/musician/{musician['slug']}"
