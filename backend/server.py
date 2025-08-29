@@ -258,6 +258,9 @@ class Show(BaseModel):
     date: Optional[str] = None
     venue: Optional[str] = None
     notes: Optional[str] = None
+    status: str = "active"  # active, archived
+    archived_at: Optional[datetime] = None
+    restored_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 # NEW: Tip tracking model
