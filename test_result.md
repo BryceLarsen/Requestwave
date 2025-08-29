@@ -1374,6 +1374,21 @@ agent_communication:
         agent: "testing"
         comment: "NEW FEATURES COMPREHENSIVE TESTING COMPLETE: ✅ GET /profile returns all 7 social media fields (instagram_username, facebook_username, tiktok_username, spotify_artist_url, apple_music_artist_url, paypal_username, venmo_username). ✅ PUT /profile updates all social media fields correctly. ✅ Username cleaning working perfectly - @ symbols removed from usernames (instagram, tiktok, paypal, venmo) while URLs preserved. Enhanced profile system fully functional for post-request audience engagement."
 
+  - task: "Show Archiving Implementation"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "NEW FEATURE: Implemented show archiving functionality with archive/restore endpoints. Added PUT /api/shows/{id}/archive and PUT /api/shows/{id}/restore endpoints for show management."
+      - working: true
+        agent: "testing"
+        comment: "SHOW ARCHIVING IMPLEMENTATION FULLY WORKING: Comprehensive testing confirms all 5 critical areas of show archiving functionality are working perfectly. ✅ SHOW ARCHIVE ENDPOINT: PUT /api/shows/{id}/archive successfully archives shows, sets status to 'archived', adds archived_at timestamp, and clears current_show_id if archived show was current. ✅ SHOW RESTORE ENDPOINT: PUT /api/shows/{id}/restore successfully restores archived shows, sets status to 'active', adds restored_at timestamp, and does not automatically set as current show. ✅ SHOW STATUS FILTERING: GET /api/shows returns all shows with proper status field (active/archived), allowing frontend to filter as needed for management interface. ✅ REQUEST ASSOCIATION PERSISTENCE: Requests remain properly associated with shows when archived - show_name field persists through archive/restore cycle, no request data lost during archiving. ✅ CURRENT SHOW LOGIC: Archiving current active show properly clears current_show_id from musician profile, restoring doesn't automatically set as current show, proper state management maintained. IMPLEMENTATION DETAILS: Fixed Show model to include status, archived_at, and restored_at fields. All endpoints require proper JWT authentication and validate show ownership. SUCCESS RATE: 100% (13/13 tests passed). The show archiving system is production-ready and fully supports show lifecycle management for musicians."
+
   - task: "Decade Functionality"
     implemented: true
     working: true
