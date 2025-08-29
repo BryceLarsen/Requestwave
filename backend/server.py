@@ -6213,11 +6213,12 @@ app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
     allow_origins=[
-        "https://requestwave.app",
+        "https://requestwave.app", 
         "https://stagepro-app.preview.emergentagent.com", 
         os.environ.get('FRONTEND_URL', '').replace('http://', 'https://'),  # Dynamic production URL
-        "https://requestwave.emergent.host",  # Potential production domain
-        "https://requestwave-app.emergent.host",  # Emergent production pattern
+        "https://requestwave.emergent.host",  # Emergent production pattern
+        "https://requestwave-app.emergent.host",  # Alternative production pattern
+        f"https://{os.environ.get('APP_NAME', 'requestwave')}.emergent.host",  # Dynamic Emergent domain
         os.environ.get('REACT_APP_AUDIENCE_BASE_URL', 'https://requestwave.app')  # Frontend audience URL
     ],
     allow_methods=["*"],
