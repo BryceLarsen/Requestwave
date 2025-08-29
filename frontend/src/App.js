@@ -2001,13 +2001,30 @@ const MusicianDashboard = () => {
     setAnalyticsDays(days);
   };
 
-  // Fetch analytics when tab is active or timeframe changes
-  React.useEffect(() => {
-    if (activeTab === 'analytics') {
-      fetchAnalytics();
-      fetchRequesters();
+  // Load saved analytics period preference
+  useEffect(() => {
+    const savedPeriod = localStorage.getItem('analytics_period');
+    if (savedPeriod) {
+      setAnalyticsPeriod(savedPeriod);
     }
-  }, [activeTab, analyticsDays]);
+  }, []);
+
+  // Handle analytics data fetching when tab becomes active
+  useEffect(() => {
+    if (activeTab === 'analytics') {
+      const periodToDaysMap = {
+        'today': 1,
+        'last7days': 7,
+        'last30days': 30,
+        'last3months': 90,
+        'lastyear': 365,
+        'alltime': null
+      };
+      
+      const days = periodToDaysMap[analyticsPeriod];
+      handleTimeframeChange(days ? `${days}days` : 'alltime');
+    }
+  }, [activeTab, analyticsPeriod]);
 
   // Fetch suggestions when suggestions tab is active
   React.useEffect(() => {
