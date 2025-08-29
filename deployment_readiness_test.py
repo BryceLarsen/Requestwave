@@ -323,6 +323,8 @@ class DeploymentReadinessTester:
                 
         except Exception as e:
             self.log_result("AUDIENCE_BASE_URL Configuration", False, f"AUDIENCE_BASE_URL test error: {str(e)}")
+
+    def test_production_deployment_readiness(self):
         """Test 4: Production Deployment Readiness"""
         print("\n=== Testing Production Deployment Readiness ===")
         
