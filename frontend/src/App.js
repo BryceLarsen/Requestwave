@@ -6125,214 +6125,207 @@ const MusicianDashboard = () => {
           </div>
         )}
 
-        {/* NEW: Phase 3 - Analytics Tab */}
+        {/* NEW: Redesigned Analytics Tab */}
         {activeTab === 'analytics' && (
           <div className="space-y-6">
-            {/* Streamlined Analytics Header */}
+            {/* NEW: Redesigned Analytics Header with Period Dropdown */}
             <div className="bg-gray-800 rounded-xl p-6">
-              {/* Description and Timeframe Controls */}
-              <div className="mb-4">
-                <p className="text-gray-300 mb-4">Insights into your audience and performance</p>
-                
-                {/* Timeframe Selector - Aligned Left */}
-                <div className="flex space-x-2">
-                  {['daily', 'weekly', 'monthly'].map((timeframe) => (
-                    <button
-                      key={timeframe}
-                      onClick={() => handleTimeframeChange(timeframe)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition duration-300 ${
-                        analyticsTimeframe === timeframe
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                      }`}
-                    >
-                      {timeframe.charAt(0).toUpperCase() + timeframe.slice(1)}
-                    </button>
-                  ))}
-                </div>
+              <p className="text-gray-300 mb-4">Insights into your audience and performance</p>
+              
+              {/* NEW: Period Dropdown (replaces Daily/Weekly/Monthly buttons) */}
+              <div className="mb-6">
+                <label className="block text-gray-300 text-sm font-bold mb-2">Period</label>
+                <select
+                  value={analyticsPeriod}
+                  onChange={(e) => {
+                    const newPeriod = e.target.value;
+                    setAnalyticsPeriod(newPeriod);
+                    localStorage.setItem('analytics_period', newPeriod);
+                    
+                    // Update analytics timeframe for existing data fetching
+                    const periodToDaysMap = {
+                      'today': 1,
+                      'last7days': 7,
+                      'last30days': 30,
+                      'last3months': 90,
+                      'lastyear': 365,
+                      'alltime': null
+                    };
+                    
+                    const days = periodToDaysMap[newPeriod];
+                    handleTimeframeChange(days ? `${days}days` : 'alltime');
+                  }}
+                  className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:ring-purple-500 focus:border-purple-500"
+                >
+                  <option value="today">Today</option>
+                  <option value="last7days">Last 7 days</option>
+                  <option value="last30days">Last 30 days</option>
+                  <option value="last3months">Last 3 months</option>
+                  <option value="lastyear">Last Year</option>
+                  <option value="alltime">All time</option>
+                </select>
               </div>
 
               {/* Analytics Summary Cards */}
               {analyticsData && (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-gray-700 rounded-lg p-4">
-                    <h3 className="text-sm font-medium text-gray-300">Total Requests</h3>
-                    <p className="text-2xl font-bold text-purple-400">{analyticsData.totals.total_requests}</p>
+                <div>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <h3 className="text-sm font-medium text-gray-300">Total Requests</h3>
+                      <p className="text-2xl font-bold text-purple-400">{analyticsData.totals.total_requests}</p>
+                    </div>
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <h3 className="text-sm font-medium text-gray-300">Unique Requesters</h3>
+                      <p className="text-2xl font-bold text-blue-400">{analyticsData.totals.unique_requesters}</p>
+                    </div>
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <h3 className="text-sm font-medium text-gray-300">Period</h3>
+                      <p className="text-lg font-bold text-gray-300">
+                        {analyticsPeriod === 'today' ? 'Today' :
+                         analyticsPeriod === 'last7days' ? 'Last 7 days' :
+                         analyticsPeriod === 'last30days' ? 'Last 30 days' :
+                         analyticsPeriod === 'last3months' ? 'Last 3 months' :
+                         analyticsPeriod === 'lastyear' ? 'Last Year' :
+                         'All time'}
+                      </p>
+                    </div>
+                    {/* NEW: Digital Tip Percentage Metric */}
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <h3 className="text-sm font-medium text-gray-300">Digital Tips</h3>
+                      <p className="text-2xl font-bold text-green-400">
+                        {analyticsData.totals.total_requests > 0 ? 
+                          Math.round(((analyticsData.totals.requests_with_tips || 0) / analyticsData.totals.total_requests) * 100) : 0}%
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        ({analyticsData.totals.requests_with_tips || 0} of {analyticsData.totals.total_requests} requests)
+                      </p>
+                    </div>
                   </div>
-                  <div className="bg-gray-700 rounded-lg p-4">
-                    <h3 className="text-sm font-medium text-gray-300">Unique Requesters</h3>
-                    <p className="text-2xl font-bold text-blue-400">{analyticsData.totals.unique_requesters}</p>
+                  
+                  {/* NEW: Export CSV Button at Bottom of First Analytics Box */}
+                  <div className="flex justify-end">
+                    <button
+                      onClick={async () => {
+                        try {
+                          const response = await axios.get(`${API}/analytics/export-requesters`, {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                            responseType: 'blob'
+                          });
+                          
+                          const blob = new Blob([response.data], { type: 'text/csv' });
+                          const url = window.URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = `requesters-analytics-${new Date().toISOString().split('T')[0]}.csv`;
+                          link.click();
+                          window.URL.revokeObjectURL(url);
+                        } catch (error) {
+                          console.error('Error exporting CSV:', error);
+                          alert('Error exporting CSV. Please try again.');
+                        }
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium transition duration-300 flex items-center space-x-2"
+                    >
+                      <span>📊</span>
+                      <span>Export CSV</span>
+                    </button>
                   </div>
-                  <div className="bg-gray-700 rounded-lg p-4">
-                    <h3 className="text-sm font-medium text-gray-300">Period</h3>
-                    <p className="text-lg font-bold text-gray-300">{analyticsData.period}</p>
-                  </div>
+                </div>
+              )}
+
+              {!analyticsData && (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto"></div>
+                  <p className="text-gray-400 mt-2">Loading analytics...</p>
                 </div>
               )}
             </div>
 
-            {/* Requesters Section */}
-            <div className="bg-gray-800 rounded-xl p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold">👥 Audience Requesters</h3>
-                <button
-                  onClick={exportRequestersCSV}
-                  className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-medium transition duration-300"
-                >
-                  📊 Export CSV
-                </button>
-              </div>
-              
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-700">
-                      <th className="text-left py-2 text-gray-300">Name</th>
-                      <th className="text-left py-2 text-gray-300">Email</th>
-                      <th className="text-left py-2 text-gray-300">Requests</th>
-                      <th className="text-left py-2 text-gray-300">Latest Request</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {requestersData.slice(0, 10).map((requester, index) => (
-                      <tr key={index} className="border-b border-gray-700 hover:bg-gray-700">
-                        <td className="py-2 font-medium">{requester.name}</td>
-                        <td className="py-2 text-gray-300">{requester.email}</td>
-                        <td className="py-2">
-                          <span className="bg-purple-600 px-2 py-1 rounded-full text-xs">
-                            {requester.request_count}
-                          </span>
-                        </td>
-                        <td className="py-2 text-gray-400 text-xs">
-                          {formatTimestamp(requester.latest_request).split(' at ')[0]}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                
-                {requestersData.length === 0 && (
-                  <div className="text-center py-8 text-gray-400">
-                    <p>No requesters yet. Share your QR code to start receiving requests!</p>
-                  </div>
-                )}
-                
-                {requestersData.length > 10 && (
-                  <div className="text-center py-4 text-gray-400">
-                    <p>Showing top 10 requesters. Export CSV for complete list.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Analytics Charts Section */}
+            {/* Analytics Charts Section - Redesigned */}
             {analyticsData && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Top Requested Songs */}
+                {/* Most Requested Songs with Top 10/20/50 Dropdown */}
                 <div className="bg-gray-800 rounded-xl p-6">
-                  <h3 className="text-xl font-bold mb-4">🎵 Most Requested Songs</h3>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-bold">🎵 Most Requested Songs</h3>
+                    {/* NEW: Top N Dropdown */}
+                    <select
+                      value={topSongsLimit}
+                      onChange={(e) => setTopSongsLimit(parseInt(e.target.value))}
+                      className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white text-sm"
+                    >
+                      <option value={10}>Top 10</option>
+                      <option value={20}>Top 20</option>
+                      <option value={50}>Top 50</option>
+                    </select>
+                  </div>
                   <div className="space-y-3">
-                    {analyticsData.top_songs.slice(0, 5).map((item, index) => (
+                    {analyticsData.top_songs.slice(0, topSongsLimit).map((item, index) => (
                       <div key={index} className="flex justify-between items-center">
                         <div className="flex-1">
                           <p className="font-medium text-sm">{item.song}</p>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-orange-400 font-bold">{item.count}</span>
-                          <div className="w-20 bg-gray-700 rounded-full h-2">
-                            <div 
-                              className="bg-orange-500 h-2 rounded-full"
-                              style={{
-                                width: `${(item.count / Math.max(...analyticsData.top_songs.map(s => s.count))) * 100}%`
-                              }}
-                            ></div>
-                          </div>
+                        <div className="text-right">
+                          <span className="bg-purple-600 px-2 py-1 rounded-full text-xs">
+                            {item.count}
+                          </span>
                         </div>
                       </div>
                     ))}
+                    
+                    {analyticsData.top_songs.length === 0 && (
+                      <div className="text-center py-8 text-gray-400">
+                        <p>No requests yet in this period</p>
+                      </div>
+                    )}
                   </div>
-                  
-                  {analyticsData.top_songs.length === 0 && (
-                    <div className="text-center py-8 text-gray-400">
-                      <p>No song requests yet in this period.</p>
-                    </div>
-                  )}
                 </div>
 
-                {/* Most Frequent Requesters */}
+                {/* Most Active Requesters with Top 10/20/50 Dropdown */}
                 <div className="bg-gray-800 rounded-xl p-6">
-                  <h3 className="text-xl font-bold mb-4">⭐ Most Active Requesters</h3>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-bold">👥 Most Active Requesters</h3>
+                    {/* NEW: Top N Dropdown */}
+                    <select
+                      value={topRequestersLimit}
+                      onChange={(e) => setTopRequestersLimit(parseInt(e.target.value))}
+                      className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white text-sm"
+                    >
+                      <option value={10}>Top 10</option>
+                      <option value={20}>Top 20</option>
+                      <option value={50}>Top 50</option>
+                    </select>
+                  </div>
                   <div className="space-y-3">
-                    {analyticsData.top_requesters.slice(0, 5).map((item, index) => (
+                    {analyticsData.top_requesters.slice(0, topRequestersLimit).map((item, index) => (
                       <div key={index} className="flex justify-between items-center">
                         <div className="flex-1">
-                          <p className="font-medium text-sm">{item.requester}</p>
+                          <p className="font-medium text-sm">{item.requester_name}</p>
+                          <p className="text-gray-400 text-xs">{item.email}</p>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-blue-400 font-bold">{item.count}</span>
-                          <div className="w-20 bg-gray-700 rounded-full h-2">
-                            <div 
-                              className="bg-blue-500 h-2 rounded-full"
-                              style={{
-                                width: `${(item.count / Math.max(...analyticsData.top_requesters.map(r => r.count))) * 100}%`
-                              }}
-                            ></div>
-                          </div>
+                        <div className="text-right">
+                          <span className="bg-blue-600 px-2 py-1 rounded-full text-xs">
+                            {item.request_count}
+                          </span>
+                          {item.total_tips > 0 && (
+                            <p className="text-green-400 text-xs mt-1">${item.total_tips}</p>
+                          )}
                         </div>
                       </div>
                     ))}
+                    
+                    {analyticsData.top_requesters.length === 0 && (
+                      <div className="text-center py-8 text-gray-400">
+                        <p>No requesters yet in this period</p>
+                      </div>
+                    )}
                   </div>
-                  
-                  {analyticsData.top_requesters.length === 0 && (
-                    <div className="text-center py-8 text-gray-400">
-                      <p>No frequent requesters yet in this period.</p>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
-
-            {/* Daily Timeline */}
-            {analyticsData && analyticsData.daily_stats.length > 0 && (
-              <div className="bg-gray-800 rounded-xl p-6">
-                <h3 className="text-xl font-bold mb-4">📈 Daily Activity</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-700">
-                        <th className="text-left py-2 text-gray-300">Date</th>
-                        <th className="text-left py-2 text-gray-300">Requests</th>
-                        <th className="text-left py-2 text-gray-300">Unique Requesters</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {analyticsData.daily_stats.map((day, index) => (
-                        <tr key={index} className="border-b border-gray-700 hover:bg-gray-700">
-                          <td className="py-2 font-medium">{day.date}</td>
-                          <td className="py-2">
-                            <span className="bg-purple-600 px-2 py-1 rounded-full text-xs">
-                              {day.request_count}
-                            </span>
-                          </td>
-                          <td className="py-2">
-                            <span className="bg-blue-600 px-2 py-1 rounded-full text-xs">
-                              {day.unique_requesters}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {analyticsLoading && (
-              <div className="text-center py-8">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-                <p className="text-gray-400 mt-2">Loading analytics...</p>
-              </div>
-            )}
+            
+            {/* Audience Requesters Box - REMOVED per requirements */}
+            {/* This section has been completely removed as requested */}
           </div>
         )}
 
