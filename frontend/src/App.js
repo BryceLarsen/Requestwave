@@ -4,35 +4,27 @@ import axios from 'axios';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
 const BILLING_ENABLED = process.env.REACT_APP_BILLING_ENABLED === 'true';
 
-// PRODUCTION DEPLOYMENT FIX: Runtime environment detection
+// PRODUCTION DEPLOYMENT FIX: Runtime environment detection and API URL override
 const isProductionDeployment = () => {
   return window.location.hostname === 'requestwave.app' || 
          window.location.hostname.includes('requestwave.emergent.host') ||
          process.env.NODE_ENV === 'production';
 };
 
-// PRODUCTION SOURCE OF TRUTH: Audience URL base domain (environment configurable with runtime override)
-const AUDIENCE_BASE_URL = (() => {
-  // If deployed to production domain, override to use production backend
-  if (isProductionDeployment()) {
-    return 'https://requestwave.app';
-  }
-  // Otherwise use environment variable with fallback
-  return process.env.REACT_APP_AUDIENCE_BASE_URL || 'https://requestwave.app';
-})();
-
-// PRODUCTION BACKEND URL: Override for production deployments
-const PRODUCTION_API = (() => {
+// PRODUCTION-AWARE API URL: Use production backend when deployed to production
+const API = (() => {
   // If deployed to production domain, use production backend
-  if (isProductionDeployment() && !process.env.REACT_APP_BACKEND_URL?.includes('requestwave.app')) {
+  if (isProductionDeployment()) {
     return 'https://requestwave.app/api';
   }
-  // Otherwise use configured backend URL
-  return API;
+  // Otherwise use configured backend URL (development/preview)
+  return `${BACKEND_URL}/api`;
 })();
+
+// PRODUCTION SOURCE OF TRUTH: Audience URL base domain
+const AUDIENCE_BASE_URL = process.env.REACT_APP_AUDIENCE_BASE_URL || 'https://requestwave.app';
 
 // Environment guard for production
 const validateProductionConfig = () => {
