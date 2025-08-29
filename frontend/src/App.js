@@ -54,6 +54,9 @@ const getAudienceUrl = (slug) => {
 // Initialize production validation
 validateProductionConfig();
 
+// Set default axios config to use production-aware API URL
+axios.defaults.baseURL = PRODUCTION_API.replace('/api', '');
+
 // Auth Context
 const AuthContext = createContext();
 
