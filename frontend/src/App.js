@@ -924,209 +924,80 @@ const MusicianDashboard = () => {
     }
   };
 
-        {/* NEW: Redesigned Analytics Tab */}
-        {activeTab === 'analytics' && (
-          <div className="space-y-6">
-            {/* NEW: Redesigned Analytics Header with Period Dropdown */}
-            <div className="bg-gray-800 rounded-xl p-6">
-              <p className="text-gray-300 mb-4">Insights into your audience and performance</p>
-              
-              {/* NEW: Period Dropdown (replaces Daily/Weekly/Monthly buttons) */}
-              <div className="mb-6">
-                <label className="block text-gray-300 text-sm font-bold mb-2">Period</label>
-                <select
-                  value={analyticsPeriod}
-                  onChange={(e) => {
-                    const newPeriod = e.target.value;
-                    setAnalyticsPeriod(newPeriod);
-                    localStorage.setItem('analytics_period', newPeriod);
-                    
-                    // Update analytics timeframe for existing data fetching
-                    const periodToDaysMap = {
-                      'today': 1,
-                      'last7days': 7,
-                      'last30days': 30,
-                      'last3months': 90,
-                      'lastyear': 365,
-                      'alltime': null
-                    };
-                    
-                    const days = periodToDaysMap[newPeriod];
-                    handleTimeframeChange(days ? `${days}days` : 'alltime');
-                  }}
-                  className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:ring-purple-500 focus:border-purple-500"
-                >
-                  <option value="today">Today</option>
-                  <option value="last7days">Last 7 days</option>
-                  <option value="last30days">Last 30 days</option>
-                  <option value="last3months">Last 3 months</option>
-                  <option value="lastyear">Last Year</option>
-                  <option value="alltime">All time</option>
-                </select>
-              </div>
+  // NEW: Show archive management functions with telemetry
+  const handleArchiveShow = async (showId, showName) => {
+    // Telemetry: Archive start
+    console.log('show_archive_start', {
+      show_id: showId,
+      show_name: showName,
+      timestamp: new Date().toISOString()
+    });
+    
+    if (confirm(`Archive show "${showName}"? The show and its requests will be moved to the archived section.`)) {
+      try {
+        await axios.put(`${API}/shows/${showId}/archive`);
+        fetchGroupedRequests();
+        fetchShows();
+        fetchCurrentShow(); // Update current show status
+        alert(`Show "${showName}" archived successfully!`);
+        
+        // Telemetry: Archive success
+        console.log('show_archive_success', {
+          show_id: showId,
+          show_name: showName,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('Error archiving show:', error);
+        alert('Error archiving show. Please try again.');
+        
+        // Telemetry: Archive error
+        console.log('show_archive_error', {
+          show_id: showId,
+          show_name: showName,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+  };
 
-              {/* Analytics Summary Cards */}
-              {analyticsData && (
-                <div>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                    <div className="bg-gray-700 rounded-lg p-4">
-                      <h3 className="text-sm font-medium text-gray-300">Total Requests</h3>
-                      <p className="text-2xl font-bold text-purple-400">{analyticsData.totals.total_requests}</p>
-                    </div>
-                    <div className="bg-gray-700 rounded-lg p-4">
-                      <h3 className="text-sm font-medium text-gray-300">Unique Requesters</h3>
-                      <p className="text-2xl font-bold text-blue-400">{analyticsData.totals.unique_requesters}</p>
-                    </div>
-                    <div className="bg-gray-700 rounded-lg p-4">
-                      <h3 className="text-sm font-medium text-gray-300">Period</h3>
-                      <p className="text-lg font-bold text-gray-300">
-                        {analyticsPeriod === 'today' ? 'Today' :
-                         analyticsPeriod === 'last7days' ? 'Last 7 days' :
-                         analyticsPeriod === 'last30days' ? 'Last 30 days' :
-                         analyticsPeriod === 'last3months' ? 'Last 3 months' :
-                         analyticsPeriod === 'lastyear' ? 'Last Year' :
-                         'All time'}
-                      </p>
-                    </div>
-                    {/* NEW: Digital Tip Percentage Metric */}
-                    <div className="bg-gray-700 rounded-lg p-4">
-                      <h3 className="text-sm font-medium text-gray-300">Digital Tips</h3>
-                      <p className="text-2xl font-bold text-green-400">
-                        {analyticsData.totals.total_requests > 0 ? 
-                          Math.round(((analyticsData.totals.requests_with_tips || 0) / analyticsData.totals.total_requests) * 100) : 0}%
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        ({analyticsData.totals.requests_with_tips || 0} of {analyticsData.totals.total_requests} requests)
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* NEW: Export CSV Button at Bottom of First Analytics Box */}
-                  <div className="flex justify-end">
-                    <button
-                      onClick={async () => {
-                        try {
-                          const response = await axios.get(`${API}/analytics/export-requesters`, {
-                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                            responseType: 'blob'
-                          });
-                          
-                          const blob = new Blob([response.data], { type: 'text/csv' });
-                          const url = window.URL.createObjectURL(blob);
-                          const link = document.createElement('a');
-                          link.href = url;
-                          link.download = `requesters-analytics-${new Date().toISOString().split('T')[0]}.csv`;
-                          link.click();
-                          window.URL.revokeObjectURL(url);
-                        } catch (error) {
-                          console.error('Error exporting CSV:', error);
-                          alert('Error exporting CSV. Please try again.');
-                        }
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium transition duration-300 flex items-center space-x-2"
-                    >
-                      <span>📊</span>
-                      <span>Export CSV</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {!analyticsData && (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto"></div>
-                  <p className="text-gray-400 mt-2">Loading analytics...</p>
-                </div>
-              )}
-            </div>
-
-            {/* Analytics Charts Section - Redesigned */}
-            {analyticsData && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Most Requested Songs with Top 10/20/50 Dropdown */}
-                <div className="bg-gray-800 rounded-xl p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-bold">🎵 Most Requested Songs</h3>
-                    {/* NEW: Top N Dropdown */}
-                    <select
-                      value={topSongsLimit}
-                      onChange={(e) => setTopSongsLimit(parseInt(e.target.value))}
-                      className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white text-sm"
-                    >
-                      <option value={10}>Top 10</option>
-                      <option value={20}>Top 20</option>
-                      <option value={50}>Top 50</option>
-                    </select>
-                  </div>
-                  <div className="space-y-3">
-                    {analyticsData.top_songs.slice(0, topSongsLimit).map((item, index) => (
-                      <div key={index} className="flex justify-between items-center">
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{item.song}</p>
-                        </div>
-                        <div className="text-right">
-                          <span className="bg-purple-600 px-2 py-1 rounded-full text-xs">
-                            {item.count}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {analyticsData.top_songs.length === 0 && (
-                      <div className="text-center py-8 text-gray-400">
-                        <p>No requests yet in this period</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Most Active Requesters with Top 10/20/50 Dropdown */}
-                <div className="bg-gray-800 rounded-xl p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-bold">👥 Most Active Requesters</h3>
-                    {/* NEW: Top N Dropdown */}
-                    <select
-                      value={topRequestersLimit}
-                      onChange={(e) => setTopRequestersLimit(parseInt(e.target.value))}
-                      className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white text-sm"
-                    >
-                      <option value={10}>Top 10</option>
-                      <option value={20}>Top 20</option>
-                      <option value={50}>Top 50</option>
-                    </select>
-                  </div>
-                  <div className="space-y-3">
-                    {analyticsData.top_requesters.slice(0, topRequestersLimit).map((item, index) => (
-                      <div key={index} className="flex justify-between items-center">
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{item.requester_name}</p>
-                          <p className="text-gray-400 text-xs">{item.email}</p>
-                        </div>
-                        <div className="text-right">
-                          <span className="bg-blue-600 px-2 py-1 rounded-full text-xs">
-                            {item.request_count}
-                          </span>
-                          {item.total_tips > 0 && (
-                            <p className="text-green-400 text-xs mt-1">${item.total_tips}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {analyticsData.top_requesters.length === 0 && (
-                      <div className="text-center py-8 text-gray-400">
-                        <p>No requesters yet in this period</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {/* Audience Requesters Box - REMOVED per requirements */}
-            {/* This section has been completely removed as requested */}
-          </div>
-        )}
+  const handleRestoreShow = async (showId, showName) => {
+    // Telemetry: Restore start
+    console.log('show_restore_start', {
+      show_id: showId,
+      show_name: showName,
+      timestamp: new Date().toISOString()
+    });
+    
+    if (confirm(`Restore show "${showName}" from archive? It will be moved back to the active shows section.`)) {
+      try {
+        await axios.put(`${API}/shows/${showId}/restore`);
+        fetchGroupedRequests();
+        fetchShows();
+        fetchCurrentShow(); // Update current show status
+        alert(`Show "${showName}" restored successfully!`);
+        
+        // Telemetry: Restore success
+        console.log('show_restore_success', {
+          show_id: showId,
+          show_name: showName,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('Error restoring show:', error);
+        alert('Error restoring show. Please try again.');
+        
+        // Telemetry: Restore error
+        console.log('show_restore_error', {
+          show_id: showId,
+          show_name: showName,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+  };
 
   // NEW: Song suggestions management functions
   const fetchSongSuggestions = async () => {
