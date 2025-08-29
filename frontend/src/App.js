@@ -216,7 +216,7 @@ const AuthForm = ({ mode, onSwitch }) => {
         ? { email: formData.email, password: formData.password }
         : formData;
 
-      const response = await axios.post(`${API}/${endpoint}`, payload);
+      const response = await axios.post(`${PRODUCTION_API}/${endpoint}`, payload);
       login(response.data);
       navigate('/dashboard');
     } catch (error) {
