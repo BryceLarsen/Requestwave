@@ -7,8 +7,32 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const BILLING_ENABLED = process.env.REACT_APP_BILLING_ENABLED === 'true';
 
-// PRODUCTION SOURCE OF TRUTH: Audience URL base domain (environment configurable)
-const AUDIENCE_BASE_URL = process.env.REACT_APP_AUDIENCE_BASE_URL || 'https://requestwave.app';
+// PRODUCTION DEPLOYMENT FIX: Runtime environment detection
+const isProductionDeployment = () => {
+  return window.location.hostname === 'requestwave.app' || 
+         window.location.hostname.includes('requestwave.emergent.host') ||
+         process.env.NODE_ENV === 'production';
+};
+
+// PRODUCTION SOURCE OF TRUTH: Audience URL base domain (environment configurable with runtime override)
+const AUDIENCE_BASE_URL = (() => {
+  // If deployed to production domain, override to use production backend
+  if (isProductionDeployment()) {
+    return 'https://requestwave.app';
+  }
+  // Otherwise use environment variable with fallback
+  return process.env.REACT_APP_AUDIENCE_BASE_URL || 'https://requestwave.app';
+})();
+
+// PRODUCTION BACKEND URL: Override for production deployments
+const PRODUCTION_API = (() => {
+  // If deployed to production domain, use production backend
+  if (isProductionDeployment() && !process.env.REACT_APP_BACKEND_URL?.includes('requestwave.app')) {
+    return 'https://requestwave.app/api';
+  }
+  // Otherwise use configured backend URL
+  return API;
+})();
 
 // Environment guard for production
 const validateProductionConfig = () => {
