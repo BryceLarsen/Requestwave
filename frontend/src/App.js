@@ -8312,7 +8312,7 @@ const AudienceInterface = () => {
           </button>
         </div>
 
-        {/* Mobile/Desktop Filters */}
+        {/* NEW: Redesigned Filter Layout */}
         <div className={`${colors.secondary} rounded-xl p-4 md:p-6 mb-4 md:mb-8 ${showFilters ? 'block' : 'hidden md:block'}`}>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
             <h2 className="text-lg md:text-xl font-bold mb-2 md:mb-0">Advanced Filters</h2>
@@ -8332,64 +8332,95 @@ const AudienceInterface = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-4">
-            <select
-              value={selectedFilters.genre}
-              onChange={(e) => setSelectedFilters({...selectedFilters, genre: e.target.value})}
-              className="bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
-            >
-              <option value="">All Genres</option>
-              {filters.genres?.map((genre) => (
-                <option key={genre} value={genre}>{genre}</option>
-              ))}
-            </select>
+          <div className="space-y-3">
+            {/* Playlists Dropdown - Full Width Below Search */}
+            <div>
+              <label htmlFor="playlist-filter" className="block text-gray-300 text-sm font-bold mb-2">Playlist</label>
+              <select
+                id="playlist-filter"
+                value={selectedFilters.playlist}
+                onChange={(e) => setSelectedFilters({...selectedFilters, playlist: e.target.value})}
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
+                aria-label="Filter by playlist"
+              >
+                <option value="">All Playlists</option>
+                {playlists.map((playlist) => (
+                  <option key={playlist.id} value={playlist.id}>
+                    {playlist.name} ({playlist.song_count} songs)
+                  </option>
+                ))}
+              </select>
+            </div>
             
-            <select
-              value={selectedFilters.playlist}
-              onChange={(e) => setSelectedFilters({...selectedFilters, playlist: e.target.value})}
-              className="bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
-            >
-              <option value="">All Playlists</option>
-              {playlists.map((playlist) => (
-                <option key={playlist.id} value={playlist.id}>
-                  {playlist.name} ({playlist.song_count} songs)
-                </option>
-              ))}
-            </select>
+            {/* Row 1: Genres (left) + Moods (right) */}
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
+              <div>
+                <label htmlFor="genre-filter" className="block text-gray-300 text-sm font-bold mb-2">Genre</label>
+                <select
+                  id="genre-filter"
+                  value={selectedFilters.genre}
+                  onChange={(e) => setSelectedFilters({...selectedFilters, genre: e.target.value})}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
+                  aria-label="Filter by genre"
+                >
+                  <option value="">All Genres</option>
+                  {filters.genres?.map((genre) => (
+                    <option key={genre} value={genre}>{genre}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label htmlFor="mood-filter" className="block text-gray-300 text-sm font-bold mb-2">Mood</label>
+                <select
+                  id="mood-filter"
+                  value={selectedFilters.mood}
+                  onChange={(e) => setSelectedFilters({...selectedFilters, mood: e.target.value})}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
+                  aria-label="Filter by mood"
+                >
+                  <option value="">All Moods</option>
+                  {filters.moods?.map((mood) => (
+                    <option key={mood} value={mood}>{mood}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
             
-            <select
-              value={selectedFilters.mood}
-              onChange={(e) => setSelectedFilters({...selectedFilters, mood: e.target.value})}
-              className="bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
-            >
-              <option value="">All Moods</option>
-              {filters.moods?.map((mood) => (
-                <option key={mood} value={mood}>{mood}</option>
-              ))}
-            </select>
-            
-            <select
-              value={selectedFilters.year}
-              onChange={(e) => setSelectedFilters({...selectedFilters, year: e.target.value})}
-              className="bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
-            >
-              <option value="">All Years</option>
-              {filters.years?.map((year) => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-            
-            {/* NEW: Decade filter */}
-            <select
-              value={selectedFilters.decade}
-              onChange={(e) => setSelectedFilters({...selectedFilters, decade: e.target.value})}
-              className="bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
-            >
-              <option value="">All Decades</option>
-              {filters.decades?.map((decade) => (
-                <option key={decade} value={decade}>{decade}</option>
-              ))}
-            </select>
+            {/* Row 2: Years (left) + Decades (right) */}
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
+              <div>
+                <label htmlFor="year-filter" className="block text-gray-300 text-sm font-bold mb-2">Year</label>
+                <select
+                  id="year-filter"
+                  value={selectedFilters.year}
+                  onChange={(e) => setSelectedFilters({...selectedFilters, year: e.target.value})}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
+                  aria-label="Filter by year"
+                >
+                  <option value="">All Years</option>
+                  {filters.years?.map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label htmlFor="decade-filter" className="block text-gray-300 text-sm font-bold mb-2">Decade</label>
+                <select
+                  id="decade-filter"
+                  value={selectedFilters.decade}
+                  onChange={(e) => setSelectedFilters({...selectedFilters, decade: e.target.value})}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
+                  aria-label="Filter by decade"
+                >
+                  <option value="">All Decades</option>
+                  {filters.decades?.map((decade) => (
+                    <option key={decade} value={decade}>{decade}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 
