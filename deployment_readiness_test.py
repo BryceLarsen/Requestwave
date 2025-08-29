@@ -235,7 +235,94 @@ class DeploymentReadinessTester:
         except Exception as e:
             self.log_result("CORS Configuration", False, f"CORS test error: {str(e)}")
 
-    def test_production_deployment_readiness(self):
+    def test_domain_override_logic(self):
+        """Test domain override logic for old livewave domains"""
+        print("\n=== Testing Domain Override Logic ===")
+        
+        try:
+            # Test QR code generation multiple times to ensure consistent domain override
+            qr_response = requests.get(f"{BASE_URL}/qr-code", headers=self.get_headers())
+            
+            if qr_response.status_code == 200:
+                qr_data = qr_response.json()
+                audience_url = qr_data.get("audience_url", "")
+                
+                # Check that old livewave domains are overridden to requestwave.app
+                if "requestwave.app" in audience_url and "livewave" not in audience_url:
+                    self.log_result("Domain Override - QR Code", True, 
+                                  "QR code correctly uses requestwave.app domain", {
+                                      "audience_url": audience_url
+                                  })
+                else:
+                    self.log_result("Domain Override - QR Code", False, 
+                                  "QR code may not be using correct domain override", {
+                                      "audience_url": audience_url
+                                  })
+                
+                # Test that the URL structure is correct
+                if "/musician/" in audience_url:
+                    self.log_result("Domain Override - URL Structure", True, 
+                                  "Audience URL has correct structure")
+                else:
+                    self.log_result("Domain Override - URL Structure", False, 
+                                  "Audience URL structure may be incorrect", {
+                                      "audience_url": audience_url
+                                  })
+            else:
+                self.log_result("Domain Override Logic", False, 
+                              f"Failed to get QR code for domain test: {qr_response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Domain Override Logic", False, f"Domain override test error: {str(e)}")
+
+    def test_audience_base_url_configuration(self):
+        """Test AUDIENCE_BASE_URL environment variable configuration"""
+        print("\n=== Testing AUDIENCE_BASE_URL Configuration ===")
+        
+        try:
+            # Test that the backend is using the AUDIENCE_BASE_URL environment variable
+            # by checking multiple endpoints that should generate audience URLs
+            
+            # Test 1: QR Code endpoint
+            qr_response = requests.get(f"{BASE_URL}/qr-code", headers=self.get_headers())
+            
+            if qr_response.status_code == 200:
+                qr_data = qr_response.json()
+                audience_url = qr_data.get("audience_url", "")
+                
+                # Should use the configured AUDIENCE_BASE_URL (requestwave.app)
+                expected_base = "https://requestwave.app"
+                if audience_url.startswith(expected_base):
+                    self.log_result("AUDIENCE_BASE_URL - QR Code", True, 
+                                  f"QR code uses configured AUDIENCE_BASE_URL: {expected_base}")
+                else:
+                    self.log_result("AUDIENCE_BASE_URL - QR Code", False, 
+                                  f"QR code doesn't use expected base URL", {
+                                      "expected": expected_base,
+                                      "actual": audience_url
+                                  })
+            
+            # Test 2: Check that environment variable is being read correctly
+            # by verifying consistent URL generation across multiple requests
+            urls = []
+            for i in range(3):
+                response = requests.get(f"{BASE_URL}/qr-code", headers=self.get_headers())
+                if response.status_code == 200:
+                    data = response.json()
+                    urls.append(data.get("audience_url", ""))
+            
+            if len(set(urls)) == 1 and urls[0]:
+                base_url = urls[0].split('/musician/')[0] if '/musician/' in urls[0] else urls[0]
+                self.log_result("AUDIENCE_BASE_URL - Consistency", True, 
+                              f"Environment variable consistently used: {base_url}")
+            else:
+                self.log_result("AUDIENCE_BASE_URL - Consistency", False, 
+                              "Inconsistent base URL usage", {
+                                  "urls": urls
+                              })
+                
+        except Exception as e:
+            self.log_result("AUDIENCE_BASE_URL Configuration", False, f"AUDIENCE_BASE_URL test error: {str(e)}")
         """Test 4: Production Deployment Readiness"""
         print("\n=== Testing Production Deployment Readiness ===")
         
