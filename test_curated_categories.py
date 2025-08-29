@@ -9,7 +9,7 @@ import json
 import os
 
 # Configuration
-BASE_URL = "https://stagepro-app.preview.emergentagent.com/api"
+BASE_URL = "https://requestwave-app.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
     "name": "Test Musician Categories",
     "email": "test.categories@requestwave.com",

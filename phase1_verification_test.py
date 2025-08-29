@@ -34,7 +34,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration - Use environment variable for backend URL
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://stagepro-app.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://requestwave-app.preview.emergentagent.com')
 BASE_URL = f"{BACKEND_URL}/api"
 
 # Test credentials from review request

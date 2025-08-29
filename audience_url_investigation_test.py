@@ -28,7 +28,7 @@ from typing import Dict, Any, Optional
 class AudienceURLInvestigator:
     def __init__(self):
         # Get backend URL from environment
-        self.backend_url = os.getenv('REACT_APP_BACKEND_URL', 'https://stagepro-app.preview.emergentagent.com')
+        self.backend_url = os.getenv('REACT_APP_BACKEND_URL', 'https://requestwave-app.preview.emergentagent.com')
         self.api_url = f"{self.backend_url}/api" if not self.backend_url.endswith('/api') else self.backend_url
         
         self.session = requests.Session()
@@ -174,7 +174,7 @@ class AudienceURLInvestigator:
             
             # Test 4: Check backend URL configuration
             print("🔍 Test 4: Backend URL configuration...")
-            expected_backend = "https://stagepro-app.preview.emergentagent.com"
+            expected_backend = "https://requestwave-app.preview.emergentagent.com"
             if self.backend_url == expected_backend:
                 self.log_test("Backend URL Config", True, f"Using expected backend URL: {self.backend_url}")
                 results["tests_passed"] += 1

@@ -8,7 +8,7 @@ import json
 import uuid
 
 # Configuration
-BASE_URL = "https://stagepro-app.preview.emergentagent.com/api"
+BASE_URL = "https://requestwave-app.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {
