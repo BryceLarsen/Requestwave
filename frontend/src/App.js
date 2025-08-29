@@ -924,8 +924,15 @@ const MusicianDashboard = () => {
     }
   };
 
-  // NEW: Show archive management functions
+  // NEW: Show archive management functions with telemetry
   const handleArchiveShow = async (showId, showName) => {
+    // Telemetry: Archive start
+    console.log('show_archive_start', {
+      show_id: showId,
+      show_name: showName,
+      timestamp: new Date().toISOString()
+    });
+    
     if (confirm(`Archive show "${showName}"? The show and its requests will be moved to the archived section.`)) {
       try {
         await axios.put(`${API}/shows/${showId}/archive`);
@@ -933,14 +940,36 @@ const MusicianDashboard = () => {
         fetchShows();
         fetchCurrentShow(); // Update current show status
         alert(`Show "${showName}" archived successfully!`);
+        
+        // Telemetry: Archive success
+        console.log('show_archive_success', {
+          show_id: showId,
+          show_name: showName,
+          timestamp: new Date().toISOString()
+        });
       } catch (error) {
         console.error('Error archiving show:', error);
         alert('Error archiving show. Please try again.');
+        
+        // Telemetry: Archive error
+        console.log('show_archive_error', {
+          show_id: showId,
+          show_name: showName,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
       }
     }
   };
 
   const handleRestoreShow = async (showId, showName) => {
+    // Telemetry: Restore start
+    console.log('show_restore_start', {
+      show_id: showId,
+      show_name: showName,
+      timestamp: new Date().toISOString()
+    });
+    
     if (confirm(`Restore show "${showName}" from archive? It will be moved back to the active shows section.`)) {
       try {
         await axios.put(`${API}/shows/${showId}/restore`);
@@ -948,9 +977,24 @@ const MusicianDashboard = () => {
         fetchShows();
         fetchCurrentShow(); // Update current show status
         alert(`Show "${showName}" restored successfully!`);
+        
+        // Telemetry: Restore success
+        console.log('show_restore_success', {
+          show_id: showId,
+          show_name: showName,
+          timestamp: new Date().toISOString()
+        });
       } catch (error) {
         console.error('Error restoring show:', error);
         alert('Error restoring show. Please try again.');
+        
+        // Telemetry: Restore error
+        console.log('show_restore_error', {
+          show_id: showId,
+          show_name: showName,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
       }
     }
   };
