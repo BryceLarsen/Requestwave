@@ -7,8 +7,8 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const BILLING_ENABLED = process.env.REACT_APP_BILLING_ENABLED === 'true';
 
-// PRODUCTION SOURCE OF TRUTH: Audience URL base domain
-const AUDIENCE_BASE_URL = 'https://requestwave.app';
+// PRODUCTION SOURCE OF TRUTH: Audience URL base domain (environment configurable)
+const AUDIENCE_BASE_URL = process.env.REACT_APP_AUDIENCE_BASE_URL || 'https://requestwave.app';
 
 // Environment guard for production
 const validateProductionConfig = () => {
