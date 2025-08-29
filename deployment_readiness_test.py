@@ -364,10 +364,19 @@ class DeploymentReadinessTester:
                                   "song_id": song_id
                               })
                 
-                # Test 4: Update operation
+                # Test 4: Update operation (using full song data as required by API)
+                update_data = {
+                    "title": "Deployment Test Song Updated",
+                    "artist": "Test Artist",
+                    "genres": ["Pop"],
+                    "moods": ["Feel Good"],
+                    "year": 2024,
+                    "notes": "Updated notes for deployment test"
+                }
+                
                 update_response = requests.put(
                     f"{BASE_URL}/songs/{song_id}",
-                    json={"notes": "Updated notes for deployment test"},
+                    json=update_data,
                     headers=self.get_headers()
                 )
                 
