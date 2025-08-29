@@ -4180,86 +4180,136 @@ const MusicianDashboard = () => {
                   </div>
                 </div>
 
-                {/* Search and Filter Bar */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-3 mb-4">
-                  <input
-                    type="text"
-                    placeholder="Search Song Title or Artist"
-                    value={songFilter}
-                    onChange={(e) => setSongFilter(e.target.value)}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-1"
-                  />
-                  <select
-                    value={genreFilter}
-                    onChange={(e) => setGenreFilter(e.target.value)}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
-                  >
-                    <option value="">All Genres</option>
-                    {filterOptions.genres?.map((genre) => (
-                      <option key={genre} value={genre}>{genre}</option>
-                    ))}
-                  </select>
-                  <div className="flex items-center space-x-2">
-                    <select
-                      value={playlistFilter}
-                      onChange={(e) => setPlaylistFilter(e.target.value)}
-                      className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
-                    >
-                      <option value="">All Playlists</option>
-                      {playlists.map((playlist) => (
-                        <option key={playlist.id} value={playlist.id}>
-                          {playlist.name} ({playlist.song_count} songs)
-                        </option>
-                      ))}
-                    </select>
-                    {playlistFilter && playlistFilter !== 'all_songs' && (
-                      <button
-                        onClick={() => openEditPlaylistSongsModal(playlistFilter)}
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center space-x-1 transition duration-300"
-                        title="Edit Playlist"
-                      >
-                        <span>✏️</span>
-                        <span>Edit</span>
-                      </button>
-                    )}
+                {/* NEW: Redesigned Filter Layout - Matches Audience View */}
+                <div className="space-y-3 mb-4">
+                  {/* Search Bar - Full Width */}
+                  <div>
+                    <label htmlFor="song-search" className="block text-gray-300 text-sm font-bold mb-2">Search</label>
+                    <input
+                      id="song-search"
+                      type="text"
+                      placeholder="Search Song Title or Artist"
+                      value={songFilter}
+                      onChange={(e) => setSongFilter(e.target.value)}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
+                      aria-label="Search songs by title or artist"
+                    />
                   </div>
-                  <select
-                    value={moodFilter}
-                    onChange={(e) => setMoodFilter(e.target.value)}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
-                  >
-                    <option value="">All Moods</option>
-                    {filterOptions.moods?.map((mood) => (
-                      <option key={mood} value={mood}>{mood}</option>
-                    ))}
-                  </select>
-                  <select
-                    value={yearFilter}
-                    onChange={(e) => setYearFilter(e.target.value)}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
-                  >
-                    <option value="">All Years</option>
-                    {filterOptions.years?.map((year) => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
-                  </select>
-                  <select
-                    value={decadeFilter}
-                    onChange={(e) => setDecadeFilter(e.target.value)}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
-                  >
-                    <option value="">All Decades</option>
-                    {filterOptions.decades?.map((decade) => (
-                      <option key={decade} value={decade}>{decade}</option>
-                    ))}
-                  </select>
-                  <input
-                    type="text"
-                    placeholder="Search notes..."
-                    value={notesFilter}
-                    onChange={(e) => setNotesFilter(e.target.value)}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
-                  />
+                  
+                  {/* Playlists Dropdown - Full Width Below Search */}
+                  <div>
+                    <label htmlFor="playlist-songs-filter" className="block text-gray-300 text-sm font-bold mb-2">Playlist</label>
+                    <div className="flex items-center space-x-2">
+                      <select
+                        id="playlist-songs-filter"
+                        value={playlistFilter}
+                        onChange={(e) => setPlaylistFilter(e.target.value)}
+                        className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+                        aria-label="Filter by playlist"
+                      >
+                        <option value="">All Playlists</option>
+                        {playlists.map((playlist) => (
+                          <option key={playlist.id} value={playlist.id}>
+                            {playlist.name} ({playlist.song_count} songs)
+                          </option>
+                        ))}
+                      </select>
+                      {playlistFilter && playlistFilter !== 'all_songs' && (
+                        <button
+                          onClick={() => openEditPlaylistSongsModal(playlistFilter)}
+                          className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center space-x-1 transition duration-300"
+                          title="Edit Playlist"
+                        >
+                          <span>✏️</span>
+                          <span>Edit</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Row 1: Genres (left) + Moods (right) */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor="genre-songs-filter" className="block text-gray-300 text-sm font-bold mb-2">Genre</label>
+                      <select
+                        id="genre-songs-filter"
+                        value={genreFilter}
+                        onChange={(e) => setGenreFilter(e.target.value)}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+                        aria-label="Filter by genre"
+                      >
+                        <option value="">All Genres</option>
+                        {filterOptions.genres?.map((genre) => (
+                          <option key={genre} value={genre}>{genre}</option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="mood-songs-filter" className="block text-gray-300 text-sm font-bold mb-2">Mood</label>
+                      <select
+                        id="mood-songs-filter"
+                        value={moodFilter}
+                        onChange={(e) => setMoodFilter(e.target.value)}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+                        aria-label="Filter by mood"
+                      >
+                        <option value="">All Moods</option>
+                        {filterOptions.moods?.map((mood) => (
+                          <option key={mood} value={mood}>{mood}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  
+                  {/* Row 2: Years (left) + Decades (right) */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor="year-songs-filter" className="block text-gray-300 text-sm font-bold mb-2">Year</label>
+                      <select
+                        id="year-songs-filter"
+                        value={yearFilter}
+                        onChange={(e) => setYearFilter(e.target.value)}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+                        aria-label="Filter by year"
+                      >
+                        <option value="">All Years</option>
+                        {filterOptions.years?.map((year) => (
+                          <option key={year} value={year}>{year}</option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="decade-songs-filter" className="block text-gray-300 text-sm font-bold mb-2">Decade</label>
+                      <select
+                        id="decade-songs-filter"
+                        value={decadeFilter}
+                        onChange={(e) => setDecadeFilter(e.target.value)}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+                        aria-label="Filter by decade"
+                      >
+                        <option value="">All Decades</option>
+                        {filterOptions.decades?.map((decade) => (
+                          <option key={decade} value={decade}>{decade}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  
+                  {/* Notes Search - Full Width */}
+                  <div>
+                    <label htmlFor="notes-filter" className="block text-gray-300 text-sm font-bold mb-2">Notes</label>
+                    <input
+                      id="notes-filter"
+                      type="text"
+                      placeholder="Search notes..."
+                      value={notesFilter}
+                      onChange={(e) => setNotesFilter(e.target.value)}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
+                      aria-label="Search song notes"
+                    />
+                  </div>
                 </div>
 
                 {/* Batch Operations Bar */}
