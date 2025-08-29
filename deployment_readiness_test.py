@@ -626,6 +626,8 @@ class DeploymentReadinessTester:
         self.test_environment_variable_configuration()
         self.test_url_generation_consistency()
         self.test_cors_configuration()
+        self.test_domain_override_logic()
+        self.test_audience_base_url_configuration()
         self.test_production_deployment_readiness()
         self.test_mongodb_atlas_compatibility()
         self.test_integration_health_check()
