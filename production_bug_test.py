@@ -203,7 +203,8 @@ class ProductionBugTester:
                     "song_id": song_id,
                     "requester_name": "Production Test User",
                     "requester_email": "test@requestwave.com",
-                    "dedication": "Testing request visibility bug - please ignore"
+                    "dedication": "Testing request visibility bug - please ignore",
+                    "tip_amount": 0.0  # Include required field
                 }
                 
                 response = requests.post(f"{PRODUCTION_BASE_URL}/requests", json=request_data, timeout=30)
