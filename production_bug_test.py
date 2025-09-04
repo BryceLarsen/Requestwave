@@ -426,39 +426,39 @@ class ProductionBugTester:
         except Exception as e:
             self.log_result("Payment Profile Configuration", False, f"Error checking payment profile: {str(e)}")
         
-        # Test 2: Test tip link generation endpoints
-        platforms = ["paypal", "venmo"]
+        # Test 2: Test tip link generation endpoints (correct endpoint format)
         test_amounts = [5.00, 10.00, 20.00]
         
-        for platform in platforms:
-            for amount in test_amounts:
-                try:
-                    response = requests.get(f"{PRODUCTION_BASE_URL}/tips/links/{platform}", 
-                                          params={"amount": amount, "message": "Test tip"}, 
-                                          timeout=30)
+        for amount in test_amounts:
+            try:
+                response = requests.get(f"{PRODUCTION_BASE_URL}/musicians/{self.musician_slug}/tip-links", 
+                                      params={"amount": amount, "message": "Test tip"}, 
+                                      timeout=30)
+                
+                if response.status_code == 200:
+                    tip_data = response.json()
+                    paypal_link = tip_data.get("paypal_link")
+                    venmo_link = tip_data.get("venmo_link")
                     
-                    if response.status_code == 200:
-                        tip_data = response.json()
-                        tip_link = tip_data.get(f"{platform}_link")
-                        
-                        if tip_link:
-                            self.log_result(f"Tip Link Generation - {platform.title()}", True, f"Successfully generated {platform} tip link", {
-                                "platform": platform,
-                                "amount": amount,
-                                "tip_link": tip_link,
-                                "link_format": "valid" if f"{platform}.me/" in tip_link else "invalid"
-                            })
-                        else:
-                            self.log_result(f"Tip Link Generation - {platform.title()}", False, f"No {platform} link in response", {
-                                "response_data": tip_data
-                            })
+                    if paypal_link or venmo_link:
+                        self.log_result(f"Tip Link Generation - Amount ${amount}", True, f"Successfully generated tip links", {
+                            "amount": amount,
+                            "paypal_link": paypal_link,
+                            "venmo_link": venmo_link,
+                            "paypal_valid": "paypal.me/" in (paypal_link or "") if paypal_link else False,
+                            "venmo_valid": "venmo.com/" in (venmo_link or "") if venmo_link else False
+                        })
                     else:
-                        self.log_result(f"Tip Link Generation - {platform.title()}", False, f"Failed to generate {platform} tip link: {response.status_code} - {response.text}")
-                        
-                except Exception as e:
-                    self.log_result(f"Tip Link Generation - {platform.title()}", False, f"Error generating {platform} tip link: {str(e)}")
+                        self.log_result(f"Tip Link Generation - Amount ${amount}", False, f"No tip links in response", {
+                            "response_data": tip_data
+                        })
+                else:
+                    self.log_result(f"Tip Link Generation - Amount ${amount}", False, f"Failed to generate tip links: {response.status_code} - {response.text}")
+                    
+            except Exception as e:
+                self.log_result(f"Tip Link Generation - Amount ${amount}", False, f"Error generating tip links: {str(e)}")
         
-        # Test 3: Test tip recording functionality
+        # Test 3: Test tip recording functionality (correct endpoint format)
         try:
             tip_record_data = {
                 "amount": 5.00,
@@ -467,8 +467,8 @@ class ProductionBugTester:
                 "message": "Test tip recording"
             }
             
-            response = requests.post(f"{PRODUCTION_BASE_URL}/tips/record", 
-                                   json=tip_record_data, headers=headers, timeout=30)
+            response = requests.post(f"{PRODUCTION_BASE_URL}/musicians/{self.musician_slug}/tips", 
+                                   json=tip_record_data, timeout=30)
             
             if response.status_code == 200:
                 tip_response = response.json()
