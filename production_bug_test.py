@@ -534,7 +534,8 @@ class ProductionBugTester:
                         "song_id": test_song.get("id"),
                         "requester_name": "Tip Integration Test",
                         "requester_email": "tiptest@requestwave.com",
-                        "dedication": "Testing tip integration - please ignore"
+                        "dedication": "Testing tip integration - please ignore",
+                        "tip_amount": 0.0  # Include required field
                     }
                     
                     response = requests.post(f"{PRODUCTION_BASE_URL}/requests", json=request_data, timeout=30)
