@@ -3475,7 +3475,7 @@ async def create_request(request_data: RequestCreate):
         "show_name": current_show_name,  # Auto-assign to current active show
         "tip_clicked": False,
         "social_clicks": [],
-        "created_at": datetime.utcnow()
+        "created_at": datetime.utcnow().isoformat()
     })
     
     await db.requests.insert_one(request_dict)
