@@ -7754,6 +7754,10 @@ const AudienceInterface = () => {
   const [showFilters, setShowFilters] = useState(false);
   // NEW: Prominent search functionality
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // NEW: Sort functionality state
+  const [sortOption, setSortOption] = useState('alphabetical'); // 'alphabetical', 'newest', 'random'
+  const [randomSeed, setRandomSeed] = useState(Date.now());
 
   // NEW: Post-request state for tip/social modal
   const [showPostRequestModal, setShowPostRequestModal] = useState(false);
