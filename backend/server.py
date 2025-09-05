@@ -2932,7 +2932,7 @@ async def create_song_suggestion(suggestion_data: dict):
             "requester_email": suggestion_data["requester_email"],
             "message": suggestion_data.get("message", ""),
             "status": "pending",
-            "created_at": datetime.utcnow()
+            "created_at": datetime.utcnow().isoformat()
         }
         
         await db.song_suggestions.insert_one(suggestion)
