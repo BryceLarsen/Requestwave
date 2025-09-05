@@ -1756,7 +1756,7 @@ async def register_musician(musician_data: MusicianRegister):
             "show_year": True,
             "show_notes": True
         },
-        "created_at": datetime.utcnow()
+        "created_at": datetime.utcnow().isoformat()
     }
     
     await db.musicians.insert_one(musician_dict)
