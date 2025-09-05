@@ -7756,7 +7756,7 @@ const AudienceInterface = () => {
   const [searchQuery, setSearchQuery] = useState('');
   
   // NEW: Sort functionality state
-  const [sortOption, setSortOption] = useState('alphabetical'); // 'alphabetical', 'newest', 'random'
+  const [sortOption, setSortOption] = useState('most-popular'); // 'most-popular', 'alphabetical', 'newest', 'random'
   const [randomSeed, setRandomSeed] = useState(Date.now());
 
   // NEW: Post-request state for tip/social modal
