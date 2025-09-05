@@ -540,6 +540,28 @@ async def check_pro_access(musician_id: str) -> bool:
     except:
         return False
 
+# Helper function to handle datetime parsing from ISO strings or datetime objects
+def parse_datetime(dt_value):
+    """Parse datetime from ISO string or return datetime object as-is"""
+    if isinstance(dt_value, str):
+        try:
+            return datetime.fromisoformat(dt_value.replace('Z', '+00:00'))
+        except ValueError:
+            # Try parsing as ISO format
+            return datetime.fromisoformat(dt_value)
+    return dt_value
+
+def format_datetime_string(dt_value, format_str):
+    """Format datetime from ISO string or datetime object"""
+    if isinstance(dt_value, str):
+        try:
+            dt = datetime.fromisoformat(dt_value.replace('Z', '+00:00'))
+            return dt.strftime(format_str)
+        except ValueError:
+            # If parsing fails, return original string
+            return dt_value
+    return dt_value.strftime(format_str)
+
 # NEW: Freemium model helper functions
 async def check_audience_link_access(musician_id: str) -> bool:
     """Check if musician's audience link should be active"""
