@@ -615,7 +615,7 @@ async def get_freemium_subscription_status(musician_id: str) -> SubscriptionStat
 
 async def start_trial_for_musician(musician_id: str):
     """Start 30-day trial for new musician"""
-    trial_end = datetime.utcnow() + timedelta(days=TRIAL_DAYS)
+    trial_end = (datetime.utcnow() + timedelta(days=TRIAL_DAYS)).isoformat()
     await db.musicians.update_one(
         {"id": musician_id},
         {
@@ -643,7 +643,7 @@ async def deactivate_audience_link(musician_id: str, reason: str = "subscription
         "musician_id": musician_id,
         "event_type": "audience_link_deactivated",
         "reason": reason,
-        "timestamp": datetime.utcnow()
+        "timestamp": datetime.utcnow().isoformat()
     })
 
 async def activate_audience_link(musician_id: str, reason: str = "subscription_activated"):
@@ -662,7 +662,7 @@ async def activate_audience_link(musician_id: str, reason: str = "subscription_a
         "musician_id": musician_id,
         "event_type": "audience_link_activated",
         "reason": reason,
-        "timestamp": datetime.utcnow()
+        "timestamp": datetime.utcnow().isoformat()
     })
 
 def init_stripe_checkout(request: FastAPIRequest):
@@ -1721,7 +1721,7 @@ async def register_musician(musician_data: MusicianRegister):
     
     if BILLING_ENABLED:
         # In billing mode, start with trial
-        trial_end = datetime.utcnow() + timedelta(days=TRIAL_DAYS)
+        trial_end = (datetime.utcnow() + timedelta(days=TRIAL_DAYS)).isoformat()
         audience_link_active = True
         has_had_trial = True
     else:
@@ -1767,7 +1767,7 @@ async def register_musician(musician_data: MusicianRegister):
         "event_type": "trial_started",
         "reason": "new_registration",
         "trial_end": trial_end,
-        "timestamp": datetime.utcnow()
+        "timestamp": datetime.utcnow().isoformat()
     })
     
     # Create JWT token
@@ -1819,7 +1819,7 @@ async def mark_startup_fee_applied(customer_id: str, subscription_id: str):
     await db.startup_fees.insert_one({
         "customer_id": customer_id,
         "subscription_id": subscription_id,
-        "applied_at": datetime.utcnow()
+        "applied_at": datetime.utcnow().isoformat()
     })
 
 async def mark_access(customer_id: str, active: bool):
@@ -2275,7 +2275,7 @@ async def emergent_oauth_login(request: FastAPIRequest, response: Response):
                     "emergent_session_token": session_token,
                     "emergent_user_id": emergent_user_id,
                     "profile_picture": picture,  # Update profile picture from Google
-                    "last_login": datetime.utcnow()
+                    "last_login": datetime.utcnow().isoformat()
                 }}
             )
             
@@ -2318,11 +2318,11 @@ async def emergent_oauth_login(request: FastAPIRequest, response: Response):
                 "emergent_session_token": session_token,
                 "emergent_user_id": emergent_user_id,
                 "created_at": datetime.utcnow().isoformat(),
-                "last_login": datetime.utcnow(),
+                "last_login": datetime.utcnow().isoformat(),
                 # In free mode, give everyone pro access
                 "subscription_status": "active" if not BILLING_ENABLED else "trial",
                 "audience_link_active": True,
-                "trial_start_date": datetime.utcnow() if BILLING_ENABLED else None,
+                "trial_start_date": datetime.utcnow().isoformat() if BILLING_ENABLED else None,
                 "trial_end_date": datetime.utcnow() + timedelta(days=14) if BILLING_ENABLED else None
             }
             
@@ -2587,7 +2587,7 @@ async def reset_password(request_data: dict):
         # Mark token as used (single-use)
         await db.password_resets.update_one(
             {"reset_token": reset_token},
-            {"$set": {"used": True, "used_at": datetime.utcnow()}}
+            {"$set": {"used": True, "used_at": datetime.utcnow().isoformat()}}
         )
         
         # Log successful password reset (non-PII)
@@ -2608,7 +2608,7 @@ async def debug_env_vars():
     return {
         "frontend_url": os.environ.get('FRONTEND_URL'),
         "backend_env_status": "active",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat().isoformat()
     }
 
 @api_router.get("/qr-code")
@@ -4870,7 +4870,7 @@ async def archive_show(
             {"id": show_id},
             {"$set": {
                 "status": "archived",
-                "archived_at": datetime.utcnow()
+                "archived_at": datetime.utcnow().isoformat()
             }}
         )
         
@@ -4912,7 +4912,7 @@ async def restore_show(
             {"id": show_id},
             {"$set": {
                 "status": "active",
-                "restored_at": datetime.utcnow()
+                "restored_at": datetime.utcnow().isoformat()
             }}
         )
         
@@ -5720,7 +5720,7 @@ async def get_freemium_checkout_status(
             {
                 "$set": {
                     "payment_status": status.payment_status,
-                    "updated_at": datetime.utcnow()
+                    "updated_at": datetime.utcnow().isoformat()
                 }
             }
         )
@@ -5836,12 +5836,12 @@ async def check_musician_audience_access(musician_slug: str):
 @api_router.get("/v2/test")
 async def test_v2_routing():
     """Simple test endpoint to verify v2 routing works"""
-    return {"message": "v2 routing is working", "timestamp": datetime.utcnow().isoformat()}
+    return {"message": "v2 routing is working", "timestamp": datetime.utcnow().isoformat().isoformat()}
 
 # Health check
 @api_router.get("/health")
 async def health_check():
-    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat().isoformat()}
 
 # NEW: Contact form endpoint
 class ContactRequest(BaseModel):
@@ -5961,7 +5961,7 @@ async def send_contact_message(contact: ContactRequest):
 # Test endpoint to debug routing
 @api_router.post("/test/subscription")
 async def test_subscription_endpoint():
-    return {"message": "Test subscription endpoint working", "timestamp": datetime.utcnow().isoformat()}
+    return {"message": "Test subscription endpoint working", "timestamp": datetime.utcnow().isoformat().isoformat()}
 
 @api_router.post("/test/upgrade")
 async def test_upgrade_endpoint(request: FastAPIRequest, musician_id: str = Depends(get_current_musician)):
@@ -5969,7 +5969,7 @@ async def test_upgrade_endpoint(request: FastAPIRequest, musician_id: str = Depe
     return {
         "message": "Test upgrade endpoint working",
         "musician_id": musician_id,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat().isoformat()
     }
 
 # NEW: Freemium model endpoints (v2 to avoid conflicts) - MOVED BEFORE ROUTER INCLUSION
@@ -6010,7 +6010,7 @@ async def cancel_freemium_subscription(musician_id: str = Depends(get_current_mu
 @api_router.get("/v2/test")
 async def test_v2_routing():
     """Simple test endpoint to verify v2 routing works"""
-    return {"message": "v2 routing is working", "timestamp": datetime.utcnow().isoformat()}
+    return {"message": "v2 routing is working", "timestamp": datetime.utcnow().isoformat().isoformat()}
 
 # Diagnostic endpoints
 @api_router.get("/__health")
@@ -6019,7 +6019,7 @@ async def health_check():
     return {
         "app_id": id(app),
         "module": __name__,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat().isoformat()
     }
 
 @api_router.get("/__routes")
@@ -6081,7 +6081,7 @@ async def route_audit():
 @api_router.get("/test-endpoint-before-inclusion")
 async def test_endpoint_before_inclusion():
     """Simple test to verify endpoint registration works"""
-    return {"message": "test endpoint before inclusion works", "timestamp": datetime.utcnow().isoformat()}
+    return {"message": "test endpoint before inclusion works", "timestamp": datetime.utcnow().isoformat().isoformat()}
 
 # Include the main router
 app.include_router(api_router)
