@@ -753,19 +753,21 @@ const MusicianDashboard = () => {
           // Handle PayPal/Venmo payment links
           if (tipPlatform === 'venmo' && paymentUrl.startsWith('venmo://')) {
             // For Venmo deep links, implement fallback for desktop browsers
+            // Extract Venmo username from the venmo link
+            const venmoMatch = paymentUrl.match(/recipients=([^&]+)/);
+            const venmoUsername = venmoMatch ? venmoMatch[1] : 'this musician';
+            
             try {
               // Try to open the Venmo app first
               window.location.href = paymentUrl;
               
               // Show instructions for desktop users or if app isn't installed
               setTimeout(() => {
-                const venmoUsername = musician.venmo_username;
                 alert(`Opening Venmo app to send $${amount} tip to @${venmoUsername}!\n\nIf Venmo app didn't open:\n1. Open Venmo app manually\n2. Search for @${venmoUsername}\n3. Send $${amount} with message: "${tipMessage || 'Thanks for the music!'}"`);
               }, 1000);
               
             } catch (error) {
               // Fallback for desktop users
-              const venmoUsername = musician.venmo_username;
               alert(`To send your $${amount} tip:\n\n1. Open Venmo app on your phone\n2. Search for @${venmoUsername}\n3. Send $${amount} with message: "${tipMessage || 'Thanks for the music!'}"`);
             }
           } else {
