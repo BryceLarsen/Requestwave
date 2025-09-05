@@ -1406,7 +1406,7 @@ const MusicianDashboard = () => {
   const fetchRequests = async () => {
     try {
       const response = await axios.get(`${API}/requests/musician/${musician.id}`);
-      setRequests(response.data);
+      setRequests(response.data.requests); // Updated to handle new response format
     } catch (error) {
       console.error('Error fetching requests:', error);
     } finally {
