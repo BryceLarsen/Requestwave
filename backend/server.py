@@ -3717,7 +3717,7 @@ async def get_daily_analytics(
         
         for request in requests:
             # Format date as YYYY-MM-DD
-            date_key = request["created_at"].strftime("%Y-%m-%d")
+            date_key = format_datetime_string(request["created_at"], "%Y-%m-%d")
             
             # Initialize date if not exists
             if date_key not in daily_stats:
