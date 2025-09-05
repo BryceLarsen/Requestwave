@@ -3220,7 +3220,7 @@ const MusicianDashboard = () => {
 
         {/* Desktop Tabs (hidden on mobile) */}
         <div className="hidden md:flex flex-wrap gap-1 bg-gray-800 rounded-lg p-1 mb-8">
-          {['songs', 'requests', 'onstage', 'analytics', 'profile', ...(BILLING_ENABLED ? ['subscription'] : []), 'design'].map((tab) => (
+          {['onstage', 'songs', 'requests', 'analytics', 'profile', ...(BILLING_ENABLED ? ['subscription'] : []), 'design'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
