@@ -2338,7 +2338,7 @@ async def emergent_oauth_login(request: FastAPIRequest, response: Response):
             "emergent_user_id": emergent_user_id,
             "email": email,
             "created_at": datetime.utcnow().isoformat(),
-            "expires_at": datetime.utcnow() + timedelta(days=7)
+            "expires_at": (datetime.utcnow() + timedelta(days=7)).isoformat()
         }
         
         await db.sessions.update_one(
