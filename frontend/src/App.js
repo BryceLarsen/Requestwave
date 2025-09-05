@@ -8220,12 +8220,18 @@ const AudienceInterface = () => {
     
     // Check if tips are enabled - if not, skip the tip modal and go straight to social follow
     if (musician.tips_enabled === false) {
-      // Submit request without tip and skip tip modal
-      const submittedRequest = await submitRequestWithTip(song, 0);
-      if (submittedRequest) {
-        // Go straight to social follow modal
-        setShowTipChoiceModal(false);
-        setShowSocialFollowModal(true);
+      try {
+        // Submit request without tip and skip tip modal
+        const submittedRequest = await submitRequestWithTip(song, 0);
+        if (submittedRequest) {
+          // Go straight to social follow modal
+          setShowTipChoiceModal(false);
+          setShowSocialFollowModal(true);
+        }
+      } catch (error) {
+        // Handle error properly - this was the missing error handling!
+        console.error('Error submitting request:', error);
+        alert('Error creating request. Please try again.');
       }
     } else {
       // Show tip choice modal as normal
