@@ -5284,61 +5284,61 @@ const MusicianDashboard = () => {
         {activeTab === 'onstage' && (
           <div className="space-y-6">
             {/* Three-Panel Layout: Up Next | Active Requests | Completed Requests */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* NOTE: Up Next panel is conditionally rendered only when there are up_next songs */}
+            <div className={`grid grid-cols-1 gap-6 ${
+              requests.filter(r => r.status === 'up_next').length > 0 
+                ? 'lg:grid-cols-3' 
+                : 'lg:grid-cols-2'
+            }`}>
               
-              {/* Up Next Panel */}
-              <div className="bg-blue-900/50 rounded-xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold text-blue-300">🎵 Up Next</h3>
-                  <div className="text-sm text-gray-400">
-                    {requests.filter(r => r.status === 'up_next').length} songs
+              {/* Up Next Panel - Only show if there are up_next songs */}
+              {requests.filter(r => r.status === 'up_next').length > 0 && (
+                <div className="bg-blue-900/50 rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-blue-300">🎵 Up Next</h3>
+                    <div className="text-sm text-gray-400">
+                      {requests.filter(r => r.status === 'up_next').length} songs
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {requests
+                      .filter(r => r.status === 'up_next')
+                      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+                      .map((request) => (
+                        <div key={request.id} className="bg-blue-800/50 rounded-lg p-4">
+                          <h4 className="font-bold text-lg text-white">
+                            {request.song_title}
+                          </h4>
+                          <p className="text-blue-200">{request.song_artist}</p>
+                          <p className="text-sm text-gray-300 mt-2">
+                            From: <strong className="text-white">{request.requester_name}</strong>
+                          </p>
+                          {request.dedication && (
+                            <p className="text-sm text-blue-200 mt-1 italic">
+                              "{request.dedication}"
+                            </p>
+                          )}
+                          
+                          <div className="flex space-x-2 mt-3">
+                            <button
+                              onClick={() => updateRequestStatus(request.id, 'played')}
+                              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition duration-300"
+                            >
+                              ✓ Played
+                            </button>
+                            <button
+                              onClick={() => updateRequestStatus(request.id, 'rejected')}
+                              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition duration-300"
+                            >
+                              ✗ Skip
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                   </div>
                 </div>
-                
-                <div className="space-y-3">
-                  {requests
-                    .filter(r => r.status === 'up_next')
-                    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-                    .map((request) => (
-                      <div key={request.id} className="bg-blue-800/50 rounded-lg p-4">
-                        <h4 className="font-bold text-lg text-white">
-                          {request.song_title}
-                        </h4>
-                        <p className="text-blue-200">{request.song_artist}</p>
-                        <p className="text-sm text-gray-300 mt-2">
-                          From: <strong className="text-white">{request.requester_name}</strong>
-                        </p>
-                        {request.dedication && (
-                          <p className="text-sm text-blue-200 mt-1 italic">
-                            "{request.dedication}"
-                          </p>
-                        )}
-                        
-                        <div className="flex space-x-2 mt-3">
-                          <button
-                            onClick={() => updateRequestStatus(request.id, 'played')}
-                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition duration-300"
-                          >
-                            ✓ Played
-                          </button>
-                          <button
-                            onClick={() => updateRequestStatus(request.id, 'rejected')}
-                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition duration-300"
-                          >
-                            ✗ Skip
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  
-                  {requests.filter(r => r.status === 'up_next').length === 0 && (
-                    <div className="text-center py-8 text-gray-400">
-                      <p>No songs queued up next</p>
-                      <p className="text-sm mt-1">Move requests from Active to queue them</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+              )}
 
               {/* Active Requests Panel */}
               <div className="bg-purple-900/50 rounded-xl p-6">
