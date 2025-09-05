@@ -4297,6 +4297,7 @@ const MusicianDashboard = () => {
                       className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm min-w-[120px]"
                       aria-label="Sort by"
                     >
+                      <option value="most-popular">Most Popular</option>
                       <option value="alphabetical">A→Z</option>
                       <option value="newest">Newest</option>
                       <option value="random">Random</option>
