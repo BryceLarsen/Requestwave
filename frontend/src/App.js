@@ -7993,6 +7993,14 @@ const AudienceInterface = () => {
     }
   }, [selectedFilters, searchQuery, musician]); // Trigger when filters or search changes
 
+  // NEW: Apply sorting when songs or sort options change
+  useEffect(() => {
+    if (songs.length > 0) {
+      const sorted = applyAudienceSorting(songs);
+      setFilteredSongs(sorted);
+    }
+  }, [songs, sortOption, randomSeed]);
+
   const fetchMusician = async () => {
     try {
       const response = await axios.get(`${API}/musicians/${slug}`);
