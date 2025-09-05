@@ -2132,8 +2132,10 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
     # Return updated profile
     updated_musician = await db.musicians.find_one({"id": musician_id})
     return MusicianProfile(
+        id=updated_musician.get("id"),  # Add musician ID
         name=updated_musician["name"],
         email=updated_musician["email"],
+        slug=updated_musician.get("slug"),  # Add slug for audience link
         bio=updated_musician.get("bio", ""),
         website=updated_musician.get("website", ""),
         # Payment usernames
@@ -2144,6 +2146,8 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
         # Control settings
         tips_enabled=updated_musician.get("tips_enabled", True),
         requests_enabled=updated_musician.get("requests_enabled", True),
+        # Link settings
+        audience_link_active=updated_musician.get("audience_link_active", True),  # Add audience link status
         # Social media usernames
         instagram_username=updated_musician.get("instagram_username", ""),
         facebook_username=updated_musician.get("facebook_username", ""),
