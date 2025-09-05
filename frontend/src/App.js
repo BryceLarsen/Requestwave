@@ -1268,7 +1268,7 @@ const MusicianDashboard = () => {
   // NEW: Update URL when sort option changes
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    if (sortOption === 'alphabetical') {
+    if (sortOption === 'most-popular') {
       urlParams.delete('sort');
     } else {
       urlParams.set('sort', sortOption);
