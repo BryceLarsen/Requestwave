@@ -3977,7 +3977,7 @@ async def upload_csv_songs(
                 "year": song_data['year'],
                 "notes": song_data['notes'],
                 "request_count": 0,
-                "created_at": datetime.utcnow()
+                "created_at": datetime.utcnow().isoformat()
             }
             
             # NEW: Optional automatic metadata enrichment
