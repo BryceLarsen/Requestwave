@@ -5844,7 +5844,7 @@ async def send_contact_message(contact: ContactRequest):
             "email": contact.email,
             "message": contact.message,
             "musician_id": contact.musician_id,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.utcnow().isoformat(),
             "status": "received"
         }
         
