@@ -3563,8 +3563,11 @@ async def create_musician_request(
 
 @api_router.get("/requests/musician/{musician_id}", response_model=List[Request])
 async def get_musician_requests(musician_id: str = Depends(get_current_musician)):
-    """Get all requests for the authenticated musician"""
-    requests = await db.requests.find({"musician_id": musician_id}).sort("created_at", DESCENDING).to_list(1000)
+    """Get all requests for the authenticated musician (excluding archived)"""
+    requests = await db.requests.find({
+        "musician_id": musician_id,
+        "status": {"$ne": "archived"}  # Exclude archived requests for consistency
+    }).sort("created_at", DESCENDING).limit(50).to_list(50)
     return [Request(**request) for request in requests]
 
 # NEW: Phase 3 - Analytics endpoints
