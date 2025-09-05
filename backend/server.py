@@ -2024,8 +2024,10 @@ async def get_profile(musician_id: str = Depends(get_current_musician)):
         raise HTTPException(status_code=404, detail="Musician not found")
     
     return MusicianProfile(
+        id=musician.get("id"),  # Add musician ID
         name=musician["name"],
         email=musician["email"],
+        slug=musician.get("slug"),  # Add slug for audience link
         bio=musician.get("bio", ""),
         website=musician.get("website", ""),
         # Payment usernames
@@ -2036,6 +2038,8 @@ async def get_profile(musician_id: str = Depends(get_current_musician)):
         # Control settings
         tips_enabled=musician.get("tips_enabled", True),
         requests_enabled=musician.get("requests_enabled", True),
+        # Link settings
+        audience_link_active=musician.get("audience_link_active", True),  # Add audience link status
         # Social media usernames
         instagram_username=musician.get("instagram_username", ""),
         facebook_username=musician.get("facebook_username", ""),
