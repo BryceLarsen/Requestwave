@@ -3561,14 +3561,28 @@ async def create_musician_request(
     
     return Request(**request_dict)
 
-@api_router.get("/requests/musician/{musician_id}", response_model=List[Request])
+@api_router.get("/requests/musician/{musician_id}")
 async def get_musician_requests(musician_id: str = Depends(get_current_musician)):
-    """Get all requests for the authenticated musician (excluding archived)"""
+    """Get all requests for the authenticated musician (excluding archived) - Same format as updates"""
     requests = await db.requests.find({
         "musician_id": musician_id,
         "status": {"$ne": "archived"}  # Exclude archived requests for consistency
     }).sort("created_at", DESCENDING).limit(50).to_list(50)
-    return [Request(**request) for request in requests]
+    
+    # Convert to Request objects for proper serialization
+    request_objects = []
+    for request in requests:
+        try:
+            request_objects.append(Request(**request))
+        except Exception as e:
+            logger.warning(f"Error converting request {request.get('id', 'unknown')}: {str(e)}")
+            continue
+    
+    return {
+        "requests": request_objects,
+        "total_requests": len(request_objects),
+        "last_updated": datetime.utcnow().isoformat()
+    }
 
 # NEW: Phase 3 - Analytics endpoints
 @api_router.get("/analytics/requesters")
