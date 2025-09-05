@@ -2323,7 +2323,7 @@ async def emergent_oauth_login(request: FastAPIRequest, response: Response):
                 "subscription_status": "active" if not BILLING_ENABLED else "trial",
                 "audience_link_active": True,
                 "trial_start_date": datetime.utcnow().isoformat() if BILLING_ENABLED else None,
-                "trial_end_date": datetime.utcnow() + timedelta(days=14) if BILLING_ENABLED else None
+                "trial_end_date": (datetime.utcnow() + timedelta(days=14)).isoformat() if BILLING_ENABLED else None
             }
             
             await db.musicians.insert_one(musician_data)
