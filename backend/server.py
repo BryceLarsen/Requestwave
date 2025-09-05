@@ -4123,7 +4123,7 @@ async def upload_lst_songs(
                     "notes": song_data.get("notes", ""),
                     "request_count": 0,
                     "hidden": False,
-                    "created_at": datetime.utcnow()
+                    "created_at": datetime.utcnow().isoformat()
                 }
                 
                 # Calculate decade from year if available
