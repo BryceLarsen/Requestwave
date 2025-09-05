@@ -8503,24 +8503,51 @@ const AudienceInterface = () => {
               <div className="text-2xl">🔍</div>
               <h2 className="text-xl md:text-2xl font-bold text-white">Search Songs</h2>
             </div>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search Song Title or Artist"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-gray-700 border-2 border-gray-600 focus:border-blue-500 rounded-xl px-4 md:px-6 py-3 md:py-4 text-white placeholder-gray-400 text-base md:text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition duration-300"
+            <div className="flex flex-col space-y-3">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search Song Title or Artist"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-gray-700 border-2 border-gray-600 focus:border-blue-500 rounded-xl px-4 md:px-6 py-3 md:py-4 text-white placeholder-gray-400 text-base md:text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition duration-300"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              
+              {/* NEW: Sort Dropdown */}
+              <div className="flex items-center space-x-2">
+                <select
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value)}
+                  className="bg-gray-700 border-2 border-gray-600 focus:border-blue-500 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+                  aria-label="Sort by"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
+                  <option value="alphabetical">Sort: A→Z</option>
+                  <option value="newest">Sort: Newest</option>
+                  <option value="random">Sort: Random</option>
+                </select>
+                {sortOption === 'random' && (
+                  <button
+                    onClick={handleAudienceShuffle}
+                    className={`${colors.primary} px-3 py-2 rounded-lg font-medium transition duration-300 text-sm flex items-center space-x-1`}
+                    title="Shuffle"
+                    aria-label="Shuffle songs"
+                  >
+                    <span>🔀</span>
+                    <span className="hidden sm:inline">Shuffle</span>
+                  </button>
+                )}
+              </div>
             </div>
             {searchQuery && (
               <p className="text-sm text-gray-300">
