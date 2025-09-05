@@ -2465,7 +2465,7 @@ async def forgot_password(reset_data: PasswordReset):
                 "reset_token": reset_token,
                 "expires_at": datetime.utcnow() + timedelta(minutes=60),
                 "used": False,
-                "created_at": datetime.utcnow()
+                "created_at": datetime.utcnow().isoformat()
             }
         },
         upsert=True
