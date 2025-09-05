@@ -3543,7 +3543,7 @@ async def create_musician_request(
         "show_name": current_show_name,
         "tip_clicked": False,
         "social_clicks": [],
-        "created_at": datetime.utcnow()
+        "created_at": datetime.utcnow().isoformat()
     })
     
     # Update song request count
