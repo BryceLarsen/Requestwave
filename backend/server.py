@@ -4604,7 +4604,7 @@ async def create_show(
         show_dict.update({
             "id": str(uuid.uuid4()),
             "musician_id": musician_id,
-            "created_at": datetime.utcnow()
+            "created_at": datetime.utcnow().isoformat()
         })
         
         await db.shows.insert_one(show_dict)
