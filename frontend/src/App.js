@@ -8127,7 +8127,40 @@ const AudienceInterface = () => {
       filtered = filtered.filter(song => song.decade === selectedFilters.decade);
     }
 
+    // NEW: Apply sorting
+    filtered = applyAudienceSorting(filtered);
+
     setFilteredSongs(filtered);
+  };
+
+  // NEW: Audience sorting function
+  const applyAudienceSorting = (songsToSort) => {
+    const sorted = [...songsToSort];
+    
+    switch (sortOption) {
+      case 'alphabetical':
+        return sorted.sort((a, b) => a.title.localeCompare(b.title));
+      case 'newest':
+        return sorted.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      case 'random':
+        // Use seeded random for consistent results
+        const seededRandom = (seed) => {
+          const x = Math.sin(seed) * 10000;
+          return x - Math.floor(x);
+        };
+        return sorted.sort((a, b) => {
+          const seedA = (a.id.charCodeAt(0) + randomSeed) % 1000;
+          const seedB = (b.id.charCodeAt(0) + randomSeed) % 1000;
+          return seededRandom(seedA) - seededRandom(seedB);
+        });
+      default:
+        return sorted;
+    }
+  };
+
+  // NEW: Shuffle function for audience random sort
+  const handleAudienceShuffle = () => {
+    setRandomSeed(Date.now());
   };
 
   // NEW: Random song selector function
