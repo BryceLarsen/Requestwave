@@ -578,6 +578,10 @@ const MusicianDashboard = () => {
   const [playlistFilter, setPlaylistFilter] = useState('');
   const [moodFilter, setMoodFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
+  
+  // NEW: Sort functionality state
+  const [sortOption, setSortOption] = useState('alphabetical'); // 'alphabetical', 'newest', 'random'
+  const [randomSeed, setRandomSeed] = useState(Date.now());
   const [decadeFilter, setDecadeFilter] = useState('');  // NEW: Add decade filter
   const [notesFilter, setNotesFilter] = useState('');  // NEW: Add notes filter
   const [filteredSongs, setFilteredSongs] = useState([]);
