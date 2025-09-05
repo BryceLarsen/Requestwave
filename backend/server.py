@@ -4721,7 +4721,7 @@ async def get_requests_grouped_by_show(
                 grouped["shows"][show_name].append(Request(**request))
             else:
                 # Group by date for unassigned requests
-                date_str = request["created_at"].strftime("%Y-%m-%d")
+                date_str = format_datetime_string(request["created_at"], "%Y-%m-%d")
                 grouped["unassigned"].append({
                     "date": date_str,
                     "request": Request(**request)
