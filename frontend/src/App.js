@@ -8537,6 +8537,7 @@ const AudienceInterface = () => {
                   className="bg-gray-700 border-2 border-gray-600 focus:border-blue-500 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
                   aria-label="Sort by"
                 >
+                  <option value="most-popular">Sort: Most Popular</option>
                   <option value="alphabetical">Sort: A→Z</option>
                   <option value="newest">Sort: Newest</option>
                   <option value="random">Sort: Random</option>
