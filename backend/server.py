@@ -4714,7 +4714,7 @@ async def start_show(
             "date": datetime.utcnow().strftime("%Y-%m-%d"),
             "venue": show_data.get("venue", ""),
             "notes": show_data.get("notes", ""),
-            "created_at": datetime.utcnow()
+            "created_at": datetime.utcnow().isoformat()
         }
         
         await db.shows.insert_one(show_dict)
