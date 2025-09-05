@@ -4434,7 +4434,7 @@ async def record_tip(
             "platform": tip_data.platform,
             "tipper_name": tip_data.tipper_name,
             "message": tip_data.message,
-            "created_at": datetime.utcnow()
+            "created_at": datetime.utcnow().isoformat()
         }
         
         # Insert tip record
