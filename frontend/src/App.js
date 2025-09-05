@@ -7968,7 +7968,7 @@ const AudienceInterface = () => {
     // NEW: Handle URL parameters for sort option
     const urlParams = new URLSearchParams(window.location.search);
     const sortParam = urlParams.get('sort');
-    if (sortParam && ['alphabetical', 'newest', 'random'].includes(sortParam)) {
+    if (sortParam && ['most-popular', 'alphabetical', 'newest', 'random'].includes(sortParam)) {
       setSortOption(sortParam);
       if (sortParam === 'random') {
         setRandomSeed(Date.now());
