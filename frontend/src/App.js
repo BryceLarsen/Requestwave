@@ -4282,14 +4282,37 @@ const MusicianDashboard = () => {
 
                 {/* NEW: Redesigned Filter Layout - No Labels, Matches Audience View */}
                 <div className="space-y-3 mb-4">
-                  {/* Search Bar - Full Width */}
-                  <input
-                    type="text"
-                    placeholder="Search Song Title or Artist"
-                    value={songFilter}
-                    onChange={(e) => setSongFilter(e.target.value)}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
-                  />
+                  {/* Search Bar and Sort Dropdown Row */}
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      placeholder="Search Song Title or Artist"
+                      value={songFilter}
+                      onChange={(e) => setSongFilter(e.target.value)}
+                      className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
+                    />
+                    <select
+                      value={sortOption}
+                      onChange={(e) => setSortOption(e.target.value)}
+                      className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm min-w-[120px]"
+                      aria-label="Sort by"
+                    >
+                      <option value="alphabetical">A→Z</option>
+                      <option value="newest">Newest</option>
+                      <option value="random">Random</option>
+                    </select>
+                    {sortOption === 'random' && (
+                      <button
+                        onClick={handleShuffle}
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center space-x-1 transition duration-300"
+                        title="Shuffle"
+                        aria-label="Shuffle songs"
+                      >
+                        <span>🔀</span>
+                        <span className="hidden sm:inline">Shuffle</span>
+                      </button>
+                    )}
+                  </div>
                   
                   {/* Playlists Dropdown - Full Width */}
                   <div className="flex items-center space-x-2">
