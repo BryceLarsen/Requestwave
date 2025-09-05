@@ -2337,7 +2337,7 @@ async def emergent_oauth_login(request: FastAPIRequest, response: Response):
             "musician_id": musician_id,
             "emergent_user_id": emergent_user_id,
             "email": email,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.utcnow().isoformat(),
             "expires_at": datetime.utcnow() + timedelta(days=7)
         }
         
