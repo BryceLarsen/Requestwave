@@ -310,8 +310,10 @@ class MusicianPublic(BaseModel):
     requests_enabled: Optional[bool] = True
 
 class MusicianProfile(BaseModel):
+    id: Optional[str] = None  # Add musician ID
     name: str
     email: str
+    slug: Optional[str] = None  # Add slug for audience link
     bio: Optional[str] = ""
     website: Optional[str] = ""
     # Payment fields
@@ -322,6 +324,8 @@ class MusicianProfile(BaseModel):
     # Control settings
     tips_enabled: Optional[bool] = True
     requests_enabled: Optional[bool] = True
+    # Link settings
+    audience_link_active: Optional[bool] = True  # Add audience link status
     # Social media fields
     instagram_username: Optional[str] = ""
     facebook_username: Optional[str] = ""
