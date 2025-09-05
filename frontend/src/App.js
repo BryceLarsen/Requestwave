@@ -750,14 +750,32 @@ const MusicianDashboard = () => {
           alert(`Use your bank app or Zelle app to send $${amount} to: ${zelleContact}\n\nMessage: ${tipMessage || 'Thanks for the music!'}`);
           setShowTipModal(false);
         } else if (paymentUrl) {
-          // Open payment link for PayPal/Venmo
-          window.open(paymentUrl, '_blank');
+          // Handle PayPal/Venmo payment links
+          if (tipPlatform === 'venmo' && paymentUrl.startsWith('venmo://')) {
+            // For Venmo deep links, implement fallback for desktop browsers
+            try {
+              // Try to open the Venmo app first
+              window.location.href = paymentUrl;
+              
+              // Show instructions for desktop users or if app isn't installed
+              setTimeout(() => {
+                const venmoUsername = musician.venmo_username;
+                alert(`Opening Venmo app to send $${amount} tip to @${venmoUsername}!\n\nIf Venmo app didn't open:\n1. Open Venmo app manually\n2. Search for @${venmoUsername}\n3. Send $${amount} with message: "${tipMessage || 'Thanks for the music!'}"`);
+              }, 1000);
+              
+            } catch (error) {
+              // Fallback for desktop users
+              const venmoUsername = musician.venmo_username;
+              alert(`To send your $${amount} tip:\n\n1. Open Venmo app on your phone\n2. Search for @${venmoUsername}\n3. Send $${amount} with message: "${tipMessage || 'Thanks for the music!'}"`);
+            }
+          } else {
+            // PayPal links work universally
+            window.open(paymentUrl, '_blank');
+            alert(`Opening ${tipPlatform === 'paypal' ? 'PayPal' : 'Venmo'} to send your $${amount} tip!`);
+          }
           
           // Close modal
           setShowTipModal(false);
-          
-          // Show success message
-          alert(`Opening ${tipPlatform === 'paypal' ? 'PayPal' : 'Venmo'} to send your $${amount} tip!`);
         } else {
           alert(`${tipPlatform === 'paypal' ? 'PayPal' : tipPlatform === 'venmo' ? 'Venmo' : 'Zelle'} is not set up for this musician`);
         }
