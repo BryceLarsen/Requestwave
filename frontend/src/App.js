@@ -580,7 +580,7 @@ const MusicianDashboard = () => {
   const [yearFilter, setYearFilter] = useState('');
   
   // NEW: Sort functionality state
-  const [sortOption, setSortOption] = useState('alphabetical'); // 'alphabetical', 'newest', 'random'
+  const [sortOption, setSortOption] = useState('most-popular'); // 'most-popular', 'alphabetical', 'newest', 'random'
   const [randomSeed, setRandomSeed] = useState(Date.now());
   const [decadeFilter, setDecadeFilter] = useState('');  // NEW: Add decade filter
   const [notesFilter, setNotesFilter] = useState('');  // NEW: Add notes filter
