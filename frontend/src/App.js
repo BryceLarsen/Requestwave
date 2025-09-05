@@ -520,7 +520,7 @@ const formatTime = (timestamp) => {
 
 const MusicianDashboard = () => {
   const { musician, token, logout, setMusician } = useAuth();
-  const [activeTab, setActiveTab] = useState('songs');
+  const [activeTab, setActiveTab] = useState('onstage');
   const [songs, setSongs] = useState([]);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
