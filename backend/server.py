@@ -3678,7 +3678,7 @@ async def export_requesters_csv(musician_id: str = Depends(get_current_musician)
                 requester["_id"]["email"],
                 str(requester["request_count"]),
                 f"${requester['total_tips']:.2f}",
-                requester["latest_request"].strftime("%Y-%m-%d %H:%M")
+                format_datetime_string(requester["latest_request"], "%Y-%m-%d %H:%M")
             ])
         
         csv_content = "\n".join([",".join([f'"{field}"' for field in row]) for row in csv_rows])
