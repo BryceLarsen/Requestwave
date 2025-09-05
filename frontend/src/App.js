@@ -1821,6 +1821,8 @@ const MusicianDashboard = () => {
     const sorted = [...songsToSort];
     
     switch (sortOption) {
+      case 'most-popular':
+        return sorted.sort((a, b) => (b.request_count || 0) - (a.request_count || 0));
       case 'alphabetical':
         return sorted.sort((a, b) => a.title.localeCompare(b.title));
       case 'newest':
