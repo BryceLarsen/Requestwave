@@ -1810,7 +1810,40 @@ const MusicianDashboard = () => {
       return searchMatch && genreMatch && playlistMatch && moodMatch && yearMatch && decadeMatch && notesMatch;
     });
     
+    // NEW: Apply sorting
+    filtered = applySorting(filtered);
+    
     setFilteredSongs(filtered);
+  };
+
+  // NEW: Sorting function
+  const applySorting = (songsToSort) => {
+    const sorted = [...songsToSort];
+    
+    switch (sortOption) {
+      case 'alphabetical':
+        return sorted.sort((a, b) => a.title.localeCompare(b.title));
+      case 'newest':
+        return sorted.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      case 'random':
+        // Use seeded random for consistent results
+        const seededRandom = (seed) => {
+          const x = Math.sin(seed) * 10000;
+          return x - Math.floor(x);
+        };
+        return sorted.sort((a, b) => {
+          const seedA = (a.id.charCodeAt(0) + randomSeed) % 1000;
+          const seedB = (b.id.charCodeAt(0) + randomSeed) % 1000;
+          return seededRandom(seedA) - seededRandom(seedB);
+        });
+      default:
+        return sorted;
+    }
+  };
+
+  // NEW: Shuffle function for random sort
+  const handleShuffle = () => {
+    setRandomSeed(Date.now());
   };
 
   const handleSelectSong = (songId) => {
