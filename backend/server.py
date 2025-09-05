@@ -3117,7 +3117,7 @@ async def create_song(song_data: SongCreate, musician_id: str = Depends(get_curr
         "decade": decade,  # NEW: Auto-calculated decade
         "request_count": 0,  # Initialize request count
         "hidden": False,  # NEW: Default to visible
-        "created_at": datetime.utcnow()
+        "created_at": datetime.utcnow().isoformat()
     })
     
     await db.songs.insert_one(song_dict)
