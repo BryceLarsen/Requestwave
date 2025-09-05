@@ -7886,8 +7886,10 @@ const AudienceInterface = () => {
       setShowTipModal(true);
       
     } catch (error) {
-      // If request submission failed, close the modal
-      closeTipFlow();
+      // Show error instead of silently closing
+      console.error('Error submitting request with tip:', error);
+      alert('Error creating request. Please try again.');
+      // Keep modal open so user can retry
     }
   };
   
