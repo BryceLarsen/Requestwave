@@ -7900,8 +7900,10 @@ const AudienceInterface = () => {
       setShowSocialFollowModal(true);
       
     } catch (error) {
-      // If request submission failed, close the modal
-      closeTipFlow();
+      // Show error instead of silently closing
+      console.error('Error submitting request without tip:', error);
+      alert('Error creating request. Please try again.');
+      // Keep modal open so user can retry
     }
   };
   
