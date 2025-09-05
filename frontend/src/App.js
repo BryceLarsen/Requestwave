@@ -1253,6 +1253,33 @@ const MusicianDashboard = () => {
     }
   }, [activeTab]);
 
+  // NEW: Handle URL parameters for sort option
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sortParam = urlParams.get('sort');
+    if (sortParam && ['alphabetical', 'newest', 'random'].includes(sortParam)) {
+      setSortOption(sortParam);
+      if (sortParam === 'random') {
+        setRandomSeed(Date.now());
+      }
+    }
+  }, []);
+
+  // NEW: Update URL when sort option changes
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (sortOption === 'alphabetical') {
+      urlParams.delete('sort');
+    } else {
+      urlParams.set('sort', sortOption);
+    }
+    
+    const newUrl = urlParams.toString() ? 
+      `${window.location.pathname}?${urlParams.toString()}` : 
+      window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
+  }, [sortOption]);
+
   // NEW: Fetch playlists when subscription status changes
   useEffect(() => {
     if (subscriptionStatus) {
