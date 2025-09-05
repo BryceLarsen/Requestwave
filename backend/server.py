@@ -2994,7 +2994,7 @@ async def update_suggestion_status(
                     "notes": f"Added from audience suggestion by {suggestion['requester_name']}",
                     "request_count": 0,
                     "hidden": False,
-                    "created_at": datetime.utcnow()
+                    "created_at": datetime.utcnow().isoformat()
                 }
                 await db.songs.insert_one(song_dict)
         
