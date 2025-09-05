@@ -8184,6 +8184,9 @@ const AudienceInterface = () => {
             window.open(paymentUrl, '_blank');
             alert(`Opening ${tipPlatform === 'paypal' ? 'PayPal' : 'Venmo'} to send your $${amount} tip!`);
           }
+          
+          // Close modal
+          setShowTipModal(false);
         } else {
           alert(`${tipPlatform === 'paypal' ? 'PayPal' : 'Venmo'} is not set up for this musician`);
         }
