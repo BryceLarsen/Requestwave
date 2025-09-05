@@ -2463,7 +2463,7 @@ async def forgot_password(reset_data: PasswordReset):
             "$set": {
                 "email": reset_data.email,
                 "reset_token": reset_token,
-                "expires_at": datetime.utcnow() + timedelta(minutes=60),
+                "expires_at": (datetime.utcnow() + timedelta(minutes=60)).isoformat(),
                 "used": False,
                 "created_at": datetime.utcnow().isoformat()
             }
