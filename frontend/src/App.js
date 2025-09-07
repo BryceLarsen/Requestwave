@@ -2129,8 +2129,19 @@ const MusicianDashboard = () => {
       
       const days = periodToDaysMap[analyticsPeriod];
       handleTimeframeChange(days ? `${days}days` : 'alltime');
+      
+      // Trigger analytics data fetching
+      fetchAnalytics();
+      fetchRequesters();
     }
   }, [activeTab, analyticsPeriod]);
+
+  // Fetch analytics when analyticsDays changes
+  useEffect(() => {
+    if (activeTab === 'analytics' && analyticsDays) {
+      fetchAnalytics();
+    }
+  }, [analyticsDays]);
 
   // Fetch suggestions when suggestions tab is active
   React.useEffect(() => {
