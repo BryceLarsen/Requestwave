@@ -346,8 +346,14 @@ class ProfileUpdate(BaseModel):
     # Payment fields
     paypal_username: Optional[str] = None
     venmo_username: Optional[str] = None
+    cash_app_username: Optional[str] = None
     zelle_email: Optional[str] = None
     zelle_phone: Optional[str] = None
+    # Payment app toggles
+    paypal_enabled: Optional[bool] = None
+    venmo_enabled: Optional[bool] = None
+    cash_app_enabled: Optional[bool] = None
+    zelle_enabled: Optional[bool] = None
     # Control settings
     tips_enabled: Optional[bool] = None
     requests_enabled: Optional[bool] = None
