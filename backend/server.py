@@ -890,7 +890,9 @@ async def get_subscription_status(musician_id: str) -> SubscriptionStatus:
     signup_date = musician.get("created_at", now)
     
     # Check if still in trial period (7 days from signup)
-    trial_end = signup_date + timedelta(days=TRIAL_DAYS)
+    # Handle both datetime objects and ISO strings
+    signup_dt = parse_datetime(signup_date) if signup_date != now else now
+    trial_end = signup_dt + timedelta(days=TRIAL_DAYS)
     if now < trial_end:
         return LegacySubscriptionStatus(
             plan="trial",
