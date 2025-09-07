@@ -2127,7 +2127,9 @@ const MusicianDashboard = () => {
 
   // Handle analytics data fetching when tab becomes active
   useEffect(() => {
+    console.log('🔄 Analytics useEffect triggered', { activeTab, analyticsPeriod });
     if (activeTab === 'analytics') {
+      console.log('✅ Analytics tab is active, fetching data...');
       const periodToDaysMap = {
         'today': 1,
         'last7days': 7,
@@ -2141,6 +2143,7 @@ const MusicianDashboard = () => {
       handleTimeframeChange(days ? `${days}days` : 'alltime');
       
       // Trigger analytics data fetching
+      console.log('🚀 About to call fetchAnalytics and fetchRequesters');
       fetchAnalytics();
       fetchRequesters();
     }
