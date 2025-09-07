@@ -2054,7 +2054,9 @@ const MusicianDashboard = () => {
   const fetchAnalytics = async () => {
     setAnalyticsLoading(true);
     try {
-      const response = await axios.get(`${API}/analytics/daily?days=${analyticsDays}`);
+      const response = await axios.get(`${API}/analytics/daily?days=${analyticsDays}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
       setAnalyticsData(response.data);
     } catch (error) {
       console.error('Error fetching analytics:', error);
@@ -2065,7 +2067,9 @@ const MusicianDashboard = () => {
 
   const fetchRequesters = async () => {
     try {
-      const response = await axios.get(`${API}/analytics/requesters`);
+      const response = await axios.get(`${API}/analytics/requesters`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
       setRequestersData(response.data.requesters);
     } catch (error) {
       console.error('Error fetching requesters:', error);
