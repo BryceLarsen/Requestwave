@@ -2013,8 +2013,14 @@ async def get_musician_by_slug(slug: str):
         # NEW: Include payment info for tip functionality  
         paypal_username=musician.get("paypal_username"),
         venmo_username=musician.get("venmo_username"),
+        cash_app_username=musician.get("cash_app_username"),
         zelle_email=musician.get("zelle_email"),
         zelle_phone=musician.get("zelle_phone"),
+        # Payment app toggles
+        paypal_enabled=musician.get("paypal_enabled", True),
+        venmo_enabled=musician.get("venmo_enabled", True),
+        cash_app_enabled=musician.get("cash_app_enabled", True),
+        zelle_enabled=musician.get("zelle_enabled", True),
         # NEW: Include social media info for post-request modal
         instagram_username=musician.get("instagram_username"),
         facebook_username=musician.get("facebook_username"),
