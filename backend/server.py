@@ -4511,7 +4511,7 @@ async def get_tip_links(
             raise HTTPException(status_code=404, detail="Musician not found")
         
         # Check if musician has any payment methods set up
-        if not musician.get('paypal_username') and not musician.get('venmo_username') and not musician.get('zelle_email') and not musician.get('zelle_phone'):
+        if not musician.get('paypal_username') and not musician.get('venmo_username') and not musician.get('cash_app_username') and not musician.get('zelle_email') and not musician.get('zelle_phone'):
             raise HTTPException(
                 status_code=400, 
                 detail="This musician hasn't set up payment methods for tips yet"
