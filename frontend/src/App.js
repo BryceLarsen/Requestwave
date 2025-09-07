@@ -2052,16 +2052,26 @@ const MusicianDashboard = () => {
 
   // NEW: Phase 3 - Analytics functions
   const fetchAnalytics = async () => {
+    console.log('🔍 fetchAnalytics called with days:', analyticsDays);
     setAnalyticsLoading(true);
     try {
+      console.log('🌐 Making analytics request to:', `${API}/analytics/daily?days=${analyticsDays}`);
       const response = await axios.get(`${API}/analytics/daily?days=${analyticsDays}`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
+      console.log('✅ Analytics response received:', response.data);
       setAnalyticsData(response.data);
+      console.log('📊 Analytics data set successfully');
     } catch (error) {
-      console.error('Error fetching analytics:', error);
+      console.error('❌ Error fetching analytics:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
     } finally {
       setAnalyticsLoading(false);
+      console.log('🏁 Analytics loading completed');
     }
   };
 
