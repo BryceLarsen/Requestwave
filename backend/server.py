@@ -304,8 +304,14 @@ class MusicianPublic(BaseModel):
     # NEW: Include social media fields for post-request modal
     paypal_username: Optional[str] = None
     venmo_username: Optional[str] = None
+    cash_app_username: Optional[str] = None
     zelle_email: Optional[str] = None
     zelle_phone: Optional[str] = None
+    # Payment app toggles for filtering in tip flow
+    paypal_enabled: bool = True
+    venmo_enabled: bool = True
+    cash_app_enabled: bool = True
+    zelle_enabled: bool = True
     instagram_username: Optional[str] = None
     facebook_username: Optional[str] = None
     tiktok_username: Optional[str] = None
