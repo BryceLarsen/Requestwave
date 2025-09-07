@@ -157,8 +157,14 @@ class Musician(BaseModel):
     # Payment information for tips
     paypal_username: Optional[str] = None  # PayPal.me username (without @)
     venmo_username: Optional[str] = None   # Venmo username (without @)
+    cash_app_username: Optional[str] = None   # Cash App $username (without $)
     zelle_email: Optional[str] = None
     zelle_phone: Optional[str] = None
+    # Payment app toggles - controls which apps appear in tip flow
+    paypal_enabled: bool = True
+    venmo_enabled: bool = True
+    cash_app_enabled: bool = True
+    zelle_enabled: bool = True
     # NEW: Social media links for "follow me" section
     instagram_username: Optional[str] = None
     facebook_username: Optional[str] = None  
