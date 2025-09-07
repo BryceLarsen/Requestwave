@@ -3332,15 +3332,14 @@ const MusicianDashboard = () => {
             <button
               key={tab}
               onClick={() => {
-                console.log('🔄 Tab clicked:', tab);
-                // Add visual debug for tab clicks
-                const clickDebug = document.createElement('div');
-                clickDebug.style.cssText = 'position:fixed;top:50px;right:10px;background:blue;color:white;padding:5px;z-index:9999;';
-                clickDebug.innerText = `Clicked: ${tab}`;
-                document.body.appendChild(clickDebug);
-                setTimeout(() => document.body.removeChild(clickDebug), 2000);
-                
                 setActiveTab(tab);
+                
+                // Directly trigger analytics fetch when analytics tab is clicked
+                if (tab === 'analytics') {
+                  console.log('Analytics tab clicked - fetching data immediately');
+                  fetchAnalytics();
+                  fetchRequesters();
+                }
               }}
               className={`px-3 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0 ${
                 activeTab === tab
