@@ -2130,10 +2130,28 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
         if venmo_username.startswith('@'):
             venmo_username = venmo_username[1:]
         update_data["venmo_username"] = venmo_username
+    
+    if profile_data.cash_app_username is not None:
+        # Clean Cash App username (remove $ if present)
+        cash_app_username = profile_data.cash_app_username.strip()
+        if cash_app_username.startswith('$'):
+            cash_app_username = cash_app_username[1:]
+        update_data["cash_app_username"] = cash_app_username
+    
     if profile_data.zelle_email is not None:
         update_data["zelle_email"] = profile_data.zelle_email
     if profile_data.zelle_phone is not None:
         update_data["zelle_phone"] = profile_data.zelle_phone
+    
+    # Payment app toggles
+    if profile_data.paypal_enabled is not None:
+        update_data["paypal_enabled"] = profile_data.paypal_enabled
+    if profile_data.venmo_enabled is not None:
+        update_data["venmo_enabled"] = profile_data.venmo_enabled
+    if profile_data.cash_app_enabled is not None:
+        update_data["cash_app_enabled"] = profile_data.cash_app_enabled
+    if profile_data.zelle_enabled is not None:
+        update_data["zelle_enabled"] = profile_data.zelle_enabled
     
     # Control settings
     if profile_data.tips_enabled is not None:
