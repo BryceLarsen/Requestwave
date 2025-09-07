@@ -4548,8 +4548,8 @@ async def record_tip(
         if tip_data.amount <= 0 or tip_data.amount > 500:
             raise HTTPException(status_code=400, detail="Tip amount must be between $0.01 and $500")
         
-        if tip_data.platform not in ["paypal", "venmo", "zelle"]:
-            raise HTTPException(status_code=400, detail="Platform must be 'paypal', 'venmo', or 'zelle'")
+        if tip_data.platform not in ["paypal", "venmo", "cashapp", "zelle"]:
+            raise HTTPException(status_code=400, detail="Platform must be 'paypal', 'venmo', 'cashapp', or 'zelle'")
         
         # Create tip record
         tip_dict = {
