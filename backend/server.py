@@ -331,8 +331,14 @@ class MusicianProfile(BaseModel):
     # Payment fields
     paypal_username: Optional[str] = ""
     venmo_username: Optional[str] = ""
+    cash_app_username: Optional[str] = ""
     zelle_email: Optional[str] = ""
     zelle_phone: Optional[str] = ""
+    # Payment app toggles
+    paypal_enabled: Optional[bool] = True
+    venmo_enabled: Optional[bool] = True
+    cash_app_enabled: Optional[bool] = True
+    zelle_enabled: Optional[bool] = True
     # Control settings
     tips_enabled: Optional[bool] = True
     requests_enabled: Optional[bool] = True
