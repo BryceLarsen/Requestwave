@@ -904,14 +904,16 @@ async def get_subscription_status(musician_id: str) -> SubscriptionStatus:
     
     # Check if has active subscription
     subscription_end = musician.get("subscription_ends_at")
-    if subscription_end and now < subscription_end:
-        return LegacySubscriptionStatus(
-            plan="pro",
-            requests_used=0,  # Unlimited with subscription
-            requests_limit=None,
-            subscription_ends_at=subscription_end,
-            can_make_request=True
-        )
+    if subscription_end:
+        subscription_end_dt = parse_datetime(subscription_end)
+        if now < subscription_end_dt:
+            return LegacySubscriptionStatus(
+                plan="pro",
+                requests_used=0,  # Unlimited with subscription
+                requests_limit=None,
+                subscription_ends_at=subscription_end,
+                can_make_request=True
+            )
     
     # Free tier - calculate monthly usage based on signup anniversary
     # Find the current month period based on signup date
