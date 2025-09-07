@@ -2067,8 +2067,14 @@ async def get_profile(musician_id: str = Depends(get_current_musician)):
         # Payment usernames
         paypal_username=musician.get("paypal_username", ""),
         venmo_username=musician.get("venmo_username", ""),
+        cash_app_username=musician.get("cash_app_username", ""),
         zelle_email=musician.get("zelle_email", ""),
         zelle_phone=musician.get("zelle_phone", ""),
+        # Payment app toggles
+        paypal_enabled=musician.get("paypal_enabled", True),
+        venmo_enabled=musician.get("venmo_enabled", True),
+        cash_app_enabled=musician.get("cash_app_enabled", True),
+        zelle_enabled=musician.get("zelle_enabled", True),
         # Control settings
         tips_enabled=musician.get("tips_enabled", True),
         requests_enabled=musician.get("requests_enabled", True),
