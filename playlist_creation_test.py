@@ -28,7 +28,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://requestwave-app.preview.emergentagent.com/api"
+BASE_URL = "https://music-flow-update.preview.emergentagent.com/api"
 
 # Pro account for playlist testing
 PRO_MUSICIAN = {
@@ -498,7 +498,7 @@ import time
 from typing import Dict, Any, Optional, List
 
 # Configuration
-BASE_URL = "https://requestwave-app.preview.emergentagent.com/api"
+BASE_URL = "https://music-flow-update.preview.emergentagent.com/api"
 
 # Pro account for playlist testing
 PRO_MUSICIAN = {

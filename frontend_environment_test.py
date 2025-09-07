@@ -15,7 +15,7 @@ def test_frontend_environment_detection():
     print("=" * 60)
     
     # From frontend/.env
-    REACT_APP_BACKEND_URL = "https://requestwave-app.preview.emergentagent.com"
+    REACT_APP_BACKEND_URL = "https://music-flow-update.preview.emergentagent.com"
     
     # Simulate the frontend's environment detection logic
     # The frontend checks:

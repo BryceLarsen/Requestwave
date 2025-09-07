@@ -25,7 +25,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://requestwave-app.preview.emergentagent.com/api"
+BASE_URL = "https://music-flow-update.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {

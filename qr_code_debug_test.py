@@ -3,7 +3,7 @@
 QR CODE URL MISMATCH DEBUGGING TEST
 
 The user reports:
-- Frontend audience URL: https://requestwave-app.preview.emergentagent.com/musician/bryce-larsen (working)
+- Frontend audience URL: https://music-flow-update.preview.emergentagent.com/musician/bryce-larsen (working)
 - QR code URL: https://livewave-music.emergent.host/musician/bryce-larsen (not working)
 
 This test will investigate:
@@ -23,7 +23,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://requestwave-app.preview.emergentagent.com/api"
+BASE_URL = "https://music-flow-update.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {
@@ -167,7 +167,7 @@ class QRCodeDebugTester:
                         # This is likely the FRONTEND_URL the backend is using
                         if 'livewave-music.emergent.host' in base_url:
                             print(f"   ❌ ISSUE IDENTIFIED: Backend is using old URL: {base_url}")
-                            print(f"   📊 Expected URL should be: https://requestwave-app.preview.emergentagent.com")
+                            print(f"   📊 Expected URL should be: https://music-flow-update.preview.emergentagent.com")
                             backend_url_issue = True
                         else:
                             print(f"   ✅ Backend URL looks correct: {base_url}")
@@ -198,7 +198,7 @@ class QRCodeDebugTester:
                         print(f"   🔍 MUSICIAN QR CODE URL: {musician_audience_url}")
                         
                         # Check if this matches the expected URL
-                        expected_url = f"https://requestwave-app.preview.emergentagent.com/musician/{self.musician_slug}"
+                        expected_url = f"https://music-flow-update.preview.emergentagent.com/musician/{self.musician_slug}"
                         if musician_audience_url == expected_url:
                             print(f"   ✅ Musician QR code URL matches expected URL")
                             musician_qr_correct = True
@@ -386,7 +386,7 @@ class QRCodeDebugTester:
             # Step 1: Test the actual frontend URL that should work
             print("📊 Step 1: Test the working frontend URL")
             
-            expected_frontend_url = f"https://requestwave-app.preview.emergentagent.com/musician/{self.musician_slug}"
+            expected_frontend_url = f"https://music-flow-update.preview.emergentagent.com/musician/{self.musician_slug}"
             
             try:
                 # Test if the expected URL is accessible
@@ -713,7 +713,7 @@ class QRCodeDebugTester:
         print("\n🔍 SUMMARY OF FINDINGS:")
         print("   The QR code URL mismatch issue appears to be caused by the backend")
         print("   using an outdated FRONTEND_URL environment variable value.")
-        print("   Expected: https://requestwave-app.preview.emergentagent.com")
+        print("   Expected: https://music-flow-update.preview.emergentagent.com")
         print("   Actual:   https://livewave-music.emergent.host")
         print("\n💡 RECOMMENDED SOLUTION:")
         print("   Update the FRONTEND_URL environment variable in the backend")
