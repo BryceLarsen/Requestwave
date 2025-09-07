@@ -521,6 +521,11 @@ const formatTime = (timestamp) => {
 const MusicianDashboard = () => {
   const { musician, token, logout, setMusician } = useAuth();
   const [activeTab, setActiveTab] = useState('onstage');
+  
+  // Debug activeTab changes
+  useEffect(() => {
+    console.log('🏷️ ActiveTab changed to:', activeTab);
+  }, [activeTab]);
   const [songs, setSongs] = useState([]);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
