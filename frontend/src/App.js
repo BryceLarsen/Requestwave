@@ -3493,8 +3493,7 @@ const MusicianDashboard = () => {
               {/* Header content removed - buttons moved above playlists */}
             </div>
             
-            {/* MOVED: Song Management Dropdown Menu (now positioned below) */}
-            {showSongManagementDropdown && (
+            {/* Song Management Dropdown moved to row above playlists */}
                     <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50">
                       <div className="py-2">
                         {/* Add New Song - First */}
