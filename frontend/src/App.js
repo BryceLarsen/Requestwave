@@ -674,6 +674,7 @@ const MusicianDashboard = () => {
   const [tipSongId, setTipSongId] = useState(null); // For integrated tips with requests
   const [showZelleModal, setShowZelleModal] = useState(false);
   const [zelleInfo, setZelleInfo] = useState({});
+  const [showSocialMediaModal, setShowSocialMediaModal] = useState(false);
   
   // NEW: Batch enrichment for existing songs
   const [batchEnrichLoading, setBatchEnrichLoading] = useState(false);
