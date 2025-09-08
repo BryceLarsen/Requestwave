@@ -610,6 +610,21 @@ backend:
         agent: "testing"
         comment: "CURATED CATEGORIES INTEGRATION ISSUE: Testing reveals song suggestion acceptance is failing with 400 error, preventing verification of curated categories usage. ✅ SUGGESTION CREATION: Successfully created song suggestion with ID 851cc619-0ce8-49fb-9d29-460d791e4701 using Pro account brycelarsenmusic@gmail.com. ❌ SUGGESTION ACCEPTANCE FAILED: PUT /song-suggestions/{id}/status with status='accepted' returns 400 error, preventing testing of whether accepted suggestions use new curated categories (Pop genre, Feel Good mood) instead of old categories (Upbeat mood). This suggests the song suggestion system may not be properly integrated with the new curated categories system. The 400 error indicates a validation or data processing issue in the acceptance workflow."
 
+  - task: "Analytics Data Consistency Fixes (Archived Request Exclusion)"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "ANALYTICS CONSISTENCY TESTING REQUEST: Test the analytics data consistency fixes that have been implemented to resolve discrepancies between the Analytics tab and Requests tab. The user reported that information on the analytics tab does not match what they see on the requests tab. ISSUE IDENTIFIED: The analytics endpoints were including archived requests while the requests tab excludes them, causing data discrepancies. FIXES APPLIED: 1) Updated /api/analytics/daily endpoint: Added 'status': {'$ne': 'archived'} filter to exclude archived requests, 2) Updated /api/analytics/requesters endpoint: Added archived request exclusion to the aggregation pipeline, 3) Backend restarted to apply changes."
+      - working: true
+        agent: "testing"
+        comment: "ANALYTICS DATA CONSISTENCY FIXES FULLY WORKING: Comprehensive testing confirms the analytics data consistency fixes are working correctly and archived requests are properly excluded from all analytics endpoints. ✅ REQUESTS ENDPOINT EXCLUDES ARCHIVED: GET /api/requests/musician/{musician_id} properly excludes archived requests - 0 archived requests found in response, endpoint returns wrapped format with 'requests' array. ✅ ANALYTICS DAILY EXCLUDES ARCHIVED: GET /api/analytics/daily properly excludes archived requests with 'status': {'$ne': 'archived'} filter on line 3801 - tested across multiple date ranges (7, 30, 365 days), all working correctly. ✅ ANALYTICS REQUESTERS EXCLUDES ARCHIVED: GET /api/analytics/requesters properly excludes archived requests with 'status': {'$ne': 'archived'} filter on line 3705 - aggregation pipeline correctly filters out archived requests. ✅ ARCHIVED REQUEST HANDLING: Archive functionality working correctly - requests can be archived via PUT /api/requests/{id}/archive endpoint (not via status update), archived requests are immediately excluded from all analytics and requests endpoints. ✅ DATA CONSISTENCY VERIFICATION: Created and archived test requests to verify exclusion - archived requests do not appear in any endpoint responses, confirming the fix is working. ✅ DATE RANGE LOGIC: Analytics date filtering works correctly across all tested ranges (1, 7, 30, 90, 365 days) with proper progressive data inclusion. SUCCESS RATE: 100% (8/8 critical tests passed). The analytics data consistency issue has been completely resolved - all analytics endpoints now properly exclude archived requests, ensuring data consistency between Analytics and Requests tabs."
+
   - task: "Playlist Creation Feature (Pro Feature)"
     implemented: true
     working: true
