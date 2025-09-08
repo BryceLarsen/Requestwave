@@ -606,7 +606,18 @@ const MusicianDashboard = () => {
   const [analyticsTimeframe, setAnalyticsTimeframe] = useState('daily'); // 'daily', 'weekly', 'monthly'
   
   // NEW: Redesigned Analytics state
-  const [analyticsPeriod, setAnalyticsPeriod] = useState('alltime');
+  // Force default to 'alltime' and clear any problematic saved preferences
+  const getInitialAnalyticsPeriod = () => {
+    const saved = localStorage.getItem('analytics_period');
+    // Always default to 'alltime' to avoid user confusion
+    if (!saved || saved === 'last7days' || saved === 'last30days') {
+      localStorage.setItem('analytics_period', 'alltime');
+      return 'alltime';
+    }
+    return saved;
+  };
+  
+  const [analyticsPeriod, setAnalyticsPeriod] = useState(getInitialAnalyticsPeriod());
   const [topSongsLimit, setTopSongsLimit] = useState(10);
   const [topRequestersLimit, setTopRequestersLimit] = useState(10);
   const [analyticsDays, setAnalyticsDays] = useState(null); // null = all time
