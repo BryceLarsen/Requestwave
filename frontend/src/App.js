@@ -4147,8 +4147,8 @@ const MusicianDashboard = () => {
             )}
 
             {/* Songs List */}
-            {/* Help Button - positioned at top left above playlists */}
-            <div className="mb-4">
+            {/* Help Button and Manage Songs in same row above playlists */}
+            <div className="flex justify-between items-center mb-4">
               <button
                 onClick={() => setShowSongsHelp(true)}
                 className="bg-gray-600 hover:bg-gray-500 active:bg-gray-700 px-3 py-2 rounded-lg transition duration-300 flex items-center space-x-1 text-sm"
@@ -4157,6 +4157,104 @@ const MusicianDashboard = () => {
                 <span className="text-gray-400">❓</span>
                 <span className="text-gray-300 font-medium">Help</span>
               </button>
+              
+              {/* Song Management Dropdown */}
+              <div className="relative song-management-dropdown">
+                <button
+                  onClick={() => setShowSongManagementDropdown(!showSongManagementDropdown)}
+                  className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-bold transition duration-300 flex items-center space-x-2"
+                >
+                  <span>⚙️ Manage Songs</span>
+                  <svg className={`w-4 h-4 transition-transform ${showSongManagementDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {/* Dropdown Menu */}
+                {showSongManagementDropdown && (
+                  <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50">
+                    <div className="py-2">
+                      {/* Add New Song - First */}
+                      <button
+                        onClick={() => {
+                          setShowAddSong(!showAddSong);
+                          setShowSongManagementDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
+                      >
+                        <span className="text-lg">➕</span>
+                        <span>Add New Song</span>
+                      </button>
+                      
+                      {/* Import Playlist - Second */}
+                      <button
+                        onClick={() => {
+                          setShowPlaylistImport(!showPlaylistImport);
+                          setShowSongManagementDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
+                      >
+                        <span className="text-lg">🎵</span>
+                        <span>Import Playlist</span>
+                      </button>
+                      
+                      {/* Upload CSV - Third */}
+                      <button
+                        onClick={() => {
+                          setShowCsvUpload(!showCsvUpload);
+                          setShowSongManagementDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
+                      >
+                        <span className="text-lg">📄</span>
+                        <span>Upload CSV</span>
+                      </button>
+                      
+                      {/* Upload LST - Fourth */}
+                      <button
+                        onClick={() => {
+                          setShowLstUpload(!showLstUpload);
+                          setShowSongManagementDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
+                      >
+                        <span className="text-lg">📝</span>
+                        <span>Upload LST</span>
+                      </button>
+                      
+                      {/* Auto-fill All - Fifth */}
+                      <button
+                        onClick={() => {
+                          handleBatchEnrich();
+                          setShowSongManagementDropdown(false);
+                        }}
+                        disabled={batchEnrichLoading}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-700 disabled:bg-gray-600 disabled:opacity-50 flex items-center space-x-3"
+                      >
+                        <span className="text-lg">✨</span>
+                        <span>
+                          {batchEnrichLoading ? 'Auto-filling...' : 'Auto-fill All'}
+                        </span>
+                      </button>
+                      
+                      {/* Divider */}
+                      <div className="border-t border-gray-600 my-2"></div>
+                      
+                      {/* Export CSV - Last */}
+                      <button
+                        onClick={() => {
+                          exportSongsToCSV();
+                          setShowSongManagementDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
+                      >
+                        <span className="text-lg">💾</span>
+                        <span>Export CSV</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* NEW: Compact Playlists Dropdown */}
