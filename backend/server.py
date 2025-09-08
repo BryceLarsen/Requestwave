@@ -289,6 +289,7 @@ class Tip(BaseModel):
 class PaymentLinkResponse(BaseModel):
     paypal_link: Optional[str] = None
     venmo_link: Optional[str] = None
+    cash_app_link: Optional[str] = None
     amount: float
     message: Optional[str] = None
     tip_amount: float = 0.0
