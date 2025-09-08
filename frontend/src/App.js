@@ -6487,6 +6487,7 @@ const MusicianDashboard = () => {
                     };
                     
                     const days = periodToDaysMap[newPeriod];
+                    setAnalyticsDays(days); // Set to null for alltime, number for specific periods
                     handleTimeframeChange(days ? `${days}days` : 'alltime');
                   }}
                   className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:ring-purple-500 focus:border-purple-500"
