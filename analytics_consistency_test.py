@@ -334,10 +334,16 @@ class AnalyticsConsistencyTester:
                                   headers=headers, timeout=30)
             
             if response.status_code == 200:
-                requesters_data = response.json()
+                response_data = response.json()
+                
+                # Handle the wrapped response format
+                if isinstance(response_data, dict) and "requesters" in response_data:
+                    requesters_list = response_data["requesters"]
+                else:
+                    requesters_list = response_data
                 
                 # Look for our test requesters
-                test_requesters = [req for req in requesters_data 
+                test_requesters = [req for req in requesters_list 
                                  if req.get("email", "").startswith("test") and "@analytics.com" in req.get("email", "")]
                 
                 # Check if any archived test requesters appear
@@ -351,7 +357,7 @@ class AnalyticsConsistencyTester:
                 
                 self.log_result("Analytics Requesters Archived Exclusion", success,
                               f"Requesters analytics {'excludes' if len(found_archived) == 0 else 'includes'} archived requests", {
-                    "total_requesters": len(requesters_data),
+                    "total_requesters": len(requesters_list),
                     "test_requesters_found": len(test_requesters),
                     "archived_test_requesters_found": len(found_archived),
                     "non_archived_test_requesters_found": len(found_non_archived),
