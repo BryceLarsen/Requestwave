@@ -1284,6 +1284,7 @@ metadata:
 
 test_plan:
   current_focus:
+    - "FINAL Songs Tab UI Improvements - Help Button and Manage Songs Same Row Layout"
     - "Demo CSV Endpoint for Onboarding"
     - "Song Suggestions Backend Endpoints" 
     - "Profile and Audience Link Functionality"
