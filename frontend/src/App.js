@@ -636,6 +636,9 @@ const MusicianDashboard = () => {
   // Quick Start Guide (manual access only)
   const [showQuickStart, setShowQuickStart] = useState(false);
   
+  // NEW: Songs Help Modal state
+  const [showSongsHelp, setShowSongsHelp] = useState(false);
+  
   // NEW: Filters visibility state
   const [showFilters, setShowFilters] = useState(false);
   
