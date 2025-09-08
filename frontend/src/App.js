@@ -8364,8 +8364,10 @@ const AudienceInterface = () => {
       // Submit request first
       const submittedRequest = await submitRequestWithTip(song, 0);
       if (submittedRequest) {
+        // Close the request modal immediately after successful submission
+        setSelectedSong(null);
+        
         // Store the song for potential tip integration
-        setSelectedSong(song);
         setTipSongId(submittedRequest.id);
         
         // Check if tips are enabled
