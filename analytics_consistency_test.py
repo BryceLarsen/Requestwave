@@ -580,9 +580,10 @@ class AnalyticsConsistencyTester:
                     "fix_verified": counts_match,
                     "user_issue_resolved": counts_match,
                     "analytics_response_structure": {
-                        "has_total_requests": "total_requests" in analytics_data,
+                        "has_totals": "totals" in analytics_data,
                         "has_daily_stats": "daily_stats" in analytics_data,
-                        "daily_stats_count": len(analytics_data.get("daily_stats", []))
+                        "daily_stats_count": len(analytics_data.get("daily_stats", [])),
+                        "totals_structure": analytics_data.get("totals", {})
                     }
                 })
                 
