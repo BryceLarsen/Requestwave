@@ -7888,6 +7888,40 @@ const MusicianDashboard = () => {
           </div>
         )}
 
+        {/* NEW: Song Deletion Confirmation Modal */}
+        {showDeleteSongModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-sm">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-red-600 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
+                  🗑️
+                </div>
+                <h3 className="text-xl font-bold text-white mb-4">Delete Song</h3>
+                <p className="text-gray-300 mb-6">
+                  Are you sure you want to delete this song?
+                </p>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => {
+                      setShowDeleteSongModal(false);
+                      setSongToDelete(null);
+                    }}
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 py-2 rounded-lg font-medium transition duration-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDeleteSong}
+                    className="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded-lg font-medium transition duration-300"
+                  >
+                    Yes
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
