@@ -672,6 +672,8 @@ const MusicianDashboard = () => {
   const [tipMessage, setTipMessage] = useState('');
   const [tipPlatform, setTipPlatform] = useState('paypal'); // 'paypal' or 'venmo'
   const [tipSongId, setTipSongId] = useState(null); // For integrated tips with requests
+  const [showZelleModal, setShowZelleModal] = useState(false);
+  const [zelleInfo, setZelleInfo] = useState({});
   
   // NEW: Batch enrichment for existing songs
   const [batchEnrichLoading, setBatchEnrichLoading] = useState(false);
