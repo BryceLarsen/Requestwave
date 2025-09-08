@@ -379,6 +379,21 @@ backend:
         agent: "testing"
         comment: "ANALYTICS LOADING ISSUE FIXED: Successfully resolved the 'Loading analytics...' problem by fixing frontend implementation gaps. ✅ AUTHENTICATION HEADERS ADDED: Added missing Authorization headers to fetchAnalytics() and fetchRequesters() functions using pattern { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }. ✅ USEEFFECT TRIGGERS ADDED: Added useEffect to call fetchAnalytics() and fetchRequesters() when analytics tab becomes active, and separate useEffect to call fetchAnalytics() when analyticsDays changes. ✅ FUNCTION INTEGRATION COMPLETE: Analytics functions now properly integrated into component lifecycle - data fetching triggered when tab becomes active and when time period changes. ✅ VERIFICATION SUCCESSFUL: External API test confirms analytics endpoint working with authentication (token length: 176, 1 daily stats, 2 total requests). ✅ BACKEND CONFIRMED WORKING: All analytics endpoints (daily, requesters, export) working perfectly with 100% success rate. The analytics dashboard should now load data properly instead of showing 'Loading analytics...' indefinitely."
 
+  - task: "Analytics Data Count Discrepancy Fix"
+    implemented: true
+    working: "NA"
+    file: "App.js"
+    stuck_count: 1
+    priority: "critical"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "CRITICAL BUG REPORTED: User reports analytics shows only 2 requests instead of 46+ requests that appear in requests tab. Previous fix didn't work and red banner 'analytics useEffect Triggered!' was showing."
+      - working: "NA"
+        agent: "main"
+        comment: "CORRECTED ANALYTICS FIX APPLIED: Fixed critical bugs in analytics data loading. 1) Fixed useEffect condition from 'analyticsDays' (falsy when null for all-time) to 'analyticsDays !== undefined' to properly handle null values. 2) Added daysOverride parameter to fetchAnalytics() function to receive explicit days value. 3) Updated useEffect and dropdown handlers to pass days directly to avoid state timing issues. 4) Removed confusing red debug banner 'analytics useEffect Triggered!'. 5) Frontend restarted to apply fixes. The analytics should now show ALL requests (46+) matching requests tab when set to 'All time'."
+
   - task: "Song Metadata Auto-fill Feature (Spotify Integration)"
     implemented: true
     working: false
