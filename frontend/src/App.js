@@ -9273,44 +9273,27 @@ const AudienceInterface = () => {
                   />
                 </div>
                 
-                {/* Payment platform */}
+                {/* Payment platform dropdown */}
                 <div>
-                  <label className="block text-gray-300 text-sm font-bold mb-2">Payment method</label>
-                  <div className="grid grid-cols-1 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setTipPlatform('paypal')}
-                      className={`py-2 px-4 rounded-lg font-medium transition duration-300 ${
-                        tipPlatform === 'paypal'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                      }`}
-                    >
-                      💳 PayPal
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTipPlatform('venmo')}
-                      className={`py-2 px-4 rounded-lg font-medium transition duration-300 ${
-                        tipPlatform === 'venmo'
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                      }`}
-                    >
-                      📱 Venmo
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTipPlatform('zelle')}
-                      className={`py-2 px-4 rounded-lg font-medium transition duration-300 ${
-                        tipPlatform === 'zelle'
-                          ? 'bg-green-600 text-white'
-                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                      }`}
-                    >
-                      🏦 Zelle
-                    </button>
-                  </div>
+                  <label className="block text-gray-300 text-sm font-bold mb-2">Choose payment app</label>
+                  <select
+                    value={tipPlatform}
+                    onChange={(e) => setTipPlatform(e.target.value)}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  >
+                    {musician?.paypal_enabled && musician.paypal_username && (
+                      <option value="paypal">💳 PayPal</option>
+                    )}
+                    {musician?.venmo_enabled && musician.venmo_username && (
+                      <option value="venmo">📱 Venmo</option>
+                    )}
+                    {musician?.cash_app_enabled && musician.cash_app_username && (
+                      <option value="cashapp">💰 Cash App</option>
+                    )}
+                    {musician?.zelle_enabled && (musician.zelle_email || musician.zelle_phone) && (
+                      <option value="zelle">🏦 Zelle</option>
+                    )}
+                  </select>
                 </div>
                 
                 {/* Optional message */}
@@ -9340,49 +9323,6 @@ const AudienceInterface = () => {
                   >
                     Send Tip
                   </button>
-                </div>
-                
-                {/* NEW: Popup Blocker Notice & Payment Info Fallback - Moved to bottom */}
-                <div className="bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-3 mt-4">
-                  <div className="flex items-start space-x-2">
-                    <span className="text-yellow-400 text-sm">⚠️</span>
-                    <div>
-                      <p className="text-yellow-300 text-xs font-medium mb-2">
-                        If your payment app does not automatically open, you can do it yourself!
-                      </p>
-                      <div className="text-gray-300 text-xs space-y-1">
-                        {tipPlatform === 'paypal' && musician.paypal_username ? (
-                          <div>
-                            <p className="font-medium">PayPal username:</p>
-                            <p className="bg-gray-700 px-2 py-1 rounded font-mono text-green-300">
-                              {musician.paypal_username}
-                            </p>
-                          </div>
-                        ) : tipPlatform === 'venmo' && musician.venmo_username ? (
-                          <div>
-                            <p className="font-medium">Venmo username:</p>
-                            <p className="bg-gray-700 px-2 py-1 rounded font-mono text-purple-300">
-                              @{musician.venmo_username}
-                            </p>
-                          </div>
-                        ) : tipPlatform === 'zelle' && (musician.zelle_email || musician.zelle_phone) ? (
-                          <div>
-                            <p className="font-medium">Zelle contact:</p>
-                            {musician.zelle_email && (
-                              <p className="bg-gray-700 px-2 py-1 rounded font-mono text-green-300 mb-1">
-                                📧 {musician.zelle_email}
-                              </p>
-                            )}
-                            {musician.zelle_phone && (
-                              <p className="bg-gray-700 px-2 py-1 rounded font-mono text-green-300">
-                                📞 {musician.zelle_phone}
-                              </p>
-                            )}
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
