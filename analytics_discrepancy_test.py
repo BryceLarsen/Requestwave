@@ -97,19 +97,29 @@ class AnalyticsDiscrepancyTester:
                                   headers=headers, timeout=30)
             
             if response.status_code == 200:
-                self.requests_data = response.json()
+                response_data = response.json()
+                
+                # Handle different response formats
+                if isinstance(response_data, dict) and 'requests' in response_data:
+                    self.requests_data = response_data['requests']
+                elif isinstance(response_data, list):
+                    self.requests_data = response_data
+                else:
+                    self.requests_data = []
+                
                 request_count = len(self.requests_data)
                 
                 # Analyze request data
                 statuses = {}
                 dates = []
                 for req in self.requests_data:
-                    status = req.get('status', 'unknown')
-                    statuses[status] = statuses.get(status, 0) + 1
-                    
-                    created_at = req.get('created_at')
-                    if created_at:
-                        dates.append(created_at)
+                    if isinstance(req, dict):
+                        status = req.get('status', 'unknown')
+                        statuses[status] = statuses.get(status, 0) + 1
+                        
+                        created_at = req.get('created_at')
+                        if created_at:
+                            dates.append(created_at)
                 
                 # Sort dates to find range
                 dates.sort()
