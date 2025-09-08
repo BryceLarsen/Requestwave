@@ -4432,6 +4432,7 @@ const MusicianDashboard = () => {
                       className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
                     >
                       <option value="">All Genres</option>
+                      <option value="__NO_GENRE__">🚫 No Genre</option>
                       {filterOptions.genres?.map((genre) => (
                         <option key={genre} value={genre}>{genre}</option>
                       ))}
@@ -4443,6 +4444,7 @@ const MusicianDashboard = () => {
                       className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
                     >
                       <option value="">All Moods</option>
+                      <option value="__NO_MOOD__">🚫 No Mood</option>
                       {filterOptions.moods?.map((mood) => (
                         <option key={mood} value={mood}>{mood}</option>
                       ))}
@@ -4457,6 +4459,7 @@ const MusicianDashboard = () => {
                       className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
                     >
                       <option value="">All Years</option>
+                      <option value="__NO_YEAR__">🚫 No Year</option>
                       {filterOptions.years?.map((year) => (
                         <option key={year} value={year}>{year}</option>
                       ))}
