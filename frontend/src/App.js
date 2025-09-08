@@ -2105,8 +2105,12 @@ const MusicianDashboard = () => {
     console.log('🔍 fetchAnalytics called with days:', analyticsDays);
     setAnalyticsLoading(true);
     try {
-      console.log('🌐 Making analytics request to:', `${API}/analytics/daily?days=${analyticsDays}`);
-      const response = await axios.get(`${API}/analytics/daily?days=${analyticsDays}`, {
+      // Build URL with days parameter only if not null (for all time)
+      const url = analyticsDays !== null 
+        ? `${API}/analytics/daily?days=${analyticsDays}`
+        : `${API}/analytics/daily`; // No days parameter = all time
+      console.log('🌐 Making analytics request to:', url);
+      const response = await axios.get(url, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       console.log('✅ Analytics response received:', response.data);
