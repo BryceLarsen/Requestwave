@@ -741,6 +741,8 @@ const MusicianDashboard = () => {
           paymentUrl = response.data.paypal_link;
         } else if (tipPlatform === 'venmo' && response.data.venmo_link) {
           paymentUrl = response.data.venmo_link;
+        } else if (tipPlatform === 'cashapp' && response.data.cash_app_link) {
+          paymentUrl = response.data.cash_app_link;
         }
 
         // Record the tip attempt for analytics
@@ -756,15 +758,22 @@ const MusicianDashboard = () => {
         }
 
         if (tipPlatform === 'zelle') {
-          // For Zelle, we don't have universal links, so show instructions
-          const zelleContact = musician.zelle_email || musician.zelle_phone;
-          alert(`Use your bank app or Zelle app to send $${amount} to: ${zelleContact}\n\nMessage: ${tipMessage || 'Thanks for the music!'}`);
+          // For Zelle, show special modal with copy functionality
+          setZelleInfo({
+            contact: musician.zelle_email || musician.zelle_phone,
+            contactType: musician.zelle_email ? 'email' : 'phone',
+            amount: amount,
+            message: tipMessage || 'Thanks for the music!'
+          });
           setShowTipModal(false);
+          setShowZelleModal(true);
+          
+          // After showing Zelle modal, go directly to social media
+          // (This will be handled after Zelle modal is closed)
         } else if (paymentUrl) {
-          // Handle PayPal/Venmo payment links
+          // Handle PayPal/Venmo/Cash App payment links
           if (tipPlatform === 'venmo' && paymentUrl.startsWith('venmo://')) {
             // For Venmo deep links, implement fallback for desktop browsers
-            // Extract Venmo username from the venmo link
             const venmoMatch = paymentUrl.match(/recipients=([^&]+)/);
             const venmoUsername = venmoMatch ? venmoMatch[1] : 'this musician';
             
@@ -772,25 +781,36 @@ const MusicianDashboard = () => {
               // Try to open the Venmo app first
               window.location.href = paymentUrl;
               
-              // Show instructions for desktop users or if app isn't installed
+              // Show brief confirmation message
               setTimeout(() => {
-                alert(`Opening Venmo app to send $${amount} tip to @${venmoUsername}!\n\nIf Venmo app didn't open:\n1. Open Venmo app manually\n2. Search for @${venmoUsername}\n3. Send $${amount} with message: "${tipMessage || 'Thanks for the music!'}"`);
-              }, 1000);
+                alert(`Opening Venmo app to send $${amount} tip to @${venmoUsername}!`);
+              }, 500);
               
             } catch (error) {
               // Fallback for desktop users
               alert(`To send your $${amount} tip:\n\n1. Open Venmo app on your phone\n2. Search for @${venmoUsername}\n3. Send $${amount} with message: "${tipMessage || 'Thanks for the music!'}"`);
             }
+          } else if (tipPlatform === 'cashapp') {
+            // Cash App links work universally
+            window.open(paymentUrl, '_blank');
+            alert(`Opening Cash App to send your $${amount} tip!`);
           } else {
             // PayPal links work universally
             window.open(paymentUrl, '_blank');
-            alert(`Opening ${tipPlatform === 'paypal' ? 'PayPal' : 'Venmo'} to send your $${amount} tip!`);
+            alert(`Opening PayPal to send your $${amount} tip!`);
           }
           
-          // Close modal
+          // Close tip modal and go directly to social media
           setShowTipModal(false);
+          // Show social media modal if we were in request flow
+          if (tipSongId) {
+            setShowSocialMediaModal(true);
+          }
         } else {
-          alert(`${tipPlatform === 'paypal' ? 'PayPal' : tipPlatform === 'venmo' ? 'Venmo' : 'Zelle'} is not set up for this musician`);
+          const platformName = tipPlatform === 'paypal' ? 'PayPal' : 
+                             tipPlatform === 'venmo' ? 'Venmo' : 
+                             tipPlatform === 'cashapp' ? 'Cash App' : 'Zelle';
+          alert(`${platformName} is not set up for this musician`);
         }
       }
     } catch (error) {
