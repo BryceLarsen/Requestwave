@@ -3488,18 +3488,55 @@ const MusicianDashboard = () => {
                   {showSongManagementDropdown && (
                     <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50">
                       <div className="py-2">
-                        {/* Export CSV - Moved from header */}
+                        {/* Add New Song - First */}
                         <button
                           onClick={() => {
-                            exportSongsToCSV();
+                            setShowAddSong(!showAddSong);
                             setShowSongManagementDropdown(false);
                           }}
                           className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
                         >
-                          <span className="text-blue-400">📊</span>
-                          <span>Export CSV</span>
+                          <span className="text-yellow-400">➕</span>
+                          <span>{showAddSong ? 'Hide Add Song' : 'Add New Song'}</span>
                         </button>
-                        {/* Auto-fill All */}
+                        
+                        {/* Import Playlist - Second */}
+                        <button
+                          onClick={() => {
+                            setShowPlaylistImport(!showPlaylistImport);
+                            setShowSongManagementDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
+                        >
+                          <span className="text-purple-400">📋</span>
+                          <span>{showPlaylistImport ? 'Hide Playlist Import' : 'Import Playlist'}</span>
+                        </button>
+                        
+                        {/* Upload CSV - Third */}
+                        <button
+                          onClick={() => {
+                            setShowCsvUpload(!showCsvUpload);
+                            setShowSongManagementDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
+                        >
+                          <span className="text-green-400">📄</span>
+                          <span>{showCsvUpload ? 'Hide CSV Upload' : 'Upload CSV'}</span>
+                        </button>
+                        
+                        {/* Upload LST - Fourth */}
+                        <button
+                          onClick={() => {
+                            setShowLstUpload(!showLstUpload);
+                            setShowSongManagementDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
+                        >
+                          <span className="text-orange-400">📝</span>
+                          <span>{showLstUpload ? 'Hide LST Upload' : 'Upload LST'}</span>
+                        </button>
+                        
+                        {/* Auto-fill All - Fifth */}
                         <button
                           onClick={() => {
                             handleBatchEnrich();
@@ -3521,52 +3558,16 @@ const MusicianDashboard = () => {
                           )}
                         </button>
                         
-                        {/* Add New Song */}
+                        {/* Export CSV - Sixth */}
                         <button
                           onClick={() => {
-                            setShowAddSong(!showAddSong);
+                            exportSongsToCSV();
                             setShowSongManagementDropdown(false);
                           }}
                           className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
                         >
-                          <span className="text-yellow-400">➕</span>
-                          <span>{showAddSong ? 'Hide Add Song' : 'Add New Song'}</span>
-                        </button>
-                        
-                        {/* Import Playlist */}
-                        <button
-                          onClick={() => {
-                            setShowPlaylistImport(!showPlaylistImport);
-                            setShowSongManagementDropdown(false);
-                          }}
-                          className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
-                        >
-                          <span className="text-purple-400">📋</span>
-                          <span>{showPlaylistImport ? 'Hide Playlist Import' : 'Import Playlist'}</span>
-                        </button>
-                        
-                        {/* Upload CSV */}
-                        <button
-                          onClick={() => {
-                            setShowCsvUpload(!showCsvUpload);
-                            setShowSongManagementDropdown(false);
-                          }}
-                          className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
-                        >
-                          <span className="text-green-400">📄</span>
-                          <span>{showCsvUpload ? 'Hide CSV Upload' : 'Upload CSV'}</span>
-                        </button>
-                        
-                        {/* Upload LST */}
-                        <button
-                          onClick={() => {
-                            setShowLstUpload(!showLstUpload);
-                            setShowSongManagementDropdown(false);
-                          }}
-                          className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
-                        >
-                          <span className="text-orange-400">📝</span>
-                          <span>{showLstUpload ? 'Hide LST Upload' : 'Upload LST'}</span>
+                          <span className="text-blue-400">📊</span>
+                          <span>Export CSV</span>
                         </button>
                       </div>
                     </div>
