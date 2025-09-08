@@ -2199,6 +2199,7 @@ const MusicianDashboard = () => {
       };
       
       const days = periodToDaysMap[analyticsPeriod];
+      setAnalyticsDays(days); // Set to null for alltime, number for specific periods
       handleTimeframeChange(days ? `${days}days` : 'alltime');
       
       // Trigger analytics data fetching
