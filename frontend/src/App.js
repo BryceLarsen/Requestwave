@@ -3489,22 +3489,12 @@ const MusicianDashboard = () => {
         {activeTab === 'songs' && (
           <div>
             {/* Streamlined Header - No Title */}
-            <div className="flex justify-end items-center mb-6">
-              <div className="flex gap-2">
-                {/* Song Management Dropdown */}
-                <div className="relative song-management-dropdown">
-                  <button
-                    onClick={() => setShowSongManagementDropdown(!showSongManagementDropdown)}
-                    className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-bold transition duration-300 flex items-center space-x-2"
-                  >
-                    <span>⚙️ Manage Songs</span>
-                    <svg className={`w-4 h-4 transition-transform ${showSongManagementDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  
-                  {/* Dropdown Menu */}
-                  {showSongManagementDropdown && (
+            <div className="mb-6">
+              {/* Header content removed - buttons moved above playlists */}
+            </div>
+            
+            {/* MOVED: Song Management Dropdown Menu (now positioned below) */}
+            {showSongManagementDropdown && (
                     <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50">
                       <div className="py-2">
                         {/* Add New Song - First */}
