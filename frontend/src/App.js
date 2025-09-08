@@ -10793,18 +10793,8 @@ const App = () => {
     const isAudienceRoute = window.location.pathname.startsWith('/musician/') || 
                            window.location.pathname.startsWith('/on-stage/');
     
-    console.log('🔐 Auth check logic:', { 
-      musician: !!musician, 
-      pathname: window.location.pathname, 
-      isAudienceRoute,
-      shouldSkipAuth: !musician && !isAudienceRoute
-    });
-    
     if (!musician && !isAudienceRoute) {
-      console.log('🔐 Running authentication check...');
       checkEmergentSession();
-    } else if (isAudienceRoute) {
-      console.log('🔐 Skipping auth check for audience route');
     }
   }, [musician, login]);
 
