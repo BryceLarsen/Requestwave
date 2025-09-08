@@ -6477,7 +6477,12 @@ const MusicianDashboard = () => {
               
               {/* NEW: Period Dropdown (replaces Daily/Weekly/Monthly buttons) */}
               <div className="mb-6">
-                <label className="block text-gray-300 text-sm font-bold mb-2">Period</label>
+                <label className="block text-gray-300 text-sm font-bold mb-2">
+                  Time Period 
+                  <span className="text-purple-400 font-normal ml-2">
+                    (Select "All time" to see all {analyticsData?.totals?.total_requests || 0} requests)
+                  </span>
+                </label>
                 <select
                   value={analyticsPeriod}
                   onChange={(e) => {
