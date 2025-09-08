@@ -606,10 +606,10 @@ const MusicianDashboard = () => {
   const [analyticsTimeframe, setAnalyticsTimeframe] = useState('daily'); // 'daily', 'weekly', 'monthly'
   
   // NEW: Redesigned Analytics state
-  const [analyticsPeriod, setAnalyticsPeriod] = useState('last7days');
+  const [analyticsPeriod, setAnalyticsPeriod] = useState('alltime');
   const [topSongsLimit, setTopSongsLimit] = useState(10);
   const [topRequestersLimit, setTopRequestersLimit] = useState(10);
-  const [analyticsDays, setAnalyticsDays] = useState(7);
+  const [analyticsDays, setAnalyticsDays] = useState(null); // null = all time
   const [requestersData, setRequestersData] = useState([]);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
