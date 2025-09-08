@@ -2215,7 +2215,7 @@ const MusicianDashboard = () => {
 
   // Fetch analytics when analyticsDays changes
   useEffect(() => {
-    if (activeTab === 'analytics' && analyticsDays) {
+    if (activeTab === 'analytics' && analyticsDays !== undefined) {
       fetchAnalytics();
     }
   }, [analyticsDays]);
