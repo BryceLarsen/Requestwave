@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Backend Test Suite for RequestWave Login Authentication
-Testing login functionality with brycelarsenmusic@gmail.com account on preview environment
-Focus: Database connectivity, JWT authentication, and external API accessibility
+Backend Test Suite for RequestWave Musician Profile and Audience Interface
+Testing musician profile routing issue with /musician/bryce-larsen endpoint
+Focus: Musician profile existence, audience endpoints, and routing functionality
 """
 
 import requests
@@ -16,6 +16,7 @@ INTERNAL_BASE_URL = "http://localhost:8001/api"
 EXTERNAL_BASE_URL = "https://music-flow-update.preview.emergentagent.com/api"
 TEST_EMAIL = "brycelarsenmusic@gmail.com"
 TEST_PASSWORD = "RequestWave2024!"
+TARGET_SLUG = "bryce-larsen"
 
 class LoginAuthenticationTester:
     def __init__(self):
