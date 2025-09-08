@@ -4635,19 +4635,19 @@ const MusicianDashboard = () => {
                       />
                       
                       <div className="flex-1">
-                        <div className="flex justify-between items-start">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
                           <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <h3 className={`font-bold text-lg ${song.hidden ? 'text-gray-400' : 'text-white'}`}>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-1">
+                              <h3 className={`font-bold text-base sm:text-lg ${song.hidden ? 'text-gray-400' : 'text-white'} break-words`}>
                                 {song.title}
                               </h3>
                               {song.hidden && (
-                                <span className="bg-gray-600 text-gray-300 text-xs px-2 py-1 rounded-full font-medium">
+                                <span className="bg-gray-600 text-gray-300 text-xs px-2 py-1 rounded-full font-medium self-start mt-1 sm:mt-0">
                                   👁️‍🗨️ Hidden
                                 </span>
                               )}
                             </div>
-                            <p className={`${song.hidden ? 'text-gray-500' : 'text-gray-300'}`}>
+                            <p className={`text-sm sm:text-base ${song.hidden ? 'text-gray-500' : 'text-gray-300'} break-words`}>
                               by {song.artist}
                             </p>
                             <div className="flex flex-wrap gap-1 sm:gap-2 mt-2">
