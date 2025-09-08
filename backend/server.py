@@ -4459,9 +4459,10 @@ async def batch_enrich_existing_songs(
 
 # NEW: Tip Support Functions
 def generate_payment_links(musician: dict, amount: float, message: str = None) -> PaymentLinkResponse:
-    """Generate PayPal.me and Venmo.me links for tipping"""
+    """Generate PayPal.me, Venmo.me, and Cash App links for tipping"""
     paypal_link = None
     venmo_link = None
+    cash_app_link = None
     
     # Generate PayPal.me link if musician has PayPal username
     if musician.get('paypal_username'):
@@ -4489,9 +4490,18 @@ def generate_payment_links(musician: dict, amount: float, message: str = None) -
         
         # Note: If deep link fails, we fallback to web URL in frontend
     
+    # Generate Cash App link if musician has Cash App username
+    if musician.get('cash_app_username'):
+        # Cash App deep link format: https://cash.app/$USERNAME
+        # For payments with amount: https://cash.app/$USERNAME/amount
+        cash_app_username = musician['cash_app_username']
+        cash_app_link = f"https://cash.app/${cash_app_username}/{amount}"
+        # Note: Cash App doesn't support message parameter in URL
+    
     return PaymentLinkResponse(
         paypal_link=paypal_link,
         venmo_link=venmo_link,
+        cash_app_link=cash_app_link,
         amount=amount,
         message=message
     )
