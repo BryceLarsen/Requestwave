@@ -4340,25 +4340,38 @@ const MusicianDashboard = () => {
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold">Your Songs ({filteredSongs.length})</h2>
-                  <div className="flex space-x-2">
-                    {/* NEW: Sort By Dropdown */}
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-purple-500 focus:border-purple-500"
+                  <div className="flex space-x-2 items-center">
+                    {/* Help Button next to Manage Songs */}
+                    <button
+                      onClick={() => setShowSongsHelp(true)}
+                      className="text-gray-400 hover:text-white transition duration-300 p-1"
+                      title="Songs Tab Help"
                     >
-                      <option value="created_at">📅 Newest First</option>
-                      <option value="popularity">🔥 Most Popular</option>
-                      <option value="title">🎵 By Title A-Z</option>
-                      <option value="artist">👤 By Artist A-Z</option>
-                      <option value="year">📆 By Year (Latest)</option>
-                    </select>
+                      <span className="text-xs">❓</span>
+                    </button>
+                    
+                    {/* NEW: Sort By Dropdown with "Sort by:" label */}
+                    <div className="flex items-center space-x-2">
+                      <span className="text-gray-400 text-xs">Sort by:</span>
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-purple-500 focus:border-purple-500"
+                      >
+                        <option value="created_at">📅 Newest First</option>
+                        <option value="popularity">🔥 Most Popular</option>
+                        <option value="title">🎵 By Title A-Z</option>
+                        <option value="artist">👤 By Artist A-Z</option>
+                        <option value="year">📆 By Year (Latest)</option>
+                        <option value="random">🎲 Random</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
                 {/* NEW: Redesigned Filter Layout - No Labels, Matches Audience View */}
                 <div className="space-y-3 mb-4">
-                  {/* Search Bar and Sort Dropdown Row */}
+                  {/* Search Bar and Clear Filters Button Row */}
                   <div className="flex space-x-2">
                     <input
                       type="text"
@@ -4367,28 +4380,18 @@ const MusicianDashboard = () => {
                       onChange={(e) => setSongFilter(e.target.value)}
                       className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
                     />
-                    <select
-                      value={sortOption}
-                      onChange={(e) => setSortOption(e.target.value)}
-                      className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm min-w-[120px]"
-                      aria-label="Sort by"
+                    <button
+                      onClick={() => {
+                        setSongFilter('');
+                        setSelectedGenre('');
+                        setSelectedMood('');
+                        setSelectedYear('');
+                        setSelectedPlaylist('');
+                      }}
+                      className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg text-white text-sm font-medium transition duration-300"
                     >
-                      <option value="most-popular">Most Popular</option>
-                      <option value="alphabetical">A→Z</option>
-                      <option value="newest">Newest</option>
-                      <option value="random">Random</option>
-                    </select>
-                    {sortOption === 'random' && (
-                      <button
-                        onClick={handleShuffle}
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center space-x-1 transition duration-300"
-                        title="Shuffle"
-                        aria-label="Shuffle songs"
-                      >
-                        <span>🔀</span>
-                        <span className="hidden sm:inline">Shuffle</span>
-                      </button>
-                    )}
+                      Clear Filters
+                    </button>
                   </div>
                   
                   {/* Playlists Dropdown - Full Width */}
