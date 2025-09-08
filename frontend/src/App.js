@@ -2186,14 +2186,6 @@ const MusicianDashboard = () => {
     console.log('🔄 Analytics useEffect triggered', { activeTab, analyticsPeriod });
     if (activeTab === 'analytics') {
       console.log('✅ Analytics tab is active, fetching data...');
-      // Add visible indicator for debugging
-      const debugElement = document.createElement('div');
-      debugElement.id = 'analytics-debug';
-      debugElement.style.cssText = 'position:fixed;top:10px;right:10px;background:red;color:white;padding:10px;z-index:9999;';
-      debugElement.innerText = 'Analytics useEffect triggered!';
-      document.body.appendChild(debugElement);
-      
-      setTimeout(() => document.body.removeChild(debugElement), 3000);
       
       const periodToDaysMap = {
         'today': 1,
