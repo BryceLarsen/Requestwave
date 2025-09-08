@@ -9898,7 +9898,10 @@ const AudienceInterface = () => {
                 )}
                 
                 <button
-                  onClick={() => setShowSocialMediaModal(false)}
+                  onClick={() => {
+                    setShowSocialMediaModal(false);
+                    resetRequestForm(); // Reset form after complete flow
+                  }}
                   className="w-full bg-purple-600 hover:bg-purple-700 py-3 rounded-lg font-medium transition duration-300 mt-4"
                 >
                   Close
