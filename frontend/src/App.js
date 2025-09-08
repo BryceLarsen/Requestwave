@@ -636,6 +636,9 @@ const MusicianDashboard = () => {
   // Quick Start Guide (manual access only)
   const [showQuickStart, setShowQuickStart] = useState(false);
   
+  // NEW: Songs Help Modal state
+  const [showSongsHelp, setShowSongsHelp] = useState(false);
+  
   // NEW: Song deletion confirmation modal state
   const [showDeleteSongModal, setShowDeleteSongModal] = useState(false);
   const [songToDelete, setSongToDelete] = useState(null);
