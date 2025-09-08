@@ -1809,9 +1809,11 @@ const MusicianDashboard = () => {
         song.title.toLowerCase().includes(songFilter.toLowerCase()) ||
         song.artist.toLowerCase().includes(songFilter.toLowerCase());
       
-      // Genre filter
+      // Genre filter - including special "No Genre" option
       const genreMatch = genreFilter === '' || 
-        song.genres.some(genre => genre.toLowerCase().includes(genreFilter.toLowerCase()));
+        (genreFilter === '__NO_GENRE__' 
+          ? (!song.genres || song.genres.length === 0 || song.genres.every(g => !g || g.trim() === ''))
+          : song.genres.some(genre => genre.toLowerCase().includes(genreFilter.toLowerCase())));
       
       // Playlist filter (client-side)
       const playlistMatch = playlistFilter === '' || (() => {
@@ -1822,13 +1824,17 @@ const MusicianDashboard = () => {
         return selectedPlaylist.song_ids.includes(song.id);
       })();
       
-      // Mood filter
+      // Mood filter - including special "No Mood" option
       const moodMatch = moodFilter === '' ||
-        song.moods.some(mood => mood.toLowerCase().includes(moodFilter.toLowerCase()));
+        (moodFilter === '__NO_MOOD__'
+          ? (!song.moods || song.moods.length === 0 || song.moods.every(m => !m || m.trim() === ''))
+          : song.moods.some(mood => mood.toLowerCase().includes(moodFilter.toLowerCase())));
       
-      // Year filter
+      // Year filter - including special "No Year" option
       const yearMatch = yearFilter === '' || 
-        (song.year && song.year.toString() === yearFilter);
+        (yearFilter === '__NO_YEAR__'
+          ? (!song.year || song.year === '' || song.year === null || song.year === undefined)
+          : (song.year && song.year.toString() === yearFilter));
       
       // NEW: Decade filter
       const decadeMatch = decadeFilter === '' || 
