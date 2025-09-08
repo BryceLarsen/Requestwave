@@ -1535,16 +1535,25 @@ const MusicianDashboard = () => {
   };
 
   const handleDeleteSong = async (songId) => {
-    if (window.confirm('Are you sure you want to delete this song?')) {
-      try {
-        console.log('Deleting song with ID:', songId);
-        await axios.delete(`${API}/songs/${songId}`); // Removed manual headers - axios already has auth token set globally
-        fetchSongs();
-        console.log('Song deleted successfully');
-      } catch (error) {
-        console.error('Error deleting song:', error);
-        alert(`Error deleting song: ${error.response?.data?.detail || error.message}`);
-      }
+    setSongToDelete(songId);
+    setShowDeleteSongModal(true);
+  };
+
+  const confirmDeleteSong = async () => {
+    if (!songToDelete) return;
+    
+    try {
+      console.log('Deleting song with ID:', songToDelete);
+      await axios.delete(`${API}/songs/${songToDelete}`);
+      fetchSongs();
+      console.log('Song deleted successfully');
+      setShowDeleteSongModal(false);
+      setSongToDelete(null);
+    } catch (error) {
+      console.error('Error deleting song:', error);
+      alert(`Error deleting song: ${error.response?.data?.detail || error.message}`);
+      setShowDeleteSongModal(false);
+      setSongToDelete(null);
     }
   };
 
