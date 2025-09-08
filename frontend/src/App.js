@@ -2101,13 +2101,15 @@ const MusicianDashboard = () => {
   }, [musician]);
 
   // NEW: Phase 3 - Analytics functions
-  const fetchAnalytics = async () => {
-    console.log('🔍 fetchAnalytics called with days:', analyticsDays);
+  const fetchAnalytics = async (daysOverride = undefined) => {
+    // Use override if provided, otherwise use state
+    const daysToUse = daysOverride !== undefined ? daysOverride : analyticsDays;
+    console.log('🔍 fetchAnalytics called with days:', daysToUse, '(override:', daysOverride, ', state:', analyticsDays, ')');
     setAnalyticsLoading(true);
     try {
       // Build URL with days parameter only if not null (for all time)
-      const url = analyticsDays !== null 
-        ? `${API}/analytics/daily?days=${analyticsDays}`
+      const url = daysToUse !== null 
+        ? `${API}/analytics/daily?days=${daysToUse}`
         : `${API}/analytics/daily`; // No days parameter = all time
       console.log('🌐 Making analytics request to:', url);
       const response = await axios.get(url, {
