@@ -10789,7 +10789,11 @@ const App = () => {
     };
     
     // Only check on initial load or when musician is null
-    if (!musician) {
+    // Skip authentication check for audience interface routes
+    const isAudienceRoute = window.location.pathname.startsWith('/musician/') || 
+                           window.location.pathname.startsWith('/on-stage/');
+    
+    if (!musician && !isAudienceRoute) {
       checkEmergentSession();
     }
   }, [musician, login]);
