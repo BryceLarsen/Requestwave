@@ -164,8 +164,24 @@ class AnalyticsConsistencyTester:
                     request_data = create_response.json()
                     request_id = request_data.get("id")
                     
-                    # Update status if not pending
-                    if req_data["status"] != "pending":
+                    # Handle different status updates
+                    if req_data["status"] == "archived":
+                        # Use archive endpoint for archived status
+                        archive_response = requests.put(f"{EXTERNAL_BASE_URL}/requests/{request_id}/archive",
+                                                      headers=headers, timeout=30)
+                        
+                        if archive_response.status_code == 200:
+                            created_requests.append({
+                                "id": request_id,
+                                "status": "archived",
+                                "requester_name": req_data["requester_name"],
+                                "requester_email": req_data["requester_email"]
+                            })
+                        else:
+                            self.log_result("Archive Request", False, 
+                                          f"Failed to archive request: {archive_response.status_code}")
+                    elif req_data["status"] != "pending":
+                        # Use status endpoint for other statuses
                         status_response = requests.put(f"{EXTERNAL_BASE_URL}/requests/{request_id}/status",
                                                      json={"status": req_data["status"]}, 
                                                      headers=headers, timeout=30)
@@ -181,6 +197,7 @@ class AnalyticsConsistencyTester:
                             self.log_result("Update Request Status", False, 
                                           f"Failed to update status to {req_data['status']}: {status_response.status_code}")
                     else:
+                        # Pending status - no update needed
                         created_requests.append({
                             "id": request_id,
                             "status": "pending",
