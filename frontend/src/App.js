@@ -9521,13 +9521,13 @@ const AudienceInterface = () => {
                 {/* Action buttons */}
                 <div className="flex space-x-3 mt-6">
                   <button
-                    onClick={() => setShowTipModal(false)}
+                    onClick={() => handleAudienceNoTip()}
                     className="flex-1 bg-gray-600 hover:bg-gray-700 py-2 rounded-lg font-medium transition duration-300"
                   >
-                    Cancel
+                    No Tip
                   </button>
                   <button
-                    onClick={() => handleTipSubmit(musician.slug, '')}
+                    onClick={() => handleAudienceInterfaceTipSubmit()}
                     disabled={!tipAmount || parseFloat(tipAmount) <= 0}
                     className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 py-2 rounded-lg font-medium transition duration-300 disabled:cursor-not-allowed"
                   >
