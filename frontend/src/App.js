@@ -10816,7 +10816,13 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={musician ? <Navigate to="/dashboard" /> : <LandingPage />} />
+        <Route path="/" element={
+          <div style={{background: 'green', color: 'white', padding: '20px'}}>
+            REACT ROUTER V6 TEST - Working! Current path: {window.location.pathname}
+            <br />React Router version fixed!
+            {musician ? <Navigate to="/dashboard" /> : <LandingPage />}
+          </div>
+        } />
         <Route path="/dashboard" element={musician ? <MusicianDashboard /> : <Navigate to="/" />} />
         <Route path="/musician/:slug" element={<AudienceInterface />} />
         <Route path="/on-stage/:slug" element={<OnStageInterface />} />
