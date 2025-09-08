@@ -9623,6 +9623,166 @@ const AudienceInterface = () => {
             </div>
           </div>
         )}
+        
+        {/* NEW: Zelle Instructions Modal */}
+        {showZelleModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-white">🏦 Zelle Instructions</h3>
+                <button
+                  onClick={() => {
+                    setShowZelleModal(false);
+                    // After closing Zelle modal, show social media if in request flow
+                    if (tipSongId) {
+                      setShowSocialMediaModal(true);
+                    }
+                  }}
+                  className="text-gray-400 hover:text-white text-xl"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="space-y-4 text-white">
+                <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg p-4">
+                  <h4 className="font-bold mb-3">📱 How to send via Zelle:</h4>
+                  <ol className="space-y-2 text-sm">
+                    <li>1. Open your bank app or Zelle app</li>
+                    <li>2. Select "Send Money" or "Send with Zelle"</li>
+                    <li>3. Use the contact info below:</li>
+                  </ol>
+                </div>
+                
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-300 text-sm">
+                      {zelleInfo.contactType === 'email' ? 'Email:' : 'Phone:'}
+                    </span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(zelleInfo.contact);
+                        alert('Copied to clipboard!');
+                      }}
+                      className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-xs font-medium transition duration-300"
+                    >
+                      📋 Copy
+                    </button>
+                  </div>
+                  <p className="font-mono text-green-300 text-lg">{zelleInfo.contact}</p>
+                </div>
+                
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <p className="text-gray-300 text-sm mb-1">Amount:</p>
+                  <p className="font-bold text-xl text-green-300">${zelleInfo.amount}</p>
+                </div>
+                
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <p className="text-gray-300 text-sm mb-1">Message (optional):</p>
+                  <p className="text-white">{zelleInfo.message}</p>
+                </div>
+                
+                <button
+                  onClick={() => {
+                    setShowZelleModal(false);
+                    // After closing Zelle modal, show social media if in request flow
+                    if (tipSongId) {
+                      setShowSocialMediaModal(true);
+                    }
+                  }}
+                  className="w-full bg-green-600 hover:bg-green-700 py-3 rounded-lg font-medium transition duration-300"
+                >
+                  Got it! 👍
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* NEW: Social Media Follow Modal */}
+        {showSocialMediaModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-white">🎵 Follow {musician?.name}</h3>
+                <button
+                  onClick={() => setShowSocialMediaModal(false)}
+                  className="text-gray-400 hover:text-white text-xl"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="space-y-3">
+                <p className="text-gray-300 text-center mb-4">
+                  Thank you for your request and tip! 🙏 Follow {musician?.name} on social media to stay connected:
+                </p>
+                
+                {musician?.instagram_username && (
+                  <a
+                    href={`https://instagram.com/${musician.instagram_username}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center space-x-3 bg-pink-600 hover:bg-pink-700 py-3 px-4 rounded-lg font-medium transition duration-300"
+                  >
+                    <span>📸 Instagram</span>
+                  </a>
+                )}
+                
+                {musician?.facebook_username && (
+                  <a
+                    href={`https://facebook.com/${musician.facebook_username}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center space-x-3 bg-blue-600 hover:bg-blue-700 py-3 px-4 rounded-lg font-medium transition duration-300"
+                  >
+                    <span>👥 Facebook</span>
+                  </a>
+                )}
+                
+                {musician?.tiktok_username && (
+                  <a
+                    href={`https://tiktok.com/@${musician.tiktok_username}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center space-x-3 bg-black hover:bg-gray-900 py-3 px-4 rounded-lg font-medium transition duration-300 border border-gray-600"
+                  >
+                    <span>🎵 TikTok</span>
+                  </a>
+                )}
+                
+                {musician?.spotify_artist_url && (
+                  <a
+                    href={musician.spotify_artist_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center space-x-3 bg-green-600 hover:bg-green-700 py-3 px-4 rounded-lg font-medium transition duration-300"
+                  >
+                    <span>🎧 Spotify</span>
+                  </a>
+                )}
+                
+                {musician?.apple_music_artist_url && (
+                  <a
+                    href={musician.apple_music_artist_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center space-x-3 bg-gray-900 hover:bg-black py-3 px-4 rounded-lg font-medium transition duration-300 border border-gray-600"
+                  >
+                    <span>🍎 Apple Music</span>
+                  </a>
+                )}
+                
+                <button
+                  onClick={() => setShowSocialMediaModal(false)}
+                  className="w-full bg-purple-600 hover:bg-purple-700 py-3 rounded-lg font-medium transition duration-300 mt-4"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
