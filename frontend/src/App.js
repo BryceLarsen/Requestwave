@@ -7457,15 +7457,15 @@ const MusicianDashboard = () => {
                             </div>
                           ) : (
                             <div>
-                              <div className="flex items-center space-x-2">
-                                <h3 className="font-medium">{playlist.name}</h3>
-                                <div className="flex items-center space-x-1">
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
+                                <h3 className="font-medium break-words">{playlist.name}</h3>
+                                <div className="flex items-center space-x-1 mt-1 sm:mt-0">
                                   {playlist.is_active && (
-                                    <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                                    <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap">
                                       Active
                                     </span>
                                   )}
-                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
                                     playlist.is_public 
                                       ? 'bg-blue-500 text-white' 
                                       : 'bg-gray-500 text-white'
