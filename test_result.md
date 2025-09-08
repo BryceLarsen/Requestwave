@@ -59,6 +59,8 @@
 ## agent_communication:
 ##     -agent: "main"
 ##     -message: "PHASE 3 COMPLETE: Fixed mobile navigation Help button visibility (already working), addressing remaining bugs: 1) Song Suggestions appearing in all tabs instead of only Requests tab, 2) Audience Link Box banner text removal and View button addition, 3) Onboarding demo playlist broken link fix. Current focus: Song Suggestions placement fix."
+##     -agent: "testing"
+##     -message: "CRITICAL ISSUE FOUND: The audience interface at /musician/bryce-larsen is not working correctly. Instead of showing the song request interface, it redirects to the main login/welcome page. The URL routing for audience links appears to be broken. The page shows login form and general information about RequestWave instead of the expected audience interface with song list and request functionality. This prevents testing of the entire request flow including form submission, tip modal, payment integration, and social media modal. The musician profile may not be properly configured or the routing is not handling the /musician/:slug pattern correctly."
 
 # Protocol Guidelines for Main agent
 #
