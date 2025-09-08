@@ -525,6 +525,182 @@ class AnalyticsConsistencyTester:
             self.log_result("Date Range Logic", False, f"Error: {str(e)}")
             return False
     
+    def test_all_time_analytics_fix(self):
+        """Test the main fix: analytics all-time (no days param) should match requests tab"""
+        print("\n=== Testing All-Time Analytics Fix (Main Issue) ===")
+        
+        if not self.token or not self.musician_id:
+            self.log_result("All-Time Analytics Fix", False, "Missing authentication or musician ID")
+            return False
+        
+        try:
+            headers = self.get_headers()
+            
+            # Get requests tab count (all non-archived requests)
+            requests_response = requests.get(f"{EXTERNAL_BASE_URL}/requests/musician/{self.musician_id}", 
+                                           headers=headers, timeout=30)
+            
+            # Get analytics all-time count (no days parameter)
+            analytics_response = requests.get(f"{EXTERNAL_BASE_URL}/analytics/daily", 
+                                            headers=headers, timeout=30)
+            
+            if requests_response.status_code == 200 and analytics_response.status_code == 200:
+                # Process requests data
+                requests_data = requests_response.json()
+                if isinstance(requests_data, dict) and "requests" in requests_data:
+                    requests_list = requests_data["requests"]
+                else:
+                    requests_list = requests_data
+                
+                # Count non-archived requests (what requests tab shows)
+                non_archived_requests = [req for req in requests_list if req.get("status") != "archived"]
+                requests_tab_count = len(non_archived_requests)
+                
+                # Process analytics data
+                analytics_data = analytics_response.json()
+                analytics_total = analytics_data.get("total_requests", 0)
+                
+                # Alternative: sum from daily stats if total_requests not available
+                if analytics_total == 0:
+                    daily_stats = analytics_data.get("daily_stats", [])
+                    analytics_total = sum(day.get("requests", 0) for day in daily_stats)
+                
+                # Check if counts match (the main fix)
+                counts_match = requests_tab_count == analytics_total
+                difference = abs(requests_tab_count - analytics_total)
+                
+                self.log_result("All-Time Analytics Fix", counts_match,
+                              f"{'✅ FIXED' if counts_match else '❌ ISSUE PERSISTS'}: Requests tab ({requests_tab_count}) {'matches' if counts_match else 'does not match'} analytics all-time ({analytics_total})", {
+                    "requests_tab_count": requests_tab_count,
+                    "analytics_all_time_count": analytics_total,
+                    "difference": difference,
+                    "fix_verified": counts_match,
+                    "user_issue_resolved": counts_match,
+                    "analytics_response_structure": {
+                        "has_total_requests": "total_requests" in analytics_data,
+                        "has_daily_stats": "daily_stats" in analytics_data,
+                        "daily_stats_count": len(analytics_data.get("daily_stats", []))
+                    }
+                })
+                
+                return counts_match
+            else:
+                self.log_result("All-Time Analytics Fix", False, 
+                              f"Failed to get data - Requests: {requests_response.status_code}, Analytics: {analytics_response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_result("All-Time Analytics Fix", False, f"Error: {str(e)}")
+            return False
+    
+    def test_analytics_no_days_parameter(self):
+        """Test that analytics endpoint works without days parameter (all-time)"""
+        print("\n=== Testing Analytics No Days Parameter (All-Time Support) ===")
+        
+        if not self.token:
+            self.log_result("Analytics No Days Parameter", False, "Missing authentication")
+            return False
+        
+        try:
+            headers = self.get_headers()
+            
+            # Test analytics endpoint without days parameter
+            response = requests.get(f"{EXTERNAL_BASE_URL}/analytics/daily", 
+                                  headers=headers, timeout=30)
+            
+            if response.status_code == 200:
+                analytics_data = response.json()
+                
+                # Check response structure
+                has_total_requests = "total_requests" in analytics_data
+                has_daily_stats = "daily_stats" in analytics_data
+                daily_stats = analytics_data.get("daily_stats", [])
+                total_requests = analytics_data.get("total_requests", 0)
+                
+                # Check if this appears to be all-time data (more than 30 days of data)
+                appears_all_time = len(daily_stats) > 30
+                
+                success = has_total_requests or has_daily_stats
+                
+                self.log_result("Analytics No Days Parameter", success,
+                              f"Analytics endpoint {'supports' if success else 'does not support'} all-time queries (no days param)", {
+                    "status_code": response.status_code,
+                    "has_total_requests": has_total_requests,
+                    "has_daily_stats": has_daily_stats,
+                    "total_requests": total_requests,
+                    "daily_stats_count": len(daily_stats),
+                    "appears_all_time": appears_all_time,
+                    "response_keys": list(analytics_data.keys())
+                })
+                
+                return success
+            else:
+                self.log_result("Analytics No Days Parameter", False, 
+                              f"Analytics endpoint failed without days parameter: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Analytics No Days Parameter", False, f"Error: {str(e)}")
+            return False
+    
+    def test_specific_date_ranges_still_work(self):
+        """Test that specific date ranges (7, 30 days) still work after the fix"""
+        print("\n=== Testing Specific Date Ranges Still Work ===")
+        
+        if not self.token:
+            self.log_result("Specific Date Ranges", False, "Missing authentication")
+            return False
+        
+        try:
+            headers = self.get_headers()
+            
+            # Test specific date ranges that should still work
+            test_ranges = [7, 30]
+            all_ranges_work = True
+            results = {}
+            
+            for days in test_ranges:
+                response = requests.get(f"{EXTERNAL_BASE_URL}/analytics/daily?days={days}", 
+                                      headers=headers, timeout=30)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    daily_stats = data.get("daily_stats", [])
+                    total_requests = data.get("total_requests", 0)
+                    
+                    # Verify we get appropriate amount of data (not more than requested days)
+                    days_returned = len(daily_stats)
+                    appropriate_range = days_returned <= days
+                    
+                    results[days] = {
+                        "success": True,
+                        "total_requests": total_requests,
+                        "days_returned": days_returned,
+                        "appropriate_range": appropriate_range
+                    }
+                    
+                    if not appropriate_range:
+                        all_ranges_work = False
+                else:
+                    results[days] = {
+                        "success": False,
+                        "status_code": response.status_code
+                    }
+                    all_ranges_work = False
+            
+            self.log_result("Specific Date Ranges", all_ranges_work,
+                          f"Specific date ranges {'work correctly' if all_ranges_work else 'have issues'} after all-time fix", {
+                "tested_ranges": test_ranges,
+                "results": results,
+                "all_ranges_functional": all_ranges_work
+            })
+            
+            return all_ranges_work
+            
+        except Exception as e:
+            self.log_result("Specific Date Ranges", False, f"Error: {str(e)}")
+            return False
+    
     def cleanup_test_requests(self):
         """Clean up test requests created during testing"""
         print("\n=== Cleaning Up Test Requests ===")
