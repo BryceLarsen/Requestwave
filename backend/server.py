@@ -3785,21 +3785,25 @@ async def export_requesters_csv(musician_id: str = Depends(get_current_musician)
 
 @api_router.get("/analytics/daily")
 async def get_daily_analytics(
-    days: int = 7,
+    days: Optional[int] = None,  # None = all time, matches requests tab
     musician_id: str = Depends(get_current_musician)
 ):
-    """Get daily analytics for the specified number of days"""
+    """Get daily analytics for the specified number of days (None = all time)"""
     try:
-        # Calculate date range
-        end_date = datetime.utcnow()
-        start_date = end_date - timedelta(days=days)
-        
-        # Get requests in date range (excluding archived requests to match requests tab)
-        requests = await db.requests.find({
+        # Build query filter
+        query_filter = {
             "musician_id": musician_id,
-            "created_at": {"$gte": start_date, "$lte": end_date},
             "status": {"$ne": "archived"}  # Exclude archived requests for consistency with requests tab
-        }).to_list(10000)
+        }
+        
+        # Add date range filter only if days is specified
+        if days is not None:
+            end_date = datetime.utcnow()
+            start_date = end_date - timedelta(days=days)
+            query_filter["created_at"] = {"$gte": start_date, "$lte": end_date}
+        
+        # Get requests (all time if days=None, or within date range)
+        requests = await db.requests.find(query_filter).to_list(10000)
         
         # Group by date
         daily_stats = {}
