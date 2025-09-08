@@ -5748,22 +5748,7 @@ const MusicianDashboard = () => {
                 <h3 className="text-lg font-semibold text-white mb-4">💰 Tip Payment Settings</h3>
                 <p className="text-gray-300 text-sm mb-4">Set up payment methods so your audience can tip you directly</p>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-gray-300 text-sm font-bold mb-2">
-                      PayPal Username
-                      <span className="text-green-400 ml-1">💳</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="paypalusername (without @)"
-                      value={profile.paypal_username || ''}
-                      onChange={(e) => setProfile({...profile, paypal_username: e.target.value})}
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
-                    />
-                    <p className="text-gray-400 text-xs mt-1">Used for PayPal.me/yourusername tip links</p>
-                  </div>
-                  
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <div>
                     <label className="block text-gray-300 text-sm font-bold mb-2">
                       Venmo Username
@@ -5781,6 +5766,36 @@ const MusicianDashboard = () => {
                   
                   <div>
                     <label className="block text-gray-300 text-sm font-bold mb-2">
+                      PayPal Username
+                      <span className="text-green-400 ml-1">💳</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="paypalusername (without @)"
+                      value={profile.paypal_username || ''}
+                      onChange={(e) => setProfile({...profile, paypal_username: e.target.value})}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                    />
+                    <p className="text-gray-400 text-xs mt-1">Used for PayPal.me/yourusername tip links</p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-gray-300 text-sm font-bold mb-2">
+                      Cash App Username
+                      <span className="text-yellow-400 ml-1">💰</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="cashappusername (without $)"
+                      value={profile.cash_app_username || ''}
+                      onChange={(e) => setProfile({...profile, cash_app_username: e.target.value})}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                    />
+                    <p className="text-gray-400 text-xs mt-1">Used for Cash.app/$yourusername tip links</p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-gray-300 text-sm font-bold mb-2">
                       Zelle Email
                       <span className="text-green-400 ml-1">🏦</span>
                     </label>
@@ -5794,9 +5809,9 @@ const MusicianDashboard = () => {
                     <p className="text-gray-400 text-xs mt-1">Email address linked to your Zelle account</p>
                   </div>
                   
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="block text-gray-300 text-sm font-bold mb-2">
-                      Zelle Phone
+                      Zelle Phone (Alternative)
                       <span className="text-green-400 ml-1">📞</span>
                     </label>
                     <input
@@ -5806,7 +5821,59 @@ const MusicianDashboard = () => {
                       onChange={(e) => setProfile({...profile, zelle_phone: e.target.value})}
                       className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
                     />
-                    <p className="text-gray-400 text-xs mt-1">Phone number linked to your Zelle account</p>
+                    <p className="text-gray-400 text-xs mt-1">Phone number linked to your Zelle account (if no email provided)</p>
+                  </div>
+                </div>
+                
+                {/* Payment App Toggles */}
+                <div className="bg-gray-700/50 rounded-lg p-4">
+                  <h4 className="text-white font-semibold mb-3">🎛️ Payment App Visibility</h4>
+                  <p className="text-gray-300 text-sm mb-4">Choose which payment apps appear in the tip flow for your audience</p>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={profile.venmo_enabled !== false}
+                        onChange={(e) => setProfile({...profile, venmo_enabled: e.target.checked})}
+                        className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
+                      />
+                      <span className="text-white text-sm">📱 Venmo</span>
+                    </label>
+                    
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={profile.paypal_enabled !== false}
+                        onChange={(e) => setProfile({...profile, paypal_enabled: e.target.checked})}
+                        className="w-4 h-4 text-green-600 bg-gray-800 border-gray-600 rounded focus:ring-green-500"
+                      />
+                      <span className="text-white text-sm">💳 PayPal</span>
+                    </label>
+                    
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={profile.cash_app_enabled !== false}
+                        onChange={(e) => setProfile({...profile, cash_app_enabled: e.target.checked})}
+                        className="w-4 h-4 text-yellow-600 bg-gray-800 border-gray-600 rounded focus:ring-yellow-500"
+                      />
+                      <span className="text-white text-sm">💰 Cash App</span>
+                    </label>
+                    
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={profile.zelle_enabled !== false}
+                        onChange={(e) => setProfile({...profile, zelle_enabled: e.target.checked})}
+                        className="w-4 h-4 text-green-600 bg-gray-800 border-gray-600 rounded focus:ring-green-500"
+                      />
+                      <span className="text-white text-sm">🏦 Zelle</span>
+                    </label>
+                  </div>
+                  
+                  <div className="mt-3 text-xs text-gray-400">
+                    <p>💡 Tip: Only apps with usernames/contact info and that are enabled will appear in the tip flow</p>
                   </div>
                 </div>
               </div>
