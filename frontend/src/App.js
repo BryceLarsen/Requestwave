@@ -4650,24 +4650,24 @@ const MusicianDashboard = () => {
                             <p className={`${song.hidden ? 'text-gray-500' : 'text-gray-300'}`}>
                               by {song.artist}
                             </p>
-                            <div className="flex flex-wrap gap-2 mt-2">
+                            <div className="flex flex-wrap gap-1 sm:gap-2 mt-2">
                               {song.genres.map((genre, index) => (
-                                <span key={index} className="bg-purple-600 text-xs px-2 py-1 rounded-full">
+                                <span key={index} className="bg-purple-600 text-xs px-2 py-1 rounded-full whitespace-nowrap">
                                   {genre}
                                 </span>
                               ))}
                               {song.moods.map((mood, index) => (
-                                <span key={index} className="bg-blue-600 text-xs px-2 py-1 rounded-full">
+                                <span key={index} className="bg-blue-600 text-xs px-2 py-1 rounded-full whitespace-nowrap">
                                   {mood}
                                 </span>
                               ))}
                               {song.year && (
-                                <span className="bg-green-600 text-xs px-2 py-1 rounded-full">
+                                <span className="bg-green-600 text-xs px-2 py-1 rounded-full whitespace-nowrap">
                                   {song.year}
                                 </span>
                               )}
                               {/* Request Count Badge */}
-                              <span className="bg-orange-600 text-xs px-2 py-1 rounded-full font-semibold">
+                              <span className="bg-orange-600 text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap">
                                 🔥 {song.request_count || 0} requests
                               </span>
                             </div>
