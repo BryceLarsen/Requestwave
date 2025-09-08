@@ -8630,6 +8630,18 @@ const AudienceInterface = () => {
     setShowSocialMediaModal(true);
   };
 
+  // Reset form after complete flow
+  const resetRequestForm = () => {
+    setRequestForm({
+      requester_name: '',
+      requester_email: '',
+      dedication: ''
+    });
+    setSelectedSong(null);
+    setTipSongId(null);
+    setCurrentRequestId(null);
+  };
+
   // NEW: Handle song suggestion submission
   const handleSuggestionSubmit = async (e) => {
     e.preventDefault();
