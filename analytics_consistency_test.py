@@ -236,23 +236,29 @@ class AnalyticsConsistencyTester:
                                   headers=headers, timeout=30)
             
             if response.status_code == 200:
-                requests_data = response.json()
+                response_data = response.json()
+                
+                # Handle the wrapped response format
+                if isinstance(response_data, dict) and "requests" in response_data:
+                    requests_list = response_data["requests"]
+                else:
+                    requests_list = response_data
                 
                 # Check if any archived requests are included
-                archived_requests = [req for req in requests_data if req.get("status") == "archived"]
-                non_archived_requests = [req for req in requests_data if req.get("status") != "archived"]
+                archived_requests = [req for req in requests_list if req.get("status") == "archived"]
+                non_archived_requests = [req for req in requests_list if req.get("status") != "archived"]
                 
                 # Count our test requests
-                test_archived = [req for req in requests_data 
+                test_archived = [req for req in requests_list 
                                if req.get("requester_email", "").startswith("test") and req.get("status") == "archived"]
-                test_non_archived = [req for req in requests_data 
+                test_non_archived = [req for req in requests_list 
                                    if req.get("requester_email", "").startswith("test") and req.get("status") != "archived"]
                 
                 success = len(archived_requests) == 0
                 
                 self.log_result("Requests Endpoint Archived Exclusion", success, 
                               f"Requests endpoint {'excludes' if success else 'includes'} archived requests", {
-                    "total_requests": len(requests_data),
+                    "total_requests": len(requests_list),
                     "archived_requests_found": len(archived_requests),
                     "non_archived_requests": len(non_archived_requests),
                     "test_archived_found": len(test_archived),
