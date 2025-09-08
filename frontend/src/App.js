@@ -8530,6 +8530,110 @@ const AudienceInterface = () => {
     }
   };
 
+  // Handle tip submission in audience interface
+  const handleTipSubmit = async () => {
+    if (!tipAmount || parseFloat(tipAmount) <= 0) {
+      alert('Please enter a valid tip amount');
+      return;
+    }
+
+    const amount = parseFloat(tipAmount);
+    if (amount > 500) {
+      alert('Tip amount cannot exceed $500');
+      return;
+    }
+
+    try {
+      // Get payment links from backend
+      const response = await axios.get(`${API}/musicians/${musician.slug}/tip-links`, {
+        params: {
+          amount: amount,
+          message: tipMessage || `Thanks for the music!${tipSongId ? ' (with song request)' : ''}`
+        }
+      });
+
+      if (response.data) {
+        // Get appropriate payment link
+        let paymentUrl = null;
+        if (tipPlatform === 'paypal' && response.data.paypal_link) {
+          paymentUrl = response.data.paypal_link;
+        } else if (tipPlatform === 'venmo' && response.data.venmo_link) {
+          paymentUrl = response.data.venmo_link;
+        } else if (tipPlatform === 'cashapp' && response.data.cash_app_link) {
+          paymentUrl = response.data.cash_app_link;
+        }
+
+        // Record the tip attempt for analytics
+        try {
+          await axios.post(`${API}/musicians/${musician.slug}/tips`, {
+            amount: amount,
+            platform: tipPlatform,
+            tipper_name: requestForm.requester_name || 'Anonymous',
+            message: tipMessage
+          });
+        } catch (error) {
+          console.log('Tip tracking failed:', error); // Non-critical
+        }
+
+        if (tipPlatform === 'zelle') {
+          // For Zelle, show special modal with copy functionality
+          setZelleInfo({
+            contact: musician.zelle_email || musician.zelle_phone,
+            contactType: musician.zelle_email ? 'email' : 'phone',
+            amount: amount,
+            message: tipMessage || 'Thanks for the music!'
+          });
+          setShowTipModal(false);
+          setShowZelleModal(true);
+        } else if (paymentUrl) {
+          // Handle PayPal/Venmo/Cash App payment links
+          if (tipPlatform === 'venmo' && paymentUrl.startsWith('venmo://')) {
+            const venmoMatch = paymentUrl.match(/recipients=([^&]+)/);
+            const venmoUsername = venmoMatch ? venmoMatch[1] : 'this musician';
+            
+            try {
+              window.location.href = paymentUrl;
+              setTimeout(() => {
+                alert(`Opening Venmo app to send $${amount} tip to @${venmoUsername}!`);
+              }, 500);
+            } catch (error) {
+              alert(`To send your $${amount} tip:\n\n1. Open Venmo app on your phone\n2. Search for @${venmoUsername}\n3. Send $${amount} with message: "${tipMessage || 'Thanks for the music!'}"`);
+            }
+          } else if (tipPlatform === 'cashapp') {
+            window.open(paymentUrl, '_blank');
+            alert(`Opening Cash App to send your $${amount} tip!`);
+          } else {
+            // PayPal links work universally
+            window.open(paymentUrl, '_blank');
+            alert(`Opening PayPal to send your $${amount} tip!`);
+          }
+          
+          // Close tip modal and show social media
+          setShowTipModal(false);
+          setShowSocialMediaModal(true);
+        } else {
+          const platformName = tipPlatform === 'paypal' ? 'PayPal' : 
+                             tipPlatform === 'venmo' ? 'Venmo' : 
+                             tipPlatform === 'cashapp' ? 'Cash App' : 'Zelle';
+          alert(`${platformName} is not set up for this musician`);
+        }
+      }
+    } catch (error) {
+      console.error('Tip error:', error);
+      if (error.response?.status === 400) {
+        alert(error.response.data.detail || 'This musician hasn\'t set up payment methods for tips yet');
+      } else {
+        alert('Error processing tip. Please try again.');
+      }
+    }
+  };
+
+  // Handle no tip selection - go straight to social media
+  const handleNoTip = () => {
+    setShowTipModal(false);
+    setShowSocialMediaModal(true);
+  };
+
   // NEW: Handle song suggestion submission
   const handleSuggestionSubmit = async (e) => {
     e.preventDefault();
