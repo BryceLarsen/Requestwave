@@ -8360,27 +8360,39 @@ const AudienceInterface = () => {
       return;
     }
 
-    // Store the song and form data
-    setSelectedSong(song);
-    
-    // Check if tips are enabled - if not, skip the tip modal and go straight to social follow
-    if (musician.tips_enabled === false) {
-      try {
-        // Submit request without tip and skip tip modal
-        const submittedRequest = await submitRequestWithTip(song, 0);
-        if (submittedRequest) {
+    try {
+      // Submit request first
+      const submittedRequest = await submitRequestWithTip(song, 0);
+      if (submittedRequest) {
+        // Store the song for potential tip integration
+        setSelectedSong(song);
+        setTipSongId(submittedRequest.id);
+        
+        // Check if tips are enabled
+        if (musician.tips_enabled === false) {
           // Go straight to social follow modal
-          setShowTipChoiceModal(false);
           setShowSocialFollowModal(true);
+        } else {
+          // Show tip modal directly (no skip button)
+          setTipAmount('');
+          setTipMessage('');
+          // Set default platform based on what's available and enabled, in order: Venmo, PayPal, Cash App, Zelle
+          if (musician?.venmo_enabled && musician.venmo_username) {
+            setTipPlatform('venmo');
+          } else if (musician?.paypal_enabled && musician.paypal_username) {
+            setTipPlatform('paypal');
+          } else if (musician?.cash_app_enabled && musician.cash_app_username) {
+            setTipPlatform('cashapp');
+          } else if (musician?.zelle_enabled && (musician.zelle_email || musician.zelle_phone)) {
+            setTipPlatform('zelle');
+          }
+          
+          setShowTipModal(true);
         }
-      } catch (error) {
-        // Handle error properly - this was the missing error handling!
-        console.error('Error submitting request:', error);
-        alert('Error creating request. Please try again.');
       }
-    } else {
-      // Show tip choice modal as normal
-      setShowTipChoiceModal(true);
+    } catch (error) {
+      console.error('Error submitting request:', error);
+      alert('Error creating request. Please try again.');
     }
   };
   
