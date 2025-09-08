@@ -1332,14 +1332,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "FINAL Songs Tab UI Improvements - Help Button and Manage Songs Same Row Layout"
-    - "Demo CSV Endpoint for Onboarding"
-    - "Song Suggestions Backend Endpoints" 
-    - "Profile and Audience Link Functionality"
-    - "General System Health and Authentication"
-  stuck_tasks:
+    - "Analytics Data Count Discrepancy Fix"
+  stuck_tasks: []
   test_all: false
-  test_priority: "high_first"
+  test_priority: "critical_first"
 
 agent_communication:
     - agent: "main"
