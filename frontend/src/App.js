@@ -9162,78 +9162,7 @@ const AudienceInterface = () => {
         )}
         
         {/* NEW: Tip Choice Modal - Second Window */}
-        {showTipChoiceModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 w-full max-w-lg border border-gray-700">
-              {/* Success Message */}
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-green-600 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
-                  ✅
-                </div>  
-                <h3 className="text-xl font-bold text-white mb-2">Your request has been sent!</h3>
-                <p className="text-gray-300 text-sm">If you'd like to leave a tip, we'll let the artist know.</p>
-              </div>
-              
-              {/* Tip Amount Choices - One Row */}
-              <div className="mb-4">
-                <p className="text-white font-medium mb-3 text-center">Choose tip amount:</p>
-                <div className="flex gap-2 mb-4">
-                  {['5', '10', '20', '50', '100'].map((amount) => (
-                    <button
-                      key={amount}
-                      onClick={() => handleTipChoice(amount)}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-2 rounded-lg transition duration-300 text-sm"
-                    >
-                      ${amount}
-                    </button>
-                  ))}
-                </div>
-                
-                {/* Other Amount Input */}
-                <div className="mb-4">
-                  <input
-                    type="number"
-                    placeholder="Other amount"
-                    value={selectedTipAmount}
-                    onChange={(e) => setSelectedTipAmount(e.target.value)}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-center"
-                    min="1"
-                    max="500"
-                  />
-                  {selectedTipAmount && selectedTipAmount !== '' && (
-                    <button
-                      onClick={() => handleTipChoice(selectedTipAmount)}
-                      className="w-full mt-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg transition duration-300"
-                    >
-                      Tip ${selectedTipAmount}
-                    </button>
-                  )}
-                </div>
-                
-                {/* No Tip Button */}
-                <button
-                  onClick={handleNoTip}
-                  className="w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 rounded-lg transition duration-300 mb-4"
-                >
-                  No Tip
-                </button>
-              </div>
-              
-              {/* Skip Button */}
-              <div className="text-center">
-                <button
-                  onClick={() => {
-                    setShowTipChoiceModal(false);
-                    setShowSocialFollowModal(true);
-                  }}
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-6 rounded-lg transition duration-300"
-                >
-                  Skip
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Removed old tip choice modal - now using integrated tip modal directly */}
         
         {/* NEW: Social Follow Modal - Third Window (No Tip Path) */}
         {showSocialFollowModal && (
