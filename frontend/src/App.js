@@ -4367,10 +4367,11 @@ const MusicianDashboard = () => {
                     {/* Help Button next to Manage Songs */}
                     <button
                       onClick={() => setShowSongsHelp(true)}
-                      className="text-gray-400 hover:text-white transition duration-300 p-1"
+                      className="bg-gray-600 hover:bg-gray-500 active:bg-gray-700 px-3 py-2 rounded-lg transition duration-300 flex items-center space-x-1 text-sm"
                       title="Songs Tab Help"
                     >
-                      <span className="text-xs">❓</span>
+                      <span className="text-gray-300">❓</span>
+                      <span className="text-gray-300 font-medium">Help</span>
                     </button>
                     
                     {/* NEW: Sort By Dropdown with "Sort by:" label */}
