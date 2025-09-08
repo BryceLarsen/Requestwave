@@ -4677,17 +4677,17 @@ const MusicianDashboard = () => {
                               </p>
                             )}
                           </div>
-                          <div className="flex space-x-2 ml-4">
+                          <div className="flex flex-wrap gap-1 sm:gap-2 ml-2 sm:ml-4 mt-2 sm:mt-0">
                             <button
                               onClick={() => handleEditSong(song)}
-                              className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm font-medium transition duration-300"
+                              className="bg-blue-600 hover:bg-blue-700 px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition duration-300 whitespace-nowrap"
                             >
                               Edit
                             </button>
                             {/* NEW: Hide/Show Button */}
                             <button
                               onClick={() => handleToggleSongVisibility(song.id)}
-                              className={`px-3 py-1 rounded text-sm font-medium transition duration-300 ${
+                              className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition duration-300 whitespace-nowrap ${
                                 song.hidden 
                                   ? 'bg-green-600 hover:bg-green-700' 
                                   : 'bg-yellow-600 hover:bg-yellow-700'
@@ -4698,7 +4698,7 @@ const MusicianDashboard = () => {
                             </button>
                             <button
                               onClick={() => handleDeleteSong(song.id)}
-                              className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm font-medium transition duration-300"
+                              className="bg-red-600 hover:bg-red-700 px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition duration-300 whitespace-nowrap"
                             >
                               Delete
                             </button>
