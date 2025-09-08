@@ -10820,13 +10820,6 @@ const App = () => {
         <Route path="/dashboard" element={musician ? <MusicianDashboard /> : <Navigate to="/" />} />
         <Route path="/musician/:slug" element={<AudienceInterface />} />
         <Route path="/on-stage/:slug" element={<OnStageInterface />} />
-        {/* Debug route to test routing */}
-        <Route path="*" element={
-          <div style={{padding: '20px', color: 'white', background: 'red'}}>
-            DEBUG: Route not matched. Current path: {window.location.pathname}
-            <br />Musician logged in: {musician ? 'Yes' : 'No'}
-          </div>
-        } />
       </Routes>
     </Router>
   );
