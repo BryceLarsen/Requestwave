@@ -3791,10 +3791,11 @@ async def get_daily_analytics(
         end_date = datetime.utcnow()
         start_date = end_date - timedelta(days=days)
         
-        # Get requests in date range
+        # Get requests in date range (excluding archived requests to match requests tab)
         requests = await db.requests.find({
             "musician_id": musician_id,
-            "created_at": {"$gte": start_date, "$lte": end_date}
+            "created_at": {"$gte": start_date, "$lte": end_date},
+            "status": {"$ne": "archived"}  # Exclude archived requests for consistency with requests tab
         }).to_list(10000)
         
         # Group by date
