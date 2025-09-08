@@ -755,7 +755,12 @@ class AnalyticsConsistencyTester:
         # Wait a moment for data to be processed
         time.sleep(2)
         
-        # Run consistency tests
+        # Run the main fix tests first (most important)
+        test_results.append(self.test_all_time_analytics_fix())
+        test_results.append(self.test_analytics_no_days_parameter())
+        test_results.append(self.test_specific_date_ranges_still_work())
+        
+        # Run legacy consistency tests
         test_results.append(self.test_requests_endpoint_excludes_archived())
         test_results.append(self.test_analytics_daily_excludes_archived())
         test_results.append(self.test_analytics_requesters_excludes_archived())
