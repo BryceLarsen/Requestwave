@@ -7850,6 +7850,10 @@ const AudienceInterface = () => {
   const [tipAmount, setTipAmount] = useState('');
   const [tipMessage, setTipMessage] = useState('');
   const [tipPlatform, setTipPlatform] = useState('paypal'); // 'paypal' or 'venmo'
+  const [tipSongId, setTipSongId] = useState(null); // For integrated tips with requests
+  const [showZelleModal, setShowZelleModal] = useState(false);
+  const [zelleInfo, setZelleInfo] = useState({});
+  const [showSocialMediaModal, setShowSocialMediaModal] = useState(false);
   
   // NEW: Song suggestion states
   const [showSuggestionModal, setShowSuggestionModal] = useState(false);
