@@ -7867,6 +7867,11 @@ const MusicianDashboard = () => {
 const AudienceInterface = () => {
   const { slug } = useParams();
   const [musician, setMusician] = useState(null);
+  
+  // Debug logging
+  console.log('🎵 AudienceInterface component loaded for slug:', slug);
+  console.log('🎵 Current URL:', window.location.href);
+  console.log('🎵 Pathname:', window.location.pathname);
   const [songs, setSongs] = useState([]);
   const [filteredSongs, setFilteredSongs] = useState([]);
   const [filters, setFilters] = useState({});
