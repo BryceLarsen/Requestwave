@@ -3852,7 +3852,7 @@ async def get_daily_analytics(
         top_requesters = sorted(requester_counts.items(), key=lambda x: x[1], reverse=True)[:10]
         
         return {
-            "period": f"Last {days} days",
+            "period": "All time" if days is None else f"Last {days} days",
             "daily_stats": formatted_daily,
             "top_songs": [{"song": song, "count": count} for song, count in top_songs],
             "top_requesters": [{"requester": requester, "count": count} for requester, count in top_requesters],
