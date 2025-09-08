@@ -4396,6 +4396,8 @@ const MusicianDashboard = () => {
                         setGenreFilter('');
                         setMoodFilter('');
                         setYearFilter('');
+                        setDecadeFilter('');
+                        setNotesFilter('');
                         setPlaylistFilter('');
                       }}
                       className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg text-white text-sm font-medium transition duration-300"
