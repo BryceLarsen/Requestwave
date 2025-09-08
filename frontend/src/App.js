@@ -4362,17 +4362,8 @@ const MusicianDashboard = () => {
               {/* NEW: Filter and Batch Edit Controls */}
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-center space-x-4">
+                  <div>
                     <h2 className="text-xl font-bold">Your Songs ({filteredSongs.length})</h2>
-                    {/* Help Button moved to top left, across from Manage Songs */}
-                    <button
-                      onClick={() => setShowSongsHelp(true)}
-                      className="bg-gray-600 hover:bg-gray-500 active:bg-gray-700 px-3 py-2 rounded-lg transition duration-300 flex items-center space-x-1 text-sm"
-                      title="Songs Tab Help"
-                    >
-                      <span className="text-gray-400">❓</span>
-                      <span className="text-gray-300 font-medium">Help</span>
-                    </button>
                   </div>
                   <div className="flex space-x-2 items-center">
                     {/* NEW: Sort By Dropdown with "Sort by:" label */}
