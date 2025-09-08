@@ -8408,12 +8408,8 @@ const AudienceInterface = () => {
       // Store request ID for analytics
       setCurrentRequestId(response.data.id);
       
-      // Reset form
-      setRequestForm({
-        requester_name: '',
-        requester_email: '',
-        dedication: ''
-      });
+      // Don't reset form here - keep the data for potential tip flow
+      // Form will be reset later after tip/social flow completes
       
       return response.data;
       
