@@ -33,7 +33,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration - Use the correct backend URL from frontend/.env
-BASE_URL = "https://music-flow-update.preview.emergentagent.com/api"
+BASE_URL = "https://requestwave-revamp.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {

@@ -19,7 +19,7 @@ import time
 from typing import Dict, Any
 
 # Configuration
-BASE_URL = "https://music-flow-update.preview.emergentagent.com/api"
+BASE_URL = "https://requestwave-revamp.preview.emergentagent.com/api"
 
 # Target user credentials
 USER_CREDENTIALS = {

@@ -12,8 +12,8 @@ from datetime import datetime
 import time
 
 # Configuration
-PREVIEW_BACKEND_URL = "https://music-flow-update.preview.emergentagent.com/api"
-PREVIEW_FRONTEND_URL = "https://music-flow-update.preview.emergentagent.com"
+PREVIEW_BACKEND_URL = "https://requestwave-revamp.preview.emergentagent.com/api"
+PREVIEW_FRONTEND_URL = "https://requestwave-revamp.preview.emergentagent.com"
 TEST_MUSICIAN_SLUG = "bryce-larsen"
 
 class DetailedFrontendFlowTester:
