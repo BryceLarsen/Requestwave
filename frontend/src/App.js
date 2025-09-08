@@ -4158,7 +4158,19 @@ const MusicianDashboard = () => {
             )}
 
             {/* Songs List */}
-            {/* NEW: Compact My Playlists Dropdown */}
+            {/* Help Button - positioned at top left above playlists */}
+            <div className="mb-4">
+              <button
+                onClick={() => setShowSongsHelp(true)}
+                className="bg-gray-600 hover:bg-gray-500 active:bg-gray-700 px-3 py-2 rounded-lg transition duration-300 flex items-center space-x-1 text-sm"
+                title="Songs Tab Help"
+              >
+                <span className="text-gray-400">❓</span>
+                <span className="text-gray-300 font-medium">Help</span>
+              </button>
+            </div>
+
+            {/* NEW: Compact Playlists Dropdown */}
             {subscriptionStatus && ['trial', 'pro', 'canceled'].includes(subscriptionStatus.plan) && (
               <div className="bg-gray-800 rounded-xl p-4 mb-6">
                 <div 
@@ -4167,7 +4179,7 @@ const MusicianDashboard = () => {
                 >
                   <div className="flex items-center space-x-2">
                     <span className="text-lg">🎵</span>
-                    <h3 className="text-lg font-medium">My Playlists</h3>
+                    <h3 className="text-lg font-medium">Playlists</h3>
                     <span className="text-sm text-gray-400">
                       ({playlists.filter(p => p.id !== 'all_songs').length})
                     </span>
