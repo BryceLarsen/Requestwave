@@ -558,12 +558,15 @@ class AnalyticsConsistencyTester:
                 
                 # Process analytics data
                 analytics_data = analytics_response.json()
-                analytics_total = analytics_data.get("total_requests", 0)
                 
-                # Alternative: sum from daily stats if total_requests not available
+                # Get total from the correct location in response structure
+                totals = analytics_data.get("totals", {})
+                analytics_total = totals.get("total_requests", 0)
+                
+                # Alternative: sum from daily stats if totals not available
                 if analytics_total == 0:
                     daily_stats = analytics_data.get("daily_stats", [])
-                    analytics_total = sum(day.get("requests", 0) for day in daily_stats)
+                    analytics_total = sum(day.get("request_count", 0) for day in daily_stats)
                 
                 # Check if counts match (the main fix)
                 counts_match = requests_tab_count == analytics_total
