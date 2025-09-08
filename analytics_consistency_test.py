@@ -1,20 +1,25 @@
 #!/usr/bin/env python3
 """
 Analytics Data Consistency Test Suite for RequestWave
-Testing the fixes for analytics data discrepancies between Analytics tab and Requests tab
+Testing the CORRECTED analytics data consistency fix where analytics tab shows all requests matching requests tab.
 
-ISSUE: Analytics endpoints were including archived requests while requests tab excludes them
+ISSUE: User reported 46 requests in requests tab but only 2 showing in analytics tab
+ROOT CAUSE: Analytics was filtering to last 7 days while requests tab shows ALL non-archived requests
 FIXES APPLIED:
-1. Updated /api/analytics/daily endpoint: Added "status": {"$ne": "archived"} filter
-2. Updated /api/analytics/requesters endpoint: Added archived request exclusion
-3. Backend restarted to apply changes
+1. Changed default analytics period from "last7days" to "alltime" 
+2. Updated backend /api/analytics/daily to support days=None parameter for all-time analytics
+3. Updated frontend to default to analyticsDays = null for all-time view
+4. Fixed URL building to not send days parameter when analyticsDays is null
+5. Restarted both backend and frontend
 
 TESTING REQUIREMENTS:
-1. Data Consistency Verification between /api/requests/musician/{musician_id} and /api/analytics/daily
-2. Archived Request Exclusion verification
-3. Request Counts matching between endpoints
-4. Requester Analytics Consistency
-5. Date Range Logic testing
+1. Request Count Verification: Compare totals between /api/requests/musician/{id} and /api/analytics/daily (no days param)
+2. All-Time Analytics: Verify /api/analytics/daily with no days parameter returns ALL non-archived requests
+3. Date Range Still Works: Verify /api/analytics/daily?days=7 still works for specific periods
+4. Data Consistency: Ensure analytics totals match requests tab totals
+5. Frontend State: Verify frontend defaults to "All time" period
+
+TEST CREDENTIALS: brycelarsenmusic@gmail.com / RequestWave2024!
 """
 
 import requests
