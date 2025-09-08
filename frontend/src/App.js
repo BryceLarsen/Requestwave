@@ -7888,6 +7888,95 @@ const MusicianDashboard = () => {
           </div>
         )}
 
+        {/* NEW: Songs Tab Help Modal */}
+        {showSongsHelp && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">📚 Songs Tab Help</h2>
+                <button
+                  onClick={() => setShowSongsHelp(false)}
+                  className="text-gray-400 hover:text-white text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="prose prose-invert max-w-none text-white space-y-6">
+                <div>
+                  <h3 className="text-xl font-semibold text-purple-300 mb-3">Adding a New Song</h3>
+                  <p className="text-gray-300">
+                    You can add songs one at a time by typing in the title and artist. RequestWave can automatically fill in details like genre, mood, and year, or you can enter them yourself.
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-xl font-semibold text-blue-300 mb-3">Importing a Playlist from Spotify or Apple Music</h3>
+                  <p className="text-gray-300 mb-3">
+                    To import a playlist from Spotify, open the playlist in your Spotify app, tap Share, then Copy Link. Paste that link into the "Import Playlist" option in RequestWave.
+                  </p>
+                  <p className="text-gray-300 mb-3">
+                    For Apple Music, open the playlist, tap the three dots, choose Share, then Copy Link. Paste that link into the import field in RequestWave.
+                  </p>
+                  <p className="text-gray-300">
+                    All songs from that playlist will be imported with their titles, artists, years, and metadata. Double-check the results, because cover versions or alternate recordings may sometimes have incorrect years or genres.
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-xl font-semibold text-green-300 mb-3">Uploading a CSV</h3>
+                  <p className="text-gray-300">
+                    You can upload a CSV file with five columns: Title, Artist, Genre, Mood, Year. We provide a blank template with these columns already set up. You can open the template in Google Sheets or Excel, fill in your songs, and upload it directly. This is a fast way to add a large number of songs.
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-xl font-semibold text-orange-300 mb-3">Uploading an LST from Songbook Pro</h3>
+                  <p className="text-gray-300">
+                    In Songbook Pro (sometimes referred to as Songmaker), you can export a playlist as a Text File. That file will be saved with the extension .LST. Save the file to your device, then in RequestWave use the Upload LST option to import it. This is the simplest way to bring in your existing Songbook Pro lists.
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-xl font-semibold text-yellow-300 mb-3">Editing Songs and Managing Metadata</h3>
+                  <p className="text-gray-300">
+                    After songs are imported, you can edit them at any time. Choose genres and moods from existing options or create new ones. Genres can only be deleted if no songs are assigned to them.
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-xl font-semibold text-red-300 mb-3">Finding Songs with Missing Metadata</h3>
+                  <p className="text-gray-300">
+                    Use the filters for No Genre, No Mood, or No Year to quickly find songs missing information. This makes it easy to clean up your list and keep your library consistent.
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-xl font-semibold text-pink-300 mb-3">Playlists</h3>
+                  <p className="text-gray-300 mb-3">
+                    Playlists help you group songs for specific shows, venues, or themes. They are private by default. You can unlock a playlist to make it public, which adds a playlist filter to your audience's view.
+                  </p>
+                  <p className="text-gray-300 mb-3">
+                    In the Design tab, you can also choose which playlist feeds into your audience link. This is useful for events where only a subset of your songs is appropriate, such as a family event, themed party, or clean-lyrics set.
+                  </p>
+                  <p className="text-gray-300">
+                    Examples: create playlists for Irish music, Disney favorites, or "Beach Vibes." You can also combine filters like Genre + Decade to narrow down requests. Remember: once you've applied filters, you'll need to clear them to see all songs again.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => setShowSongsHelp(false)}
+                  className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-medium transition duration-300"
+                >
+                  Got it! 👍
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* NEW: Song Deletion Confirmation Modal */}
         {showDeleteSongModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
