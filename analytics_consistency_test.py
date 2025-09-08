@@ -616,10 +616,11 @@ class AnalyticsConsistencyTester:
                 analytics_data = response.json()
                 
                 # Check response structure
-                has_total_requests = "total_requests" in analytics_data
+                has_totals = "totals" in analytics_data
                 has_daily_stats = "daily_stats" in analytics_data
                 daily_stats = analytics_data.get("daily_stats", [])
-                total_requests = analytics_data.get("total_requests", 0)
+                totals = analytics_data.get("totals", {})
+                total_requests = totals.get("total_requests", 0)
                 
                 # Check if this appears to be all-time data (more than 30 days of data)
                 appears_all_time = len(daily_stats) > 30
