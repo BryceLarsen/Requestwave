@@ -3698,9 +3698,12 @@ async def get_musician_requests(musician_id: str = Depends(get_current_musician)
 async def get_requester_analytics(musician_id: str = Depends(get_current_musician)):
     """Get all unique requesters with their request counts and total tips"""
     try:
-        # Aggregate requesters with counts and tips
+        # Aggregate requesters with counts and tips (excluding archived requests)
         pipeline = [
-            {"$match": {"musician_id": musician_id}},
+            {"$match": {
+                "musician_id": musician_id,
+                "status": {"$ne": "archived"}  # Exclude archived requests for consistency
+            }},
             {
                 "$group": {
                     "_id": {
