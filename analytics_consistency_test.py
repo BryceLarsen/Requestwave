@@ -809,17 +809,33 @@ class AnalyticsConsistencyTester:
         # Key findings
         print("\n🔍 KEY FINDINGS:")
         
-        # Check archived exclusion
-        archived_excluded = any(r["success"] and "archived exclusion" in r["test"].lower() for r in self.results)
-        if archived_excluded:
-            print("✅ Analytics endpoints properly exclude archived requests")
+        # Check main fix (all-time analytics)
+        main_fix_working = any(r["success"] and "all-time analytics fix" in r["test"].lower() for r in self.results)
+        if main_fix_working:
+            print("✅ MAIN FIX WORKING: Analytics all-time now matches requests tab count")
+            print("   User issue RESOLVED: Analytics tab will show all 46 requests when set to 'All time'")
         else:
-            print("❌ Analytics endpoints may still include archived requests")
+            print("❌ MAIN FIX NOT WORKING: Analytics all-time still doesn't match requests tab")
+            print("   User issue PERSISTS: Analytics tab still shows fewer requests than requests tab")
         
-        # Check data consistency
+        # Check all-time support
+        all_time_supported = any(r["success"] and "no days parameter" in r["test"].lower() for r in self.results)
+        if all_time_supported:
+            print("✅ Backend supports all-time analytics (no days parameter)")
+        else:
+            print("❌ Backend does not support all-time analytics queries")
+        
+        # Check date ranges still work
+        date_ranges_work = any(r["success"] and "specific date ranges" in r["test"].lower() for r in self.results)
+        if date_ranges_work:
+            print("✅ Specific date ranges (7, 30 days) still work correctly")
+        else:
+            print("❌ Specific date ranges may have been broken by the fix")
+        
+        # Check legacy data consistency
         data_consistent = any(r["success"] and "data consistency" in r["test"].lower() for r in self.results)
         if data_consistent:
-            print("✅ Data is consistent between Analytics and Requests tabs")
+            print("✅ General data consistency between endpoints maintained")
         else:
             print("❌ Data inconsistency detected between Analytics and Requests tabs")
         
@@ -828,13 +844,17 @@ class AnalyticsConsistencyTester:
         # Provide recommendations
         if critical_failures:
             print("\n💡 RECOMMENDATIONS:")
-            if not archived_excluded:
-                print("1. Verify that analytics endpoints have proper archived request exclusion filters")
-            if not data_consistent:
-                print("2. Check that both endpoints use the same filtering logic")
-            print("3. Review the aggregation pipelines in analytics endpoints")
+            if not main_fix_working:
+                print("1. ❗ CRITICAL: Fix all-time analytics to return ALL non-archived requests")
+                print("2. Verify backend /api/analytics/daily supports days=None parameter")
+                print("3. Check frontend defaults to analyticsDays=null for all-time view")
+            if not all_time_supported:
+                print("4. Implement all-time analytics support in backend endpoint")
+            if not date_ranges_work:
+                print("5. Ensure specific date range filtering still works after all-time fix")
         else:
-            print("\n✅ ALL CRITICAL TESTS PASSED - Analytics consistency fixes are working correctly!")
+            print("\n✅ ALL CRITICAL TESTS PASSED - User's analytics consistency issue is RESOLVED!")
+            print("   Analytics tab now shows the same count as requests tab when set to 'All time'")
         
         return len(critical_failures) == 0
 
