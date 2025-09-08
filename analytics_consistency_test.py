@@ -625,17 +625,18 @@ class AnalyticsConsistencyTester:
                 # Check if this appears to be all-time data (more than 30 days of data)
                 appears_all_time = len(daily_stats) > 30
                 
-                success = has_total_requests or has_daily_stats
+                success = has_totals or has_daily_stats
                 
                 self.log_result("Analytics No Days Parameter", success,
                               f"Analytics endpoint {'supports' if success else 'does not support'} all-time queries (no days param)", {
                     "status_code": response.status_code,
-                    "has_total_requests": has_total_requests,
+                    "has_totals": has_totals,
                     "has_daily_stats": has_daily_stats,
                     "total_requests": total_requests,
                     "daily_stats_count": len(daily_stats),
                     "appears_all_time": appears_all_time,
-                    "response_keys": list(analytics_data.keys())
+                    "response_keys": list(analytics_data.keys()),
+                    "totals_structure": totals
                 })
                 
                 return success
