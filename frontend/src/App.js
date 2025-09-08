@@ -2208,9 +2208,9 @@ const MusicianDashboard = () => {
       setAnalyticsDays(days); // Set to null for alltime, number for specific periods
       handleTimeframeChange(days ? `${days}days` : 'alltime');
       
-      // Trigger analytics data fetching
-      console.log('🚀 About to call fetchAnalytics and fetchRequesters');
-      fetchAnalytics();
+      // Trigger analytics data fetching with explicit days value
+      console.log('🚀 About to call fetchAnalytics and fetchRequesters with days:', days);
+      fetchAnalytics(days); // Pass days directly to avoid state timing issues
       fetchRequesters();
     }
   }, [activeTab, analyticsPeriod]);
