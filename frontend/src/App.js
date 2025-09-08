@@ -9253,17 +9253,17 @@ const AudienceInterface = () => {
                   
                   <div className="flex flex-wrap gap-1 md:gap-2 mb-3 md:mb-4">
                     {song.genres.map((genre, idx) => (
-                      <span key={idx} className="bg-blue-600 text-xs px-2 py-1 rounded">{genre}</span>
+                      <span key={idx} className="bg-blue-600 text-xs px-2 py-1 rounded whitespace-nowrap">{genre}</span>
                     ))}
                     {song.moods.map((mood, idx) => (
-                      <span key={idx} className="bg-green-600 text-xs px-2 py-1 rounded">{mood}</span>
+                      <span key={idx} className="bg-green-600 text-xs px-2 py-1 rounded whitespace-nowrap">{mood}</span>
                     ))}
                     {designSettings.show_year && song.year && (
-                      <span className="bg-gray-600 text-xs px-2 py-1 rounded">{song.year}</span>
+                      <span className="bg-gray-600 text-xs px-2 py-1 rounded whitespace-nowrap">{song.year}</span>
                     )}
                     {/* NEW: Show decade if available */}
                     {song.decade && (
-                      <span className="bg-orange-600 text-xs px-2 py-1 rounded">{song.decade}</span>
+                      <span className="bg-orange-600 text-xs px-2 py-1 rounded whitespace-nowrap">{song.decade}</span>
                     )}
                   </div>
                   
