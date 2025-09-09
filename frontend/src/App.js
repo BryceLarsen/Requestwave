@@ -4893,7 +4893,9 @@ const MusicianDashboard = () => {
                         </div>
                       </summary>
                       <div className="px-4 pb-4 space-y-2">
-                        {requests.filter(r => r.show_name === show.name).map((request) => (
+                        {requests.filter(r => r.show_name === show.name)
+                          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Most recent first
+                          .map((request) => (
                           <div key={request.id} className="bg-gray-600 p-3 rounded flex items-center space-x-3">
                             <input
                               type="checkbox"
