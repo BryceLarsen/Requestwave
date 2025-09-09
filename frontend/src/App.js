@@ -4993,7 +4993,9 @@ const MusicianDashboard = () => {
                   {(currentShow ? 
                     requests.filter(r => r.show_name === currentShow.name) : 
                     requests
-                  ).slice(0, 50).map((request) => (
+                  )
+                  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Most recent first
+                  .slice(0, 50).map((request) => (
                     <div key={request.id} className={`p-4 rounded-lg flex items-center space-x-3 ${
                       currentShow ? 'bg-gray-600 border-l-4 border-green-500' : 'bg-gray-600'
                     }`}>
