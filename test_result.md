@@ -694,6 +694,18 @@ backend:
         agent: "testing"
         comment: "FRONTEND-BACKEND REQUEST FLOW BUG IDENTIFIED AND FIXED: Comprehensive debugging revealed a critical JavaScript error handling bug in the audience interface. ✅ BACKEND API FULLY FUNCTIONAL: All backend testing passed perfectly - POST /api/requests works correctly from both preview (https://requestwave-revamp.preview.emergentagent.com/api) and internal (localhost:8001) backends with 200 status codes, proper CORS headers, and correct response format. ✅ ENVIRONMENT DETECTION WORKING: Frontend environment detection logic correctly uses preview backend URL, not production URL. ✅ BROWSER SIMULATION SUCCESSFUL: Complete browser request flow simulation passed - musician profile loading, songs loading, and request creation all work with realistic browser headers and payloads. ✅ CORS CONFIGURATION CORRECT: CORS preflight requests working properly with correct Access-Control headers. ❌ CRITICAL BUG IDENTIFIED: In handleRequest() function (lines 8222-8229), when musician.tips_enabled === false, the code calls await submitRequestWithTip(song, 0) without try-catch error handling. Since submitRequestWithTip() throws errors in its catch block, any network issues or validation errors cause unhandled promise rejections, leading to 'error creating request' messages. ✅ BUG FIXED: Added proper try-catch error handling around submitRequestWithTip() call in handleRequest() function to catch and display errors properly. SUCCESS RATE: Backend 100% (15/15 tests passed), Frontend Bug Fixed. The 'error creating request' issue was caused by missing error handling in the frontend JavaScript code, not backend API problems. Users should now see proper error messages instead of generic failures."
 
+  - task: "Requests Tab Sorting and Timezone Improvements"
+    implemented: true
+    working: "NA"
+    file: "App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "NEW TESTING REQUEST: Testing requests tab sorting and timezone improvements. User requested: 1) Sorting Implementation - requests should be ordered by date/time with most recent on top in each category (show requests, all requests, archived requests), 2) Timezone Alignment - timestamps should align with artist's device timezone. Code review shows sorting implemented in all three sections using .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) and formatTimestamp function uses Intl.DateTimeFormat().resolvedOptions().timeZone for timezone detection."
+
   - task: "Production Bug Investigation - Request Visibility and Tip Functionality"
     implemented: true
     working: false
