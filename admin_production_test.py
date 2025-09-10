@@ -246,7 +246,7 @@ class AdminProductionTester:
             rate_limited = False
             
             for attempt in range(7):  # Try 7 attempts (should be rate limited after 5)
-                response = requests.post(f"{ADMIN_BASE_URL}/auth/login", json={
+                response = requests.post(f"{ADMIN_BASE_URL}/login", json={
                     "email": ADMIN_EMAIL,
                     "password": f"wrong_password_{attempt}"
                 }, timeout=30)
