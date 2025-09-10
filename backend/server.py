@@ -168,6 +168,13 @@ class CustomAPIRoute(APIRoute):
 
 # Initialize app
 app = FastAPI(title="RequestWave API", description="Live music request platform")
+
+# Startup event to ensure database indexes
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database indexes on startup"""
+    await ensure_database_indexes()
+
 freemium_router = APIRouter(prefix="/api", route_class=CustomAPIRoute)
 api_router = APIRouter(prefix="/api")
 
