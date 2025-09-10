@@ -1839,8 +1839,9 @@ async def register_musician(musician_data: MusicianRegister):
 
 @api_router.post("/auth/login", response_model=AuthResponse)
 async def login_musician(login_data: MusicianLogin):
-    # Find musician
-    musician_doc = await db.musicians.find_one({"email": login_data.email})
+    # Normalize email and find musician
+    email_lc = login_data.email.lower()
+    musician_doc = await db.musicians.find_one({"email_lc": email_lc})
     if not musician_doc or not verify_password(login_data.password, musician_doc["password"]):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
