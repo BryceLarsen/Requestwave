@@ -260,9 +260,17 @@ class AdminPanelTester:
             if users_response.status_code == 200:
                 users_data = users_response.json()
                 
-                if isinstance(users_data, list) and users_data:
-                    test_user_id = users_data[0].get("id")
-                    test_user_email = users_data[0].get("email")
+                # Handle both list and dict responses (with pagination)
+                if isinstance(users_data, dict) and "musicians" in users_data:
+                    musicians_list = users_data["musicians"]
+                elif isinstance(users_data, list):
+                    musicians_list = users_data
+                else:
+                    musicians_list = []
+                
+                if musicians_list:
+                    test_user_id = musicians_list[0].get("id")
+                    test_user_email = musicians_list[0].get("email")
                     
                     if test_user_id:
                         # Test user data inspector endpoint
