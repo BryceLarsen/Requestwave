@@ -2681,7 +2681,7 @@ async def delete_user(
     _: bool = Depends(verify_admin_access)
 ):
     """Delete a user and all associated data"""
-    session = client.start_session()
+    session = await client.start_session()
     
     try:
         async with session.start_transaction():
