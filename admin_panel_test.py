@@ -221,17 +221,23 @@ class AdminPanelTester:
                 if response.status_code == 200:
                     search_results = response.json()
                     
-                    if isinstance(search_results, list):
-                        matching_users = [user for user in search_results if search_email.lower() in user.get("email", "").lower()]
-                        
-                        self.log_result(f"User Search - {search_email}", True, f"Search returned {len(search_results)} results", {
-                            "search_term": search_email,
-                            "total_results": len(search_results),
-                            "matching_users": len(matching_users),
-                            "search_working": len(matching_users) > 0 or len(search_results) == 0
-                        })
+                    # Handle both list and dict responses (with pagination)
+                    if isinstance(search_results, dict) and "musicians" in search_results:
+                        musicians_list = search_results["musicians"]
+                    elif isinstance(search_results, list):
+                        musicians_list = search_results
                     else:
-                        self.log_result(f"User Search - {search_email}", False, f"Search returned non-list: {type(search_results)}")
+                        self.log_result(f"User Search - {search_email}", False, f"Search returned unexpected format: {type(search_results)}")
+                        continue
+                    
+                    matching_users = [user for user in musicians_list if search_email.lower() in user.get("email", "").lower()]
+                    
+                    self.log_result(f"User Search - {search_email}", True, f"Search returned {len(musicians_list)} results", {
+                        "search_term": search_email,
+                        "total_results": len(musicians_list),
+                        "matching_users": len(matching_users),
+                        "search_working": len(matching_users) > 0 or len(musicians_list) == 0
+                    })
                 else:
                     self.log_result(f"User Search - {search_email}", False, f"Search failed: {response.status_code}")
                     
