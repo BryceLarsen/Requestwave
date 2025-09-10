@@ -629,6 +629,22 @@ def check_admin_rate_limit(client_ip: str) -> bool:
     admin_login_attempts[client_ip].append(now)
     return True
 
+def generate_csrf_token() -> str:
+    """Generate CSRF token"""
+    return jwt.encode(
+        {"csrf": True, "exp": datetime.utcnow() + timedelta(hours=1)},
+        RW_ADMIN_JWT_SECRET,
+        algorithm="HS256"
+    )
+
+def verify_csrf_token(token: str) -> bool:
+    """Verify CSRF token"""
+    try:
+        payload = jwt.decode(token, RW_ADMIN_JWT_SECRET, algorithms=["HS256"])
+        return payload.get("csrf") is True
+    except (jwt.InvalidTokenError, jwt.ExpiredSignatureError):
+        return False
+
 def serialize_document(doc):
     """Convert MongoDB document to JSON-serializable format"""
     if isinstance(doc, dict):
