@@ -11086,7 +11086,10 @@ const AdminPanel = () => {
     }
     
     try {
-      const response = await axios.delete(`${API}/admin/users/${userId}`);
+      const token = getCsrfToken();
+      const response = await axios.delete(`${API}/admin/users/${userId}`, {
+        headers: { 'X-CSRF-Token': token }
+      });
       if (response.data.success) {
         alert(`User ${userEmail} deleted successfully`);
         fetchUsers();
