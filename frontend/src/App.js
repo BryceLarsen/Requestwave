@@ -11018,12 +11018,26 @@ const AdminPanel = () => {
     }
   };
   
+  const getCsrfToken = () => {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'csrf_token') {
+        return value;
+      }
+    }
+    return '';
+  };
+
   const handleAdminLogin = async (e) => {
     e.preventDefault();
     try {
       const response = await axios.post(`${API}/admin/login`, adminCredentials);
       if (response.data.success) {
         setIsAuthenticated(true);
+        // Get CSRF token from cookie
+        const token = getCsrfToken();
+        setCsrfToken(token);
         fetchSystemInfo();
         fetchUsers();
       }
