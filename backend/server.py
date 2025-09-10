@@ -2819,7 +2819,8 @@ async def delete_user(
 async def merge_users(
     request: FastAPIRequest,
     merge_data: dict,
-    _: bool = Depends(verify_admin_access)
+    _: bool = Depends(verify_admin_access),
+    __: bool = Depends(verify_csrf_token_header)
 ):
     """Merge duplicate user into canonical user"""
     canonical_id = merge_data.get("canonical_id") or merge_data.get("primary_user_id")
