@@ -591,6 +591,21 @@ async def get_current_musician(credentials: HTTPAuthorizationCredentials = Depen
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+async def verify_admin_access(request: FastAPIRequest) -> bool:
+    """Verify admin access from session cookie or header"""
+    # Check for admin session token in cookie
+    admin_token = request.cookies.get("admin_session")
+    
+    # Also check Authorization header as fallback
+    if not admin_token:
+        auth_header = request.headers.get("authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            admin_token = auth_header.split(" ")[1]
+    
+    if not admin_token or not verify_admin_token(admin_token):
+        raise HTTPException(status_code=401, detail="Admin access required")
+    
+    return True
 async def check_pro_access(musician_id: str) -> bool:
     """Check if musician has Pro subscription access"""
     if not BILLING_ENABLED:
