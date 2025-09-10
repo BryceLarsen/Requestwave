@@ -11122,9 +11122,12 @@ const AdminPanel = () => {
     }
     
     try {
+      const token = getCsrfToken();
       const response = await axios.post(`${API}/admin/users/merge`, {
         canonical_id: mergeState.canonicalId,
         duplicate_id: mergeState.duplicateId
+      }, {
+        headers: { 'X-CSRF-Token': token }
       });
       
       if (response.data.success) {
