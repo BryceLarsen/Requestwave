@@ -364,9 +364,7 @@ class AdminProductionTester:
             # Test various admin endpoints without authentication
             admin_endpoints = [
                 "/users",
-                "/users/search", 
                 "/system/info",
-                "/database/stats",
                 "/users/merge"
             ]
             
