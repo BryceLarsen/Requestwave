@@ -1759,10 +1759,13 @@ async def search_spotify_metadata(title: str, artist: str) -> Dict[str, Any]:
 # Auth endpoints
 @api_router.post("/auth/register", response_model=AuthResponse)
 async def register_musician(musician_data: MusicianRegister):
-    # Check if email already exists
-    existing = await db.musicians.find_one({"email": musician_data.email})
+    # Normalize email to lowercase
+    email_lc = musician_data.email.lower()
+    
+    # Check if normalized email already exists
+    existing = await db.musicians.find_one({"email_lc": email_lc})
     if existing:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="This account already exists—please log in.")
     
     # Create unique slug
     base_slug = create_slug(musician_data.name)
