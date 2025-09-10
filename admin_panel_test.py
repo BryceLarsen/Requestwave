@@ -512,8 +512,17 @@ class AdminPanelTester:
                     users_response = requests.get(f"{INTERNAL_BASE_URL}/admin/users", headers=headers, timeout=10)
                     if users_response.status_code == 200:
                         users_data = users_response.json()
-                        primary_exists = any(user.get("id") == test_users[0]["id"] for user in users_data)
-                        duplicate_exists = any(user.get("id") == test_users[1]["id"] for user in users_data)
+                        
+                        # Handle both list and dict responses
+                        if isinstance(users_data, dict) and "musicians" in users_data:
+                            musicians_list = users_data["musicians"]
+                        elif isinstance(users_data, list):
+                            musicians_list = users_data
+                        else:
+                            musicians_list = []
+                        
+                        primary_exists = any(user.get("id") == test_users[0]["id"] for user in musicians_list)
+                        duplicate_exists = any(user.get("id") == test_users[1]["id"] for user in musicians_list)
                         
                         self.log_result("User Merge", primary_exists and not duplicate_exists, "User merge test completed", {
                             "primary_user_id": test_users[0]["id"],
