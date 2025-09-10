@@ -2677,9 +2677,9 @@ async def delete_user(
             
             # Delete all associated data
             collections_to_clean = [
-                ("songs", {"user_id": user_id}),
-                ("playlists", {"user_id": user_id}),
-                ("requests", {"musician_id": user_id}),  # Note: using musician_id
+                ("songs", {"musician_id": user_id}),
+                ("playlists", {"musician_id": user_id}),
+                ("requests", {"musician_id": user_id}),
                 ("shows", {"musician_id": user_id}),
             ]
             
