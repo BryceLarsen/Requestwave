@@ -11173,9 +11173,17 @@ const AdminPanel = () => {
           <div>
             <h1 className="text-2xl font-bold">🔐 RequestWave Admin Panel</h1>
             {systemInfo && (
-              <p className="text-red-200 text-sm">
-                Environment: {systemInfo.environment} | Database: {systemInfo.database_name} | Host: {systemInfo.database_url}
-              </p>
+              <div className="text-red-200 text-sm">
+                <div className="flex items-center space-x-4">
+                  <span className={`px-2 py-1 rounded text-xs font-bold ${
+                    systemInfo.environment === 'production' ? 'bg-red-600' : 'bg-yellow-600'
+                  }`}>
+                    {systemInfo.environment?.toUpperCase() || 'UNKNOWN'}
+                  </span>
+                  <span>Database: {systemInfo.database_name}</span>
+                  <span>Host: {systemInfo.database_url?.split('://')[1]?.split('/')[0] || 'unknown'}</span>
+                </div>
+              </div>
             )}
           </div>
           <button
