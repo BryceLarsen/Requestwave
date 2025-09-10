@@ -10960,6 +10960,19 @@ const LandingPage = () => {
 // Admin Panel Component
 const AdminPanel = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // Add robots meta tag to prevent indexing
+  useEffect(() => {
+    const metaRobots = document.createElement('meta');
+    metaRobots.name = 'robots';
+    metaRobots.content = 'noindex, nofollow';
+    document.head.appendChild(metaRobots);
+    
+    return () => {
+      // Cleanup on unmount
+      document.head.removeChild(metaRobots);
+    };
+  }, []);
   const [adminCredentials, setAdminCredentials] = useState({ email: '', password: '' });
   const [activeTab, setActiveTab] = useState('users');
   const [users, setUsers] = useState([]);
