@@ -2744,11 +2744,11 @@ async def get_user_data(
     result = {"user": user}
     
     if not data_type or data_type == "songs":
-        songs = await db.songs.find({"user_id": user_id}).to_list(None)
+        songs = await db.songs.find({"musician_id": user_id}).to_list(None)
         result["songs"] = songs
     
     if not data_type or data_type == "playlists":
-        playlists = await db.playlists.find({"user_id": user_id}).to_list(None)
+        playlists = await db.playlists.find({"musician_id": user_id}).to_list(None)
         result["playlists"] = playlists
     
     if not data_type or data_type == "requests":
