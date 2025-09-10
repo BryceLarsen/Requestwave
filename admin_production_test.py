@@ -521,11 +521,9 @@ class AdminProductionTester:
         try:
             headers = {"Authorization": f"Bearer {self.admin_session_token}"}
             
-            # Test various data inspection endpoints
+            # Test user data inspection endpoint (the one that exists)
             inspection_endpoints = [
-                ("/songs", "Songs"),
-                ("/playlists", "Playlists"), 
-                ("/requests", "Requests")
+                ("/users", "Users")
             ]
             
             for endpoint, name in inspection_endpoints:
