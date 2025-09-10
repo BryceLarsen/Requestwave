@@ -2763,11 +2763,19 @@ async def get_all_users(
         "limit": limit
     })
 
+def verify_csrf_token_header(request: FastAPIRequest) -> bool:
+    """Verify CSRF token from header"""
+    csrf_token = request.headers.get("X-CSRF-Token")
+    if not csrf_token or not verify_csrf_token(csrf_token):
+        raise HTTPException(status_code=403, detail="Invalid or missing CSRF token")
+    return True
+
 @api_router.delete("/admin/users/{user_id}")
 async def delete_user(
     user_id: str,
     request: FastAPIRequest,
-    _: bool = Depends(verify_admin_access)
+    _: bool = Depends(verify_admin_access),
+    __: bool = Depends(verify_csrf_token_header)
 ):
     """Delete a user and all associated data"""
     try:
