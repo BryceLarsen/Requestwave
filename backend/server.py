@@ -40,6 +40,11 @@ BILLING_ENABLED = os.getenv("BILLING_ENABLED", "false").lower() == "true"
 if BILLING_ENABLED:
     from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 
+# Admin configuration
+RW_ADMIN_EMAIL = os.getenv("RW_ADMIN_EMAIL", "admin@requestwave.com")
+RW_ADMIN_PASSWORD = os.getenv("RW_ADMIN_PASSWORD", "admin123")
+RW_ENV = os.getenv("RW_ENV", "development")
+
 # MongoDB connection
 # mongo_url = os.environ['MONGO_URL']
 # client = AsyncIOMotorClient(mongo_url)
