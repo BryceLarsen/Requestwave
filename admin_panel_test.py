@@ -557,30 +557,43 @@ class AdminPanelTester:
             if response.status_code == 200:
                 system_info = response.json()
                 
-                # Check for expected environment variables
-                expected_env_vars = ["RW_ENV", "RW_ADMIN_EMAIL", "RW_ADMIN_PASSWORD"]
-                env_info = system_info.get("environment", {})
+                # Check for expected configuration values
+                expected_fields = {
+                    "environment": "preview",
+                    "admin_email": ADMIN_EMAIL,
+                    "billing_enabled": False
+                }
                 
-                present_vars = []
-                missing_vars = []
+                present_fields = []
+                missing_fields = []
+                correct_values = []
+                incorrect_values = []
                 
-                for var in expected_env_vars:
-                    if var in env_info:
-                        present_vars.append(var)
+                for field, expected_value in expected_fields.items():
+                    if field in system_info:
+                        present_fields.append(field)
+                        if system_info[field] == expected_value:
+                            correct_values.append(field)
+                        else:
+                            incorrect_values.append(f"{field}: expected {expected_value}, got {system_info[field]}")
                     else:
-                        missing_vars.append(var)
+                        missing_fields.append(field)
                 
                 # Check database connection info
-                db_info = system_info.get("database", {})
-                db_connected = db_info.get("connected", False) if isinstance(db_info, dict) else False
+                db_url = system_info.get("database_url")
+                db_name = system_info.get("database_name")
+                collections = system_info.get("collections", {})
+                db_connected = bool(db_url and db_name and collections)
                 
-                self.log_result("Environment Consistency", len(missing_vars) == 0 and db_connected, "Environment consistency check completed", {
-                    "present_env_vars": present_vars,
-                    "missing_env_vars": missing_vars,
+                self.log_result("Environment Consistency", len(missing_fields) == 0 and len(incorrect_values) == 0 and db_connected, "Environment consistency check completed", {
+                    "present_fields": present_fields,
+                    "missing_fields": missing_fields,
+                    "correct_values": correct_values,
+                    "incorrect_values": incorrect_values,
                     "database_connected": db_connected,
-                    "database_info": db_info if isinstance(db_info, dict) else "No database info",
-                    "admin_email_configured": "RW_ADMIN_EMAIL" in present_vars,
-                    "admin_password_configured": "RW_ADMIN_PASSWORD" in present_vars
+                    "database_url": db_url,
+                    "database_name": db_name,
+                    "collections_count": len(collections)
                 })
             else:
                 self.log_result("Environment Consistency", False, f"Could not get system info: {response.status_code}")
