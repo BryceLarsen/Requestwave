@@ -46,6 +46,7 @@ if BILLING_ENABLED:
 # Admin configuration
 RW_ADMIN_EMAIL = os.getenv("RW_ADMIN_EMAIL", "admin@requestwave.com")
 RW_ADMIN_PASSWORD = os.getenv("RW_ADMIN_PASSWORD", "admin123")
+RW_ADMIN_JWT_SECRET = os.getenv("RW_ADMIN_JWT_SECRET") or JWT_SECRET  # Fallback to main JWT secret
 RW_ENV = os.getenv("RW_ENV", "development")
 
 # MongoDB connection with environment consistency
