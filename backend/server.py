@@ -2681,47 +2681,42 @@ async def delete_user(
     _: bool = Depends(verify_admin_access)
 ):
     """Delete a user and all associated data"""
-    session = await client.start_session()
-    
     try:
-        async with session.start_transaction():
-            # Verify user exists
-            user = await db.musicians.find_one({"id": user_id}, session=session)
-            if not user:
-                raise HTTPException(status_code=404, detail="User not found")
-            
-            # Delete all associated data
-            collections_to_clean = [
-                ("songs", {"musician_id": user_id}),
-                ("playlists", {"musician_id": user_id}),
-                ("requests", {"musician_id": user_id}),
-                ("shows", {"musician_id": user_id}),
-            ]
-            
-            deleted_counts = {}
-            for collection_name, filter_doc in collections_to_clean:
-                collection = db[collection_name]
-                result = await collection.delete_many(filter_doc, session=session)
-                deleted_counts[collection_name] = result.deleted_count
-            
-            # Delete the user
-            user_result = await db.musicians.delete_one({"id": user_id}, session=session)
-            if user_result.deleted_count != 1:
-                raise HTTPException(status_code=500, detail="Failed to delete user")
-            
-            logger.info(f"Deleted user {user_id} and associated data: {deleted_counts}")
-            
-            return {
-                "success": True,
-                "message": f"User {user['email']} deleted successfully",
-                "deleted_counts": deleted_counts
-            }
-            
+        # Verify user exists
+        user = await db.musicians.find_one({"id": user_id})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Delete all associated data
+        collections_to_clean = [
+            ("songs", {"musician_id": user_id}),
+            ("playlists", {"musician_id": user_id}),
+            ("requests", {"musician_id": user_id}),
+            ("shows", {"musician_id": user_id}),
+        ]
+        
+        deleted_counts = {}
+        for collection_name, filter_doc in collections_to_clean:
+            collection = db[collection_name]
+            result = await collection.delete_many(filter_doc)
+            deleted_counts[collection_name] = result.deleted_count
+        
+        # Delete the user
+        user_result = await db.musicians.delete_one({"id": user_id})
+        if user_result.deleted_count != 1:
+            raise HTTPException(status_code=500, detail="Failed to delete user")
+        
+        logger.info(f"Deleted user {user_id} and associated data: {deleted_counts}")
+        
+        return {
+            "success": True,
+            "message": f"User {user['email']} deleted successfully",
+            "deleted_counts": deleted_counts
+        }
+        
     except Exception as e:
         logger.error(f"Error deleting user {user_id}: {str(e)}")
         raise
-    finally:
-        await session.end_session()
 
 @api_router.post("/admin/users/merge")
 async def merge_users(
