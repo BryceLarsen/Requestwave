@@ -6555,7 +6555,7 @@ async def health_check():
     return {
         "app_id": id(app),
         "module": __name__,
-        "timestamp": datetime.utcnow().isoformat().isoformat()
+        "timestamp": datetime.utcnow().isoformat()
     }
 
 @api_router.get("/__routes")
