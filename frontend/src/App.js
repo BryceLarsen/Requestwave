@@ -10957,6 +10957,422 @@ const LandingPage = () => {
   );
 };
 
+// Admin Panel Component
+const AdminPanel = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [adminCredentials, setAdminCredentials] = useState({ email: '', password: '' });
+  const [activeTab, setActiveTab] = useState('users');
+  const [users, setUsers] = useState([]);
+  const [systemInfo, setSystemInfo] = useState(null);
+  const [searchEmail, setSearchEmail] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userDataType, setUserDataType] = useState('songs');
+  const [userDetails, setUserDetails] = useState(null);
+  const [mergeState, setMergeState] = useState({ canonicalId: '', duplicateId: '' });
+  
+  // Check if already authenticated on load
+  useEffect(() => {
+    checkAuthStatus();
+    fetchSystemInfo();
+  }, []);
+  
+  const checkAuthStatus = async () => {
+    try {
+      const response = await axios.get(`${API}/admin/system/info`);
+      setIsAuthenticated(true);
+      setSystemInfo(response.data);
+    } catch (error) {
+      setIsAuthenticated(false);
+    }
+  };
+  
+  const fetchSystemInfo = async () => {
+    try {
+      if (isAuthenticated) {
+        const response = await axios.get(`${API}/admin/system/info`);
+        setSystemInfo(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch system info:', error);
+    }
+  };
+  
+  const handleAdminLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post(`${API}/admin/login`, adminCredentials);
+      if (response.data.success) {
+        setIsAuthenticated(true);
+        fetchSystemInfo();
+        fetchUsers();
+      }
+    } catch (error) {
+      alert('Invalid admin credentials');
+    }
+  };
+  
+  const handleAdminLogout = async () => {
+    try {
+      await axios.post(`${API}/admin/logout`);
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setIsAuthenticated(false);
+      setSystemInfo(null);
+      setUsers([]);
+    }
+  };
+  
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get(`${API}/admin/users`, {
+        params: { search_email: searchEmail || undefined, limit: 100 }
+      });
+      setUsers(response.data.musicians);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    }
+  };
+  
+  const fetchUserData = async (userId, dataType = 'all') => {
+    try {
+      const response = await axios.get(`${API}/admin/users/${userId}/data`, {
+        params: { data_type: dataType !== 'all' ? dataType : undefined }
+      });
+      setUserDetails(response.data);
+    } catch (error) {
+      console.error('Failed to fetch user data:', error);
+    }
+  };
+  
+  const handleDeleteUser = async (userId, userEmail) => {
+    if (!confirm(`Are you sure you want to delete user ${userEmail}? This will permanently delete all their data and cannot be undone.`)) {
+      return;
+    }
+    
+    try {
+      const response = await axios.delete(`${API}/admin/users/${userId}`);
+      if (response.data.success) {
+        alert(`User ${userEmail} deleted successfully`);
+        fetchUsers();
+        if (selectedUser?.id === userId) {
+          setSelectedUser(null);
+          setUserDetails(null);
+        }
+      }
+    } catch (error) {
+      alert('Failed to delete user: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+  
+  const handleMergeUsers = async () => {
+    if (!mergeState.canonicalId || !mergeState.duplicateId) {
+      alert('Please select both canonical and duplicate users');
+      return;
+    }
+    
+    if (mergeState.canonicalId === mergeState.duplicateId) {
+      alert('Cannot merge user with itself');
+      return;
+    }
+    
+    const canonicalUser = users.find(u => u.id === mergeState.canonicalId);
+    const duplicateUser = users.find(u => u.id === mergeState.duplicateId);
+    
+    if (!confirm(`Merge user ${duplicateUser?.email} into ${canonicalUser?.email}? This will reassign all data and delete the duplicate user.`)) {
+      return;
+    }
+    
+    try {
+      const response = await axios.post(`${API}/admin/users/merge`, {
+        canonical_id: mergeState.canonicalId,
+        duplicate_id: mergeState.duplicateId
+      });
+      
+      if (response.data.success) {
+        alert('Users merged successfully');
+        setMergeState({ canonicalId: '', duplicateId: '' });
+        fetchUsers();
+      }
+    } catch (error) {
+      alert('Failed to merge users: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+  
+  // Login form for non-authenticated admin
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="bg-gray-800 rounded-xl p-8 w-full max-w-md">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-red-400">🔐 RequestWave Admin</h1>
+            <p className="text-gray-400 mt-2">Admin access required</p>
+          </div>
+          
+          <form onSubmit={handleAdminLogin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Admin Email</label>
+              <input
+                type="email"
+                value={adminCredentials.email}
+                onChange={(e) => setAdminCredentials({...adminCredentials, email: e.target.value})}
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">Admin Password</label>
+              <input
+                type="password"
+                value={adminCredentials.password}
+                onChange={(e) => setAdminCredentials({...adminCredentials, password: e.target.value})}
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2"
+                required
+              />
+            </div>
+            
+            <button
+              type="submit"
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg transition duration-300"
+            >
+              Admin Login
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+  
+  // Main admin panel interface
+  return (
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Admin Header */}
+      <div className="bg-red-800 p-4">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold">🔐 RequestWave Admin Panel</h1>
+            {systemInfo && (
+              <p className="text-red-200 text-sm">
+                Environment: {systemInfo.environment} | Database: {systemInfo.database_name} | Host: {systemInfo.database_url}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={handleAdminLogout}
+            className="bg-red-700 hover:bg-red-600 px-4 py-2 rounded-lg transition duration-300"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+      
+      {/* Admin Navigation */}
+      <div className="bg-gray-800 p-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex space-x-4">
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`px-4 py-2 rounded-lg transition duration-300 ${
+                activeTab === 'users' ? 'bg-red-600' : 'bg-gray-700 hover:bg-gray-600'
+              }`}
+            >
+              👥 Users
+            </button>
+            <button
+              onClick={() => setActiveTab('data')}
+              className={`px-4 py-2 rounded-lg transition duration-300 ${
+                activeTab === 'data' ? 'bg-red-600' : 'bg-gray-700 hover:bg-gray-600'
+              }`}
+            >
+              📊 Data
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Users Tab */}
+        {activeTab === 'users' && (
+          <div className="space-y-6">
+            {/* Users List */}
+            <div className="bg-gray-800 rounded-xl p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">User Management</h2>
+                <div className="flex space-x-3">
+                  <input
+                    type="text"
+                    placeholder="Search by email..."
+                    value={searchEmail}
+                    onChange={(e) => setSearchEmail(e.target.value)}
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2"
+                  />
+                  <button
+                    onClick={fetchUsers}
+                    className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition duration-300"
+                  >
+                    Search
+                  </button>
+                </div>
+              </div>
+              
+              {systemInfo && (
+                <div className="mb-4 text-sm text-gray-400">
+                  Total: {systemInfo.collections.musicians} musicians | {systemInfo.collections.songs} songs | {systemInfo.collections.requests} requests
+                </div>
+              )}
+              
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-700">
+                    <tr>
+                      <th className="p-3 text-left">Email</th>
+                      <th className="p-3 text-left">Name</th>
+                      <th className="p-3 text-left">Created</th>
+                      <th className="p-3 text-left">Songs</th>
+                      <th className="p-3 text-left">Playlists</th>
+                      <th className="p-3 text-left">Requests</th>
+                      <th className="p-3 text-left">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((user) => (
+                      <tr key={user.id} className="border-b border-gray-700">
+                        <td className="p-3">{user.email}</td>
+                        <td className="p-3">{user.name}</td>
+                        <td className="p-3">{user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</td>
+                        <td className="p-3">{user.counts?.songs || 0}</td>
+                        <td className="p-3">{user.counts?.playlists || 0}</td>
+                        <td className="p-3">{user.counts?.requests || 0}</td>
+                        <td className="p-3">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => {
+                                setSelectedUser(user);
+                                fetchUserData(user.id);
+                              }}
+                              className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
+                            >
+                              View
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(user.id, user.email)}
+                              className="bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            {/* Merge Users */}
+            <div className="bg-gray-800 rounded-xl p-6">
+              <h3 className="text-lg font-bold mb-4">Merge Users</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Canonical User (keep this one)</label>
+                  <select
+                    value={mergeState.canonicalId}
+                    onChange={(e) => setMergeState({...mergeState, canonicalId: e.target.value})}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2"
+                  >
+                    <option value="">Select canonical user...</option>
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.email} - {user.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-2">Duplicate User (merge into canonical)</label>
+                  <select
+                    value={mergeState.duplicateId}
+                    onChange={(e) => setMergeState({...mergeState, duplicateId: e.target.value})}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2"
+                  >
+                    <option value="">Select duplicate user...</option>
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.email} - {user.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              <button
+                onClick={handleMergeUsers}
+                className="bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-lg transition duration-300"
+                disabled={!mergeState.canonicalId || !mergeState.duplicateId}
+              >
+                Merge Users
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {/* Data Tab */}
+        {activeTab === 'data' && (
+          <div className="space-y-6">
+            <div className="bg-gray-800 rounded-xl p-6">
+              <h2 className="text-xl font-bold mb-4">User Data Inspector</h2>
+              
+              {!selectedUser ? (
+                <p className="text-gray-400">Select a user from the Users tab to inspect their data.</p>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <h3 className="text-lg font-medium">
+                      Data for: {selectedUser.email} ({selectedUser.name})
+                    </h3>
+                    <div className="flex space-x-2">
+                      {['songs', 'playlists', 'requests'].map((type) => (
+                        <button
+                          key={type}
+                          onClick={() => {
+                            setUserDataType(type);
+                            fetchUserData(selectedUser.id, type);
+                          }}
+                          className={`px-3 py-1 rounded text-sm transition duration-300 ${
+                            userDataType === type ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'
+                          }`}
+                        >
+                          {type.charAt(0).toUpperCase() + type.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {userDetails && (
+                    <div className="bg-gray-700 rounded-lg p-4 max-h-96 overflow-y-auto">
+                      <pre className="text-xs text-gray-300">
+                        {JSON.stringify(
+                          userDataType === 'songs' ? userDetails.songs :
+                          userDataType === 'playlists' ? userDetails.playlists :
+                          userDetails.requests,
+                          null,
+                          2
+                        )}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const App = () => {
   const { musician, login } = useAuth();
 
