@@ -2770,7 +2770,7 @@ async def get_user_data(
         requests = await db.requests.find({"musician_id": user_id}).to_list(None)
         result["requests"] = requests
     
-    return result
+    return serialize_document(result)
 
 @api_router.get("/admin/system/info")
 async def get_system_info(
