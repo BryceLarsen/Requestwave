@@ -277,7 +277,7 @@ class AdminProductionTester:
         """Test HTTP-only cookie session storage"""
         try:
             # Attempt admin login with correct credentials
-            response = requests.post(f"{ADMIN_BASE_URL}/auth/login", json={
+            response = requests.post(f"{ADMIN_BASE_URL}/login", json={
                 "email": ADMIN_EMAIL,
                 "password": ADMIN_PASSWORD
             }, timeout=30)
