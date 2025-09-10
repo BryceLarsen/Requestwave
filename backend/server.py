@@ -554,6 +554,24 @@ def create_jwt_token(musician_id: str) -> str:
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
+def create_admin_session_token() -> str:
+    """Create admin session token"""
+    expiration = datetime.utcnow() + timedelta(hours=24)  # 24 hour admin sessions
+    payload = {
+        "admin": True,
+        "exp": expiration,
+        "env": RW_ENV
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+
+def verify_admin_token(token: str) -> bool:
+    """Verify admin session token"""
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        return payload.get("admin") is True
+    except (jwt.InvalidTokenError, jwt.ExpiredSignatureError):
+        return False
+
 async def get_current_musician(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
     """Get current authenticated musician ID from JWT token"""
     try:
