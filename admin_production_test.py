@@ -91,7 +91,7 @@ class AdminProductionTester:
         """Test environment configuration variables"""
         try:
             # Test admin login first to get session
-            login_response = requests.post(f"{ADMIN_BASE_URL}/auth/login", json={
+            login_response = requests.post(f"{ADMIN_BASE_URL}/login", json={
                 "email": ADMIN_EMAIL,
                 "password": ADMIN_PASSWORD
             }, timeout=30)
