@@ -2641,10 +2641,11 @@ async def admin_login(admin_data: AdminLogin, response: Response, request: FastA
     if admin_data.email != RW_ADMIN_EMAIL or admin_data.password != RW_ADMIN_PASSWORD:
         raise HTTPException(status_code=401, detail="Invalid admin credentials")
     
-    # Create admin session token
+    # Create admin session token and CSRF token
     session_token = create_admin_session_token()
+    csrf_token = generate_csrf_token()
     
-    # Set secure HTTP-only cookie
+    # Set secure HTTP-only cookie for session
     response.set_cookie(
         key="admin_session",
         value=session_token,
@@ -2652,6 +2653,16 @@ async def admin_login(admin_data: AdminLogin, response: Response, request: FastA
         secure=True,
         samesite="lax",
         max_age=24 * 60 * 60  # 24 hours
+    )
+    
+    # Set CSRF token cookie (readable by JavaScript)
+    response.set_cookie(
+        key="csrf_token",
+        value=csrf_token,
+        httponly=False,  # JavaScript needs to read this
+        secure=True,
+        samesite="lax",
+        max_age=60 * 60  # 1 hour
     )
     
     return AdminAuthResponse(
