@@ -155,6 +155,16 @@ class MusicianLogin(BaseModel):
     email: str
     password: str
 
+# Admin Models
+class AdminLogin(BaseModel):
+    email: str
+    password: str
+
+class AdminAuthResponse(BaseModel):
+    success: bool
+    message: str
+    session_token: Optional[str] = None
+
 class Musician(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
