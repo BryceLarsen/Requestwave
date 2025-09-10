@@ -601,6 +601,26 @@ def verify_admin_token(token: str) -> bool:
     except (jwt.InvalidTokenError, jwt.ExpiredSignatureError):
         return False
 
+# Rate limiting for admin login
+admin_login_attempts = defaultdict(list)
+MAX_ADMIN_LOGIN_ATTEMPTS = 5
+ADMIN_LOGIN_WINDOW = 300  # 5 minutes
+
+def check_admin_rate_limit(client_ip: str) -> bool:
+    """Check if admin login rate limit is exceeded"""
+    now = time.time()
+    # Clean old attempts
+    admin_login_attempts[client_ip] = [
+        attempt_time for attempt_time in admin_login_attempts[client_ip]
+        if now - attempt_time < ADMIN_LOGIN_WINDOW
+    ]
+    
+    if len(admin_login_attempts[client_ip]) >= MAX_ADMIN_LOGIN_ATTEMPTS:
+        return False
+    
+    admin_login_attempts[client_ip].append(now)
+    return True
+
 def serialize_document(doc):
     """Convert MongoDB document to JSON-serializable format"""
     if isinstance(doc, dict):
