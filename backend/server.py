@@ -2536,6 +2536,38 @@ async def emergent_oauth_login(request: FastAPIRequest, response: Response):
         logger.error(f"Error during Emergent OAuth login: {str(e)}")
         raise HTTPException(status_code=500, detail="Authentication failed")
 
+# Admin Authentication Endpoints
+@api_router.post("/admin/login", response_model=AdminAuthResponse)
+async def admin_login(admin_data: AdminLogin, response: Response):
+    """Admin login endpoint"""
+    if admin_data.email != RW_ADMIN_EMAIL or admin_data.password != RW_ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid admin credentials")
+    
+    # Create admin session token
+    session_token = create_admin_session_token()
+    
+    # Set secure HTTP-only cookie
+    response.set_cookie(
+        key="admin_session",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=24 * 60 * 60  # 24 hours
+    )
+    
+    return AdminAuthResponse(
+        success=True,
+        message="Admin authentication successful",
+        session_token=session_token
+    )
+
+@api_router.post("/admin/logout")
+async def admin_logout(response: Response):
+    """Admin logout endpoint"""
+    response.delete_cookie("admin_session")
+    return {"success": True, "message": "Admin logged out"}
+
 # NEW: Enhanced authentication dependency supporting both JWT and Emergent sessions
 async def get_current_musician_enhanced(request: FastAPIRequest) -> str:
     """Get current musician ID supporting both JWT and Emergent session authentication"""
