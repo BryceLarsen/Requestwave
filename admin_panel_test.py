@@ -215,7 +215,7 @@ class AdminPanelTester:
         for search_email in search_emails:
             try:
                 headers = {"Authorization": f"Bearer {self.admin_token}"}
-                params = {"email": search_email}
+                params = {"search_email": search_email}  # Use correct parameter name
                 response = requests.get(f"{INTERNAL_BASE_URL}/admin/users", headers=headers, params=params, timeout=10)
                 
                 if response.status_code == 200:
