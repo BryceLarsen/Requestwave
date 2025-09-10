@@ -604,7 +604,7 @@ def create_admin_session_token() -> str:
 def verify_admin_token(token: str) -> bool:
     """Verify admin session token"""
     try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        payload = jwt.decode(token, RW_ADMIN_JWT_SECRET, algorithms=["HS256"])
         return payload.get("admin") is True
     except (jwt.InvalidTokenError, jwt.ExpiredSignatureError):
         return False
