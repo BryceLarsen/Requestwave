@@ -2600,8 +2600,14 @@ async def emergent_oauth_login(request: FastAPIRequest, response: Response):
 
 # Admin Authentication Endpoints
 @api_router.post("/admin/login", response_model=AdminAuthResponse)
-async def admin_login(admin_data: AdminLogin, response: Response):
-    """Admin login endpoint"""
+async def admin_login(admin_data: AdminLogin, response: Response, request: FastAPIRequest):
+    """Admin login endpoint with rate limiting"""
+    client_ip = request.client.host if request.client else "unknown"
+    
+    # Check rate limiting
+    if not check_admin_rate_limit(client_ip):
+        raise HTTPException(status_code=429, detail="Too many login attempts. Please try again later.")
+    
     if admin_data.email != RW_ADMIN_EMAIL or admin_data.password != RW_ADMIN_PASSWORD:
         raise HTTPException(status_code=401, detail="Invalid admin credentials")
     
