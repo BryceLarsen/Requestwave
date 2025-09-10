@@ -46,13 +46,39 @@ RW_ADMIN_EMAIL = os.getenv("RW_ADMIN_EMAIL", "admin@requestwave.com")
 RW_ADMIN_PASSWORD = os.getenv("RW_ADMIN_PASSWORD", "admin123")
 RW_ENV = os.getenv("RW_ENV", "development")
 
-# MongoDB connection
-# mongo_url = os.environ['MONGO_URL']
-# client = AsyncIOMotorClient(mongo_url)
-# db = client[os.environ['DB_NAME']]
-mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
-client = AsyncIOMotorClient(mongo_url)
+# MongoDB connection with environment consistency
+RW_MONGODB_URI = os.environ.get('RW_MONGODB_URI') or os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+client = AsyncIOMotorClient(RW_MONGODB_URI)
 db = client[os.environ.get('DB_NAME', 'livewave-music-test_database')]
+
+# Startup database indexing
+async def ensure_database_indexes():
+    """Ensure email uniqueness index on server startup"""
+    try:
+        # Idempotent email normalization - only update docs without email_lc
+        result = await db.musicians.update_many(
+            {"email_lc": {"$exists": False}},
+            [{"$set": {"email_lc": {"$toLower": "$email"}}}]
+        )
+        if result.modified_count > 0:
+            logger.info(f"Normalized {result.modified_count} email addresses on startup")
+        
+        # Create unique index (idempotent - won't fail if exists)
+        try:
+            await db.musicians.create_index(
+                {"email_lc": 1}, 
+                unique=True, 
+                name="unique_email_lc"
+            )
+            logger.info("Email uniqueness index ensured")
+        except Exception as e:
+            if "duplicate key" in str(e).lower() or "11000" in str(e):
+                logger.warning("Cannot create unique email index due to existing duplicates")
+            else:
+                logger.error(f"Error creating email index: {e}")
+                
+    except Exception as e:
+        logger.error(f"Error ensuring database indexes: {e}")
 
 
 # JWT Configuration
