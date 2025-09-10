@@ -611,12 +611,21 @@ class AdminPanelTester:
             
             for email in known_duplicates:
                 # Search for users with this email
-                params = {"email": email}
+                params = {"search_email": email}  # Use correct parameter name
                 response = requests.get(f"{INTERNAL_BASE_URL}/admin/users", headers=headers, params=params, timeout=10)
                 
                 if response.status_code == 200:
                     search_results = response.json()
-                    matching_users = [user for user in search_results if user.get("email", "").lower() == email.lower()]
+                    
+                    # Handle both list and dict responses
+                    if isinstance(search_results, dict) and "musicians" in search_results:
+                        musicians_list = search_results["musicians"]
+                    elif isinstance(search_results, list):
+                        musicians_list = search_results
+                    else:
+                        musicians_list = []
+                    
+                    matching_users = [user for user in musicians_list if user.get("email", "").lower() == email.lower()]
                     duplicate_results[email] = len(matching_users)
                 else:
                     duplicate_results[email] = -1  # Error
