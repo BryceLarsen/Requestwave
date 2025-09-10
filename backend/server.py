@@ -2639,8 +2639,8 @@ async def get_all_users(
         musician_id = musician["id"]
         
         # Count songs, playlists, requests
-        songs_count = await db.songs.count_documents({"user_id": musician_id})
-        playlists_count = await db.playlists.count_documents({"user_id": musician_id})
+        songs_count = await db.songs.count_documents({"musician_id": musician_id})
+        playlists_count = await db.playlists.count_documents({"musician_id": musician_id})
         requests_count = await db.requests.count_documents({"musician_id": musician_id})
         
         musician["counts"] = {
