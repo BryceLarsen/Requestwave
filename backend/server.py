@@ -6377,7 +6377,7 @@ async def test_v2_routing():
 # Health check
 @api_router.get("/health")
 async def health_check():
-    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat().isoformat()}
+    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
 
 # NEW: Contact form endpoint
 class ContactRequest(BaseModel):
