@@ -2584,48 +2584,42 @@ async def admin_logout(response: Response):
 
 # Admin Data Management Functions
 async def merge_musicians(canonical_id: str, duplicate_id: str):
-    """Merge duplicate musician into canonical musician using transaction"""
-    session = await client.start_session()
-    
+    """Merge duplicate musician into canonical musician"""
     try:
-        async with session.start_transaction():
-            # Verify both musicians exist and are different
-            canonical = await db.musicians.find_one({"id": canonical_id}, session=session)
-            duplicate = await db.musicians.find_one({"id": duplicate_id}, session=session)
-            
-            if not canonical or not duplicate:
-                raise HTTPException(status_code=404, detail="One or both musicians not found")
-            
-            if canonical_id == duplicate_id:
-                raise HTTPException(status_code=400, detail="Cannot merge musician with itself")
-            
-            # Update all foreign-keyed collections
-            fk_updates = [
-                ("songs", {"user_id": duplicate_id}, {"$set": {"user_id": canonical_id}}),
-                ("playlists", {"user_id": duplicate_id}, {"$set": {"user_id": canonical_id}}),
-                ("requests", {"musician_id": duplicate_id}, {"$set": {"musician_id": canonical_id}}),
-                # Note: using musician_id for requests as per existing schema
-                ("shows", {"musician_id": duplicate_id}, {"$set": {"musician_id": canonical_id}}),
-            ]
-            
-            # Execute all updates
-            for collection_name, filter_doc, update_doc in fk_updates:
-                collection = db[collection_name]
-                result = await collection.update_many(filter_doc, update_doc, session=session)
-                logger.info(f"Updated {result.modified_count} documents in {collection_name}")
-            
-            # Delete the duplicate musician
-            delete_result = await db.musicians.delete_one({"id": duplicate_id}, session=session)
-            if delete_result.deleted_count != 1:
-                raise HTTPException(status_code=500, detail="Failed to delete duplicate musician")
-            
-            logger.info(f"Successfully merged musician {duplicate_id} into {canonical_id}")
-            
+        # Verify both musicians exist and are different
+        canonical = await db.musicians.find_one({"id": canonical_id})
+        duplicate = await db.musicians.find_one({"id": duplicate_id})
+        
+        if not canonical or not duplicate:
+            raise HTTPException(status_code=404, detail="One or both musicians not found")
+        
+        if canonical_id == duplicate_id:
+            raise HTTPException(status_code=400, detail="Cannot merge musician with itself")
+        
+        # Update all foreign-keyed collections (using correct field names)
+        fk_updates = [
+            ("songs", {"musician_id": duplicate_id}, {"$set": {"musician_id": canonical_id}}),
+            ("playlists", {"musician_id": duplicate_id}, {"$set": {"musician_id": canonical_id}}),
+            ("requests", {"musician_id": duplicate_id}, {"$set": {"musician_id": canonical_id}}),
+            ("shows", {"musician_id": duplicate_id}, {"$set": {"musician_id": canonical_id}}),
+        ]
+        
+        # Execute all updates
+        for collection_name, filter_doc, update_doc in fk_updates:
+            collection = db[collection_name]
+            result = await collection.update_many(filter_doc, update_doc)
+            logger.info(f"Updated {result.modified_count} documents in {collection_name}")
+        
+        # Delete the duplicate musician
+        delete_result = await db.musicians.delete_one({"id": duplicate_id})
+        if delete_result.deleted_count != 1:
+            raise HTTPException(status_code=500, detail="Failed to delete duplicate musician")
+        
+        logger.info(f"Successfully merged musician {duplicate_id} into {canonical_id}")
+        
     except Exception as e:
         logger.error(f"Error merging musicians: {str(e)}")
         raise
-    finally:
-        await session.end_session()
 
 # Admin API Endpoints
 @api_router.get("/admin/users")
