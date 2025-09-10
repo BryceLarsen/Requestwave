@@ -158,27 +158,43 @@ class AdminPanelTester:
             if response.status_code == 200:
                 users_data = response.json()
                 
-                if isinstance(users_data, list):
-                    # Check if users have required fields
-                    if users_data:
-                        first_user = users_data[0]
-                        required_fields = ["id", "name", "email"]
-                        optional_fields = ["songs_count", "playlists_count", "requests_count", "email_lc"]
-                        
-                        missing_required = [field for field in required_fields if field not in first_user]
-                        present_optional = [field for field in optional_fields if field in first_user]
-                        
-                        self.log_result("Users Management", True, f"Retrieved {len(users_data)} users", {
-                            "total_users": len(users_data),
-                            "missing_required_fields": missing_required,
-                            "present_optional_fields": present_optional,
-                            "sample_user_email": first_user.get("email", "N/A"),
-                            "has_normalized_email": "email_lc" in first_user
-                        })
-                    else:
-                        self.log_result("Users Management", True, "Retrieved empty users list (no users in system)")
+                # Handle both list and dict responses (with pagination)
+                if isinstance(users_data, dict) and "musicians" in users_data:
+                    musicians_list = users_data["musicians"]
+                    total_count = users_data.get("total_count", len(musicians_list))
+                elif isinstance(users_data, list):
+                    musicians_list = users_data
+                    total_count = len(musicians_list)
                 else:
-                    self.log_result("Users Management", False, f"Users endpoint returned non-list: {type(users_data)}")
+                    self.log_result("Users Management", False, f"Users endpoint returned unexpected format: {type(users_data)}")
+                    return
+                
+                # Check if users have required fields
+                if musicians_list:
+                    first_user = musicians_list[0]
+                    required_fields = ["id", "name", "email"]
+                    optional_fields = ["counts", "email_lc"]
+                    
+                    missing_required = [field for field in required_fields if field not in first_user]
+                    present_optional = [field for field in optional_fields if field in first_user]
+                    
+                    # Check counts structure if present
+                    counts_info = {}
+                    if "counts" in first_user:
+                        counts_info = first_user["counts"]
+                    
+                    self.log_result("Users Management", True, f"Retrieved {len(musicians_list)} users", {
+                        "total_users": len(musicians_list),
+                        "total_count": total_count,
+                        "missing_required_fields": missing_required,
+                        "present_optional_fields": present_optional,
+                        "sample_user_email": first_user.get("email", "N/A"),
+                        "has_normalized_email": "email_lc" in first_user,
+                        "has_counts": "counts" in first_user,
+                        "sample_counts": counts_info
+                    })
+                else:
+                    self.log_result("Users Management", True, "Retrieved empty users list (no users in system)")
             else:
                 self.log_result("Users Management", False, f"Users endpoint failed: {response.status_code} - {response.text}")
                 
