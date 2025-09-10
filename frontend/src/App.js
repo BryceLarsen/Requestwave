@@ -11450,6 +11450,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={musician ? <Navigate to="/dashboard" /> : <LandingPage />} />
         <Route path="/dashboard" element={musician ? <MusicianDashboard /> : <Navigate to="/" />} />
+        <Route path="/admin" element={<AdminPanel />} />
         <Route path="/musician/:slug" element={<AudienceInterface />} />
         <Route path="/on-stage/:slug" element={<OnStageInterface />} />
       </Routes>
