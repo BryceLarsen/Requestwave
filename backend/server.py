@@ -1793,6 +1793,7 @@ async def register_musician(musician_data: MusicianRegister):
         "id": str(uuid.uuid4()),
         "name": musician_data.name,
         "email": musician_data.email,
+        "email_lc": email_lc,  # Add normalized email field
         "password": hashed_password,
         "slug": slug,
         "bio": "",
