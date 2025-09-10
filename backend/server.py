@@ -661,8 +661,14 @@ async def get_current_musician(credentials: HTTPAuthorizationCredentials = Depen
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-async def verify_admin_access(request: FastAPIRequest) -> bool:
+async def verify_admin_access(request: FastAPIRequest, response: Response = None) -> bool:
     """Verify admin access from session cookie or header"""
+    # Add security headers for all admin routes
+    if response:
+        response.headers["X-Robots-Tag"] = "noindex"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+    
     # Check for admin session token in cookie
     admin_token = request.cookies.get("admin_session")
     
