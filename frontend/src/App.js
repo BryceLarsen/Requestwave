@@ -10982,6 +10982,7 @@ const AdminPanel = () => {
   const [userDataType, setUserDataType] = useState('songs');
   const [userDetails, setUserDetails] = useState(null);
   const [mergeState, setMergeState] = useState({ canonicalId: '', duplicateId: '' });
+  const [csrfToken, setCsrfToken] = useState('');
   
   // Check if already authenticated on load
   useEffect(() => {
