@@ -599,7 +599,7 @@ def create_admin_session_token() -> str:
         "exp": expiration,
         "env": RW_ENV
     }
-    return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+    return jwt.encode(payload, RW_ADMIN_JWT_SECRET, algorithm="HS256")
 
 def verify_admin_token(token: str) -> bool:
     """Verify admin session token"""
