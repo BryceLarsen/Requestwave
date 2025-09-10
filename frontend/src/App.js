@@ -24,7 +24,7 @@ const API = (() => {
 })();
 
 // PRODUCTION SOURCE OF TRUTH: Audience URL base domain
-const AUDIENCE_BASE_URL = process.env.REACT_APP_AUDIENCE_BASE_URL || 'https://requestwave.app';
+const AUDIENCE_BASE_URL = window.location.origin.includes("preview.emergentagent.com") ? process.env.REACT_APP_AUDIENCE_BASE_URL : 'https://requestwave.app';
 
 // Environment guard for production
 const validateProductionConfig = () => {
@@ -187,7 +187,7 @@ const AuthForm = ({ mode, onSwitch }) => {
     
     // Get current preview URL for redirect
     const currentUrl = window.location.origin;
-    const redirectUrl = `${currentUrl}/profile`;
+    const redirectUrl = `${currentUrl}`;
     
     // Redirect to Emergent OAuth
     const emergentOAuthUrl = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;

@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, UploadFile, File, Request as FastAPIRequest, Response
 from fastapi.routing import APIRoute
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -45,7 +46,7 @@ if BILLING_ENABLED:
 # db = client[os.environ['DB_NAME']]
 mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ.get('DB_NAME', 'requestwave_production')]
+db = client[os.environ.get('DB_NAME', 'livewave-music-test_database')]
 
 
 # JWT Configuration
@@ -238,7 +239,7 @@ class Request(BaseModel):
     social_clicks: List[str] = []  # Track which social links were clicked
     status: str = "pending"  # pending, up_next, accepted, played, rejected, archived
     created_at: datetime = Field(default_factory=datetime.utcnow)
-
+    
 class SongSuggestion(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     musician_id: str
@@ -6356,15 +6357,7 @@ async def log_routes():
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=[
-        "https://requestwave.app", 
-        "https://requestwave-revamp.preview.emergentagent.com", 
-        os.environ.get('FRONTEND_URL', '').replace('http://', 'https://'),  # Dynamic production URL
-        "https://requestwave.emergent.host",  # Emergent production pattern
-        "https://requestwave-app.emergent.host",  # Alternative production pattern
-        f"https://{os.environ.get('APP_NAME', 'requestwave')}.emergent.host",  # Dynamic Emergent domain
-        os.environ.get('REACT_APP_AUDIENCE_BASE_URL', 'https://requestwave.app')  # Frontend audience URL
-    ],
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
