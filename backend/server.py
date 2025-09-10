@@ -2568,6 +2568,215 @@ async def admin_logout(response: Response):
     response.delete_cookie("admin_session")
     return {"success": True, "message": "Admin logged out"}
 
+# Admin Data Management Functions
+async def merge_musicians(canonical_id: str, duplicate_id: str):
+    """Merge duplicate musician into canonical musician using transaction"""
+    session = client.start_session()
+    
+    try:
+        async with session.start_transaction():
+            # Verify both musicians exist and are different
+            canonical = await db.musicians.find_one({"id": canonical_id}, session=session)
+            duplicate = await db.musicians.find_one({"id": duplicate_id}, session=session)
+            
+            if not canonical or not duplicate:
+                raise HTTPException(status_code=404, detail="One or both musicians not found")
+            
+            if canonical_id == duplicate_id:
+                raise HTTPException(status_code=400, detail="Cannot merge musician with itself")
+            
+            # Update all foreign-keyed collections
+            fk_updates = [
+                ("songs", {"user_id": duplicate_id}, {"$set": {"user_id": canonical_id}}),
+                ("playlists", {"user_id": duplicate_id}, {"$set": {"user_id": canonical_id}}),
+                ("requests", {"musician_id": duplicate_id}, {"$set": {"musician_id": canonical_id}}),
+                # Note: using musician_id for requests as per existing schema
+                ("shows", {"musician_id": duplicate_id}, {"$set": {"musician_id": canonical_id}}),
+            ]
+            
+            # Execute all updates
+            for collection_name, filter_doc, update_doc in fk_updates:
+                collection = db[collection_name]
+                result = await collection.update_many(filter_doc, update_doc, session=session)
+                logger.info(f"Updated {result.modified_count} documents in {collection_name}")
+            
+            # Delete the duplicate musician
+            delete_result = await db.musicians.delete_one({"id": duplicate_id}, session=session)
+            if delete_result.deleted_count != 1:
+                raise HTTPException(status_code=500, detail="Failed to delete duplicate musician")
+            
+            logger.info(f"Successfully merged musician {duplicate_id} into {canonical_id}")
+            
+    except Exception as e:
+        logger.error(f"Error merging musicians: {str(e)}")
+        raise
+    finally:
+        await session.end_session()
+
+# Admin API Endpoints
+@api_router.get("/admin/users")
+async def get_all_users(
+    request: FastAPIRequest,
+    search_email: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50,
+    _: bool = Depends(verify_admin_access)
+):
+    """Get all musicians with counts and search capability"""
+    # Build search filter
+    filter_doc = {}
+    if search_email:
+        filter_doc["email_lc"] = {"$regex": search_email.lower(), "$options": "i"}
+    
+    # Get musicians with pagination
+    musicians = await db.musicians.find(
+        filter_doc,
+        {"password": 0}  # Exclude password field
+    ).skip(skip).limit(limit).to_list(None)
+    
+    # Get counts for each musician
+    for musician in musicians:
+        musician_id = musician["id"]
+        
+        # Count songs, playlists, requests
+        songs_count = await db.songs.count_documents({"user_id": musician_id})
+        playlists_count = await db.playlists.count_documents({"user_id": musician_id})
+        requests_count = await db.requests.count_documents({"musician_id": musician_id})
+        
+        musician["counts"] = {
+            "songs": songs_count,
+            "playlists": playlists_count,
+            "requests": requests_count
+        }
+    
+    # Get total count for pagination
+    total_count = await db.musicians.count_documents(filter_doc)
+    
+    return {
+        "musicians": musicians,
+        "total_count": total_count,
+        "skip": skip,
+        "limit": limit
+    }
+
+@api_router.delete("/admin/users/{user_id}")
+async def delete_user(
+    user_id: str,
+    request: FastAPIRequest,
+    _: bool = Depends(verify_admin_access)
+):
+    """Delete a user and all associated data"""
+    session = client.start_session()
+    
+    try:
+        async with session.start_transaction():
+            # Verify user exists
+            user = await db.musicians.find_one({"id": user_id}, session=session)
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+            
+            # Delete all associated data
+            collections_to_clean = [
+                ("songs", {"user_id": user_id}),
+                ("playlists", {"user_id": user_id}),
+                ("requests", {"musician_id": user_id}),  # Note: using musician_id
+                ("shows", {"musician_id": user_id}),
+            ]
+            
+            deleted_counts = {}
+            for collection_name, filter_doc in collections_to_clean:
+                collection = db[collection_name]
+                result = await collection.delete_many(filter_doc, session=session)
+                deleted_counts[collection_name] = result.deleted_count
+            
+            # Delete the user
+            user_result = await db.musicians.delete_one({"id": user_id}, session=session)
+            if user_result.deleted_count != 1:
+                raise HTTPException(status_code=500, detail="Failed to delete user")
+            
+            logger.info(f"Deleted user {user_id} and associated data: {deleted_counts}")
+            
+            return {
+                "success": True,
+                "message": f"User {user['email']} deleted successfully",
+                "deleted_counts": deleted_counts
+            }
+            
+    except Exception as e:
+        logger.error(f"Error deleting user {user_id}: {str(e)}")
+        raise
+    finally:
+        await session.end_session()
+
+@api_router.post("/admin/users/merge")
+async def merge_users(
+    request: FastAPIRequest,
+    merge_data: dict,
+    _: bool = Depends(verify_admin_access)
+):
+    """Merge duplicate user into canonical user"""
+    canonical_id = merge_data.get("canonical_id")
+    duplicate_id = merge_data.get("duplicate_id")
+    
+    if not canonical_id or not duplicate_id:
+        raise HTTPException(status_code=400, detail="Both canonical_id and duplicate_id required")
+    
+    await merge_musicians(canonical_id, duplicate_id)
+    
+    return {
+        "success": True,
+        "message": f"Successfully merged user {duplicate_id} into {canonical_id}"
+    }
+
+@api_router.get("/admin/users/{user_id}/data")
+async def get_user_data(
+    user_id: str,
+    request: FastAPIRequest,
+    data_type: Optional[str] = None,
+    _: bool = Depends(verify_admin_access)
+):
+    """Get detailed data for a specific user"""
+    # Verify user exists
+    user = await db.musicians.find_one({"id": user_id}, {"password": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    result = {"user": user}
+    
+    if not data_type or data_type == "songs":
+        songs = await db.songs.find({"user_id": user_id}).to_list(None)
+        result["songs"] = songs
+    
+    if not data_type or data_type == "playlists":
+        playlists = await db.playlists.find({"user_id": user_id}).to_list(None)
+        result["playlists"] = playlists
+    
+    if not data_type or data_type == "requests":
+        requests = await db.requests.find({"musician_id": user_id}).to_list(None)
+        result["requests"] = requests
+    
+    return result
+
+@api_router.get("/admin/system/info")
+async def get_system_info(
+    request: FastAPIRequest,
+    _: bool = Depends(verify_admin_access)
+):
+    """Get system information for admin panel"""
+    return {
+        "environment": RW_ENV,
+        "database_url": mongo_url,
+        "database_name": db.name,
+        "admin_email": RW_ADMIN_EMAIL,
+        "billing_enabled": BILLING_ENABLED,
+        "collections": {
+            "musicians": await db.musicians.count_documents({}),
+            "songs": await db.songs.count_documents({}), 
+            "playlists": await db.playlists.count_documents({}),
+            "requests": await db.requests.count_documents({})
+        }
+    }
+
 # NEW: Enhanced authentication dependency supporting both JWT and Emergent sessions
 async def get_current_musician_enhanced(request: FastAPIRequest) -> str:
     """Get current musician ID supporting both JWT and Emergent session authentication"""
