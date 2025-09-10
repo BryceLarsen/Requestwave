@@ -2715,11 +2715,11 @@ async def merge_users(
     _: bool = Depends(verify_admin_access)
 ):
     """Merge duplicate user into canonical user"""
-    canonical_id = merge_data.get("canonical_id")
-    duplicate_id = merge_data.get("duplicate_id")
+    canonical_id = merge_data.get("canonical_id") or merge_data.get("primary_user_id")
+    duplicate_id = merge_data.get("duplicate_id") or merge_data.get("duplicate_user_id")
     
     if not canonical_id or not duplicate_id:
-        raise HTTPException(status_code=400, detail="Both canonical_id and duplicate_id required")
+        raise HTTPException(status_code=400, detail="Both canonical_id and duplicate_id (or primary_user_id and duplicate_user_id) required")
     
     await merge_musicians(canonical_id, duplicate_id)
     
