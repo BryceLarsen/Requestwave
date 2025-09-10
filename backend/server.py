@@ -2585,7 +2585,7 @@ async def admin_logout(response: Response):
 # Admin Data Management Functions
 async def merge_musicians(canonical_id: str, duplicate_id: str):
     """Merge duplicate musician into canonical musician using transaction"""
-    session = client.start_session()
+    session = await client.start_session()
     
     try:
         async with session.start_transaction():
