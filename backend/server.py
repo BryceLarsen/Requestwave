@@ -2826,12 +2826,18 @@ async def get_user_data(
 @api_router.get("/admin/system/info")
 async def get_system_info(
     request: FastAPIRequest,
+    response: Response,
     _: bool = Depends(verify_admin_access)
 ):
     """Get system information for admin panel"""
+    # Add security headers for admin routes
+    response.headers["X-Robots-Tag"] = "noindex"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    
     return {
         "environment": RW_ENV,
-        "database_url": mongo_url,
+        "database_url": RW_MONGODB_URI,
         "database_name": db.name,
         "admin_email": RW_ADMIN_EMAIL,
         "billing_enabled": BILLING_ENABLED,
