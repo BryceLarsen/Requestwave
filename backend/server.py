@@ -2666,12 +2666,13 @@ async def get_all_users(
     # Get total count for pagination
     total_count = await db.musicians.count_documents(filter_doc)
     
-    return {
+    # Serialize the response to handle ObjectIds
+    return serialize_document({
         "musicians": musicians,
         "total_count": total_count,
         "skip": skip,
         "limit": limit
-    }
+    })
 
 @api_router.delete("/admin/users/{user_id}")
 async def delete_user(
