@@ -573,6 +573,19 @@ def verify_admin_token(token: str) -> bool:
     except (jwt.InvalidTokenError, jwt.ExpiredSignatureError):
         return False
 
+def serialize_document(doc):
+    """Convert MongoDB document to JSON-serializable format"""
+    if isinstance(doc, dict):
+        return {key: serialize_document(value) for key, value in doc.items()}
+    elif isinstance(doc, list):
+        return [serialize_document(item) for item in doc]
+    elif isinstance(doc, ObjectId):
+        return str(doc)
+    elif isinstance(doc, datetime):
+        return doc.isoformat()
+    else:
+        return doc
+
 async def get_current_musician(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
     """Get current authenticated musician ID from JWT token"""
     try:
