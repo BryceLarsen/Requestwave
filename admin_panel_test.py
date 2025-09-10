@@ -384,7 +384,7 @@ class AdminPanelTester:
                         seen.add(email_lc)
                     
                     self.log_result("Email Normalization", True, "Email normalization analysis complete", {
-                        "total_users": len(users_data),
+                        "total_users": len(musicians_list),
                         "users_with_email_lc": len(users_with_normalized),
                         "users_without_email_lc": len(users_without_normalized),
                         "properly_normalized": len(properly_normalized),
