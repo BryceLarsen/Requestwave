@@ -186,7 +186,7 @@ class AdminProductionTester:
         """Test security headers on admin routes"""
         try:
             # Test admin login endpoint for security headers
-            response = requests.post(f"{ADMIN_BASE_URL}/auth/login", json={
+            response = requests.post(f"{ADMIN_BASE_URL}/login", json={
                 "email": ADMIN_EMAIL,
                 "password": "wrong_password"  # Intentionally wrong to test headers without auth
             }, timeout=30)
