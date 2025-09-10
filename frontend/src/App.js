@@ -10976,6 +10976,13 @@ const AdminPanel = () => {
     fetchSystemInfo();
   }, []);
   
+  // Fetch users when authenticated and on Users tab
+  useEffect(() => {
+    if (isAuthenticated && activeTab === 'users') {
+      fetchUsers();
+    }
+  }, [isAuthenticated, activeTab]);
+  
   const checkAuthStatus = async () => {
     try {
       const response = await axios.get(`${API}/admin/system/info`);
