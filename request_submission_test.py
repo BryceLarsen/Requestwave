@@ -208,7 +208,7 @@ class RequestSubmissionTester:
         
         try:
             request_data = {
-                "song_id": TEST_SONG_ID,
+                "song_id": self.test_song_id,
                 "requester_name": "Test Audience Member",
                 "requester_email": "test.audience@example.com",
                 "dedication": "Testing the datetime bug fix!",
