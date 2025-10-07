@@ -176,8 +176,8 @@ class RequestSubmissionTester:
                     
                     if not test_song:
                         test_song = songs_data[0]  # Use first available song
-                        TEST_SONG_ID = test_song.get("id")
-                        print(f"   Updated TEST_SONG_ID to: {TEST_SONG_ID}")
+                        self.test_song_id = test_song.get("id")
+                        print(f"   Updated test_song_id to: {self.test_song_id}")
                     
                     self.log_result("Songs Availability", True, f"Found {len(songs_data)} songs available", {
                         "total_songs": len(songs_data),
