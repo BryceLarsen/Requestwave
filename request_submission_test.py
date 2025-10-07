@@ -174,7 +174,6 @@ class RequestSubmissionTester:
                     
                     if not test_song:
                         test_song = songs_data[0]  # Use first available song
-                        global TEST_SONG_ID
                         TEST_SONG_ID = test_song.get("id")
                         print(f"   Updated TEST_SONG_ID to: {TEST_SONG_ID}")
                     
