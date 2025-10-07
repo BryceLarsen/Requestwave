@@ -202,7 +202,7 @@ class RequestSubmissionTester:
         """Test basic request submission - this is where the datetime bug was causing 500 errors"""
         print(f"\n=== Testing Basic Request Submission (Datetime Bug Fix) ===")
         
-        if not TEST_SONG_ID:
+        if not self.test_song_id:
             self.log_result("Basic Request Submission", False, "No test song ID available")
             return False
         
