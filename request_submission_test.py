@@ -324,7 +324,7 @@ class RequestSubmissionTester:
             {
                 "name": "Missing Requester Name",
                 "data": {
-                    "song_id": TEST_SONG_ID,
+                    "song_id": self.test_song_id,
                     "requester_email": "test@example.com",
                     "dedication": "Test"
                 },
