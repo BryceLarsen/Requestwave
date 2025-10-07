@@ -33,6 +33,8 @@ class RequestSubmissionTester:
         self.token = None
         self.musician_id = None
         self.results = []
+        self.test_musician_id = TEST_MUSICIAN_ID
+        self.test_song_id = TEST_SONG_ID
         
     def log_result(self, test_name, success, message, details=None):
         """Log test result"""
