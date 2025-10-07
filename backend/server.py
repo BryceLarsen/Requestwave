@@ -942,7 +942,7 @@ async def get_subscription_status(musician_id: str) -> SubscriptionStatus:
     
     # Free tier - calculate monthly usage based on signup anniversary
     # Find the current month period based on signup date
-    current_period_start = signup_date
+    current_period_start = signup_dt
     while current_period_start + timedelta(days=30) < now:
         current_period_start = current_period_start + timedelta(days=30)
     
