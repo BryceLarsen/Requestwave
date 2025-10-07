@@ -408,7 +408,7 @@ class RequestSubmissionTester:
         """Test submitting multiple requests to verify the fix works consistently"""
         print(f"\n=== Testing Multiple Requests Flow ===")
         
-        if not TEST_SONG_ID:
+        if not self.test_song_id:
             self.log_result("Multiple Requests Flow", False, "No test song ID available")
             return False
         
