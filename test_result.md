@@ -636,11 +636,11 @@ backend:
 
   - task: "Audience Song Request Submission Bug"
     implemented: true
-    working: false
-    file: "App.js"
+    working: true
+    file: "server.py"
     stuck_count: 0
     priority: "critical"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "user"
@@ -648,6 +648,9 @@ backend:
       - working: "NA"
         agent: "main"
         comment: "INVESTIGATION STARTING: Beginning investigation of the audience request submission flow. Will examine frontend handleRequest function, submitRequestWithTip function, backend POST /api/requests endpoint, and any related middleware or validation issues."
+      - working: true
+        agent: "testing"
+        comment: "DATETIME BUG FIX VERIFIED - AUDIENCE REQUEST SUBMISSION NOW WORKING: Comprehensive testing confirms the critical datetime bug in get_subscription_status function has been successfully fixed and audience song request submission is now fully functional. ✅ ROOT CAUSE IDENTIFIED AND FIXED: The issue was a TypeError in get_subscription_status function (line 945-946) where current_period_start was being set to raw signup_date string instead of parsed datetime object, causing 'can only concatenate str (not datetime.timedelta) to str' error during request submission. ✅ DATETIME BUG RESOLUTION: Fixed by ensuring current_period_start is always a datetime object using parse_datetime() function before arithmetic operations with timedelta. ✅ REQUEST SUBMISSION ENDPOINTS WORKING: Both POST /api/requests and POST /api/musicians/{slug}/requests endpoints now working correctly - successfully created multiple test requests with proper response structure including request_id, song details, requester info, status, and timestamps. ✅ SUBSCRIPTION STATUS ENDPOINT: GET /api/subscription/status working correctly, returning proper subscription data without datetime errors. ✅ REQUEST VALIDATION: Proper validation working - correctly rejects invalid song IDs (404), missing required fields (422), and other invalid data. ✅ BACKEND LOGS CLEAN: No more TypeError or datetime-related errors in backend logs after fix implementation. ✅ COMPREHENSIVE TESTING: Verified with multiple request submissions, different tip amounts, various requester details, and both direct and musician-slug endpoints. SUCCESS RATE: 100% (6/6 core tests passed). The audience song request submission functionality is now production-ready and the datetime bug has been completely resolved."
       - working: true
         agent: "main"
         comment: "ROOT CAUSE IDENTIFIED AND FIXED: Found critical backend bug in get_subscription_status function (line 945-946 in server.py). The function was using raw signup_date string instead of parsed signup_dt datetime object when calculating free tier usage periods, causing TypeError when adding timedelta. Fixed by changing 'current_period_start = signup_date' to 'current_period_start = signup_dt'. Backend logs confirmed this was causing 500 errors on request creation. Direct API test confirms requests now work correctly."
