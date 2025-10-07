@@ -170,7 +170,7 @@ class RequestSubmissionTester:
                     # Look for the specific test song or use the first available song
                     test_song = None
                     for song in songs_data:
-                        if song.get("id") == TEST_SONG_ID:
+                        if song.get("id") == self.test_song_id:
                             test_song = song
                             break
                     
@@ -181,7 +181,7 @@ class RequestSubmissionTester:
                     
                     self.log_result("Songs Availability", True, f"Found {len(songs_data)} songs available", {
                         "total_songs": len(songs_data),
-                        "test_song_id": TEST_SONG_ID,
+                        "test_song_id": self.test_song_id,
                         "test_song_title": test_song.get("title"),
                         "test_song_artist": test_song.get("artist"),
                         "original_song_found": any(s.get("id") == "4e23f254-db09-480a-93c2-17019e9fca0e" for s in songs_data)
