@@ -122,7 +122,7 @@ class RequestSubmissionTester:
     
     def test_musician_profile_access(self):
         """Test accessing the musician profile to verify it exists"""
-        print(f"\n=== Testing Musician Profile Access (ID: {TEST_MUSICIAN_ID}) ===")
+        print(f"\n=== Testing Musician Profile Access (ID: {self.test_musician_id}) ===")
         
         try:
             # Try to access musician by slug first
@@ -138,14 +138,14 @@ class RequestSubmissionTester:
                     "slug": musician_data.get("slug"),
                     "requests_enabled": musician_data.get("requests_enabled"),
                     "tips_enabled": musician_data.get("tips_enabled"),
-                    "id_matches_test": actual_musician_id == TEST_MUSICIAN_ID
+                    "id_matches_test": actual_musician_id == self.test_musician_id
                 })
                 
-                # Update TEST_MUSICIAN_ID if different
-                if actual_musician_id != TEST_MUSICIAN_ID:
-                    print(f"   Note: Actual musician ID {actual_musician_id} differs from expected {TEST_MUSICIAN_ID}")
+                # Update test_musician_id if different
+                if actual_musician_id != self.test_musician_id:
+                    print(f"   Note: Actual musician ID {actual_musician_id} differs from expected {self.test_musician_id}")
                     # Use actual ID for subsequent tests
-                    TEST_MUSICIAN_ID = actual_musician_id
+                    self.test_musician_id = actual_musician_id
                 
                 return True
             else:
