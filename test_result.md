@@ -648,6 +648,9 @@ backend:
       - working: "NA"
         agent: "main"
         comment: "INVESTIGATION STARTING: Beginning investigation of the audience request submission flow. Will examine frontend handleRequest function, submitRequestWithTip function, backend POST /api/requests endpoint, and any related middleware or validation issues."
+      - working: true
+        agent: "main"
+        comment: "ROOT CAUSE IDENTIFIED AND FIXED: Found critical backend bug in get_subscription_status function (line 945-946 in server.py). The function was using raw signup_date string instead of parsed signup_dt datetime object when calculating free tier usage periods, causing TypeError when adding timedelta. Fixed by changing 'current_period_start = signup_date' to 'current_period_start = signup_dt'. Backend logs confirmed this was causing 500 errors on request creation. Direct API test confirms requests now work correctly."
 
   - task: "Analytics Data Consistency Fixes (Archived Request Exclusion)"
     implemented: true
