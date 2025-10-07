@@ -253,13 +253,13 @@ class RequestSubmissionTester:
         """Test request submission using the musician-specific endpoint"""
         print(f"\n=== Testing Request Submission via Musician Slug Endpoint ===")
         
-        if not TEST_SONG_ID:
+        if not self.test_song_id:
             self.log_result("Musician Slug Request Submission", False, "No test song ID available")
             return False
         
         try:
             request_data = {
-                "song_id": TEST_SONG_ID,
+                "song_id": self.test_song_id,
                 "requester_name": "Test Audience Member 2",
                 "requester_email": "test.audience2@example.com",
                 "dedication": "Testing musician slug endpoint!",
