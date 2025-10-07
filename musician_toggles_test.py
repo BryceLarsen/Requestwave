@@ -23,7 +23,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://requestwave-revamp.preview.emergentagent.com/api"
+BASE_URL = "https://request-error-fix.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
     "name": "Toggle Test Musician",
     "email": "toggle.test@requestwave.com", 

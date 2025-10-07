@@ -11,7 +11,7 @@ import random
 from typing import Dict, Any, List
 
 # Configuration
-BASE_URL = "https://requestwave-revamp.preview.emergentagent.com/api"
+BASE_URL = "https://request-error-fix.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
     "name": "Scale Test Musician",
     "email": "scale.test@requestwave.com", 

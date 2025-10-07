@@ -29,7 +29,7 @@ from datetime import datetime, timedelta
 import time
 
 # Configuration
-EXTERNAL_BASE_URL = "https://requestwave-revamp.preview.emergentagent.com/api"
+EXTERNAL_BASE_URL = "https://request-error-fix.preview.emergentagent.com/api"
 TEST_EMAIL = "brycelarsenmusic@gmail.com"
 TEST_PASSWORD = "RequestWave2024!"
 

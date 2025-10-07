@@ -11,8 +11,8 @@ import sys
 import time
 
 # Configuration
-PREVIEW_FRONTEND_URL = "https://requestwave-revamp.preview.emergentagent.com"
-PREVIEW_BACKEND_URL = "https://requestwave-revamp.preview.emergentagent.com/api"
+PREVIEW_FRONTEND_URL = "https://request-error-fix.preview.emergentagent.com"
+PREVIEW_BACKEND_URL = "https://request-error-fix.preview.emergentagent.com/api"
 TEST_MUSICIAN_SLUG = "bryce-larsen"
 
 def simulate_browser_request_flow():
