@@ -454,8 +454,8 @@ class RequestSubmissionTester:
         """Run all request submission tests"""
         print("🚀 Starting Request Submission Tests - Datetime Bug Fix Verification")
         print(f"Backend URL: {BACKEND_URL}")
-        print(f"Test Musician ID: {TEST_MUSICIAN_ID}")
-        print(f"Test Song ID: {TEST_SONG_ID}")
+        print(f"Test Musician ID: {self.test_musician_id}")
+        print(f"Test Song ID: {self.test_song_id}")
         print("=" * 80)
         
         # Run tests in order
