@@ -418,7 +418,7 @@ class RequestSubmissionTester:
         for i in range(total_requests):
             try:
                 request_data = {
-                    "song_id": TEST_SONG_ID,
+                    "song_id": self.test_song_id,
                     "requester_name": f"Test User {i+1}",
                     "requester_email": f"test{i+1}@example.com",
                     "dedication": f"Test request #{i+1} - datetime bug fix verification",
