@@ -634,6 +634,21 @@ backend:
         agent: "testing"
         comment: "CURATED CATEGORIES INTEGRATION ISSUE: Testing reveals song suggestion acceptance is failing with 400 error, preventing verification of curated categories usage. ✅ SUGGESTION CREATION: Successfully created song suggestion with ID 851cc619-0ce8-49fb-9d29-460d791e4701 using Pro account brycelarsenmusic@gmail.com. ❌ SUGGESTION ACCEPTANCE FAILED: PUT /song-suggestions/{id}/status with status='accepted' returns 400 error, preventing testing of whether accepted suggestions use new curated categories (Pop genre, Feel Good mood) instead of old categories (Upbeat mood). This suggests the song suggestion system may not be properly integrated with the new curated categories system. The 400 error indicates a validation or data processing issue in the acceptance workflow."
 
+  - task: "Audience Song Request Submission Bug"
+    implemented: true
+    working: false
+    file: "App.js"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "CRITICAL BUG REPORTED: Audience members cannot submit song requests via the audience link. After clicking 'Request a song', filling out the form, and clicking 'Submit request', nothing happens. The form doesn't submit and no request is created. This is blocking the core functionality of the application."
+      - working: "NA"
+        agent: "main"
+        comment: "INVESTIGATION STARTING: Beginning investigation of the audience request submission flow. Will examine frontend handleRequest function, submitRequestWithTip function, backend POST /api/requests endpoint, and any related middleware or validation issues."
+
   - task: "Analytics Data Consistency Fixes (Archived Request Exclusion)"
     implemented: true
     working: true
