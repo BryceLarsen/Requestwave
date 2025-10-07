@@ -141,9 +141,9 @@ class RequestSubmissionTester:
                 
                 # Update TEST_MUSICIAN_ID if different
                 if actual_musician_id != TEST_MUSICIAN_ID:
-                    global TEST_MUSICIAN_ID
+                    print(f"   Note: Actual musician ID {actual_musician_id} differs from expected {TEST_MUSICIAN_ID}")
+                    # Use actual ID for subsequent tests
                     TEST_MUSICIAN_ID = actual_musician_id
-                    print(f"   Updated TEST_MUSICIAN_ID to: {TEST_MUSICIAN_ID}")
                 
                 return True
             else:
