@@ -1080,6 +1080,18 @@ frontend:
         agent: "testing"
         comment: "SONGS TAB UI IMPROVEMENTS FULLY WORKING: Comprehensive testing confirms all requested UI improvements have been successfully implemented and are working correctly. ✅ HELP BUTTON POSITIONING: Help button correctly moved to top left area, positioned in same row as 'Your Songs' title (x=566, y=372 vs title x=376, y=376) - positioned across from Manage Songs dropdown as requested. ✅ HELP BUTTON COLOR: Help button icon successfully changed from red to light gray using text-gray-400 class (computed color: rgb(156, 163, 175)) as requested. ✅ MANAGE SONGS DROPDOWN POSITION: Manage Songs dropdown correctly positioned on the right side (x=1374, y=184) with help button to its left - proper opposite positioning maintained. ✅ HELP BUTTON FUNCTIONALITY: Help button opens Songs Tab Help modal correctly on both desktop and mobile, modal displays comprehensive help content and closes properly with Escape key or close button. ✅ MANAGE SONGS DROPDOWN FUNCTIONALITY: Dropdown opens correctly, displays expected options (Add New Song, Import Playlist, Upload CSV, etc.), and closes properly when clicking outside. ✅ MOBILE RESPONSIVENESS (375x800): Help button accessible and properly sized for mobile touch interaction, Manage Songs button accessible on mobile, all song containers fit within mobile viewport without overflow, badges/tags wrap properly within mobile constraints, action buttons fit within viewport. ✅ LAYOUT INTEGRITY: Desktop layout maintained without breaking changes, all existing functionality preserved, no negative impact on user experience. SUCCESS RATE: 100% (7/7 requirements met). The Songs Tab UI improvements are production-ready and meet all specified requirements for help button repositioning, color changes, and mobile responsiveness."
 
+  - task: "CSV Export Enhancement - Include Playlists Column"
+    implemented: true
+    working: "NA"
+    file: "App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "NEW FEATURE: Enhanced CSV export functionality to include all song data. Added 'Playlists' column between 'Year' and 'Notes' columns. Implemented getSongPlaylists() helper function that finds all playlists containing a specific song ID and returns comma-separated playlist names. CSV now exports: Title, Artist, Genres, Moods, Year, Playlists, Notes. Songs belonging to multiple playlists will show all playlist names, songs not in any playlist will show empty string."
+
   - task: "Tip System Toggle in Design Tab"
     implemented: true
     working: "NA" 
