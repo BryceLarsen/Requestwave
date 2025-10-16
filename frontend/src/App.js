@@ -2022,6 +2022,16 @@ const MusicianDashboard = () => {
         .join(', ');
     };
     
+    // Helper function to properly escape CSV fields
+    const escapeCSVField = (field) => {
+      // Convert to string and handle null/undefined
+      const str = String(field ?? '');
+      // Escape double quotes by doubling them
+      const escaped = str.replace(/"/g, '""');
+      // Always wrap in quotes to handle commas, newlines, and special characters
+      return `"${escaped}"`;
+    };
+    
     const csvContent = [
       ['Title', 'Artist', 'Genres', 'Moods', 'Year', 'Playlists', 'Notes'],
       ...exportSongs.map(song => [
@@ -2033,7 +2043,7 @@ const MusicianDashboard = () => {
         getSongPlaylists(song.id),
         song.notes || ''
       ])
-    ].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+    ].map(row => row.map(field => escapeCSVField(field)).join(',')).join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
