@@ -1374,10 +1374,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Analytics Data Count Discrepancy Fix"
+    - "CSV Export Enhancement - Include Playlists Column"
   stuck_tasks: []
   test_all: false
-  test_priority: "critical_first"
+  test_priority: "high_first"
 
 agent_communication:
     - agent: "main"
