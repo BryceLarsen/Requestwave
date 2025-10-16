@@ -12,8 +12,8 @@ from datetime import datetime
 import time
 
 # Configuration
-PREVIEW_BACKEND_URL = "https://request-error-fix.preview.emergentagent.com/api"
-PREVIEW_FRONTEND_URL = "https://request-error-fix.preview.emergentagent.com"
+PREVIEW_BACKEND_URL = "https://tipflow-stable.preview.emergentagent.com/api"
+PREVIEW_FRONTEND_URL = "https://tipflow-stable.preview.emergentagent.com"
 TEST_MUSICIAN_SLUG = "bryce-larsen"
 
 class DetailedFrontendFlowTester:
