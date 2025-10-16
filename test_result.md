@@ -1082,11 +1082,11 @@ frontend:
 
   - task: "CSV Export Enhancement - Include Playlists Column"
     implemented: true
-    working: false
+    working: "NA"
     file: "App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
@@ -1094,6 +1094,9 @@ frontend:
       - working: false
         agent: "testing"
         comment: "CSV EXPORT ENHANCEMENT PARTIALLY WORKING WITH CRITICAL FORMATTING BUG: Comprehensive testing reveals the Playlists column has been successfully implemented but there's a critical CSV formatting issue. ✅ PLAYLISTS COLUMN IMPLEMENTED: CSV header correctly includes 'Playlists' column in proper position (Title, Artist, Genres, Moods, Year, Playlists, Notes) - 7 columns total as expected. ✅ EXPORT FUNCTIONALITY: Export CSV button accessible via Manage Songs dropdown, file downloads successfully with correct naming convention (songs-export-YYYY-MM-DD.csv). ✅ PLAYLIST DATA INTEGRATION: getSongPlaylists() function working - all songs show 'All Songs' in Playlists column indicating they belong to a default playlist. ❌ CRITICAL CSV FORMATTING BUG: Newlines in song data (Notes field) break CSV structure causing parsing errors - first song data spans multiple rows instead of single row, making CSV invalid for import into other applications. ❌ SPECIAL CHARACTER HANDLING: Quotes and newlines in Notes field not properly escaped, causing CSV parsing to fail (Row 1 has 10 columns instead of 7, Row 2 has only 1 column). ✅ BASIC FUNCTIONALITY: 4 songs exported successfully, file structure correct, column order matches specification. IMMEDIATE FIX REQUIRED: Implement proper CSV escaping for newlines and special characters in song data to ensure valid CSV format."
+      - working: "NA"
+        agent: "main"
+        comment: "CSV FORMATTING BUG FIXED: Implemented proper CSV escaping to handle newlines, quotes, and special characters. Added escapeCSVField() helper function that: 1) Converts all fields to strings and handles null/undefined values, 2) Escapes double quotes by doubling them (standard CSV escape), 3) Always wraps fields in quotes to properly handle commas, newlines, and special characters. This ensures the CSV output is valid and can be imported into Excel/Google Sheets without errors. Ready for re-testing to verify CSV format is now correct."
 
   - task: "Tip System Toggle in Design Tab"
     implemented: true
