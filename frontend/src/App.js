@@ -2014,14 +2014,23 @@ const MusicianDashboard = () => {
   const exportSongsToCSV = (songsToExport = null) => {
     const exportSongs = songsToExport || filteredSongs;
     
+    // Helper function to get playlists for a song
+    const getSongPlaylists = (songId) => {
+      return playlists
+        .filter(playlist => playlist.song_ids && playlist.song_ids.includes(songId))
+        .map(playlist => playlist.name)
+        .join(', ');
+    };
+    
     const csvContent = [
-      ['Title', 'Artist', 'Genres', 'Moods', 'Year', 'Notes'],
+      ['Title', 'Artist', 'Genres', 'Moods', 'Year', 'Playlists', 'Notes'],
       ...exportSongs.map(song => [
         song.title,
         song.artist,
         song.genres.join(', '),
         song.moods.join(', '),
         song.year || '',
+        getSongPlaylists(song.id),
         song.notes || ''
       ])
     ].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
