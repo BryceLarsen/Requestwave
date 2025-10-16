@@ -1082,15 +1082,18 @@ frontend:
 
   - task: "CSV Export Enhancement - Include Playlists Column"
     implemented: true
-    working: "NA"
+    working: false
     file: "App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "NEW FEATURE: Enhanced CSV export functionality to include all song data. Added 'Playlists' column between 'Year' and 'Notes' columns. Implemented getSongPlaylists() helper function that finds all playlists containing a specific song ID and returns comma-separated playlist names. CSV now exports: Title, Artist, Genres, Moods, Year, Playlists, Notes. Songs belonging to multiple playlists will show all playlist names, songs not in any playlist will show empty string."
+      - working: false
+        agent: "testing"
+        comment: "CSV EXPORT ENHANCEMENT PARTIALLY WORKING WITH CRITICAL FORMATTING BUG: Comprehensive testing reveals the Playlists column has been successfully implemented but there's a critical CSV formatting issue. ✅ PLAYLISTS COLUMN IMPLEMENTED: CSV header correctly includes 'Playlists' column in proper position (Title, Artist, Genres, Moods, Year, Playlists, Notes) - 7 columns total as expected. ✅ EXPORT FUNCTIONALITY: Export CSV button accessible via Manage Songs dropdown, file downloads successfully with correct naming convention (songs-export-YYYY-MM-DD.csv). ✅ PLAYLIST DATA INTEGRATION: getSongPlaylists() function working - all songs show 'All Songs' in Playlists column indicating they belong to a default playlist. ❌ CRITICAL CSV FORMATTING BUG: Newlines in song data (Notes field) break CSV structure causing parsing errors - first song data spans multiple rows instead of single row, making CSV invalid for import into other applications. ❌ SPECIAL CHARACTER HANDLING: Quotes and newlines in Notes field not properly escaped, causing CSV parsing to fail (Row 1 has 10 columns instead of 7, Row 2 has only 1 column). ✅ BASIC FUNCTIONALITY: 4 songs exported successfully, file structure correct, column order matches specification. IMMEDIATE FIX REQUIRED: Implement proper CSV escaping for newlines and special characters in song data to ensure valid CSV format."
 
   - task: "Tip System Toggle in Design Tab"
     implemented: true
