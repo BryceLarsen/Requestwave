@@ -5013,10 +5013,18 @@ const MusicianDashboard = () => {
                       ❌ Mark as Rejected
                     </button>
                     <button
-                      onClick={batchDeleteRequests}
+                      onClick={batchArchiveRequests}
                       className="bg-gray-600 hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
+                      title="Archive selected requests (hide from active view)"
                     >
-                      🗑️ Delete Selected
+                      📦 Archive
+                    </button>
+                    <button
+                      onClick={batchDeleteRequests}
+                      className="bg-gray-700 hover:bg-red-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
+                      title="Permanently delete selected requests"
+                    >
+                      🗑️ Delete
                     </button>
                     <button
                       onClick={clearRequestSelection}
