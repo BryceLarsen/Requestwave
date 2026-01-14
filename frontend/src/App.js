@@ -10503,6 +10503,13 @@ const OnStageInterface = () => {
   const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [completedSectionCollapsed, setCompletedSectionCollapsed] = useState(false);
+  const [errorToast, setErrorToast] = useState({ show: false, message: '' });
+  
+  // Helper function to show error toast
+  const showErrorToast = (message) => {
+    setErrorToast({ show: true, message });
+    setTimeout(() => setErrorToast({ show: false, message: '' }), 5000);
+  };
   
   // Audio for notifications
   const notificationSound = useRef(null);
