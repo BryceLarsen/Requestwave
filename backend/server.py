@@ -232,7 +232,8 @@ class Request(BaseModel):
     dedication: str = ""
     tip_amount: float = 0.0
     # Artist-controlled show grouping (not provided by audience)
-    show_name: Optional[str] = None  # Artist can assign later
+    show_id: Optional[str] = None  # Artist can assign later
+    show_name: Optional[str] = None  # Display only, not for filtering
     # Tracking fields
     tip_clicked: bool = False
     social_clicks: List[str] = []  # Track which social links were clicked
