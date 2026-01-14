@@ -5155,6 +5155,7 @@ const MusicianDashboard = () => {
                         <div className="flex items-center space-x-3">
                           <input
                             type="checkbox"
+                            onClick={(e) => e.stopPropagation()}
                             onChange={(e) => {
                               const showRequests = requests.filter(r => r.show_name === show.name);
                               if (e.target.checked) {
