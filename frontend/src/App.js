@@ -2496,7 +2496,7 @@ const MusicianDashboard = () => {
       if (process.env.NODE_ENV === 'development') {
         console.error('[Status Update] Invalid status:', { requestId, status });
       }
-      showErrorToast(errorMsg);
+      showErrorToast(errorMsg, error);
       return;
     }
 
@@ -2538,7 +2538,7 @@ const MusicianDashboard = () => {
       const errorMsg = error.response?.data?.detail || 
                        error.response?.data?.message || 
                        `Failed to update request status to "${status}"`;
-      showErrorToast(errorMsg);
+      showErrorToast(errorMsg, error);
     }
   };
 
@@ -2580,7 +2580,7 @@ const MusicianDashboard = () => {
       const errorMsg = error.response?.data?.detail || 
                        error.response?.data?.message || 
                        'Failed to archive request';
-      showErrorToast(errorMsg);
+      showErrorToast(errorMsg, error);
     }
   };
 
@@ -10715,7 +10715,7 @@ const OnStageInterface = () => {
       if (process.env.NODE_ENV === 'development') {
         console.error('[On Stage Status Update] Invalid status:', { requestId, status });
       }
-      showErrorToast(errorMsg);
+      showErrorToast(errorMsg, error);
       return;
     }
 
@@ -10757,7 +10757,7 @@ const OnStageInterface = () => {
       const errorMsg = error.response?.data?.detail || 
                        error.response?.data?.message || 
                        `Failed to update request status to "${status}"`;
-      showErrorToast(errorMsg);
+      showErrorToast(errorMsg, error);
     }
   };
 
@@ -10799,7 +10799,7 @@ const OnStageInterface = () => {
       const errorMsg = error.response?.data?.detail || 
                        error.response?.data?.message || 
                        'Failed to archive request';
-      showErrorToast(errorMsg);
+      showErrorToast(errorMsg, error);
     }
   };
   
