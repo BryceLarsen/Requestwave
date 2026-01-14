@@ -2471,26 +2471,98 @@ const MusicianDashboard = () => {
     }
   };
 
-  // FIXED: Unified updateRequestStatus function for all interfaces
+  // UNIFIED: Single updateRequestStatus function for both Requests tab and On Stage tab
   const updateRequestStatus = async (requestId, status) => {
+    // Validate status (archived handled by separate endpoint)
+    const validStatuses = ['pending', 'up_next', 'accepted', 'played', 'rejected'];
+    if (!validStatuses.includes(status)) {
+      const errorMsg = `Invalid status "${status}". Use archiveRequest() for archiving.`;
+      console.error('❌ Status Update Error:', errorMsg);
+      alert(errorMsg);
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         alert('Please log in again to update request status');
         return;
       }
+
+      const payload = { status };
+      console.log('🔄 Updating request status:', { requestId, payload });
       
-      await axios.put(`${API}/requests/${requestId}/status`, 
-        { status },
+      const response = await axios.put(
+        `${API}/requests/${requestId}/status`, 
+        payload,
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       
-      // Refresh request data
+      console.log('✅ Status update successful:', response.data);
+      
+      // Refresh request data for both tabs
       fetchRequests();
       
+      // Show success feedback
+      const statusLabels = {
+        'up_next': '⬆️ Added to Up Next',
+        'played': '🎵 Marked as Played',
+        'rejected': '❌ Marked as Rejected',
+        'accepted': '✅ Accepted',
+        'pending': '🔄 Moved to Pending'
+      };
+      console.log(`✅ ${statusLabels[status] || 'Status updated'}`);
+      
     } catch (error) {
-      console.error('Error updating request status:', error);
-      alert('Error updating request status');
+      console.error('❌ Error updating request status:', {
+        requestId,
+        status,
+        error: error.response?.data || error.message,
+        statusCode: error.response?.status
+      });
+      
+      const errorMsg = error.response?.data?.detail || 
+                       error.response?.data?.message || 
+                       `Failed to update request status to "${status}"`;
+      alert(`Error: ${errorMsg}`);
+    }
+  };
+
+  // UNIFIED: Archive request function (separate endpoint from status updates)
+  const archiveRequest = async (requestId) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please log in again to archive request');
+        return;
+      }
+
+      console.log('📦 Archiving request:', requestId);
+      
+      const response = await axios.put(
+        `${API}/requests/${requestId}/archive`,
+        {},
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      
+      console.log('✅ Archive successful:', response.data);
+      
+      // Refresh request data for both tabs
+      fetchRequests();
+      
+      console.log('✅ Request archived');
+      
+    } catch (error) {
+      console.error('❌ Error archiving request:', {
+        requestId,
+        error: error.response?.data || error.message,
+        statusCode: error.response?.status
+      });
+      
+      const errorMsg = error.response?.data?.detail || 
+                       error.response?.data?.message || 
+                       'Failed to archive request';
+      alert(`Error: ${errorMsg}`);
     }
   };
 
