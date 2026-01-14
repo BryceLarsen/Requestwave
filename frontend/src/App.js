@@ -11042,11 +11042,31 @@ const OnStageInterface = () => {
   const upNextRequests = requests.filter(r => r.status === 'up_next')
     .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); // oldest first
   
-  const activeRequests = requests.filter(r => !r.status || r.status === 'pending')
-    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); // oldest first
+  // Merge active requests with pending suggestions, sorted by created_at (oldest first)
+  const activeRequestsAndSuggestions = [
+    ...requests.filter(r => !r.status || r.status === 'pending').map(r => ({ ...r, type: 'request' })),
+    ...suggestions.filter(s => s.status === 'pending').map(s => ({ 
+      ...s, 
+      type: 'suggestion',
+      song_title: s.suggested_title,
+      song_artist: s.suggested_artist,
+      dedication: s.message
+    }))
+  ].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); // oldest first
+  
+  // Backwards compatibility - keep activeRequests for other code
+  const activeRequests = activeRequestsAndSuggestions;
     
-  const completedRequests = requests.filter(r => r.status === 'played' || r.status === 'rejected')
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // newest first
+  const completedRequests = [
+    ...requests.filter(r => r.status === 'played' || r.status === 'rejected').map(r => ({ ...r, type: 'request' })),
+    ...suggestions.filter(s => s.status === 'learn_later' || s.status === 'rejected').map(s => ({ 
+      ...s, 
+      type: 'suggestion',
+      song_title: s.suggested_title,
+      song_artist: s.suggested_artist,
+      dedication: s.message
+    }))
+  ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // newest first
   
   const allItems = [
     ...requests.map(r => ({ ...r, type: 'request' })),
