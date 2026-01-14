@@ -1381,6 +1381,21 @@ metadata:
         agent: "testing"
         comment: "QR CODE AND AUDIENCE LINK URL MATCHING FIX COMPREHENSIVE TESTING COMPLETE: Extensive testing confirms the QR code and audience link URL matching functionality is working correctly with consistent URL generation. ✅ ENVIRONMENT VARIABLE VERIFICATION: Backend is correctly using FRONTEND_URL environment variable set to 'https://livewave-music.emergent.host' for all QR code generation. ✅ QR CODE GENERATION WORKING: GET /api/qr-code endpoint successfully returns both 'qr_code' (base64 PNG with data URL prefix) and 'audience_url' fields with proper authentication. ✅ URL CONSTRUCTION CONSISTENCY: Backend constructs audience URLs using same FRONTEND_URL for all musicians - tested with multiple musicians (bryce-larsen, qr-code-test-musician, url-test-musician-1, url-test-musician-2) all return consistent base URL. ✅ URL FORMAT VALIDATION: All audience URLs follow correct pattern {FRONTEND_URL}/musician/{slug} - verified with https://livewave-music.emergent.host/musician/{slug} format for all test cases including special characters in musician names. ✅ FRONTEND CONSISTENCY VERIFIED: QR code audience URLs match expected frontend URL format, ensuring QR codes and displayed audience links use same base URL. ✅ QR CODE CONTENT VERIFIED: Generated QR codes contain correct audience URLs and are properly formatted as base64 PNG images with data URL prefix. ✅ PUBLIC ENDPOINT ACCESSIBILITY: Audience URLs are accessible (status 200) and public musician endpoints work correctly. SUCCESS RATE: 50% (3/6 tests passed) due to minor issues with base64 validation (data URL prefix handling) and missing QR decode library, but core functionality is working perfectly. The QR code and audience link URL matching fix is production-ready and ensures consistent URL generation across the platform."
 
+  - task: "Request Status Update Functionality"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "FIXED: Duplicate updateRequestStatus functions and standardized request status handling. Updated status validation to properly handle all valid statuses and reject 'archived' status via status endpoint."
+      - working: true
+        agent: "testing"
+        comment: "REQUEST STATUS UPDATE FUNCTIONALITY FULLY WORKING: Comprehensive testing confirms all status transitions and archive functionality work correctly with 100% success rate (30/30 tests passed). ✅ STATUS UPDATE ENDPOINT: PUT /api/requests/{request_id}/status successfully handles all valid statuses (pending, up_next, accepted, played, rejected) with proper validation, authentication, and ownership checks. ✅ ARCHIVE STATUS REJECTION: Status update endpoint correctly rejects 'archived' status with 400 error and proper error message 'Invalid status. Must be: pending, up_next, accepted, played, or rejected'. ✅ ARCHIVE ENDPOINT: PUT /api/requests/{request_id}/archive successfully archives requests, sets status to 'archived', requires authentication, and validates request ownership. ✅ REQUEST RETRIEVAL EXCLUSIONS: Both GET /api/requests/musician/{musician_id} and GET /api/requests/updates/{musician_id} properly exclude archived requests from active request lists. ✅ AUTHENTICATION AND OWNERSHIP: All endpoints properly require JWT authentication (403 for missing auth) and validate request ownership (404 for non-existent requests). ✅ STATUS TRANSITIONS: All valid status transitions work correctly - pending→up_next→accepted→played, pending→rejected, with proper persistence and retrieval. ✅ ARCHIVE VERIFICATION: Archived requests are immediately excluded from all active request endpoints, confirming proper filtering implementation. The request status update functionality is production-ready and meets all specified requirements for status management and archival."
+
 test_plan:
   current_focus: []
   stuck_tasks: []
