@@ -10824,6 +10824,14 @@ const OnStageInterface = () => {
       const response = await axios.get(`${API}/musicians/${slug}`);
       setMusician(response.data);
       setLoading(false); // Clear loading state once musician is fetched
+      
+      // Fetch songs for this musician
+      const token = localStorage.getItem('token');
+      const songsResponse = await axios.get(`${API}/songs`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        params: { musician_id: response.data.id }
+      });
+      setSongs(songsResponse.data || []);
     } catch (error) {
       console.error('Error fetching musician:', error);
       setLoading(false); // Clear loading state even on error
