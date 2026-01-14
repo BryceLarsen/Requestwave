@@ -10685,20 +10685,24 @@ const OnStageInterface = () => {
     const validStatuses = ['pending', 'up_next', 'accepted', 'played', 'rejected'];
     if (!validStatuses.includes(status)) {
       const errorMsg = `Invalid status "${status}". Use archiveRequest() for archiving.`;
-      console.error('❌ Status Update Error:', errorMsg);
-      alert(errorMsg);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[On Stage Status Update] Invalid status:', { requestId, status });
+      }
+      showErrorToast(errorMsg);
       return;
     }
 
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        alert('Please log in again to update request status');
+        showErrorToast('Please log in again to update request status');
         return;
       }
 
       const payload = { status };
-      console.log('🔄 [On Stage] Updating request status:', { requestId, payload });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[On Stage Status Update] Request:', { requestId, status });
+      }
       
       const response = await axios.put(
         `${API}/requests/${requestId}/status`, 
@@ -10706,47 +10710,27 @@ const OnStageInterface = () => {
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       
-      console.log('✅ [On Stage] Status update successful:', response.data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[On Stage Status Update] Success:', { requestId, newStatus: response.data.new_status });
+      }
       
       // Refetch to ensure consistency
       fetchUpdates();
       
-      // Show visual feedback
-      const statusLabels = {
-        'up_next': '⬆️ Added to Up Next',
-        'played': '🎵 Marked as Played',
-        'rejected': '❌ Marked as Rejected',
-        'accepted': '✅ Accepted',
-        'pending': '🔄 Moved to Pending'
-      };
-      
-      const toast = document.createElement('div');
-      toast.textContent = statusLabels[status] || 'Status updated';
-      toast.style.cssText = `
-        position: fixed; top: 20px; right: 20px; z-index: 1000;
-        background: ${status === 'rejected' ? '#ef4444' : '#10b981'};
-        color: white; padding: 12px 20px; border-radius: 8px;
-        font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-      `;
-      document.body.appendChild(toast);
-      setTimeout(() => {
-        if (document.body.contains(toast)) {
-          document.body.removeChild(toast);
-        }
-      }, 3000);
-      
     } catch (error) {
-      console.error('❌ [On Stage] Error updating request status:', {
-        requestId,
-        status,
-        error: error.response?.data || error.message,
-        statusCode: error.response?.status
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[On Stage Status Update] Error:', {
+          requestId,
+          status,
+          error: error.response?.data || error.message,
+          statusCode: error.response?.status
+        });
+      }
       
       const errorMsg = error.response?.data?.detail || 
                        error.response?.data?.message || 
                        `Failed to update request status to "${status}"`;
-      alert(`Error: ${errorMsg}`);
+      showErrorToast(errorMsg);
     }
   };
 
@@ -10755,11 +10739,13 @@ const OnStageInterface = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        alert('Please log in again to archive request');
+        showErrorToast('Please log in again to archive request');
         return;
       }
 
-      console.log('📦 [On Stage] Archiving request:', requestId);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[On Stage Archive] Request:', requestId);
+      }
       
       const response = await axios.put(
         `${API}/requests/${requestId}/archive`,
@@ -10767,36 +10753,26 @@ const OnStageInterface = () => {
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       
-      console.log('✅ [On Stage] Archive successful:', response.data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[On Stage Archive] Success:', requestId);
+      }
       
       // Refetch to ensure consistency
       fetchUpdates();
       
-      const toast = document.createElement('div');
-      toast.textContent = '📦 Request Archived';
-      toast.style.cssText = `
-        position: fixed; top: 20px; right: 20px; z-index: 1000;
-        background: #6b7280; color: white; padding: 12px 20px; border-radius: 8px;
-        font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-      `;
-      document.body.appendChild(toast);
-      setTimeout(() => {
-        if (document.body.contains(toast)) {
-          document.body.removeChild(toast);
-        }
-      }, 3000);
-      
     } catch (error) {
-      console.error('❌ [On Stage] Error archiving request:', {
-        requestId,
-        error: error.response?.data || error.message,
-        statusCode: error.response?.status
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[On Stage Archive] Error:', {
+          requestId,
+          error: error.response?.data || error.message,
+          statusCode: error.response?.status
+        });
+      }
       
       const errorMsg = error.response?.data?.detail || 
                        error.response?.data?.message || 
                        'Failed to archive request';
-      alert(`Error: ${errorMsg}`);
+      showErrorToast(errorMsg);
     }
   };
   
