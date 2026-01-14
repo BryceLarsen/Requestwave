@@ -5133,8 +5133,19 @@ const MusicianDashboard = () => {
               </div>
             )}
             
+            {/* Empty State: No Active Show */}
+            {!currentShow && (
+              <div className="bg-gray-700/50 rounded-lg p-8 text-center mb-6">
+                <div className="text-4xl mb-4">🎤</div>
+                <h3 className="text-xl font-semibold mb-2">No Active Show</h3>
+                <p className="text-gray-400 mb-4">
+                  Start a show or wait for your first request to arrive.
+                </p>
+              </div>
+            )}
+            
             {/* Active Shows Folders (MOVED ABOVE ALL REQUESTS) */}
-            {shows.filter(show => show.status !== 'archived').length > 0 && (
+            {currentShow && shows.filter(show => show.status !== 'archived').length > 0 && (
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-4">🎭 Shows</h3>
                 <div className="space-y-3">
