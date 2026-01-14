@@ -3572,9 +3572,42 @@ async def create_request(request_data: RequestCreate):
     # Create request
     request_dict = request_data.dict()
     
-    # NEW: Get musician's current active show and assign to request
+    # Get musician's current active show
     musician = await db.musicians.find_one({"id": musician_id})
     current_show_name = musician.get("current_show_name") if musician else None
+    
+    # AUTO-SHOW CREATION: If no active show exists, create one automatically
+    if not current_show_name:
+        # Check if any active show exists
+        active_show = await db.shows.find_one({
+            "musician_id": musician_id,
+            "status": "active"
+        })
+        
+        if not active_show:
+            # Create a new auto-generated show
+            from datetime import date
+            today = date.today().strftime("%B %d, %Y")
+            new_show = {
+                "id": str(uuid.uuid4()),
+                "musician_id": musician_id,
+                "name": f"Show - {today}",
+                "date": date.today().isoformat(),
+                "venue": None,
+                "notes": "Auto-created show",
+                "status": "active",
+                "archived_at": None,
+                "restored_at": None,
+                "created_at": datetime.utcnow()
+            }
+            await db.shows.insert_one(new_show)
+            current_show_name = new_show["name"]
+            
+            # Update musician's current show
+            await db.musicians.update_one(
+                {"id": musician_id},
+                {"$set": {"current_show_name": current_show_name}}
+            )
     
     request_dict.update({
         "id": str(uuid.uuid4()),
