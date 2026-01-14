@@ -2588,6 +2588,13 @@ const MusicianDashboard = () => {
   };
 
   const batchUpdateRequestStatus = async (status) => {
+    // Validate status
+    const validStatuses = ['pending', 'up_next', 'accepted', 'played', 'rejected'];
+    if (!validStatuses.includes(status)) {
+      alert(`Invalid status "${status}". Cannot batch update to archived (use batch archive instead).`);
+      return;
+    }
+
     if (selectedRequests.size === 0) {
       alert('Please select requests to update');
       return;
@@ -2598,6 +2605,8 @@ const MusicianDashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
+      console.log(`🔄 Batch updating ${selectedRequests.size} requests to ${status}`);
+      
       const updatePromises = Array.from(selectedRequests).map(requestId =>
         axios.put(`${API}/requests/${requestId}/status`, 
           { status },
@@ -2605,16 +2614,85 @@ const MusicianDashboard = () => {
         )
       );
 
-      await Promise.all(updatePromises);
+      const results = await Promise.allSettled(updatePromises);
+      
+      // Count successes and failures
+      const successes = results.filter(r => r.status === 'fulfilled').length;
+      const failures = results.filter(r => r.status === 'rejected').length;
+      
+      console.log(`✅ Batch update complete: ${successes} success, ${failures} failed`);
+      
+      if (failures > 0) {
+        const errors = results
+          .filter(r => r.status === 'rejected')
+          .map(r => r.reason?.response?.data?.detail || r.reason?.message)
+          .join(', ');
+        console.error('❌ Batch update errors:', errors);
+      }
       
       // Clear selection and refresh
       clearRequestSelection();
       fetchRequests();
       
-      alert(`Successfully updated ${selectedRequests.size} request(s) to ${status}`);
+      if (failures === 0) {
+        alert(`✅ Successfully updated ${successes} request(s) to ${status}`);
+      } else {
+        alert(`⚠️ Updated ${successes} request(s). ${failures} failed. Check console for details.`);
+      }
     } catch (error) {
-      console.error('Error batch updating requests:', error);
+      console.error('❌ Error batch updating requests:', error);
       alert('Error updating requests. Please try again.');
+    }
+  };
+
+  const batchArchiveRequests = async () => {
+    if (selectedRequests.size === 0) {
+      alert('Please select requests to archive');
+      return;
+    }
+
+    const confirmMessage = `Archive ${selectedRequests.size} selected request(s)?`;
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      console.log(`📦 Batch archiving ${selectedRequests.size} requests`);
+      
+      const archivePromises = Array.from(selectedRequests).map(requestId =>
+        axios.put(`${API}/requests/${requestId}/archive`, 
+          {},
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        )
+      );
+
+      const results = await Promise.allSettled(archivePromises);
+      
+      // Count successes and failures
+      const successes = results.filter(r => r.status === 'fulfilled').length;
+      const failures = results.filter(r => r.status === 'rejected').length;
+      
+      console.log(`✅ Batch archive complete: ${successes} success, ${failures} failed`);
+      
+      if (failures > 0) {
+        const errors = results
+          .filter(r => r.status === 'rejected')
+          .map(r => r.reason?.response?.data?.detail || r.reason?.message)
+          .join(', ');
+        console.error('❌ Batch archive errors:', errors);
+      }
+      
+      // Clear selection and refresh
+      clearRequestSelection();
+      fetchRequests();
+      
+      if (failures === 0) {
+        alert(`✅ Successfully archived ${successes} request(s)`);
+      } else {
+        alert(`⚠️ Archived ${successes} request(s). ${failures} failed. Check console for details.`);
+      }
+    } catch (error) {
+      console.error('❌ Error batch archiving requests:', error);
+      alert('Error archiving requests. Please try again.');
     }
   };
 
@@ -2629,21 +2707,41 @@ const MusicianDashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
+      console.log(`🗑️ Batch deleting ${selectedRequests.size} requests`);
+      
       const deletePromises = Array.from(selectedRequests).map(requestId =>
         axios.delete(`${API}/requests/${requestId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       );
 
-      await Promise.all(deletePromises);
+      const results = await Promise.allSettled(deletePromises);
+      
+      // Count successes and failures
+      const successes = results.filter(r => r.status === 'fulfilled').length;
+      const failures = results.filter(r => r.status === 'rejected').length;
+      
+      console.log(`✅ Batch delete complete: ${successes} success, ${failures} failed`);
+      
+      if (failures > 0) {
+        const errors = results
+          .filter(r => r.status === 'rejected')
+          .map(r => r.reason?.response?.data?.detail || r.reason?.message)
+          .join(', ');
+        console.error('❌ Batch delete errors:', errors);
+      }
       
       // Clear selection and refresh
       clearRequestSelection();
       fetchRequests();
       
-      alert(`Successfully deleted ${selectedRequests.size} request(s)`);
+      if (failures === 0) {
+        alert(`✅ Successfully deleted ${successes} request(s)`);
+      } else {
+        alert(`⚠️ Deleted ${successes} request(s). ${failures} failed. Check console for details.`);
+      }
     } catch (error) {
-      console.error('Error batch deleting requests:', error);
+      console.error('❌ Error batch deleting requests:', error);
       alert('Error deleting requests. Please try again.');
     }
   };
