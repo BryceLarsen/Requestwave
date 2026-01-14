@@ -10578,20 +10578,37 @@ const SuggestionCard = ({ item, index, onMatchToSong, onLearnLater, onSkip, song
 
 // Shared Completed Item Component - Used by both Dashboard On Stage and Standalone On Stage
 const CompletedRequestItem = ({ request, onRestore, compact = false }) => {
+  const isSuggestion = request.type === 'suggestion';
+  const isLearnLater = isSuggestion && request.status === 'learn_later';
+  
+  const getStatusLabel = () => {
+    if (isLearnLater) return '📚 LEARN LATER';
+    if (request.status === 'played') return '🎵 PLAYED';
+    if (request.status === 'rejected') return '❌ SKIPPED';
+    return request.status;
+  };
+  
+  const getBgColor = () => {
+    if (isLearnLater) return compact ? 'bg-blue-800/50' : 'bg-blue-900/30 border-l-4 border-blue-400';
+    if (request.status === 'played') return compact ? 'bg-green-800/50' : 'bg-gray-700 border-l-4 border-gray-500 bg-gray-800/50';
+    return compact ? 'bg-red-800/30' : 'bg-gray-700 border-l-4 border-gray-500 bg-gray-800/50';
+  };
+  
   return (
-    <div className={`rounded-lg p-4 ${
-      compact 
-        ? (request.status === 'played' ? 'bg-green-800/50' : 'bg-red-800/30')
-        : 'bg-gray-700 border-l-4 border-gray-500 bg-gray-800/50'
-    }`}>
+    <div className={`rounded-lg p-4 ${getBgColor()}`}>
       <div className="flex justify-between items-start mb-3">
         <div className="flex items-center space-x-2">
+          {isSuggestion && (
+            <span className="px-2 py-1 rounded-full text-xs font-bold bg-orange-600 text-white">
+              SUGGESTION
+            </span>
+          )}
           <span className={`px-2 py-1 rounded-full text-xs font-bold ${
             compact
-              ? (request.status === 'played' ? 'bg-green-600 text-white' : 'bg-red-600 text-white')
+              ? (isLearnLater ? 'bg-blue-600 text-white' : request.status === 'played' ? 'bg-green-600 text-white' : 'bg-red-600 text-white')
               : 'bg-gray-600'
           }`}>
-            {request.status === 'played' ? '🎵 PLAYED' : '❌ SKIPPED'}
+            {getStatusLabel()}
           </span>
           {!compact && (
             <span className="text-gray-400 text-sm">
