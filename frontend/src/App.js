@@ -2486,20 +2486,24 @@ const MusicianDashboard = () => {
     const validStatuses = ['pending', 'up_next', 'accepted', 'played', 'rejected'];
     if (!validStatuses.includes(status)) {
       const errorMsg = `Invalid status "${status}". Use archiveRequest() for archiving.`;
-      console.error('❌ Status Update Error:', errorMsg);
-      alert(errorMsg);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[Status Update] Invalid status:', { requestId, status });
+      }
+      showErrorToast(errorMsg);
       return;
     }
 
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        alert('Please log in again to update request status');
+        showErrorToast('Please log in again to update request status');
         return;
       }
 
       const payload = { status };
-      console.log('🔄 Updating request status:', { requestId, payload });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Status Update] Request:', { requestId, status });
+      }
       
       const response = await axios.put(
         `${API}/requests/${requestId}/status`, 
@@ -2507,33 +2511,27 @@ const MusicianDashboard = () => {
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       
-      console.log('✅ Status update successful:', response.data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Status Update] Success:', { requestId, newStatus: response.data.new_status });
+      }
       
       // Refresh request data for both tabs
       fetchRequests();
       
-      // Show success feedback
-      const statusLabels = {
-        'up_next': '⬆️ Added to Up Next',
-        'played': '🎵 Marked as Played',
-        'rejected': '❌ Marked as Rejected',
-        'accepted': '✅ Accepted',
-        'pending': '🔄 Moved to Pending'
-      };
-      console.log(`✅ ${statusLabels[status] || 'Status updated'}`);
-      
     } catch (error) {
-      console.error('❌ Error updating request status:', {
-        requestId,
-        status,
-        error: error.response?.data || error.message,
-        statusCode: error.response?.status
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[Status Update] Error:', {
+          requestId,
+          status,
+          error: error.response?.data || error.message,
+          statusCode: error.response?.status
+        });
+      }
       
       const errorMsg = error.response?.data?.detail || 
                        error.response?.data?.message || 
                        `Failed to update request status to "${status}"`;
-      alert(`Error: ${errorMsg}`);
+      showErrorToast(errorMsg);
     }
   };
 
@@ -2542,11 +2540,13 @@ const MusicianDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        alert('Please log in again to archive request');
+        showErrorToast('Please log in again to archive request');
         return;
       }
 
-      console.log('📦 Archiving request:', requestId);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Archive] Request:', requestId);
+      }
       
       const response = await axios.put(
         `${API}/requests/${requestId}/archive`,
@@ -2554,24 +2554,26 @@ const MusicianDashboard = () => {
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       
-      console.log('✅ Archive successful:', response.data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Archive] Success:', requestId);
+      }
       
       // Refresh request data for both tabs
       fetchRequests();
       
-      console.log('✅ Request archived');
-      
     } catch (error) {
-      console.error('❌ Error archiving request:', {
-        requestId,
-        error: error.response?.data || error.message,
-        statusCode: error.response?.status
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[Archive] Error:', {
+          requestId,
+          error: error.response?.data || error.message,
+          statusCode: error.response?.status
+        });
+      }
       
       const errorMsg = error.response?.data?.detail || 
                        error.response?.data?.message || 
                        'Failed to archive request';
-      alert(`Error: ${errorMsg}`);
+      showErrorToast(errorMsg);
     }
   };
 
