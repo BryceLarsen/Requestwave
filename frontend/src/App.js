@@ -5177,7 +5177,7 @@ const MusicianDashboard = () => {
                                 request.status === 'played' ? 'bg-blue-600/20 text-blue-400' :
                                 'bg-red-600/20 text-red-400'
                               }`}>
-                                {request.status}
+                                {getStatusLabel(request.status)}
                               </span>
                               {request.status === 'pending' && (
                                 <div className="flex space-x-1">
@@ -5286,7 +5286,7 @@ const MusicianDashboard = () => {
                           request.status === 'played' ? 'bg-blue-600/20 text-blue-400' :
                           'bg-red-600/20 text-red-400'
                         }`}>
-                          {request.status}
+                          {getStatusLabel(request.status)}
                         </span>
                         {request.status === 'pending' && (
                           <div className="flex space-x-1">
