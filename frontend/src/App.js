@@ -11143,6 +11143,7 @@ const OnStageInterface = () => {
                     key={item.id} 
                     item={item} 
                     index={index}
+                    onRestore={handleRestore}
                     showMoveButtons={false}
                     isCompleted={true}
                   />
