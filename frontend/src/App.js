@@ -10445,7 +10445,7 @@ const AudienceInterface = () => {
   );
 };
 // Request Card Component for On Stage Interface
-const RequestCard = ({ item, index, onAccept, onPlay, onSkip, showMoveButtons, isUpNext, isCompleted }) => {
+const RequestCard = ({ item, index, onAccept, onPlay, onSkip, onRestore, showMoveButtons, isUpNext, isCompleted }) => {
   const isNewRequest = index === 0 && !isCompleted && !isUpNext;
   
   return (
