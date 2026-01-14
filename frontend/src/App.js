@@ -10852,6 +10852,12 @@ const OnStageInterface = () => {
     }
   };
   
+  // Request action handlers
+  const handleAccept = (requestId) => updateRequestStatus(requestId, 'up_next');
+  const handlePlay = (requestId) => updateRequestStatus(requestId, 'played');
+  const handleSkip = (requestId) => updateRequestStatus(requestId, 'rejected');
+  const handleRestore = (requestId) => updateRequestStatus(requestId, 'accepted');
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
