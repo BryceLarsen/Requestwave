@@ -10476,6 +10476,73 @@ const AudienceInterface = () => {
     </div>
   );
 };
+
+// Shared Completed Item Component - Used by both Dashboard On Stage and Standalone On Stage
+const CompletedRequestItem = ({ request, onRestore, compact = false }) => {
+  return (
+    <div className={`rounded-lg p-4 ${
+      compact 
+        ? (request.status === 'played' ? 'bg-green-800/50' : 'bg-red-800/30')
+        : 'bg-gray-700 border-l-4 border-gray-500 bg-gray-800/50'
+    }`}>
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex items-center space-x-2">
+          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+            compact
+              ? (request.status === 'played' ? 'bg-green-600 text-white' : 'bg-red-600 text-white')
+              : 'bg-gray-600'
+          }`}>
+            {request.status === 'played' ? '🎵 PLAYED' : '❌ SKIPPED'}
+          </span>
+          {!compact && (
+            <span className="text-gray-400 text-sm">
+              {new Date(request.created_at).toLocaleTimeString()}
+            </span>
+          )}
+        </div>
+      </div>
+      
+      <div className="mb-4">
+        <h4 className={`font-bold ${compact ? 'text-lg' : 'text-xl'} text-white mb-2`}>
+          {request.song_title}
+        </h4>
+        <p className={`${compact ? 'text-base' : 'text-base'} ${
+          request.status === 'played' 
+            ? (compact ? 'text-green-200' : 'text-gray-300')
+            : (compact ? 'text-red-200' : 'text-gray-300')
+        }`}>
+          by {request.song_artist}
+        </p>
+      </div>
+      
+      <div className="mb-4">
+        <p className="text-sm text-gray-300">
+          From: <strong className="text-white">{request.requester_name}</strong>
+        </p>
+        {request.dedication && (
+          <p className={`text-sm mt-1 italic ${
+            request.status === 'played'
+              ? (compact ? 'text-green-200' : 'text-purple-200')
+              : (compact ? 'text-red-200' : 'text-purple-200')
+          }`}>
+            💌 "{request.dedication}"
+          </p>
+        )}
+      </div>
+      
+      {/* Restore Button */}
+      <div className="flex space-x-2">
+        <button
+          onClick={() => onRestore(request.id)}
+          className="flex-1 bg-yellow-600 hover:bg-yellow-700 active:bg-yellow-800 py-2 px-4 rounded-lg font-bold text-white transition duration-200"
+        >
+          Restore
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // Request Card Component for On Stage Interface
 const RequestCard = ({ item, index, onAccept, onPlay, onSkip, onRestore, showMoveButtons, isUpNext, isCompleted }) => {
   const isNewRequest = index === 0 && !isCompleted && !isUpNext;
