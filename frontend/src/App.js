@@ -10457,6 +10457,125 @@ const AudienceInterface = () => {
   );
 };
 
+// Suggestion Card Component for On Stage Interface
+const SuggestionCard = ({ item, index, onMatchToSong, onLearnLater, onSkip, songs }) => {
+  const [showSongPicker, setShowSongPicker] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSongId, setSelectedSongId] = useState('');
+  
+  const filteredSongs = songs.filter(song => 
+    song.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    song.artist.toLowerCase().includes(searchTerm.toLowerCase())
+  ).slice(0, 10);
+  
+  return (
+    <div className="bg-orange-900/30 rounded-lg p-4 border-l-4 border-orange-400">
+      {/* Suggestion Label */}
+      <div className="flex justify-between items-start mb-3">
+        <span className="px-2 py-1 rounded-full text-xs font-bold bg-orange-600 text-white">
+          SUGGESTION
+        </span>
+        <span className="text-gray-400 text-sm">
+          {new Date(item.created_at).toLocaleTimeString()}
+        </span>
+      </div>
+      
+      {/* Song Info */}
+      <div className="mb-4">
+        <h3 className="font-bold text-xl mb-2 text-orange-100">
+          {item.suggested_title || item.song_title}
+        </h3>
+        <p className="text-orange-200 text-base">
+          by {item.suggested_artist || item.song_artist}
+        </p>
+      </div>
+      
+      {/* Requester Info */}
+      <div className="mb-4">
+        <div className="text-white text-lg font-bold mb-2">
+          <span className="text-gray-300 font-semibold">From:</span> <span className="font-black text-yellow-300">{item.requester_name}</span>
+        </div>
+        {item.message && (
+          <div className="text-orange-200 italic font-bold text-base">
+            💌 "{item.message}"
+          </div>
+        )}
+      </div>
+      
+      {/* Song Picker Modal */}
+      {showSongPicker && (
+        <div className="mb-4 p-3 bg-gray-800 rounded-lg">
+          <input
+            type="text"
+            placeholder="Search your songs..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full p-2 mb-2 rounded bg-gray-700 text-white"
+            autoFocus
+          />
+          <div className="max-h-48 overflow-y-auto space-y-1">
+            {filteredSongs.map(song => (
+              <div
+                key={song.id}
+                onClick={() => setSelectedSongId(song.id)}
+                className={`p-2 rounded cursor-pointer ${
+                  selectedSongId === song.id ? 'bg-purple-600' : 'bg-gray-700 hover:bg-gray-600'
+                }`}
+              >
+                <div className="font-bold text-sm">{song.title}</div>
+                <div className="text-xs text-gray-400">{song.artist}</div>
+              </div>
+            ))}
+          </div>
+          <div className="flex space-x-2 mt-2">
+            <button
+              onClick={() => {
+                if (selectedSongId) {
+                  onMatchToSong(item.id, selectedSongId);
+                  setShowSongPicker(false);
+                }
+              }}
+              disabled={!selectedSongId}
+              className="flex-1 bg-green-600 hover:bg-green-700 py-2 px-3 rounded font-bold disabled:opacity-50"
+            >
+              Confirm Match
+            </button>
+            <button
+              onClick={() => setShowSongPicker(false)}
+              className="flex-1 bg-gray-600 hover:bg-gray-700 py-2 px-3 rounded font-bold"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Actions */}
+      <div className="flex space-x-2">
+        <button
+          onClick={() => setShowSongPicker(true)}
+          className="flex-1 bg-green-600 hover:bg-green-700 py-2 px-3 rounded-lg font-bold text-white text-sm"
+        >
+          Match to Song
+        </button>
+        <button
+          onClick={() => onLearnLater(item.id)}
+          className="flex-1 bg-blue-600 hover:bg-blue-700 py-2 px-3 rounded-lg font-bold text-white text-sm"
+        >
+          Learn it later
+        </button>
+        <button
+          onClick={() => onSkip(item.id)}
+          className="bg-red-600 hover:bg-red-700 py-2 px-3 rounded-lg font-bold text-white text-sm"
+          title="Skip"
+        >
+          🗑️
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // Shared Completed Item Component - Used by both Dashboard On Stage and Standalone On Stage
 const CompletedRequestItem = ({ request, onRestore, compact = false }) => {
   return (
