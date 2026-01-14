@@ -10765,6 +10765,7 @@ const OnStageInterface = () => {
   const [musician, setMusician] = useState(null);
   const [requests, setRequests] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
+  const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newRequestCount, setNewRequestCount] = useState(0);
   const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
