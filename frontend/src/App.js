@@ -5263,45 +5263,42 @@ const MusicianDashboard = () => {
             )}
             
             {/* All Requests Section (NOW COLLAPSIBLE) */}
-            <div className="mb-6">
-              <details open={showAllRequests} className="bg-gray-700 rounded-lg">
-                <summary 
-                  className="cursor-pointer p-4 font-medium hover:bg-gray-600 rounded-lg transition duration-300 flex justify-between items-center"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setShowAllRequests(!showAllRequests);
-                  }}
-                >
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        const allRequests = currentShow ? 
-                          requests.filter(r => r.show_name === currentShow.name) :
-                          requests;
-                        if (e.target.checked) {
-                          selectAllRequests(allRequests);
-                        } else {
-                          clearRequestSelection();
-                        }
-                      }}
-                      className="rounded bg-gray-600 border-gray-500 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
-                      title="Select all requests"
-                    />
-                    <span>📥 {currentShow ? `Current Show: ${currentShow.name}` : 'All Requests'}</span>
-                    <span className="text-gray-400 text-sm">
-                      ({currentShow ? requests.filter(r => r.show_name === currentShow.name).length : requests.length} requests)
-                    </span>
-                  </div>
-                </summary>
-                <div className="px-4 pb-4 space-y-3">
-                  {(currentShow ? 
-                    requests.filter(r => r.show_name === currentShow.name) : 
-                    requests
-                  )
-                  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Most recent first
-                  .slice(0, 50).map((request) => (
+            {currentShow && (
+              <div className="mb-6">
+                <details open={showAllRequests} className="bg-gray-700 rounded-lg">
+                  <summary 
+                    className="cursor-pointer p-4 font-medium hover:bg-gray-600 rounded-lg transition duration-300 flex justify-between items-center"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowAllRequests(!showAllRequests);
+                    }}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          const currentShowRequests = requests.filter(r => r.show_name === currentShow.name);
+                          if (e.target.checked) {
+                            selectAllRequests(currentShowRequests);
+                          } else {
+                            clearRequestSelection();
+                          }
+                        }}
+                        className="rounded bg-gray-600 border-gray-500 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
+                        title="Select all requests in current show"
+                      />
+                      <span>📥 Current Show: {currentShow.name}</span>
+                      <span className="text-gray-400 text-sm">
+                        ({requests.filter(r => r.show_name === currentShow.name).length} requests)
+                      </span>
+                    </div>
+                  </summary>
+                  <div className="px-4 pb-4 space-y-3">
+                    {requests
+                      .filter(r => r.show_name === currentShow.name)
+                      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Most recent first
+                      .slice(0, 50).map((request) => (
                     <div key={request.id} className={`p-4 rounded-lg flex items-center space-x-3 ${
                       currentShow ? 'bg-gray-600 border-l-4 border-green-500' : 'bg-gray-600'
                     }`}>
