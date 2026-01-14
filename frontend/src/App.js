@@ -11074,6 +11074,52 @@ const OnStageInterface = () => {
   const handleSkip = (requestId) => updateRequestStatus(requestId, 'rejected');
   const handleRestore = (requestId) => updateRequestStatus(requestId, 'accepted');
   
+  // Suggestion action handlers
+  const handleMatchToSong = async (suggestionId, songId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(
+        `${API}/song-suggestions/${suggestionId}/match`,
+        { song_id: songId },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      fetchUpdates(); // Refresh to show new request
+    } catch (error) {
+      const errorMsg = error.response?.data?.detail || 'Failed to match suggestion';
+      showErrorToast(errorMsg, error);
+    }
+  };
+  
+  const handleLearnLater = async (suggestionId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(
+        `${API}/song-suggestions/${suggestionId}/learn-later`,
+        {},
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      fetchUpdates(); // Refresh to move to handled
+    } catch (error) {
+      const errorMsg = error.response?.data?.detail || 'Failed to mark as learn later';
+      showErrorToast(errorMsg, error);
+    }
+  };
+  
+  const handleSkipSuggestion = async (suggestionId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(
+        `${API}/song-suggestions/${suggestionId}/status`,
+        { status: 'rejected' },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      fetchUpdates(); // Refresh to move to handled
+    } catch (error) {
+      const errorMsg = error.response?.data?.detail || 'Failed to skip suggestion';
+      showErrorToast(errorMsg, error);
+    }
+  };
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
