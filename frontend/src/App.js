@@ -1302,6 +1302,38 @@ const MusicianDashboard = () => {
     };
   }, [musician.id]);
 
+  // Set default show based on musician's current_show_name or most recent active show
+  useEffect(() => {
+    if (activeTab === 'requests' && shows.length > 0 && musician) {
+      // Use backend's current_show_name if available
+      if (musician.current_show_name) {
+        const backendCurrentShow = shows.find(show => show.name === musician.current_show_name && show.status === 'active');
+        if (backendCurrentShow) {
+          setCurrentShow(backendCurrentShow);
+          return;
+        }
+      }
+      
+      // Otherwise, select most recently created active show
+      const activeShows = shows.filter(show => show.status === 'active');
+      if (activeShows.length > 0) {
+        // Sort by created_at descending (most recent first)
+        const sortedShows = [...activeShows].sort((a, b) => 
+          new Date(b.created_at) - new Date(a.created_at)
+        );
+        
+        if (process.env.NODE_ENV === 'development' && activeShows.length > 1) {
+          console.warn('[Default Show] Multiple active shows exist. Selected most recent:', sortedShows[0].name);
+        }
+        
+        setCurrentShow(sortedShows[0]);
+      } else {
+        // No active show exists
+        setCurrentShow(null);
+      }
+    }
+  }, [activeTab, shows, musician]);
+
   useEffect(() => {
     if (showProfile) {
       fetchProfile();
