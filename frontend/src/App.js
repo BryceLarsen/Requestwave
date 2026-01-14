@@ -10462,7 +10462,7 @@ const RequestCard = ({ item, index, onAccept, onPlay, onSkip, onRestore, showMov
             'bg-purple-600'
           }`}>
             {isUpNext ? '⬆️ UP NEXT' : 
-             isCompleted ? (item.status === 'played' ? '🎵 PLAYED' : '❌ REJECTED') :
+             isCompleted ? (item.status === 'played' ? '🎵 PLAYED' : '❌ SKIPPED') :
              '🎵 REQUEST'}
           </span>
           <span className="text-gray-400 text-sm">
