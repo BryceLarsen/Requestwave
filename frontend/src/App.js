@@ -11387,16 +11387,28 @@ const OnStageInterface = () => {
           ) : (
             <div className="space-y-3">
               {activeRequests.map((item, index) => (
-                <RequestCard 
-                  key={item.id} 
-                  item={item} 
-                  index={index}
-                  onAccept={handleAccept}
-                  onPlay={handlePlay}
-                  onSkip={handleSkip}
-                  showMoveButtons={true}
-                  isUpNext={false}
-                />
+                item.type === 'suggestion' ? (
+                  <SuggestionCard
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    onMatchToSong={handleMatchToSong}
+                    onLearnLater={handleLearnLater}
+                    onSkip={handleSkipSuggestion}
+                    songs={songs}
+                  />
+                ) : (
+                  <RequestCard 
+                    key={item.id} 
+                    item={item} 
+                    index={index}
+                    onAccept={handleAccept}
+                    onPlay={handlePlay}
+                    onSkip={handleSkip}
+                    showMoveButtons={true}
+                    isUpNext={false}
+                  />
+                )
               ))}
             </div>
           )}
