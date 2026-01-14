@@ -3686,10 +3686,11 @@ async def create_musician_request(
     
     # Create request
     request_dict = request_data.dict()
+    current_show_id = musician.get("current_show_id")
     current_show_name = musician.get("current_show_name")
     
     # AUTO-SHOW CREATION: If no active show exists, create one automatically
-    if not current_show_name:
+    if not current_show_id:
         # Check if any active show exists
         active_show = await db.shows.find_one({
             "musician_id": musician_id,
@@ -3697,11 +3698,12 @@ async def create_musician_request(
         })
         
         if not active_show:
-            # Create a new auto-generated show
+            # Create a new auto-generated show with unique ID
             from datetime import date
             today = date.today().strftime("%B %d, %Y")
+            show_id = str(uuid.uuid4())
             new_show = {
-                "id": str(uuid.uuid4()),
+                "id": show_id,
                 "musician_id": musician_id,
                 "name": f"Show - {today}",
                 "date": date.today().isoformat(),
@@ -3713,13 +3715,20 @@ async def create_musician_request(
                 "created_at": datetime.utcnow()
             }
             await db.shows.insert_one(new_show)
+            current_show_id = show_id
             current_show_name = new_show["name"]
             
-            # Update musician's current show
+            # Update musician's current show ID and name
             await db.musicians.update_one(
                 {"id": musician_id},
-                {"$set": {"current_show_name": current_show_name}}
+                {"$set": {
+                    "current_show_id": current_show_id,
+                    "current_show_name": current_show_name
+                }}
             )
+        else:
+            current_show_id = active_show["id"]
+            current_show_name = active_show["name"]
     
     request_dict.update({
         "id": str(uuid.uuid4()),
@@ -3727,7 +3736,8 @@ async def create_musician_request(
         "song_title": song["title"],
         "song_artist": song["artist"],
         "status": "pending",
-        "show_name": current_show_name,
+        "show_id": current_show_id,  # Primary identifier
+        "show_name": current_show_name,  # Display only
         "tip_clicked": False,
         "social_clicks": [],
         "created_at": datetime.utcnow().isoformat()
