@@ -5299,9 +5299,7 @@ const MusicianDashboard = () => {
                       .filter(r => r.show_name === currentShow.name)
                       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Most recent first
                       .slice(0, 50).map((request) => (
-                    <div key={request.id} className={`p-4 rounded-lg flex items-center space-x-3 ${
-                      currentShow ? 'bg-gray-600 border-l-4 border-green-500' : 'bg-gray-600'
-                    }`}>
+                    <div key={request.id} className="p-4 rounded-lg flex items-center space-x-3 bg-gray-600 border-l-4 border-green-500">
                       <input
                         type="checkbox"
                         checked={selectedRequests.has(request.id)}
