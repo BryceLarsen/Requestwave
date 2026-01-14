@@ -10885,6 +10885,27 @@ const OnStageInterface = () => {
   
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
+      {/* Error Toast */}
+      {errorToast.show && (
+        <div className="fixed top-4 right-4 z-50 animate-fade-in">
+          <div className="bg-red-600 text-white px-6 py-4 rounded-lg shadow-lg max-w-md">
+            <div className="flex items-start">
+              <span className="text-xl mr-3">⚠️</span>
+              <div className="flex-1">
+                <p className="font-medium">Error</p>
+                <p className="text-sm mt-1">{errorToast.message}</p>
+              </div>
+              <button
+                onClick={() => setErrorToast({ show: false, message: '' })}
+                className="ml-4 text-white hover:text-gray-200"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="bg-gray-800 rounded-xl p-4 mb-6 sticky top-4 z-10">
         <div className="flex items-center justify-between">
