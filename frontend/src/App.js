@@ -5157,7 +5157,7 @@ const MusicianDashboard = () => {
                             type="checkbox"
                             onClick={(e) => e.stopPropagation()}
                             onChange={(e) => {
-                              const showRequests = requests.filter(r => r.show_name === show.name);
+                              const showRequests = requests.filter(r => r.show_id === show.id);
                               if (e.target.checked) {
                                 selectAllRequests(showRequests);
                               } else {
@@ -5169,7 +5169,7 @@ const MusicianDashboard = () => {
                           />
                           <span>📁 {show.name} ({show.date || 'No date'})</span>
                           <span className="text-gray-400 text-sm">
-                            ({requests.filter(r => r.show_name === show.name).length} requests)
+                            ({requests.filter(r => r.show_id === show.id).length} requests)
                           </span>
                         </div>
                         <div className="flex items-center space-x-1">
@@ -5198,7 +5198,7 @@ const MusicianDashboard = () => {
                         </div>
                       </summary>
                       <div className="px-4 pb-4 space-y-2">
-                        {requests.filter(r => r.show_name === show.name)
+                        {requests.filter(r => r.show_id === show.id)
                           .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Most recent first
                           .map((request) => (
                           <div key={request.id} className="bg-gray-600 p-3 rounded flex items-center space-x-3">
@@ -5280,7 +5280,7 @@ const MusicianDashboard = () => {
                         onClick={(e) => e.stopPropagation()}
                         onChange={(e) => {
                           e.stopPropagation();
-                          const currentShowRequests = requests.filter(r => r.show_name === currentShow.name);
+                          const currentShowRequests = requests.filter(r => r.show_id === currentShow.id);
                           if (e.target.checked) {
                             selectAllRequests(currentShowRequests);
                           } else {
@@ -5292,13 +5292,13 @@ const MusicianDashboard = () => {
                       />
                       <span>📥 Current Show: {currentShow.name}</span>
                       <span className="text-gray-400 text-sm">
-                        ({requests.filter(r => r.show_name === currentShow.name).length} requests)
+                        ({requests.filter(r => r.show_id === currentShow.id).length} requests)
                       </span>
                     </div>
                   </summary>
                   <div className="px-4 pb-4 space-y-3">
                     {requests
-                      .filter(r => r.show_name === currentShow.name)
+                      .filter(r => r.show_id === currentShow.id)
                       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Most recent first
                       .slice(0, 50).map((request) => (
                     <div key={request.id} className="p-4 rounded-lg flex items-center space-x-3 bg-gray-600 border-l-4 border-green-500">
@@ -5362,7 +5362,7 @@ const MusicianDashboard = () => {
                     </div>
                   ))}
                   {(currentShow ? 
-                    requests.filter(r => r.show_name === currentShow.name).length === 0 :
+                    requests.filter(r => r.show_id === currentShow.id).length === 0 :
                     requests.length === 0
                   ) && (
                     <p className="text-gray-400 text-center py-8">
@@ -5373,11 +5373,11 @@ const MusicianDashboard = () => {
                     </p>
                   )}
                   {(currentShow ? 
-                    requests.filter(r => r.show_name === currentShow.name).length :
+                    requests.filter(r => r.show_id === currentShow.id).length :
                     requests.length
                   ) > 50 && (
                     <p className="text-gray-400 text-center text-sm">
-                      Showing 50 of {requests.filter(r => r.show_name === currentShow.name).length} requests
+                      Showing 50 of {requests.filter(r => r.show_id === currentShow.id).length} requests
                     </p>
                   )}
                 </div>
@@ -5640,7 +5640,7 @@ const MusicianDashboard = () => {
                         <div className="flex items-center space-x-3">
                           <span>📁 {show.name} ({show.date || 'No date'})</span>
                           <span className="text-gray-400 text-xs">
-                            Archived • {requests.filter(r => r.show_name === show.name).length} requests
+                            Archived • {requests.filter(r => r.show_id === show.id).length} requests
                           </span>
                         </div>
                         <div className="flex items-center space-x-1">
@@ -5671,7 +5671,7 @@ const MusicianDashboard = () => {
                       
                       {/* Archived Show Requests */}
                       <div className="px-4 pb-4 space-y-2">
-                        {requests.filter(r => r.show_name === show.name)
+                        {requests.filter(r => r.show_id === show.id)
                           .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Most recent first
                           .map((request) => (
                           <div key={request.id} className="bg-gray-600 p-3 rounded flex items-center justify-between opacity-75">
@@ -5692,7 +5692,7 @@ const MusicianDashboard = () => {
                           </div>
                         ))}
                         
-                        {requests.filter(r => r.show_name === show.name).length === 0 && (
+                        {requests.filter(r => r.show_id === show.id).length === 0 && (
                           <div className="text-center py-4 text-gray-500">
                             <p className="text-sm">No requests in this archived show</p>
                           </div>
