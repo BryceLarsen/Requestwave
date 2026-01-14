@@ -248,7 +248,9 @@ class SongSuggestion(BaseModel):
     requester_name: str
     requester_email: str
     message: str = ""  # Optional message from requester explaining why they want this song
-    status: str = "pending"  # pending, added, rejected
+    status: str = "pending"  # pending, added, rejected, learn_later
+    learn_later: bool = False  # Flag for "Learn it later" action
+    matched_song_id: Optional[str] = None  # When matched to a song in library
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 # NEW: Show management for artists
