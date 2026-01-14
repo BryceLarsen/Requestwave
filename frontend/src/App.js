@@ -727,8 +727,15 @@ const MusicianDashboard = () => {
   const [errorToast, setErrorToast] = useState({ show: false, message: '' });
   
   // Helper function to show error toast
-  const showErrorToast = (message) => {
-    setErrorToast({ show: true, message });
+  const showErrorToast = (message, error = null) => {
+    // Detect network/offline errors
+    let displayMessage = message;
+    if (error) {
+      if (!navigator.onLine || error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+        displayMessage = 'You appear to be offline. Reconnect and try again.';
+      }
+    }
+    setErrorToast({ show: true, message: displayMessage });
     setTimeout(() => setErrorToast({ show: false, message: '' }), 5000);
   };
   
@@ -10519,8 +10526,15 @@ const OnStageInterface = () => {
   const [errorToast, setErrorToast] = useState({ show: false, message: '' });
   
   // Helper function to show error toast
-  const showErrorToast = (message) => {
-    setErrorToast({ show: true, message });
+  const showErrorToast = (message, error = null) => {
+    // Detect network/offline errors
+    let displayMessage = message;
+    if (error) {
+      if (!navigator.onLine || error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+        displayMessage = 'You appear to be offline. Reconnect and try again.';
+      }
+    }
+    setErrorToast({ show: true, message: displayMessage });
     setTimeout(() => setErrorToast({ show: false, message: '' }), 5000);
   };
   
