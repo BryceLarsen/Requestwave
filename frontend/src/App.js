@@ -5891,34 +5891,14 @@ const MusicianDashboard = () => {
                       .sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at))
                       .slice(0, 10) // Show only recent 10
                       .map((request) => (
-                        <div key={request.id} className={`rounded-lg p-4 ${
-                          request.status === 'played' ? 'bg-green-800/50' : 'bg-red-800/30'
-                        }`}>
-                          <h4 className="font-bold text-lg text-white">
-                            {request.song_title}
-                          </h4>
-                          <p className={request.status === 'played' ? 'text-green-200' : 'text-red-200'}>
-                            {request.song_artist}
-                          </p>
-                          <p className="text-sm text-gray-300 mt-2">
-                            From: <strong className="text-white">{request.requester_name}</strong>
-                          </p>
-                          {request.dedication && (
-                            <p className={`text-sm mt-1 italic ${
-                              request.status === 'played' ? 'text-green-200' : 'text-red-200'
-                            }`}>
-                              "{request.dedication}"
-                            </p>
-                          )}
-                          
-                          <div className={`text-xs mt-2 px-2 py-1 rounded-full inline-block ${
-                            request.status === 'played' 
-                              ? 'bg-green-600 text-white' 
-                              : 'bg-red-600 text-white'
-                          }`}>
-                            {request.status === 'played' ? '✓ Played' : '✗ Skipped'}
-                          </div>
-                        </div>
+                        <CompletedRequestItem
+                          key={request.id}
+                          request={request}
+                          onRestore={(requestId) => {
+                            updateRequestStatus(requestId, 'accepted');
+                          }}
+                          compact={true}
+                        />
                       ))}
                     
                     {requests.filter(r => ['played', 'rejected'].includes(r.status)).length === 0 && (
