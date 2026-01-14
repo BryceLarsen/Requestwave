@@ -723,6 +723,15 @@ const MusicianDashboard = () => {
   const [openDropdownId, setOpenDropdownId] = useState(null); // NEW: Track which dropdown is open
   const [playlistsExpanded, setPlaylistsExpanded] = useState(false); // NEW: Track if playlists section is expanded
   
+  // Error toast state for request operations
+  const [errorToast, setErrorToast] = useState({ show: false, message: '' });
+  
+  // Helper function to show error toast
+  const showErrorToast = (message) => {
+    setErrorToast({ show: true, message });
+    setTimeout(() => setErrorToast({ show: false, message: '' }), 5000);
+  };
+  
   // NEW: Tip functionality functions
   const handleTipButton = (songId = null) => {
     setTipSongId(songId);
