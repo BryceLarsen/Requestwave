@@ -5740,6 +5740,11 @@ const MusicianDashboard = () => {
         {/* On Stage Tab - Dedicated tab for live performance management */}
         {activeTab === 'onstage' && (
           <div className="space-y-6">
+            {/* Build Marker */}
+            <div className="bg-purple-900/30 border border-purple-500/50 rounded-lg p-3 text-center">
+              <span className="text-purple-300 font-mono text-sm">Build: preview-restore-1A7C</span>
+            </div>
+            
             {/* Three-Panel Layout: Up Next | Active Requests | Completed Requests */}
             {/* NOTE: Up Next panel is conditionally rendered only when there are up_next songs */}
             <div className={`grid grid-cols-1 gap-6 ${
