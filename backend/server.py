@@ -3125,6 +3125,106 @@ async def update_suggestion_status(
         logger.error(f"Error updating suggestion status: {str(e)}")
         raise HTTPException(status_code=500, detail="Error updating suggestion status")
 
+@api_router.put("/song-suggestions/{suggestion_id}/match")
+async def match_suggestion_to_song(
+    suggestion_id: str,
+    match_data: dict,  # {"song_id": "uuid"}
+    musician_id: str = Depends(get_current_musician)
+):
+    """Match a suggestion to an existing song and convert to a normal request"""
+    try:
+        # Verify suggestion belongs to musician
+        suggestion = await db.song_suggestions.find_one({"id": suggestion_id, "musician_id": musician_id})
+        if not suggestion:
+            raise HTTPException(status_code=404, detail="Song suggestion not found")
+        
+        song_id = match_data.get("song_id")
+        if not song_id:
+            raise HTTPException(status_code=400, detail="song_id is required")
+        
+        # Verify song exists and belongs to musician
+        song = await db.songs.find_one({"id": song_id, "musician_id": musician_id})
+        if not song:
+            raise HTTPException(status_code=404, detail="Song not found")
+        
+        # Get musician's current show
+        musician = await db.musicians.find_one({"id": musician_id})
+        current_show_id = musician.get("current_show_id") if musician else None
+        current_show_name = musician.get("current_show_name") if musician else None
+        
+        # Create a normal request from the suggestion
+        request_dict = {
+            "id": str(uuid.uuid4()),
+            "musician_id": musician_id,
+            "song_id": song_id,
+            "song_title": song["title"],
+            "song_artist": song["artist"],
+            "requester_name": suggestion["requester_name"],
+            "requester_email": suggestion["requester_email"],
+            "dedication": suggestion.get("message", ""),
+            "status": "pending",
+            "show_id": current_show_id,
+            "show_name": current_show_name,
+            "tip_amount": 0.0,
+            "tip_clicked": False,
+            "social_clicks": [],
+            "created_at": suggestion["created_at"]  # Preserve original timestamp
+        }
+        
+        await db.requests.insert_one(request_dict)
+        
+        # Update suggestion to mark as matched
+        await db.song_suggestions.update_one(
+            {"id": suggestion_id},
+            {"$set": {
+                "status": "added",
+                "matched_song_id": song_id
+            }}
+        )
+        
+        # Increment song request count
+        await db.songs.update_one(
+            {"id": song_id},
+            {"$inc": {"request_count": 1}}
+        )
+        
+        return {"success": True, "request_id": request_dict["id"], "message": "Suggestion matched to song successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error matching suggestion to song: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error matching suggestion to song")
+
+@api_router.put("/song-suggestions/{suggestion_id}/learn-later")
+async def mark_suggestion_learn_later(
+    suggestion_id: str,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Mark suggestion as 'learn it later' - moves to handled but keeps visible in suggestions"""
+    try:
+        # Verify suggestion belongs to musician
+        suggestion = await db.song_suggestions.find_one({"id": suggestion_id, "musician_id": musician_id})
+        if not suggestion:
+            raise HTTPException(status_code=404, detail="Song suggestion not found")
+        
+        # Update suggestion
+        await db.song_suggestions.update_one(
+            {"id": suggestion_id},
+            {"$set": {
+                "status": "learn_later",
+                "learn_later": True
+            }}
+        )
+        
+        return {"success": True, "message": "Suggestion marked as learn later"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error marking suggestion learn later: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error marking suggestion learn later")
+
 @api_router.delete("/song-suggestions/{suggestion_id}")
 async def delete_song_suggestion(suggestion_id: str, musician_id: str = Depends(get_current_musician)):
     """Delete a song suggestion"""
