@@ -11162,6 +11162,7 @@ const OnStageInterface = () => {
               <div className="flex items-center space-x-2">
                 <span className="text-2xl">✅</span>
                 <h2 className="text-xl font-bold text-gray-300">Completed Requests ({completedRequests.length})</h2>
+                <span className="text-xs text-gray-500">restore-v1</span>
               </div>
               <span className={`text-xl transition-transform ${completedSectionCollapsed ? 'rotate-90' : 'rotate-0'}`}>
                 ▶️
