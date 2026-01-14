@@ -5375,15 +5375,13 @@ const MusicianDashboard = () => {
                     requests.length
                   ) > 50 && (
                     <p className="text-gray-400 text-center text-sm">
-                      Showing 50 of {currentShow ? 
-                        requests.filter(r => r.show_name === currentShow.name).length :
-                        requests.length
-                      } requests
+                      Showing 50 of {requests.filter(r => r.show_name === currentShow.name).length} requests
                     </p>
                   )}
                 </div>
               </details>
             </div>
+            )}
             
           </div>
         )}
