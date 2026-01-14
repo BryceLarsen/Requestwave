@@ -2577,6 +2577,19 @@ const MusicianDashboard = () => {
     }
   };
 
+  // Helper: Map backend status to display label
+  const getStatusLabel = (status) => {
+    const labels = {
+      'pending': 'Pending',
+      'up_next': 'Up Next',
+      'accepted': 'Accepted',
+      'played': 'Played',
+      'rejected': 'Skipped',  // Display as "Skipped" but backend stores "rejected"
+      'archived': 'Archived'
+    };
+    return labels[status] || status;
+  };
+
   const clearRequestSelection = () => {
     setSelectedRequests(new Set());
   };
