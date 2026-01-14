@@ -10758,9 +10758,12 @@ const OnStageInterface = () => {
         });
       }
       
-      // Update suggestions if available
-      if (data.suggestions) {
-        setSuggestions(data.suggestions);
+      // Update suggestions - only pending and learn_later (not matched/rejected)
+      if (suggestionsResponse.data) {
+        const activeSuggestions = suggestionsResponse.data.filter(s => 
+          s.status === 'pending' || s.status === 'learn_later'
+        );
+        setSuggestions(activeSuggestions);
       }
       
       setLoading(false);
