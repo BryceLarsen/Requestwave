@@ -345,7 +345,16 @@ class RequestStatusTester:
             response = requests.get(f"{EXTERNAL_BASE_URL}/requests/musician/{self.musician_id}", headers=headers, timeout=30)
             
             if response.status_code == 200:
-                requests_list = response.json()
+                response_data = response.json()
+                
+                # Handle both list and dict response formats
+                if isinstance(response_data, dict) and "requests" in response_data:
+                    requests_list = response_data["requests"]
+                elif isinstance(response_data, list):
+                    requests_list = response_data
+                else:
+                    self.log_result("Verify Archive - Exclusion", False, f"Unexpected response format: {type(response_data)}")
+                    return
                 
                 # Look for our request in the list (it should NOT be there since archived requests are excluded)
                 found_request = None
