@@ -5054,7 +5054,7 @@ const MusicianDashboard = () => {
                       onClick={() => batchUpdateRequestStatus('rejected')}
                       className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
                     >
-                      ❌ Mark as Rejected
+                      ❌ Mark as Skipped
                     </button>
                     <button
                       onClick={batchArchiveRequests}
@@ -5384,7 +5384,7 @@ const MusicianDashboard = () => {
                             onClick={() => batchSuggestionAction('rejected')}
                             className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
                           >
-                            ❌ Reject All
+                            ❌ Skip All
                           </button>
                           <button
                             onClick={batchDeleteSuggestions}
@@ -5475,9 +5475,9 @@ const MusicianDashboard = () => {
                                   <button
                                     onClick={() => handleSuggestionAction(suggestion.id, 'rejected', suggestion.suggested_title)}
                                     className="bg-red-600 hover:bg-red-700 text-xs px-3 py-1 rounded transition duration-300"
-                                    title="Reject suggestion"
+                                    title="Skip suggestion"
                                   >
-                                    ❌ Reject
+                                    ❌ Skip
                                   </button>
                                 </div>
                               )}
@@ -7907,9 +7907,9 @@ const MusicianDashboard = () => {
                         <div className="ml-4 space-y-1">
                           <p className="text-gray-300 text-sm">• <span className="text-blue-300">Up Next</span>: your active queue</p>
                           <p className="text-gray-300 text-sm">• <span className="text-purple-300">Requests</span>: incoming songs</p>
-                          <p className="text-gray-300 text-sm">• <span className="text-green-300">Played/Rejected</span>: history log</p>
+                          <p className="text-gray-300 text-sm">• <span className="text-green-300">Played/Skipped</span>: history log</p>
                         </div>
-                        <p className="text-gray-300 text-sm">• Mark songs as Up Next, Played, or Rejected. Played songs automatically move down the list to keep the queue clear.</p>
+                        <p className="text-gray-300 text-sm">• Mark songs as Up Next, Played, or Skipped. Played songs automatically move down the list to keep the queue clear.</p>
                       </div>
                     </div>
                     
@@ -10388,7 +10388,7 @@ const AudienceInterface = () => {
   );
 };
 // Request Card Component for On Stage Interface
-const RequestCard = ({ item, index, onAccept, onPlay, onReject, showMoveButtons, isUpNext, isCompleted }) => {
+const RequestCard = ({ item, index, onAccept, onPlay, onSkip, showMoveButtons, isUpNext, isCompleted }) => {
   const isNewRequest = index === 0 && !isCompleted && !isUpNext;
   
   return (
@@ -10463,10 +10463,10 @@ const RequestCard = ({ item, index, onAccept, onPlay, onReject, showMoveButtons,
             🎵 Play Now
           </button>
           <button
-            onClick={() => onReject(item.id)}
+            onClick={() => onSkip(item.id)}
             className="flex-1 bg-red-600 hover:bg-red-700 active:bg-red-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
           >
-            ❌ Reject
+            ❌ Skip
           </button>
         </div>
       )}
@@ -10481,7 +10481,7 @@ const RequestCard = ({ item, index, onAccept, onPlay, onReject, showMoveButtons,
             🎵 Play Now
           </button>
           <button
-            onClick={() => onReject(item.id)}
+            onClick={() => onSkip(item.id)}
             className="flex-1 bg-red-600 hover:bg-red-700 active:bg-red-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
           >
             ❌ Remove
@@ -10988,7 +10988,7 @@ const OnStageInterface = () => {
                   item={item} 
                   index={index}
                   onPlay={handlePlay}
-                  onReject={handleReject}
+                  onSkip={handleSkip}
                   showMoveButtons={false}
                   isUpNext={true}
                 />
@@ -11029,7 +11029,7 @@ const OnStageInterface = () => {
                   index={index}
                   onAccept={handleAccept}
                   onPlay={handlePlay}
-                  onReject={handleReject}
+                  onSkip={handleSkip}
                   showMoveButtons={true}
                   isUpNext={false}
                 />
