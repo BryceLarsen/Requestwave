@@ -11237,7 +11237,6 @@ const OnStageInterface = () => {
       {/* Footer */}
       <div className="mt-8 text-center text-gray-500 text-sm">
         <p>Updates automatically • Keep this tab open during your performance</p>
-        <p className="mt-2 text-gray-600 text-xs">Build: restore-v1</p>
         {!notificationsEnabled && (
           <button 
             onClick={requestNotificationPermission}
