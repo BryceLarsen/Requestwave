@@ -10545,6 +10545,23 @@ const RequestCard = ({ item, index, onAccept, onPlay, onSkip, showMoveButtons, i
           </button>
         </div>
       )}
+      
+      {/* Completed Section - Restore Button */}
+      {isCompleted && (
+        <div className="flex space-x-2">
+          <button
+            onClick={() => {
+              // Restore by setting status back to accepted
+              if (window.updateRequestStatus) {
+                window.updateRequestStatus(item.id, 'accepted');
+              }
+            }}
+            className="flex-1 bg-yellow-600 hover:bg-yellow-700 active:bg-yellow-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
+          >
+            ↩️ Restore to Active
+          </button>
+        </div>
+      )}
     </div>
   );
 };
