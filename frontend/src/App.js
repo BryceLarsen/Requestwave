@@ -10723,6 +10723,12 @@ const OnStageInterface = () => {
       
       console.log('On Stage update received:', data);
       
+      // Fetch suggestions separately
+      const token = localStorage.getItem('token');
+      const suggestionsResponse = await axios.get(`${API}/song-suggestions`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      
       // Update requests with real data from backend
       if (data.requests) {
         // Keep existing request statuses if they were updated locally
