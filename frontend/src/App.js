@@ -11171,14 +11171,52 @@ const OnStageInterface = () => {
             {!completedSectionCollapsed && (
               <div className="p-4 pt-0 space-y-3 max-h-96 overflow-y-auto">
                 {completedRequests.map((item, index) => (
-                  <RequestCard 
-                    key={item.id} 
-                    item={item} 
-                    index={index}
-                    onRestore={handleRestore}
-                    showMoveButtons={false}
-                    isCompleted={true}
-                  />
+                  <div key={item.id} className="bg-gray-700 rounded-lg p-4 border-l-4 border-gray-500 bg-gray-800/50">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center space-x-2">
+                        <span className="px-2 py-1 rounded-full text-xs font-bold bg-gray-600">
+                          {item.status === 'played' ? '🎵 PLAYED' : '❌ SKIPPED'}
+                        </span>
+                        <span className="text-gray-400 text-sm">
+                          {new Date(item.created_at).toLocaleTimeString()}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Song Info */}
+                    <div className="mb-4">
+                      <h3 className="font-bold text-xl mb-2">
+                        {item.song_title || item.title}
+                      </h3>
+                      <p className="text-gray-300 text-base">
+                        by {item.song_artist || item.artist}
+                      </p>
+                    </div>
+                    
+                    {/* Requester Info */}
+                    <div className="mb-4">
+                      <div className="text-white text-lg font-bold mb-2">
+                        <span className="text-gray-300 font-semibold">From:</span> <span className="font-black text-yellow-300">{item.requester_name || 'Anonymous'}</span>
+                      </div>
+                      {item.dedication && (
+                        <div className="text-purple-200 italic font-bold text-base">
+                          💌 "{item.dedication}"
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Restore Button - Always visible for completed items */}
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => {
+                          updateRequestStatus(item.id, 'accepted');
+                        }}
+                        className="flex-1 bg-yellow-600 hover:bg-yellow-700 active:bg-yellow-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
+                      >
+                        Restore
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
