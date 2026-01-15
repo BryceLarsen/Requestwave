@@ -5951,20 +5951,25 @@ const MusicianDashboard = () => {
                 </div>
               </div>
 
-              {/* Completed Requests Panel */}
+              {/* Handled Requests Panel */}
               <div className="bg-green-900/50 rounded-xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold text-green-300">✅ Completed</h3>
-                  <div className="flex items-center space-x-2">
-                    <div className="text-sm text-gray-400">
-                      {requests.filter(r => ['played', 'rejected'].includes(r.status)).length} done
+                <div className="mb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xl font-bold text-green-300">✅ Handled</h3>
+                      <p className="text-sm text-gray-400 mt-1">Played, skipped, or saved for later.</p>
                     </div>
-                    <button
-                      onClick={() => setCompletedSectionCollapsed(!completedSectionCollapsed)}
-                      className="text-gray-400 hover:text-white transition-colors"
-                    >
-                      {completedSectionCollapsed ? '▼' : '▲'}
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      <div className="text-sm text-gray-400">
+                        {requests.filter(r => ['played', 'rejected'].includes(r.status)).length} done
+                      </div>
+                      <button
+                        onClick={() => setCompletedSectionCollapsed(!completedSectionCollapsed)}
+                        className="text-gray-400 hover:text-white transition-colors"
+                      >
+                        {completedSectionCollapsed ? '▼' : '▲'}
+                      </button>
+                    </div>
                   </div>
                 </div>
                 
