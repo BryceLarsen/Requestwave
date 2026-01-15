@@ -3816,9 +3816,10 @@ async def create_request(request_data: RequestCreate):
     await emit_analytics_event(
         event_type="audience.request_submitted",
         musician_id=musician_id,
+        source="audience",
+        entity_type="request",
         show_id=current_show_id,
         entity_id=request_dict["id"],
-        entity_type="request",
         metadata={
             "song_id": request_data.song_id,
             "song_title": song["title"],
@@ -3826,7 +3827,7 @@ async def create_request(request_data: RequestCreate):
             "has_dedication": bool(request_data.dedication),
             "tip_amount": request_data.tip_amount
         },
-        requester_email=request_data.requester_email
+        requester_email_norm=request_data.requester_email
     )
     
     # NEW: Increment request count for the song
