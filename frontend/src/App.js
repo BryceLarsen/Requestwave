@@ -1078,7 +1078,7 @@ const MusicianDashboard = () => {
         fetchGroupedRequests();
         fetchShows();
         fetchCurrentShow(); // Update current show status
-        alert(`Show "${showName}" restored successfully!`);
+        // UI update implies success - no alert needed
         
         // Telemetry: Restore success
         console.log('show_restore_success', {
