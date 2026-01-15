@@ -2755,12 +2755,9 @@ const MusicianDashboard = () => {
       clearRequestSelection();
       fetchRequests();
       
-      if (failures === 0) {
-        alert(`Successfully archived ${successes} request(s)`);
-      } else {
+      if (failures > 0) {
         const message = `Archived ${successes} request(s). ${failures} failed.`;
         showErrorToast(message);
-        alert(message + ' Check console for details.');
       }
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
@@ -2809,12 +2806,9 @@ const MusicianDashboard = () => {
       clearRequestSelection();
       fetchRequests();
       
-      if (failures === 0) {
-        alert(`Successfully deleted ${successes} request(s)`);
-      } else {
+      if (failures > 0) {
         const message = `Deleted ${successes} request(s). ${failures} failed.`;
         showErrorToast(message);
-        alert(message + ' Check console for details.');
       }
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
