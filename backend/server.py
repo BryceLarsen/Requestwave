@@ -3805,6 +3805,23 @@ async def create_request(request_data: RequestCreate):
     
     await db.requests.insert_one(request_dict)
     
+    # Emit analytics event: audience.request_submitted
+    await emit_analytics_event(
+        event_type="audience.request_submitted",
+        musician_id=musician_id,
+        show_id=current_show_id,
+        entity_id=request_dict["id"],
+        entity_type="request",
+        metadata={
+            "song_id": request_data.song_id,
+            "song_title": song["title"],
+            "song_artist": song["artist"],
+            "has_dedication": bool(request_data.dedication),
+            "tip_amount": request_data.tip_amount
+        },
+        requester_email=request_data.requester_email
+    )
+    
     # NEW: Increment request count for the song
     await db.songs.update_one(
         {"id": request_data.song_id},
