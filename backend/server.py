@@ -4287,10 +4287,35 @@ async def get_daily_analytics(
         }
         
         # Add date range filter only if days is specified
+        # Handle mixed created_at types: some are datetime, some are ISO 8601 strings
+        # Use $or to match both: datetime with $gte/$lte, strings with lexicographic comparison
         if days is not None:
             end_date = datetime.utcnow()
             start_date = end_date - timedelta(days=days)
-            query_filter["created_at"] = {"$gte": start_date, "$lte": end_date}
+            
+            # ISO 8601 string bounds for lexicographic comparison
+            start_str = start_date.strftime("%Y-%m-%dT%H:%M:%S")
+            end_str = end_date.strftime("%Y-%m-%dT%H:%M:%S")
+            
+            # Dual-path filter: match datetime OR ISO string within range
+            query_filter["$or"] = [
+                # Path A: created_at is a datetime object
+                {
+                    "created_at": {
+                        "$type": "date",
+                        "$gte": start_date,
+                        "$lte": end_date
+                    }
+                },
+                # Path B: created_at is an ISO 8601 string (lexicographic comparison)
+                {
+                    "created_at": {
+                        "$type": "string",
+                        "$gte": start_str,
+                        "$lte": end_str
+                    }
+                }
+            ]
         
         # Get requests (all time if days=None, or within date range)
         requests = await db.requests.find(query_filter).to_list(10000)
