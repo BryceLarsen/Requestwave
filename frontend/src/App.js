@@ -5982,27 +5982,56 @@ const MusicianDashboard = () => {
                 
                 {!completedSectionCollapsed && (
                   <div className="space-y-3">
-                    {requests
-                      .filter(r => ['played', 'rejected'].includes(r.status))
-                      .sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at))
-                      .slice(0, 10) // Show only recent 10
-                      .map((request) => (
+                    {(() => {
+                      // Merge completed requests and handled suggestions
+                      const completedReqs = requests.filter(r => ['played', 'rejected'].includes(r.status)).map(r => ({...r, type: 'request'}));
+                      const handledSuggs = songSuggestions.filter(s => s.status === 'learn_later' || s.status === 'rejected').map(s => ({
+                        ...s,
+                        type: 'suggestion',
+                        song_title: s.suggested_title,
+                        song_artist: s.suggested_artist,
+                        dedication: s.message,
+                        requester_name: s.requester_name,
+                        status: s.status === 'learn_later' ? 'learn_later' : 'rejected'
+                      }));
+                      const completedItems = [...completedReqs, ...handledSuggs].sort((a, b) => 
+                        new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)
+                      ).slice(0, 10);
+                      
+                      if (completedItems.length === 0) {
+                        return (
+                          <div className="text-center py-8 text-gray-400">
+                            <p>No completed requests yet</p>
+                            <p className="text-sm mt-1">Played and skipped songs will appear here</p>
+                          </div>
+                        );
+                      }
+                      
+                      return completedItems.map((item) => (
                         <CompletedRequestItem
-                          key={request.id}
-                          request={request}
-                          onRestore={(requestId) => {
-                            updateRequestStatus(requestId, 'accepted');
+                          key={item.id}
+                          request={item}
+                          onRestore={(itemId) => {
+                            if (item.type === 'suggestion') {
+                              // Restore suggestion by setting status back to pending
+                              const token = localStorage.getItem('token');
+                              axios.put(
+                                `${API}/song-suggestions/${itemId}/status`,
+                                { status: 'pending' },
+                                { headers: { 'Authorization': `Bearer ${token}` } }
+                              ).then(() => {
+                                fetchSongSuggestions();
+                              }).catch((error) => {
+                                showErrorToast(error.response?.data?.detail || 'Failed to restore suggestion', error);
+                              });
+                            } else {
+                              updateRequestStatus(itemId, 'accepted');
+                            }
                           }}
                           compact={true}
                         />
-                      ))}
-                    
-                    {requests.filter(r => ['played', 'rejected'].includes(r.status)).length === 0 && (
-                      <div className="text-center py-8 text-gray-400">
-                        <p>No completed requests yet</p>
-                        <p className="text-sm mt-1">Played and skipped songs will appear here</p>
-                      </div>
-                    )}
+                      ));
+                    })()}
                   </div>
                 )}
                 
