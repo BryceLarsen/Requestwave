@@ -46,18 +46,43 @@ Live music request platform enabling musicians to receive song requests from aud
 - ✅ Learn Later toggle on Songs tab showing learn_later suggestions
 - ✅ Restore archived shows without success popup
 
+### Bug Fixes (January 15, 2026)
+
+#### P0: Analytics Period Filters - FIXED
+- **Issue**: `days=0` (All Time) returned 0 results instead of all requests
+- **Root Cause**: Condition `if days is not None` treated `days=0` as a date filter
+- **Fix**: Changed to `if days is not None and days > 0` to correctly identify All Time
+- **File**: `/app/backend/server.py` line ~4315
+
+#### P1: Learn Later List Actions - FIXED
+- **Issue**: Match button caused runtime errors, Restore button was redundant
+- **Root Cause**: Calls to non-existent `setShowMatchModal(true)` function
+- **Fix**: Removed `setShowMatchModal(true)` calls, removed Restore button
+- **File**: `/app/frontend/src/App.js` lines ~4850-4888
+
+#### P2: On Stage Tab Scope - FIXED
+- **Issue**: On Stage tab showed all requests/suggestions, not just active show
+- **Root Cause**: Missing `currentShow` conditional and show_id filtering
+- **Fix**: 
+  - Added empty state when no active show exists
+  - Filtered all requests/suggestions by `show_id === currentShow.id`
+  - Updated useEffect to run on 'onstage' tab too
+- **File**: `/app/frontend/src/App.js` lines ~5822-6143
+
 ### Architecture
 
 #### Backend: `/app/backend/server.py`
 - SongSuggestion model includes `show_id` and `show_name`
 - Auto-show creation in suggestion submission endpoint
 - Analytics events for all suggestion and show lifecycle actions
+- Timezone-aware analytics with musician timezone stored in profile
 
 #### Frontend: `/app/frontend/src/App.js`
 - Show tiles display "(X requests, Y suggestions)" counts
 - Collapsible Requests and Suggestions sections within each show
 - Batch actions: Learn Later, Skip, Trash for suggestions
-- Learn Later view on Songs tab with Match, Add, Restore, Delete actions
+- Learn Later view on Songs tab with Match, Add, Trash actions
+- On Stage tab shows empty state when no active show, filters by currentShow when active
 
 ## Key API Endpoints
 - `/api/requests` - Create request
@@ -67,21 +92,24 @@ Live music request platform enabling musicians to receive song requests from aud
 - `/api/song-suggestions/{id}/status` - Update suggestion status
 - `/api/song-suggestions/{id}/match` - Match suggestion to song
 - `/api/song-suggestions/{id}/learn-later` - Mark as learn later
-- `/api/shows/start` - Start show
+- `/api/shows/start` - Start show (captures musician timezone)
 - `/api/shows/stop` - Stop show
 - `/api/shows/{id}/archive` - Archive show
 - `/api/shows/{id}/restore` - Restore show
+- `/api/analytics/daily` - Get daily analytics (timezone-aware)
 
 ## Known Edge Cases
 1. Legacy suggestions without show_id appear in "Unassigned Suggestions"
 2. Archived shows don't show suggestions count in summary
 3. "Song Suggestions" button at top still exists for backwards compatibility
+4. `created_at` field in requests/suggestions has mixed types (string/datetime)
 
 ## Upcoming Tasks (Backlog)
 - Build analytics UI powered by `analytics_events`
 - Spotify Web API integration for playlist enrichment
 - Show rename functionality
 - Frontend refactoring (App.js is ~12,000+ lines)
+- Increment 4: Update UI to format timestamps in musician's local timezone
 
 ## Technical Debt
 - `/app/frontend/src/App.js` is monolithic (~12,000+ lines)
@@ -92,3 +120,7 @@ Live music request platform enabling musicians to receive song requests from aud
 - Backend: FastAPI (Python)
 - Frontend: React
 - Database: MongoDB
+
+## Test Credentials
+- Email: test@test.com
+- Password: test
