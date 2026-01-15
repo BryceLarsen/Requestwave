@@ -5470,6 +5470,8 @@ async def archive_show(
         if show.get("status") == "archived":
             raise HTTPException(status_code=400, detail="Show is already archived")
         
+        show_name = show.get("name")
+        
         # Archive the show
         await db.shows.update_one(
             {"id": show_id},
@@ -5486,6 +5488,19 @@ async def archive_show(
                 {"id": musician_id},
                 {"$set": {"current_show_id": None, "current_show_name": None}}
             )
+        
+        # Emit analytics event
+        await emit_analytics_event(
+            event_type="musician.show_archived",
+            musician_id=musician_id,
+            source="musician",
+            entity_type="show",
+            show_id=show_id,
+            entity_id=show_id,
+            metadata={
+                "show_name": show_name
+            }
+        )
         
         logger.info(f"Archived show {show_id} for musician {musician_id}")
         return {"success": True, "message": f"Show '{show['name']}' archived successfully"}
