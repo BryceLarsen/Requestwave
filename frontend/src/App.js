@@ -1140,7 +1140,7 @@ const MusicianDashboard = () => {
   };
 
   const handleDeleteSuggestion = async (suggestionId, suggestionTitle) => {
-    if (confirm(`Permanently delete suggestion "${suggestionTitle}"?`)) {
+    if (confirm(`Delete "${suggestionTitle}"?\n\nThis action cannot be undone.`)) {
       try {
         await axios.delete(`${API}/song-suggestions/${suggestionId}`);
         fetchSongSuggestions();
