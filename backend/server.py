@@ -4379,10 +4379,10 @@ async def get_daily_analytics(
                 logger.info(f"[Analytics] query_filter=$or with Date[$gte={start_date.isoformat()}, $lte={end_date.isoformat()}] OR String[$gte={start_str}, $lte={end_str}]")
                 logger.info(f"[Analytics] =====================================")
         else:
-            # All time - no date filter
+            # All time - no date filter (days=None or days=0)
             if os.environ.get("NODE_ENV") == "development":
                 logger.info(f"[Analytics] ========== ANALYTICS CALL ==========")
-                logger.info(f"[Analytics] days_param=None (All Time)")
+                logger.info(f"[Analytics] days_param={days} (All Time)")
                 logger.info(f"[Analytics] musician_id=[REDACTED]")
                 logger.info(f"[Analytics] musician_timezone={tz_str}")
                 logger.info(f"[Analytics] No date filter applied")
