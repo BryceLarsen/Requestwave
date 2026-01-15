@@ -3070,10 +3070,10 @@ async def get_song_suggestions(musician_id: str = Depends(get_current_musician))
 @api_router.put("/song-suggestions/{suggestion_id}/status")
 async def update_suggestion_status(
     suggestion_id: str,
-    status_data: dict,  # {"status": "added|rejected"}
+    status_data: dict,  # {"status": "pending|learn_later|rejected|added"}
     musician_id: str = Depends(get_current_musician)
 ):
-    """Update song suggestion status (add to repertoire or reject)"""
+    """Update song suggestion status (restore to pending, learn later, reject, or add to repertoire)"""
     try:
         # Verify suggestion belongs to musician
         suggestion = await db.song_suggestions.find_one({"id": suggestion_id, "musician_id": musician_id})
@@ -3081,8 +3081,9 @@ async def update_suggestion_status(
             raise HTTPException(status_code=404, detail="Song suggestion not found")
         
         new_status = status_data.get("status")
-        if new_status not in ["added", "rejected"]:
-            raise HTTPException(status_code=400, detail="Status must be 'added' or 'rejected'")
+        valid_statuses = ["pending", "learn_later", "rejected", "added"]
+        if new_status not in valid_statuses:
+            raise HTTPException(status_code=400, detail=f"Status must be one of: {', '.join(valid_statuses)}")
         
         # If adding to repertoire, create the song
         if new_status == "added":
@@ -3111,10 +3112,16 @@ async def update_suggestion_status(
                 }
                 await db.songs.insert_one(song_dict)
         
-        # Update suggestion status
+        # Update suggestion status and learn_later flag if needed
+        update_data = {"status": new_status}
+        if new_status == "learn_later":
+            update_data["learn_later"] = True
+        elif new_status == "pending":
+            update_data["learn_later"] = False
+        
         await db.song_suggestions.update_one(
             {"id": suggestion_id},
-            {"$set": {"status": new_status}}
+            {"$set": update_data}
         )
         
         return {"success": True, "message": f"Song suggestion {new_status} successfully"}
