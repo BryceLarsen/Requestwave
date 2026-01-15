@@ -4287,6 +4287,7 @@ async def get_daily_analytics(
         # Import zoneinfo for timezone handling
         from zoneinfo import ZoneInfo
         import os
+        import json as json_lib
         
         # Fetch musician to get their timezone
         musician = await db.musicians.find_one({"id": musician_id})
@@ -4337,12 +4338,6 @@ async def get_daily_analytics(
             start_str = start_date.strftime("%Y-%m-%dT%H:%M:%S")
             end_str = end_date.strftime("%Y-%m-%dT%H:%M:%S")
             
-            # Dev-only logging for debugging timezone boundaries
-            if os.environ.get("NODE_ENV") == "development":
-                logger.info(f"[Analytics] musician_timezone={tz_str}")
-                logger.info(f"[Analytics] now_local={now_local.isoformat()}, start_local={start_local.isoformat()}, end_local={end_local.isoformat()}")
-                logger.info(f"[Analytics] start_utc={start_date.isoformat()}, end_utc={end_date.isoformat()}")
-            
             # Dual-path filter: match datetime OR ISO string within range
             query_filter["$or"] = [
                 # Path A: created_at is a datetime object
@@ -4362,6 +4357,35 @@ async def get_daily_analytics(
                     }
                 }
             ]
+            
+            # Dev-only detailed logging
+            if os.environ.get("NODE_ENV") == "development":
+                # Redact musician_id for logging
+                log_filter = {**query_filter, "musician_id": "[REDACTED]"}
+                # Convert datetime objects to strings for JSON serialization
+                def serialize_filter(obj):
+                    if isinstance(obj, datetime):
+                        return obj.isoformat()
+                    return str(obj)
+                logger.info(f"[Analytics] ========== ANALYTICS CALL ==========")
+                logger.info(f"[Analytics] days_param={days}")
+                logger.info(f"[Analytics] musician_id=[REDACTED]")
+                logger.info(f"[Analytics] musician_timezone={tz_str}")
+                logger.info(f"[Analytics] start_local={start_local.isoformat()}")
+                logger.info(f"[Analytics] end_local={end_local.isoformat()}")
+                logger.info(f"[Analytics] start_utc={start_date.isoformat()}")
+                logger.info(f"[Analytics] end_utc={end_date.isoformat()}")
+                logger.info(f"[Analytics] query_filter=$or with Date[$gte={start_date.isoformat()}, $lte={end_date.isoformat()}] OR String[$gte={start_str}, $lte={end_str}]")
+                logger.info(f"[Analytics] =====================================")
+        else:
+            # All time - no date filter
+            if os.environ.get("NODE_ENV") == "development":
+                logger.info(f"[Analytics] ========== ANALYTICS CALL ==========")
+                logger.info(f"[Analytics] days_param=None (All Time)")
+                logger.info(f"[Analytics] musician_id=[REDACTED]")
+                logger.info(f"[Analytics] musician_timezone={tz_str}")
+                logger.info(f"[Analytics] No date filter applied")
+                logger.info(f"[Analytics] =====================================")
         
         # Get requests (all time if days=None, or within date range)
         requests = await db.requests.find(query_filter).to_list(10000)
