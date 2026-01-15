@@ -4312,7 +4312,8 @@ async def get_daily_analytics(
         # Add date range filter only if days is specified
         # Handle mixed created_at types: some are datetime, some are ISO 8601 strings
         # Use $or to match both: datetime with $gte/$lte, strings with lexicographic comparison
-        if days is not None:
+        # days=None or days=0 means "All Time" (no date filter)
+        if days is not None and days > 0:
             # Compute boundaries in musician's local timezone
             now_utc = datetime.now(timezone.utc)
             now_local = now_utc.astimezone(tz)
