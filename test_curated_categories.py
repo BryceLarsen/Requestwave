@@ -9,7 +9,7 @@ import json
 import os
 
 # Configuration
-BASE_URL = "https://tipflow-stable.preview.emergentagent.com/api"
+BASE_URL = "https://songsync-10.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
     "name": "Test Musician Categories",
     "email": "test.categories@requestwave.com",

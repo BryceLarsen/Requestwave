@@ -8,7 +8,7 @@ import requests
 import json
 
 # Configuration
-BASE_URL = "https://tipflow-stable.preview.emergentagent.com/api"
+BASE_URL = "https://songsync-10.preview.emergentagent.com/api"
 
 # Pro account credentials
 PRO_MUSICIAN = {

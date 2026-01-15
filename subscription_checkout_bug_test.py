@@ -35,7 +35,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration - Use the exact URL from frontend/.env
-BASE_URL = "https://tipflow-stable.preview.emergentagent.com/api"
+BASE_URL = "https://songsync-10.preview.emergentagent.com/api"
 
 # Test credentials from review request
 TEST_CREDENTIALS = {

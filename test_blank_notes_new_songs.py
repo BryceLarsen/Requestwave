@@ -8,7 +8,7 @@ import json
 import uuid
 
 # Configuration
-BASE_URL = "https://tipflow-stable.preview.emergentagent.com/api"
+BASE_URL = "https://songsync-10.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {

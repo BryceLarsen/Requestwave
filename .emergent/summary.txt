@@ -1,72 +1,198 @@
 <analysis>
-The previous AI engineer's work primarily focused on diagnosing and fixing a critical bug preventing audience members from submitting song requests. Initially, the frontend appeared to show Error submitting request, but a deeper investigation revealed a backend  in  within . The root cause was identified as  (a string) being used for  operations instead of the correctly parsed  (a datetime object). The engineer successfully corrected this by modifying  to use . Backend API calls and automated backend tests confirmed the fix. The trajectory concludes with the intention to verify the end-to-end fix on the frontend.
+original_problem_statement
+
+The user’s initial request was to enhance the CSV export functionality on the Songs tab to include additional metadata (genre, mood, playlists, year). The scope then expanded into a major debugging, stabilization, and UX refinement effort across the entire request and suggestion lifecycle. This included fixing broken request state transitions, standardizing statuses between frontend and backend, unifying duplicated logic, stabilizing the On Stage experience, and improving destructive-action UX. The current focus is to implement a durable, append-only analytics event system that will survive future feature changes (restore, suggestions, archiving, Stripe) without impacting current functionality.
+
+⸻
+
+PRODUCT REQUIREMENTS
+	•	Unify requests and suggestions into a single, time-ordered list in the On Stage view.
+	•	Provide suggestion actions:
+	•	Match to Song
+	•	Learn it later
+	•	Skip
+	•	Ensure Restore works consistently for all handled items:
+	•	Played
+	•	Skipped
+	•	Learn it later
+	•	Standardize on show_id (not show_name) for all filtering and selection logic.
+	•	Auto-create a show on the backend if a request arrives when no show is active.
+	•	Clean up UX by removing redundant success dialogs for destructive actions.
+	•	Implement a non-blocking, append-only analytics event ledger that does not alter existing analytics UI or calculations.
+
+⸻
+
+User’s preferred language
+
+English
+
+⸻
+
+what currently exists?
+
+The agent has successfully completed extensive stabilization and feature work:
+	•	CSV export on the Songs tab now includes genre, mood, playlists, and year.
+	•	Request and suggestion lifecycle is stabilized:
+	•	Status transitions fixed and standardized.
+	•	Duplicate logic consolidated.
+	•	show_id is now the primary identifier everywhere.
+	•	Suggestions are fully integrated into the On Stage timeline alongside requests.
+	•	Suggestion actions implemented:
+	•	Match to Song
+	•	Learn it later
+	•	Skip
+	•	Restore functionality is fixed across:
+	•	Dashboard On Stage tab
+	•	Standalone /on-stage/:slug route
+This was achieved by creating a reusable CompletedRequestItem component.
+	•	Auto-show creation is implemented on the backend.
+	•	UX cleanup completed:
+	•	Removed redundant success popups.
+	•	Start Show no longer prompts confirmation.
+	•	Stop Show now has a single confirmation only.
+	•	Backend validation bug preventing suggestion restore was fixed.
+	•	Temporary build/debug markers have been removed.
+
+⸻
+
+Last working item
+	•	Last item agent was working: Finalized and user-approved plan for implementing an append-only analytics event system.
+	•	Status: NOT STARTED
+	•	Agent testing done: No
+	•	User testing done: No
+
+⸻
+
+Pending / Fragile Areas (Must Re-Verify After Backend Changes)
+
+These are not currently broken, but have historically regressed and must be re-tested after analytics work:
+	•	Requests tab behavior when no active show exists.
+	•	Visibility of past shows vs archived shows.
+	•	Restore behavior for handled items in both:
+	•	Dashboard On Stage tab
+	•	Standalone /on-stage/:slug
+	•	Analytics UI accuracy remains unresolved long-term until it consumes the new ledger.
+	•	Show rename functionality does not exist (explicitly desired but not implemented).
+
+⸻
+
+Upcoming Tasks (P0)
+
+Implement Analytics Event System
+
+File: /app/backend/server.py
+
+Core Requirements
+	•	Add a new append-only MongoDB collection: analytics_events
+	•	Add AnalyticsEvent Pydantic model
+	•	Add centralized helper: emit_analytics_event(...)
+	•	Guard all analytics writes behind:
+ANALYTICS_EVENTS_ENABLED = true  # default true in preview
+	•	If disabled:
+	•	Do nothing
+	•	Never throw
+	•	Never log errors
+
+Critical Guardrails (Do NOT violate)
+	•	Append-only: events are never updated or deleted.
+	•	Event writes must be non-blocking:
+	•	Await insert with short timeout (≈150–250ms).
+	•	Swallow all exceptions.
+	•	Log errors only.
+	•	Event timestamp stored as UTC datetime (not ISO string).
+	•	Normalized requester email (lower().strip()) stored only for:
+	•	audience.request_submitted
+	•	audience.suggestion_submitted
+	•	Do NOT emit batch events in phase 1.
+	•	Do NOT modify existing analytics UI or calculations.
+
+⸻
+
+Future Tasks
+	•	Build analytics UI powered by analytics_events.
+	•	Spotify Web API integration for playlist enrichment.
+	•	Address aggressive preview caching issues if they recur.
+	•	Deploy stabilized features to production.
+
+⸻
+
+Completed Work in This Session
+	•	CSV export enhancement on Songs tab.
+	•	Request & suggestion lifecycle overhaul.
+	•	Unified On Stage timeline (requests + suggestions).
+	•	Shared CompletedRequestItem component for handled items.
+	•	Suggestion actions fully implemented.
+	•	show_id migration across frontend and backend.
+	•	Restore functionality stabilized.
+	•	UX cleanup for destructive actions.
+	•	Backend auto-show creation.
+	•	Backend validation fix for suggestion restore.
+	•	Removal of temporary build/debug UI.
+
+⸻
+
+Known Historical Issue (Resolved)
+	•	Issue: Restore button repeatedly failed to appear.
+	•	Cause: Divergent implementations across On Stage surfaces.
+	•	Resolution: Shared reusable component used in both views.
+	•	Status: RESOLVED (must still be re-verified after major backend changes).
+Code Architecture:
+/app/
+├── backend/
+│   └── server.py        # All backend logic and models
+├── frontend/
+│   └── src/
+│       └── App.js       # Entire React app (monolithic)
+└── test_request_status_transitions.js
+Technical Debt (Critical)
+	•	/app/frontend/src/App.js is ~11,000+ lines.
+	•	All UI, state, and logic live in one file.
+	•	This is now the largest long-term risk.
+	•	Refactoring into modular components is required before scaling further.
+
+⸻
+
+Key API Endpoints
+	•	/api/requests
+	•	/api/requests/{id}/status
+	•	/api/song-suggestions
+	•	/api/song-suggestions/{id}/status
+	•	/api/song-suggestions/{id}/match
+	•	/api/song-suggestions/{id}/learn-later
+	•	/api/shows/start
+	•	/api/shows/stop
+	•	/api/shows/{id}/archive
+
+⸻
+
+Critical Info for New Agent
+	•	Follow the approved analytics plan strictly.
+	•	Do not reintroduce show_name logic.
+	•	Be extremely cautious editing App.js.
+	•	Always verify UI changes in preview, not deployed.
+	•	Confirm preview base URL before testing:
+	•	https://songsync-10.preview.emergentagent.com
+
+⸻
+
+What the Next Agent Must Do First
+	1.	Confirm preview URL and login access.
+	2.	Implement analytics scaffolding only:
+	•	Model
+	•	Collection
+	•	Helper
+	•	Feature flag
+	3.	Emit one event only first:
+	•	audience.request_submitted
+	4.	Manually verify events appear in DB.
+	5.	Proceed event-by-event only after confirmation.
+
+⸻
+
+Project Health Check
+	•	Currently broken: None
+	•	Fragile: On Stage UI + Requests tab edge cases
+	•	Refactor required: Frontend monolith
+	•	Next risk: Analytics implementation touching many endpoints
+
 </analysis>
-
-<product_requirements>
-The RequestWave application is a freemium platform for musicians to manage songs, requests, and tips. The core objective is to provide a stable, user-friendly experience for both musicians and their audience. Key requirements addressed include:
-1.  **Core Stability**: Ensuring reliable authentication, consistent database usage, and stable request/tip flows.
-2.  **UI/UX Enhancements**: Implementing dynamic Up Next features, advanced song sorting, improved analytics loading, and correct audience links.
-3.  **Tip Flow Redesign**: Streamlining the tipping process with payment app dropdowns, deep linking, Zelle instructions, and artist controls for payment method toggles.
-4.  **Songs Tab Enhancements**: Adding robust filtering, sorting, custom delete modals, and a styled ❓ Help button with updated documentation.
-5.  **Recent Enhancements and Fixes**:
-    *   **Songs Tab UI**: Refinements like repositioning the help button, responsive song/playlist tiles, and renaming My Playlists to Playlists.
-    *   **Analytics/Requests Data Consistency**: Resolving discrepancies due to archived requests, date range filters, and frontend state issues.
-    *   **Requests Tab Sorting & Timezone**: Ensuring requests are sorted by recency and timestamps are timezone-aware.
-    The most recent focus was on fixing a critical bug preventing audience song submissions.
-</product_requirements>
-
-<key_technical_concepts>
--   **Full-stack Development**: React.js (frontend), FastAPI (backend), MongoDB (database).
--   **UI/UX Design**: React state management, responsive design (Tailwind CSS).
--   **API Integration**: , JSON (de)serialization, Pydantic for data validation.
--   **Database Interactions**: MongoDB queries, Pydantic models.
--   **Debugging**: Console logs, network requests, backend logs, automated testing agents.
-</key_technical_concepts>
-
-<code_architecture>
-The application uses a standard full-stack architecture:
-
-
-
--   **/app/backend/server.py**:
-    -   **Importance**: Central API logic, database interaction, and business rules.
-    -   **Changes Made**:
-        -   Models updated for  and  flags.
-        -   Profile/Tip endpoints updated for new payment fields.
-        -   Analytics endpoints (, ) fixed for  and date ranges (excluding archived, handling ).
-        -   Request endpoints standardized and limited, excluding archived.
-        -   **Critical Recent Fix**: Modified  function (specifically lines 945-947) to use  (a parsed datetime object) instead of the raw  (which was a string) when calculating subscription period, resolving a  during audience request submissions.
-
--   **/app/frontend/src/App.js**:
-    -   **Importance**: Main React component managing application state, routing, and UI.
-    -   **Changes Made**:
-        -   Reworked tip flow, request flow reset logic, and profile settings UI.
-        -   Extensive enhancements to the Songs tab (filtering, sorting, help modals, responsive styling, renaming My Playlists).
-        -   Routing changes (downgraded , audience auth bypass).
-        -   Analytics tab fixed ( truthiness, , All time default,  clearing).
-        -   Requests tab sorting logic implemented.
-        -   The  function (lines 8581-8629) is responsible for submitting song requests from the audience, which was triggering the backend error.
-
--   **/app/backend/.env, /app/frontend/.env, etc.**:
-    -   **Importance**: Environment-specific configurations.
-    -   **Changes Made**: Adjusted  and  for  and  service.
-
-</code_architecture>
-
-<pending_tasks>
--   **Deploy to Production**: Apply all verified fixes and new features.
--   **Address Preview Environment Caching**: Investigate and resolve aggressive caching.
--   **Implement Spotify Web API Integration**: Enhance Spotify playlist import to use actual API data.
--   **Frontend Validation of Audience Song Request Submission**: Confirm the backend fix resolves the end-to-end user experience.
-</pending_tasks>
-
-<current_work>
-Immediately prior to this summary, the AI engineer was focused on fixing a critical bug preventing audience members from submitting song requests. Initially, the frontend displayed an Error submitting request, followed by Error creating request. The engineer systematically investigated the frontend submission flow ( in ) and the backend creation endpoint ( in ). Direct testing of the backend API revealed that requests *could* be created successfully via , indicating the issue was not with the API endpoint itself.
-
-Further investigation into backend logs () uncovered a  at  line 946 within the  function. This error occurred because the code was attempting to perform date arithmetic using  (which was a string retrieved from the database) instead of the properly parsed  (a datetime object). The AI engineer fixed this by ensuring  was used consistently for all date calculations in that function. After the code modification, direct backend API tests and automated backend testing confirmed the  was resolved, and song requests could be successfully created on the backend.
-</current_work>
-
-<optional_next_step>
-Test the frontend to ensure the audience song request submission works end-to-end.
-</optional_next_step>
-

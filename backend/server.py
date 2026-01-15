@@ -6555,7 +6555,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_origins=[
         "https://requestwave.app", 
-        "https://tipflow-stable.preview.emergentagent.com", 
+        "https://songsync-10.preview.emergentagent.com", 
         os.environ.get('FRONTEND_URL', '').replace('http://', 'https://'),  # Dynamic production URL
         "https://requestwave.emergent.host",  # Emergent production pattern
         "https://requestwave-app.emergent.host",  # Alternative production pattern
