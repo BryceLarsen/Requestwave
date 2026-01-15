@@ -5174,23 +5174,9 @@ const MusicianDashboard = () => {
                     <details key={show.id} className="bg-gray-700 rounded-lg">
                       <summary className="cursor-pointer p-4 font-medium hover:bg-gray-600 rounded-lg transition duration-300 flex justify-between items-center">
                         <div className="flex items-center space-x-3">
-                          <input
-                            type="checkbox"
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) => {
-                              const showRequests = requests.filter(r => r.show_id === show.id);
-                              if (e.target.checked) {
-                                selectAllRequests(showRequests);
-                              } else {
-                                clearRequestSelection();
-                              }
-                            }}
-                            className="rounded bg-gray-600 border-gray-500 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
-                            title="Select all requests in this show"
-                          />
                           <span>📁 {show.name} ({show.date || 'No date'})</span>
                           <span className="text-gray-400 text-sm">
-                            ({requests.filter(r => r.show_id === show.id).length} requests)
+                            ({requests.filter(r => r.show_id === show.id).length} requests, {songSuggestions.filter(s => s.show_id === show.id && s.status === 'pending').length} suggestions)
                           </span>
                         </div>
                         <div className="flex items-center space-x-1">
