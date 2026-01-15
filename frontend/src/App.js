@@ -2891,7 +2891,7 @@ const MusicianDashboard = () => {
       clearSuggestionSelection();
       fetchSongSuggestions();
       
-      alert(`Successfully deleted ${selectedSuggestions.size} suggestion(s)`);
+      // UI update implies success - no alert needed
     } catch (error) {
       console.error('Error batch deleting suggestions:', error);
       alert('Error deleting suggestions. Please try again.');
