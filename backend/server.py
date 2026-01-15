@@ -3938,9 +3938,10 @@ async def create_request(request_data: RequestCreate):
                 "venue": None,
                 "notes": "Auto-created show",
                 "status": "active",
+                "timezone": None,  # Auto-created shows don't have timezone yet
                 "archived_at": None,
                 "restored_at": None,
-                "created_at": datetime.utcnow()
+                "created_at": datetime.now(timezone.utc)  # Store as UTC Date
             }
             await db.shows.insert_one(new_show)
             current_show_id = show_id
@@ -4082,9 +4083,10 @@ async def create_musician_request(
                 "venue": None,
                 "notes": "Auto-created show",
                 "status": "active",
+                "timezone": None,  # Auto-created shows don't have timezone yet
                 "archived_at": None,
                 "restored_at": None,
-                "created_at": datetime.utcnow()
+                "created_at": datetime.now(timezone.utc)  # Store as UTC Date
             }
             await db.shows.insert_one(new_show)
             current_show_id = show_id
