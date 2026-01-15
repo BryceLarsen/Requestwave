@@ -1,198 +1,602 @@
-<analysis>
-original_problem_statement
+<analysis>**original_problem_statement**:
+The user's initial high-level goal is to stabilize and enhance the RequestWave application. This session focused on two main phases:
+1.  **Analytics Implementation**: Implement a robust, append-only analytics event ledger ( collection) to track all significant user and system actions without altering existing logic. This was completed.
+2.  **Bug Fixing & Refinement**: Address three specific issues:
+    *   **Issue 1**: Broken analytics period filters (Today, 7d, 30d, etc.).
+    *   **Issue 2**: Broken actions on the Learn Later list in the Songs tab.
+    *   **Issue 3**: The On Stage tab showing all items instead of only items for the active show.
 
-The user’s initial request was to enhance the CSV export functionality on the Songs tab to include additional metadata (genre, mood, playlists, year). The scope then expanded into a major debugging, stabilization, and UX refinement effort across the entire request and suggestion lifecycle. This included fixing broken request state transitions, standardizing statuses between frontend and backend, unifying duplicated logic, stabilizing the On Stage experience, and improving destructive-action UX. The current focus is to implement a durable, append-only analytics event system that will survive future feature changes (restore, suggestions, archiving, Stripe) without impacting current functionality.
+The current priority is to fix these three issues sequentially, starting with the analytics filters.
 
-⸻
+**PRODUCT REQUIREMENTS**
+- Store all new timestamps in MongoDB as UTC  objects, not strings.
+- Capture the musician's timezone (IANA string) and use it as the source of truth for UI display and analytics period boundaries.
+- Do not migrate existing data; fixes should handle the present mixed data types.
+- **Analytics Filters**: Must correctly filter data for Today, Last 7 days, Last 30 days, and Last year based on the musician's local timezone boundaries.
+- **Learn Later Actions**: The Match, Add, and Trash buttons must function correctly. The Restore button should be removed.
+- **On Stage Scope**: The On Stage tab must only display items associated with the current active show. If no show is active, it should display an empty state with a Start Show button.
 
-PRODUCT REQUIREMENTS
-	•	Unify requests and suggestions into a single, time-ordered list in the On Stage view.
-	•	Provide suggestion actions:
-	•	Match to Song
-	•	Learn it later
-	•	Skip
-	•	Ensure Restore works consistently for all handled items:
-	•	Played
-	•	Skipped
-	•	Learn it later
-	•	Standardize on show_id (not show_name) for all filtering and selection logic.
-	•	Auto-create a show on the backend if a request arrives when no show is active.
-	•	Clean up UX by removing redundant success dialogs for destructive actions.
-	•	Implement a non-blocking, append-only analytics event ledger that does not alter existing analytics UI or calculations.
+---
+**User's preferred language**: English
 
-⸻
+---
+**what currently exists?**
+- A complete, append-only analytics event system has been implemented in the  collection, tracking all major request, suggestion, and show lifecycle events.
+- Path B features are complete: auto-show creation for suggestions, show-scoped request/suggestion lists, batch actions for suggestions, and a Learn Later view on the Songs tab.
+- **Timestamp Standardization**: The agent has updated all backend write paths (, , ) to store new timestamps as UTC  objects instead of strings.
+- **Timezone Capture**: The  endpoint now captures the musician's browser timezone and stores it on the show and musician profiles.
+- **Analytics Filter Fix (In Progress)**: The  endpoint was updated to handle mixed  types (string and date) and to compute date ranges based on the musician's timezone. However, the initial test results were suspicious, prompting a deeper validation phase.
 
-User’s preferred language
+---
+**Last working item**:
+- **Last item agent was working**: Validating the fix for Issue 1: Analytics period filters broken. The agent just added detailed, development-only logging to the  endpoint in  to print the musician's timezone, local/UTC date boundaries, and the final MongoDB query for each filter period.
+- **Status**: IN PROGRESS
+- **Agent Testing Done**: Y (initial tests were done, but deeper validation is now required and in progress).
+- **Which testing method agent to use?**: Backend testing. The agent needs to trigger the analytics endpoint for each period, check the backend logs for the new debug output, and run direct MongoDB queries to cross-verify the counts and date boundaries.
+- **User Testing Done**: N
 
-English
+---
+**All Pending/In progress Issue list**:
+- **Issue 1 (P0)**: Analytics period filters broken.
+- **Issue 2 (P1)**: Songs tab “Learn Later” list actions are broken or noisy.
+- **Issue 3 (P2)**: On Stage tab should be active-show only.
 
-⸻
+**Issues Detail**:
+- **Issue 1: Analytics period filters broken**
+    - **Attempted fixes**: The agent implemented a dual-path query in  to handle mixed  and Thu Jan 15 18:04:05 UTC 2026 types for . It also introduced timezone-aware boundary calculations. However, initial tests showed identical counts for 7, 30, and 365-day filters, suggesting a potential logic error or a test data anomaly.
+    - **Next debug checklist**:
+        1.  In , click each analytics period filter (Today, 7d, 30d, 365d, All Time).
+        2.  Check backend logs (==> /var/log/supervisor/backend.err.log <==
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/root/.venv/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/root/.venv/lib/python3.11/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/root/.venv/lib/python3.11/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/root/.venv/lib/python3.11/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.venv/lib/python3.11/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 936, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1074, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1004, in source_to_code
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/app/backend/server.py", line 2495
+    "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string,
+                  
+SyntaxError: invalid syntax. Perhaps you forgot a comma?
+WARNING:  WatchFiles detected changes in 'server.py'. Reloading...
+Process SpawnProcess-9:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/root/.venv/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/root/.venv/lib/python3.11/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/root/.venv/lib/python3.11/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/root/.venv/lib/python3.11/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.venv/lib/python3.11/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 936, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1074, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1004, in source_to_code
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/app/backend/server.py", line 2515
+    "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string,
+                  
+SyntaxError: invalid syntax. Perhaps you forgot a comma?
+WARNING:  WatchFiles detected changes in 'server.py'. Reloading...
+Process SpawnProcess-10:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/root/.venv/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/root/.venv/lib/python3.11/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/root/.venv/lib/python3.11/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/root/.venv/lib/python3.11/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.venv/lib/python3.11/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 936, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1074, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1004, in source_to_code
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/app/backend/server.py", line 6616
+    "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string,
+                  
+SyntaxError: invalid syntax. Perhaps you forgot a comma?
+WARNING:  WatchFiles detected changes in 'server.py'. Reloading...
+INFO:     Started server process [5097]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [5097]
+INFO:     Stopping reloader process [47]
+INFO:     Will watch for changes in these directories: ['/app/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [5500] using WatchFiles
+INFO:     Started server process [5502]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:server:Started show 'Timezone Test Show' for musician c74dd6e8-2ccf-41e1-9892-56d13af29489
+INFO:server:Stopped active show for musician c74dd6e8-2ccf-41e1-9892-56d13af29489
+INFO:     Will watch for changes in these directories: ['/app/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [41] using WatchFiles
+INFO:     Started server process [84]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'server.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [84]
+INFO:     Started server process [275]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:server:[Analytics] musician_timezone=America/New_York
+INFO:server:[Analytics] now_local=2026-01-15T11:22:24.534615-05:00, start_local=2026-01-15T00:00:00-05:00, end_local=2026-01-15T11:22:24.534615-05:00
+INFO:server:[Analytics] start_utc=2026-01-15T05:00:00, end_utc=2026-01-15T16:22:24.534615
+INFO:server:[Analytics] musician_timezone=America/New_York
+INFO:server:[Analytics] now_local=2026-01-15T11:22:24.618034-05:00, start_local=2026-01-08T11:22:24.618034-05:00, end_local=2026-01-15T11:22:24.618034-05:00
+INFO:server:[Analytics] start_utc=2026-01-08T16:22:24.618034, end_utc=2026-01-15T16:22:24.618034
+INFO:server:[Analytics] musician_timezone=America/New_York
+INFO:server:[Analytics] now_local=2026-01-15T11:22:24.701875-05:00, start_local=2025-12-16T11:22:24.701875-05:00, end_local=2026-01-15T11:22:24.701875-05:00
+INFO:server:[Analytics] start_utc=2025-12-16T16:22:24.701875, end_utc=2026-01-15T16:22:24.701875
+INFO:server:[Analytics] musician_timezone=America/New_York
+INFO:server:[Analytics] now_local=2026-01-15T11:22:24.782725-05:00, start_local=2025-01-15T11:22:24.782725-05:00, end_local=2026-01-15T11:22:24.782725-05:00
+INFO:server:[Analytics] start_utc=2025-01-15T16:22:24.782725, end_utc=2026-01-15T16:22:24.782725
+INFO:server:Started show 'Timezone Verify Show' for musician c74dd6e8-2ccf-41e1-9892-56d13af29489
+INFO:server:Stopped active show for musician c74dd6e8-2ccf-41e1-9892-56d13af29489
+INFO:server:[Analytics] musician_timezone=America/New_York
+INFO:server:[Analytics] now_local=2026-01-15T11:22:50.166831-05:00, start_local=2026-01-15T00:00:00-05:00, end_local=2026-01-15T11:22:50.166831-05:00
+INFO:server:[Analytics] start_utc=2026-01-15T05:00:00, end_utc=2026-01-15T16:22:50.166831
+INFO:server:Started show 'Regression Test Show' for musician c74dd6e8-2ccf-41e1-9892-56d13af29489
+INFO:server:Stopped active show for musician c74dd6e8-2ccf-41e1-9892-56d13af29489
+INFO:     Will watch for changes in these directories: ['/app/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [47] using WatchFiles
+INFO:     Started server process [98]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'server.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [98]
+INFO:     Started server process [262]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Will watch for changes in these directories: ['/app/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [41] using WatchFiles
+INFO:     Started server process [84]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
 
-what currently exists?
+==> /var/log/supervisor/backend.out.log <==
+  POST       /api/subscription/checkout               -> create_freemium_checkout_session
+  POST       /api/subscription/checkout-test          -> test_checkout_route
+  POST       /api/test/subscription                   -> test_subscription_endpoint
+  POST       /api/v2/subscription/cancel              -> cancel_freemium_subscription
+  POST       /v2/api/subscription/cancel              -> cancel_freemium_subscription
 
-The agent has successfully completed extensive stabilization and feature work:
-	•	CSV export on the Songs tab now includes genre, mood, playlists, and year.
-	•	Request and suggestion lifecycle is stabilized:
-	•	Status transitions fixed and standardized.
-	•	Duplicate logic consolidated.
-	•	show_id is now the primary identifier everywhere.
-	•	Suggestions are fully integrated into the On Stage timeline alongside requests.
-	•	Suggestion actions implemented:
-	•	Match to Song
-	•	Learn it later
-	•	Skip
-	•	Restore functionality is fixed across:
-	•	Dashboard On Stage tab
-	•	Standalone /on-stage/:slug route
-This was achieved by creating a reusable CompletedRequestItem component.
-	•	Auto-show creation is implemented on the backend.
-	•	UX cleanup completed:
-	•	Removed redundant success popups.
-	•	Start Show no longer prompts confirmation.
-	•	Stop Show now has a single confirmation only.
-	•	Backend validation bug preventing suggestion restore was fixed.
-	•	Temporary build/debug markers have been removed.
+📊 TOTAL ROUTES: 101
+🔗 Webhook Routes: 1
+💳 Subscription Routes: 8
 
-⸻
+================================================================================
 
-Last working item
-	•	Last item agent was working: Finalized and user-approved plan for implementing an append-only analytics event system.
-	•	Status: NOT STARTED
-	•	Agent testing done: No
-	•	User testing done: No
+================================================================================
+🔍 FREEMIUM BACKEND STARTUP DIAGNOSTICS:
+================================================================================
+🔑 Stripe API Key Prefix: NOT_SET
+🔗 Webhook Secret Set: No
+💰 Price IDs: STARTUP=None, MONTHLY=None, ANNUAL=None
+⚠️  NON-LIVE KEYS DETECTED: NOT_SET
 
-⸻
+📋 FULL ROUTE LIST:
+--------------------------------------------------
+🔗 WEBHOOK ROUTES:
+  POST       /api/stripe/webhook                      -> stripe_webhook_handler
 
-Pending / Fragile Areas (Must Re-Verify After Backend Changes)
+💳 SUBSCRIPTION ROUTES:
+  GET        /api/subscription/status                 -> freemium_subscription_status_endpoint
+  GET        /v2/api/subscription/checkout/status/{session_id} -> get_freemium_checkout_status
+  POST       /api/subscription/cancel                 -> cancel_freemium_subscription
+  POST       /api/subscription/checkout               -> create_freemium_checkout_session
+  POST       /api/subscription/checkout-test          -> test_checkout_route
+  POST       /api/test/subscription                   -> test_subscription_endpoint
+  POST       /api/v2/subscription/cancel              -> cancel_freemium_subscription
+  POST       /v2/api/subscription/cancel              -> cancel_freemium_subscription
 
-These are not currently broken, but have historically regressed and must be re-tested after analytics work:
-	•	Requests tab behavior when no active show exists.
-	•	Visibility of past shows vs archived shows.
-	•	Restore behavior for handled items in both:
-	•	Dashboard On Stage tab
-	•	Standalone /on-stage/:slug
-	•	Analytics UI accuracy remains unresolved long-term until it consumes the new ledger.
-	•	Show rename functionality does not exist (explicitly desired but not implemented).
+📊 TOTAL ROUTES: 101
+🔗 Webhook Routes: 1
+💳 Subscription Routes: 8
 
-⸻
+================================================================================
 
-Upcoming Tasks (P0)
+================================================================================
+🔍 FREEMIUM BACKEND STARTUP DIAGNOSTICS:
+================================================================================
+🔑 Stripe API Key Prefix: NOT_SET
+🔗 Webhook Secret Set: No
+💰 Price IDs: STARTUP=None, MONTHLY=None, ANNUAL=None
+⚠️  NON-LIVE KEYS DETECTED: NOT_SET
 
-Implement Analytics Event System
+📋 FULL ROUTE LIST:
+--------------------------------------------------
+🔗 WEBHOOK ROUTES:
+  POST       /api/stripe/webhook                      -> stripe_webhook_handler
 
-File: /app/backend/server.py
+💳 SUBSCRIPTION ROUTES:
+  GET        /api/subscription/status                 -> freemium_subscription_status_endpoint
+  GET        /v2/api/subscription/checkout/status/{session_id} -> get_freemium_checkout_status
+  POST       /api/subscription/cancel                 -> cancel_freemium_subscription
+  POST       /api/subscription/checkout               -> create_freemium_checkout_session
+  POST       /api/subscription/checkout-test          -> test_checkout_route
+  POST       /api/test/subscription                   -> test_subscription_endpoint
+  POST       /api/v2/subscription/cancel              -> cancel_freemium_subscription
+  POST       /v2/api/subscription/cancel              -> cancel_freemium_subscription
 
-Core Requirements
-	•	Add a new append-only MongoDB collection: analytics_events
-	•	Add AnalyticsEvent Pydantic model
-	•	Add centralized helper: emit_analytics_event(...)
-	•	Guard all analytics writes behind:
-ANALYTICS_EVENTS_ENABLED = true  # default true in preview
-	•	If disabled:
-	•	Do nothing
-	•	Never throw
-	•	Never log errors
+📊 TOTAL ROUTES: 101
+🔗 Webhook Routes: 1
+💳 Subscription Routes: 8
 
-Critical Guardrails (Do NOT violate)
-	•	Append-only: events are never updated or deleted.
-	•	Event writes must be non-blocking:
-	•	Await insert with short timeout (≈150–250ms).
-	•	Swallow all exceptions.
-	•	Log errors only.
-	•	Event timestamp stored as UTC datetime (not ISO string).
-	•	Normalized requester email (lower().strip()) stored only for:
-	•	audience.request_submitted
-	•	audience.suggestion_submitted
-	•	Do NOT emit batch events in phase 1.
-	•	Do NOT modify existing analytics UI or calculations.
+================================================================================
+INFO:     10.64.128.21:55510 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     10.64.128.21:55510 - "POST /api/shows/start HTTP/1.1" 200 OK
+INFO:     10.64.128.233:49326 - "POST /api/musicians/test/requests HTTP/1.1" 200 OK
+INFO:     10.64.128.20:54018 - "POST /api/song-suggestions HTTP/1.1" 200 OK
+INFO:     10.64.131.254:46972 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     10.64.128.21:57566 - "GET /api/requests/musician/me HTTP/1.1" 200 OK
+INFO:     10.64.128.21:57566 - "GET /api/song-suggestions HTTP/1.1" 200 OK
+INFO:     10.64.134.14:35174 - "GET /api/shows HTTP/1.1" 200 OK
+INFO:     10.64.128.199:53330 - "GET /api/analytics/daily HTTP/1.1" 200 OK
+INFO:     10.64.128.21:57566 - "POST /api/shows/stop HTTP/1.1" 200 OK
 
-⸻
+================================================================================
+🔍 FREEMIUM BACKEND STARTUP DIAGNOSTICS:
+================================================================================
+🔑 Stripe API Key Prefix: NOT_SET
+🔗 Webhook Secret Set: No
+💰 Price IDs: STARTUP=None, MONTHLY=None, ANNUAL=None
+⚠️  NON-LIVE KEYS DETECTED: NOT_SET
 
-Future Tasks
-	•	Build analytics UI powered by analytics_events.
-	•	Spotify Web API integration for playlist enrichment.
-	•	Address aggressive preview caching issues if they recur.
-	•	Deploy stabilized features to production.
+📋 FULL ROUTE LIST:
+--------------------------------------------------
+🔗 WEBHOOK ROUTES:
+  POST       /api/stripe/webhook                      -> stripe_webhook_handler
 
-⸻
+💳 SUBSCRIPTION ROUTES:
+  GET        /api/subscription/status                 -> freemium_subscription_status_endpoint
+  GET        /v2/api/subscription/checkout/status/{session_id} -> get_freemium_checkout_status
+  POST       /api/subscription/cancel                 -> cancel_freemium_subscription
+  POST       /api/subscription/checkout               -> create_freemium_checkout_session
+  POST       /api/subscription/checkout-test          -> test_checkout_route
+  POST       /api/test/subscription                   -> test_subscription_endpoint
+  POST       /api/v2/subscription/cancel              -> cancel_freemium_subscription
+  POST       /v2/api/subscription/cancel              -> cancel_freemium_subscription
 
-Completed Work in This Session
-	•	CSV export enhancement on Songs tab.
-	•	Request & suggestion lifecycle overhaul.
-	•	Unified On Stage timeline (requests + suggestions).
-	•	Shared CompletedRequestItem component for handled items.
-	•	Suggestion actions fully implemented.
-	•	show_id migration across frontend and backend.
-	•	Restore functionality stabilized.
-	•	UX cleanup for destructive actions.
-	•	Backend auto-show creation.
-	•	Backend validation fix for suggestion restore.
-	•	Removal of temporary build/debug UI.
+📊 TOTAL ROUTES: 101
+🔗 Webhook Routes: 1
+💳 Subscription Routes: 8
 
-⸻
+================================================================================
 
-Known Historical Issue (Resolved)
-	•	Issue: Restore button repeatedly failed to appear.
-	•	Cause: Divergent implementations across On Stage surfaces.
-	•	Resolution: Shared reusable component used in both views.
-	•	Status: RESOLVED (must still be re-verified after major backend changes).
-Code Architecture:
-/app/
-├── backend/
-│   └── server.py        # All backend logic and models
-├── frontend/
-│   └── src/
-│       └── App.js       # Entire React app (monolithic)
-└── test_request_status_transitions.js
-Technical Debt (Critical)
-	•	/app/frontend/src/App.js is ~11,000+ lines.
-	•	All UI, state, and logic live in one file.
-	•	This is now the largest long-term risk.
-	•	Refactoring into modular components is required before scaling further.
+================================================================================
+🔍 FREEMIUM BACKEND STARTUP DIAGNOSTICS:
+================================================================================
+🔑 Stripe API Key Prefix: NOT_SET
+🔗 Webhook Secret Set: No
+💰 Price IDs: STARTUP=None, MONTHLY=None, ANNUAL=None
+⚠️  NON-LIVE KEYS DETECTED: NOT_SET
 
-⸻
+📋 FULL ROUTE LIST:
+--------------------------------------------------
+🔗 WEBHOOK ROUTES:
+  POST       /api/stripe/webhook                      -> stripe_webhook_handler
 
-Key API Endpoints
-	•	/api/requests
-	•	/api/requests/{id}/status
-	•	/api/song-suggestions
-	•	/api/song-suggestions/{id}/status
-	•	/api/song-suggestions/{id}/match
-	•	/api/song-suggestions/{id}/learn-later
-	•	/api/shows/start
-	•	/api/shows/stop
-	•	/api/shows/{id}/archive
+💳 SUBSCRIPTION ROUTES:
+  GET        /api/subscription/status                 -> freemium_subscription_status_endpoint
+  GET        /v2/api/subscription/checkout/status/{session_id} -> get_freemium_checkout_status
+  POST       /api/subscription/cancel                 -> cancel_freemium_subscription
+  POST       /api/subscription/checkout               -> create_freemium_checkout_session
+  POST       /api/subscription/checkout-test          -> test_checkout_route
+  POST       /api/test/subscription                   -> test_subscription_endpoint
+  POST       /api/v2/subscription/cancel              -> cancel_freemium_subscription
+  POST       /v2/api/subscription/cancel              -> cancel_freemium_subscription
 
-⸻
+📊 TOTAL ROUTES: 101
+🔗 Webhook Routes: 1
+💳 Subscription Routes: 8
 
-Critical Info for New Agent
-	•	Follow the approved analytics plan strictly.
-	•	Do not reintroduce show_name logic.
-	•	Be extremely cautious editing App.js.
-	•	Always verify UI changes in preview, not deployed.
-	•	Confirm preview base URL before testing:
-	•	https://songsync-10.preview.emergentagent.com
+================================================================================
+INFO:     10.64.131.242:37090 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     10.64.134.14:44778 - "GET /api/analytics/daily HTTP/1.1" 200 OK
+INFO:     10.64.131.254:50716 - "GET /api/analytics/daily?days=1 HTTP/1.1" 200 OK
+INFO:     10.64.131.254:50716 - "GET /api/analytics/daily?days=7 HTTP/1.1" 200 OK
+INFO:     10.64.128.203:46060 - "GET /api/analytics/daily?days=30 HTTP/1.1" 200 OK
+INFO:     10.64.128.21:53578 - "GET /api/analytics/daily?days=365 HTTP/1.1" 200 OK
+INFO:     10.64.134.14:36242 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     10.64.131.254:42740 - "POST /api/shows/start HTTP/1.1" 200 OK
+INFO:     10.64.131.242:46132 - "POST /api/shows/stop HTTP/1.1" 200 OK
+INFO:     10.64.137.79:55626 - "GET /api/analytics/daily?days=1 HTTP/1.1" 200 OK
+INFO:     10.64.137.79:33430 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     10.64.129.142:36114 - "GET /api/requests/musician/me HTTP/1.1" 200 OK
+INFO:     10.64.137.145:42872 - "GET /api/song-suggestions HTTP/1.1" 200 OK
+INFO:     10.64.131.242:48612 - "GET /api/shows HTTP/1.1" 200 OK
+INFO:     10.64.131.242:48612 - "POST /api/shows/start HTTP/1.1" 200 OK
+INFO:     10.64.128.203:47464 - "POST /api/shows/stop HTTP/1.1" 200 OK
+INFO:     10.64.128.21:57160 - "POST /api/musicians/test/requests HTTP/1.1" 200 OK
 
-⸻
+================================================================================
+🔍 FREEMIUM BACKEND STARTUP DIAGNOSTICS:
+================================================================================
+🔑 Stripe API Key Prefix: NOT_SET
+🔗 Webhook Secret Set: No
+💰 Price IDs: STARTUP=None, MONTHLY=None, ANNUAL=None
+⚠️  NON-LIVE KEYS DETECTED: NOT_SET
 
-What the Next Agent Must Do First
-	1.	Confirm preview URL and login access.
-	2.	Implement analytics scaffolding only:
-	•	Model
-	•	Collection
-	•	Helper
-	•	Feature flag
-	3.	Emit one event only first:
-	•	audience.request_submitted
-	4.	Manually verify events appear in DB.
-	5.	Proceed event-by-event only after confirmation.
+📋 FULL ROUTE LIST:
+--------------------------------------------------
+🔗 WEBHOOK ROUTES:
+  POST       /api/stripe/webhook                      -> stripe_webhook_handler
 
-⸻
+💳 SUBSCRIPTION ROUTES:
+  GET        /api/subscription/status                 -> freemium_subscription_status_endpoint
+  GET        /v2/api/subscription/checkout/status/{session_id} -> get_freemium_checkout_status
+  POST       /api/subscription/cancel                 -> cancel_freemium_subscription
+  POST       /api/subscription/checkout               -> create_freemium_checkout_session
+  POST       /api/subscription/checkout-test          -> test_checkout_route
+  POST       /api/test/subscription                   -> test_subscription_endpoint
+  POST       /api/v2/subscription/cancel              -> cancel_freemium_subscription
+  POST       /v2/api/subscription/cancel              -> cancel_freemium_subscription
 
-Project Health Check
-	•	Currently broken: None
-	•	Fragile: On Stage UI + Requests tab edge cases
-	•	Refactor required: Frontend monolith
-	•	Next risk: Analytics implementation touching many endpoints
+📊 TOTAL ROUTES: 101
+🔗 Webhook Routes: 1
+💳 Subscription Routes: 8
 
-</analysis>
+================================================================================
+INFO:     10.64.129.142:53576 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     10.64.129.142:53576 - "GET /api/requests/musician/88cf1515-2650-4fdb-8e82-bfdd3d910b68 HTTP/1.1" 200 OK
+INFO:     10.64.129.135:38422 - "GET /api/requests/updates/88cf1515-2650-4fdb-8e82-bfdd3d910b68 HTTP/1.1" 200 OK
+INFO:     10.64.129.135:38430 - "GET /api/design/settings HTTP/1.1" 200 OK
+INFO:     10.64.129.142:53588 - "GET /api/requests/grouped HTTP/1.1" 200 OK
+INFO:     10.64.129.135:38410 - "GET /api/song-suggestions HTTP/1.1" 200 OK
+INFO:     10.64.129.135:38446 - "GET /api/shows/current HTTP/1.1" 200 OK
+INFO:     10.64.129.142:53604 - "GET /api/shows HTTP/1.1" 200 OK
+INFO:     10.64.129.142:53624 - "GET /api/musicians/adventure-sound-live/filters HTTP/1.1" 200 OK
+INFO:     10.64.129.135:38404 - "GET /api/songs?sort_by=created_at HTTP/1.1" 200 OK
+INFO:     10.64.129.142:53620 - "GET /api/playlists HTTP/1.1" 200 OK
+INFO:     10.64.129.142:53588 - "GET /api/requests/updates/88cf1515-2650-4fdb-8e82-bfdd3d910b68 HTTP/1.1" 200 OK
+INFO:     10.64.129.142:53588 - "GET /api/requests/updates/88cf1515-2650-4fdb-8e82-bfdd3d910b68 HTTP/1.1" 200 OK
+INFO:     10.64.129.135:39620 - "GET /api/requests/updates/88cf1515-2650-4fdb-8e82-bfdd3d910b68 HTTP/1.1" 200 OK
+INFO:     10.64.129.142:54858 - "GET /api/requests/updates/88cf1515-2650-4fdb-8e82-bfdd3d910b68 HTTP/1.1" 200 OK
+INFO:     10.64.129.142:54858 - "GET /api/requests/updates/88cf1515-2650-4fdb-8e82-bfdd3d910b68 HTTP/1.1" 200 OK
+INFO:     10.64.129.135:47466 - "GET /api/requests/updates/88cf1515-2650-4fdb-8e82-bfdd3d910b68 HTTP/1.1" 200 OK) to verify the new logging shows the correct , different / boundaries, and the correct  for each period.
+        3.  Run direct MongoDB queries () to manually count requests for the same musician and confirm the BSON type distribution ( vs. Thu Jan 15 18:04:05 UTC 2026) and date range of existing records.
+        4.  Compare the log output with the manual DB query results to explain why the counts were previously identical and confirm the fix is now working as expected.
+    - **Why fix this issue and what will be achieved with the fix?**: This will make the Analytics tab functional and provide the musician with accurate insights into their request history over different time periods.
+    - **Status**: IN PROGRESS
+    - **Is recurring issue?** N
+    - **Should Test frontend/backend/both after fix?**: Backend.
+
+- **Issue 2: Songs tab “Learn Later” list actions broken or noisy**
+    - **Status**: NOT STARTED
+- **Issue 3: On Stage should be active-show only**
+    - **Status**: NOT STARTED
+
+---
+**In progress Task List**:
+- **Task 1: Validate the analytics filter fix**
+    - **Where to resume**: The detailed logging has just been added to  in . The next agent must proceed with the debug checklist outlined in Issue 1 above to test the changes and report the findings.
+    - **What will be achieved with this?**: This will confirm whether the analytics filter logic is correct or if it needs further refinement.
+    - **Status**: IN PROGRESS
+    - **Should Test frontend/backend/both after fix?**: Backend
+    - **Blocked on something**: No.
+
+---
+**Upcoming and Future Tasks**
+- **Upcoming Tasks**:
+  - **P1**: Fix Issue 2: Broken Learn Later list actions on the Songs tab.
+  - **P2**: Fix Issue 3: Scope the On Stage tab to the active show only.
+  - **P3**: Implement Increment 4: Update the UI to format and display all timestamps in the musician's local timezone.
+- **Future Tasks**:
+  - Build a new analytics UI that is powered by the  collection.
+  - Refactor the monolithic  file into smaller components.
+  - Integrate with the Spotify Web API for song data enrichment.
+  - Deploy the stabilized features to production.
+
+---
+**Completed work in this session**
+- Implemented the full append-only analytics event system ( collection) for 12+ distinct event types.
+- Implemented features from Path B:
+    - Auto-show creation for suggestions without an active show.
+    - Scoped  and  into collapsible sections within each show tile on the Requests tab.
+    - Added batch actions (, , ) for suggestions.
+    - Created a Learn Later toggle view on the Songs tab.
+    - Removed redundant success popups on show restoration.
+- Enforced UTC  object storage for all new timestamps in , , and .
+- Implemented timezone capture on the  endpoint, storing the IANA timezone on the musician and show documents.
+- Partially fixed analytics date filters by handling mixed  types and introducing timezone-aware boundaries (validation in progress).
+
+---
+**Earlier issues found/mentioned but not fixed**:
+None. The agent is working through the user-provided list in order.
+
+---
+**Known issue recurrence from previous fork**:
+None.
+
+---
+**Code Architecture**
+- **Backend**: A single file, , containing all FastAPI logic, Pydantic models, and database interactions with MongoDB.
+- **Frontend**: A monolithic React application in a single file, , which has grown to over 12,000 lines and is a significant source of technical debt.
+- **Database**: MongoDB.
+
+---
+**Key Technical Concepts**
+- **Backend**: FastAPI, Pydantic, Motor (async MongoDB driver).
+- **Frontend**: React, Axios.
+- **Timezones**: Using Python's  library for server-side timezone conversions and the browser's  for detection.
+- **Data Integrity**: Handling mixed data types ( vs. ) in MongoDB queries for backward compatibility while enforcing  objects for all new writes.
+
+---
+**key DB schema**
+- : { ..., : America/New_York }
+- : { ..., : datetime, : America/New_York }
+- : { ..., : mixed(string/datetime) }
+- : { ..., : mixed(string/datetime) }
+- : { uid=0(root) gid=0(root) groups=0(root), , , , , , , ,  }
+
+---
+**changes in tech stack**:
+No changes to the core stack.  from Python's standard library was introduced for timezone management.
+
+---
+**All files of reference**
+- : The entire backend. Contains the analytics logic being debugged and all recent timestamp/timezone changes.
+- : The entire frontend. Contains the UI for analytics filters and was modified to send the timezone on Start Show.
+- : Used for toggling  to enable/disable dev-only logging.
+
+---
+**Areas that need refactoring**:
+- The monolithic  is the highest priority for refactoring. Its size and complexity make new feature implementation and bug fixing increasingly difficult and risky.
+
+---
+**key api endpoints**
+- : The endpoint currently being debugged for date filtering.
+- : Used to manage musician profile data.
+- : Modified to capture the musician's timezone.
+- : Endpoint for creating song requests.
+- : Endpoint for creating song suggestions.
+
+---
+**Critical Info for New Agent**
+- The immediate task is to validate the analytics filter fix. Do not proceed to other issues until this is confirmed working correctly.
+- The user expects a methodical, code-grounded approach. First, investigate and report findings with code/data evidence, then propose a fix.
+- The  field in the  and  collections contains a mix of ISO 8601 strings and native BSON Date objects. The analytics query must continue to support both types.
+- All new timestamps must be stored as timezone-aware UTC  objects ().
+
+---
+**documents and test reports created in this job**
+-  has been updated with the latest progress.
+
+---
+**Last 10 User Messages and any pending HUMAN messages**
+1.  **User**: Stop building. I have 3 issues. Propose a plan to fix them one at a time.
+2.  **Agent**: Analyzed the issues and proposed a speculative plan with questions.
+3.  **User**: Plan is too speculative. Provide a code-grounded plan with exact locations, root causes, and test checklists.
+4.  **Agent**: Investigated the code, identified exact locations and root causes for all 3 issues, and provided a detailed plan.
+5.  **User**: Proceed with Issue 1 (Analytics filters) only. Provided detailed requirements for the fix.
+6.  **Agent**: Implemented the fix for Issue 1 in  and ran tests, which gave suspicious results (identical counts for different periods).
+7.  **User**: Asked for samples of  string values.
+8.  **Agent**: Provided samples, confirming the ISO 8601 format.
+9.  **User**: Outlined a new, more robust plan to handle timestamps and timezones consistently going forward, breaking it into increments.
+10. **Agent**: Implemented Increments 1 (UTC date enforcement) & 2 (timezone capture) and reported success.
+11. **User**: Instructed the agent to proceed with Increment 3 (Analytics boundary correction).
+12. **Agent**: Implemented the timezone-aware analytics boundaries and reported success.
+13. **User**: **PENDING**: Instructed the agent to stop, add more detailed logging to the analytics endpoint, and perform a much deeper validation to ensure the fix is not a false positive.
+
+---
+**Project Health Check:**
+- **Broken**:
+    - Analytics tab period filters (fix is in progress but requires validation).
+    - Action buttons (Add, Trash, Match) on the Learn Later list.
+    - The On Stage tab does not filter by active show.
+- **Mocked**: None.
+
+---
+**3rd Party Integrations**
+None.
+
+---
+**Testing status**
+- **Testing agent used after significant changes**: NO
+- **Troubleshoot agent used after agent stuck in loop**: NO
+- **Test files created**: None. All testing has been manual via ,  scripts, or .
+- **Known regressions**: None confirmed, but the user is cautious about the analytics fix, which is why deep validation is required.
+
+---
+**Credentials to test flow:**
+- **Email**: 
+- **Password**: 
+
+---
+**What agent forgot to execute**
+The agent has been following the user's instructions closely. The current task is a direct command from the user to perform deeper validation on a previous step. Nothing has been forgotten.</analysis>

@@ -88,7 +88,7 @@ Live music request platform enabling musicians to receive song requests from aud
 - Refactoring into modular components required before scaling
 
 ## Environment
-- Preview URL: https://songsync-10.preview.emergentagent.com
+- Preview URL: https://requestwave-fix.preview.emergentagent.com
 - Backend: FastAPI (Python)
 - Frontend: React
 - Database: MongoDB

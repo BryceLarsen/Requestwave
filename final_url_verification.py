@@ -20,7 +20,7 @@ from datetime import datetime
 
 class FinalURLVerification:
     def __init__(self):
-        self.backend_url = "https://songsync-10.preview.emergentagent.com"
+        self.backend_url = "https://requestwave-fix.preview.emergentagent.com"
         self.api_url = f"{self.backend_url}/api"
         
         self.session = requests.Session()

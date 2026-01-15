@@ -25,7 +25,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://songsync-10.preview.emergentagent.com/api"
+BASE_URL = "https://requestwave-fix.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {
