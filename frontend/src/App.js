@@ -4852,21 +4852,21 @@ const MusicianDashboard = () => {
                                 className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
                                 title="Match to existing song in your library"
                               >
-                                🎯 Match
+                                Match
                               </button>
                               <button
                                 onClick={() => handleSuggestionAction(suggestion.id, 'added', suggestion.suggested_title)}
                                 className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 rounded"
                                 title="Add as new song"
                               >
-                                ➕ Add
+                                Add
                               </button>
                               <button
                                 onClick={() => handleDeleteSuggestion(suggestion.id, suggestion.suggested_title)}
                                 className="bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
                                 title="Delete permanently"
                               >
-                                🗑️ Trash
+                                Trash
                               </button>
                             </div>
                           </div>
