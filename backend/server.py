@@ -254,6 +254,8 @@ class SongSuggestion(BaseModel):
     status: str = "pending"  # pending, added, rejected, learn_later
     learn_later: bool = False  # Flag for "Learn it later" action
     matched_song_id: Optional[str] = None  # When matched to a song in library
+    show_id: Optional[str] = None  # Show this suggestion belongs to
+    show_name: Optional[str] = None  # Display only
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 # NEW: Show management for artists
