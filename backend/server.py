@@ -35,6 +35,9 @@ load_dotenv(ROOT_DIR / '.env')
 # Billing Feature Flag - Load this early
 BILLING_ENABLED = os.getenv("BILLING_ENABLED", "false").lower() == "true"
 
+# Analytics Feature Flag - Controls append-only event ledger
+ANALYTICS_EVENTS_ENABLED = os.getenv("ANALYTICS_EVENTS_ENABLED", "true").lower() == "true"
+
 # Conditional Stripe imports - only import when billing is enabled
 if BILLING_ENABLED:
     from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
