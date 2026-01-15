@@ -669,6 +669,11 @@ const MusicianDashboard = () => {
   const [suggestionsSectionCollapsed, setSuggestionsSectionCollapsed] = useState(false);
   const [suggestionError, setSuggestionError] = useState('');
   
+  // Song picker modal state for suggestion matching
+  const [matchingSuggestion, setMatchingSuggestion] = useState(null);
+  const [songSearchTerm, setSongSearchTerm] = useState('');
+  const [selectedMatchSongId, setSelectedMatchSongId] = useState('');
+  
   // NEW: Archived shows state
   const [archivedShowsCollapsed, setArchivedShowsCollapsed] = useState(true);
   
