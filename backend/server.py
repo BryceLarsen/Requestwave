@@ -3118,6 +3118,24 @@ async def create_song_suggestion(suggestion_data: dict):
         }
         
         await db.song_suggestions.insert_one(suggestion)
+        
+        # Emit analytics event: audience.suggestion_submitted
+        current_show_id = musician.get("current_show_id")
+        await emit_analytics_event(
+            event_type="audience.suggestion_submitted",
+            musician_id=musician["id"],
+            source="audience",
+            entity_type="suggestion",
+            show_id=current_show_id,
+            entity_id=suggestion["id"],
+            metadata={
+                "suggested_title": suggestion_data["suggested_title"],
+                "suggested_artist": suggestion_data["suggested_artist"],
+                "has_message": bool(suggestion_data.get("message"))
+            },
+            requester_email_norm=suggestion_data["requester_email"]
+        )
+        
         return SongSuggestion(**suggestion)
         
     except HTTPException:
