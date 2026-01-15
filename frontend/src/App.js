@@ -6060,6 +6060,82 @@ const MusicianDashboard = () => {
           </div>
         )}
 
+        {/* Song Picker Modal for Matching Suggestions */}
+        {matchingSuggestion && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+              <h3 className="text-xl font-bold mb-4">Match "{matchingSuggestion.suggested_title}" to a Song</h3>
+              
+              <input
+                type="text"
+                placeholder="Search your songs..."
+                value={songSearchTerm}
+                onChange={(e) => setSongSearchTerm(e.target.value)}
+                className="w-full p-3 mb-4 rounded bg-gray-700 text-white border border-gray-600"
+                autoFocus
+              />
+              
+              <div className="space-y-2 mb-4 max-h-96 overflow-y-auto">
+                {songs
+                  .filter(song => 
+                    song.title.toLowerCase().includes(songSearchTerm.toLowerCase()) ||
+                    song.artist.toLowerCase().includes(songSearchTerm.toLowerCase())
+                  )
+                  .slice(0, 20)
+                  .map(song => (
+                    <div
+                      key={song.id}
+                      onClick={() => setSelectedMatchSongId(song.id)}
+                      className={`p-3 rounded cursor-pointer transition ${
+                        selectedMatchSongId === song.id 
+                          ? 'bg-purple-600' 
+                          : 'bg-gray-700 hover:bg-gray-600'
+                      }`}
+                    >
+                      <div className="font-bold">{song.title}</div>
+                      <div className="text-sm text-gray-400">{song.artist}</div>
+                    </div>
+                  ))}
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={async () => {
+                    if (!selectedMatchSongId) {
+                      showErrorToast('Please select a song first');
+                      return;
+                    }
+                    
+                    try {
+                      const token = localStorage.getItem('token');
+                      await axios.put(
+                        `${API}/song-suggestions/${matchingSuggestion.id}/match`,
+                        { song_id: selectedMatchSongId },
+                        { headers: { 'Authorization': `Bearer ${token}` } }
+                      );
+                      setMatchingSuggestion(null);
+                      fetchSongSuggestions();
+                      fetchRequests(); // Refetch to show new request
+                    } catch (error) {
+                      showErrorToast(error.response?.data?.detail || 'Failed to match suggestion to song', error);
+                    }
+                  }}
+                  disabled={!selectedMatchSongId}
+                  className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed py-3 px-4 rounded-lg font-bold text-white transition"
+                >
+                  Confirm Match
+                </button>
+                <button
+                  onClick={() => setMatchingSuggestion(null)}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 py-3 px-4 rounded-lg font-bold text-white transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div>
