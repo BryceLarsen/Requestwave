@@ -1023,10 +1023,9 @@ const MusicianDashboard = () => {
         fetchGroupedRequests();
         fetchShows();
         fetchCurrentShow(); // Update current show status
-        alert(`Show "${showName}" and all associated requests deleted successfully!`);
       } catch (error) {
         console.error('Error deleting show:', error);
-        alert('Error deleting show. Please try again.');
+        showErrorToast(error.response?.data?.detail || 'Error deleting show. Please try again.', error);
       }
     }
   };
@@ -1046,7 +1045,6 @@ const MusicianDashboard = () => {
         fetchGroupedRequests();
         fetchShows();
         fetchCurrentShow(); // Update current show status
-        alert(`Show "${showName}" archived successfully!`);
         
         // Telemetry: Archive success
         console.log('show_archive_success', {
@@ -1056,7 +1054,7 @@ const MusicianDashboard = () => {
         });
       } catch (error) {
         console.error('Error archiving show:', error);
-        alert('Error archiving show. Please try again.');
+        showErrorToast(error.response?.data?.detail || 'Error archiving show. Please try again.', error);
         
         // Telemetry: Archive error
         console.log('show_archive_error', {
