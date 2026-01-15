@@ -5881,8 +5881,9 @@ const MusicianDashboard = () => {
                           <div className="flex space-x-2 mt-3">
                             <button
                               onClick={() => {
-                                // Match to song action - for now, just add to repertoire
-                                handleSuggestionAction(item.id, 'added', item.suggested_title);
+                                setMatchingSuggestion(item);
+                                setSongSearchTerm('');
+                                setSelectedMatchSongId('');
                               }}
                               className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition duration-300"
                             >
@@ -5898,8 +5899,9 @@ const MusicianDashboard = () => {
                                     { headers: { 'Authorization': `Bearer ${token}` } }
                                   );
                                   fetchSongSuggestions();
+                                  fetchRequests(); // Also refetch requests
                                 } catch (error) {
-                                  console.error('Error marking learn later:', error);
+                                  showErrorToast(error.response?.data?.detail || 'Failed to mark as learn later', error);
                                 }
                               }}
                               className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition duration-300"
@@ -5907,7 +5909,20 @@ const MusicianDashboard = () => {
                               Learn it later
                             </button>
                             <button
-                              onClick={() => handleSuggestionAction(item.id, 'rejected', item.suggested_title)}
+                              onClick={async () => {
+                                try {
+                                  const token = localStorage.getItem('token');
+                                  await axios.put(
+                                    `${API}/song-suggestions/${item.id}/status`,
+                                    { status: 'rejected' },
+                                    { headers: { 'Authorization': `Bearer ${token}` } }
+                                  );
+                                  fetchSongSuggestions();
+                                  fetchRequests(); // Also refetch requests
+                                } catch (error) {
+                                  showErrorToast(error.response?.data?.detail || 'Failed to skip suggestion', error);
+                                }
+                              }}
                               className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm transition duration-300"
                               title="Skip"
                             >
