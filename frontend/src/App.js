@@ -5532,8 +5532,8 @@ const MusicianDashboard = () => {
           </div>
         )}
 
-        {/* NEW: Song Suggestions Section - Always Visible Folder (like All Requests) */}
-        {activeTab === 'requests' && (
+        {/* Orphaned Suggestions Section - Only shows suggestions without a show_id (legacy data) */}
+        {activeTab === 'requests' && songSuggestions.filter(s => !s.show_id && s.status === 'pending').length > 0 && (
           <div className="bg-gray-800 rounded-xl p-6 mb-6" id="song-suggestions-section">
             <details open={!suggestionsSectionCollapsed}>
               <summary 
@@ -5546,28 +5546,64 @@ const MusicianDashboard = () => {
                 <div className="flex justify-between items-center">
                   <div className="flex items-center space-x-2">
                     <span className={`transition-transform ${suggestionsSectionCollapsed ? '' : 'rotate-90'}`}>▶</span>
-                    <h3 className="text-lg font-bold text-green-400">💡 Song Suggestions</h3>
-                    {songSuggestions.filter(s => s.status === 'pending').length > 0 && (
-                      <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                        {songSuggestions.filter(s => s.status === 'pending').length}
-                      </span>
-                    )}
+                    <h3 className="text-lg font-bold text-yellow-400">💡 Unassigned Suggestions</h3>
+                    <span className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">
+                      {songSuggestions.filter(s => !s.show_id && s.status === 'pending').length}
+                    </span>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      fetchSongSuggestions();
-                    }}
-                    className="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg text-sm font-medium transition duration-300"
-                  >
-                    Refresh
-                  </button>
                 </div>
               </summary>
-
-              {/* Suggestion Content - Only show when expanded */}
               {!suggestionsSectionCollapsed && (
-                <div className="mt-4">
+                <div className="mt-4 space-y-2">
+                  <p className="text-gray-400 text-sm mb-3">These suggestions were submitted before show assignment was implemented. They will appear in future shows automatically.</p>
+                  {songSuggestions.filter(s => !s.show_id && s.status === 'pending').map((suggestion) => (
+                    <div key={suggestion.id} className="bg-gray-700 p-3 rounded flex items-center space-x-3">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="font-medium text-yellow-400 text-sm">{suggestion.suggested_title}</span>
+                          <span className="text-gray-400 text-sm">by {suggestion.suggested_artist}</span>
+                        </div>
+                        <p className="text-xs text-gray-300">
+                          Suggested by: {suggestion.requester_name}
+                          {suggestion.message && <span className="italic ml-1">"{suggestion.message}"</span>}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={() => {
+                            setMatchingSuggestion(suggestion);
+                            setShowMatchModal(true);
+                          }}
+                          className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
+                        >
+                          🎯 Match
+                        </button>
+                        <button
+                          onClick={() => handleLearnLater(suggestion.id)}
+                          className="bg-yellow-600 hover:bg-yellow-700 text-xs px-2 py-1 rounded"
+                        >
+                          📚
+                        </button>
+                        <button
+                          onClick={() => handleSuggestionAction(suggestion.id, 'rejected', suggestion.suggested_title)}
+                          className="bg-orange-600 hover:bg-orange-700 text-xs px-2 py-1 rounded"
+                        >
+                          ⏭️
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSuggestion(suggestion.id, suggestion.suggested_title)}
+                          className="bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </details>
+          </div>
+        )}
                   {/* Batch Actions Bar for Suggestions */}
                   {selectedSuggestions.size > 0 && (
                     <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4 mb-4">
