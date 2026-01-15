@@ -5802,52 +5802,153 @@ const MusicianDashboard = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-bold text-purple-300">🎸 Live Requests</h3>
                   <div className="text-sm text-gray-400">
-                    {requests.filter(r => ['pending', 'accepted'].includes(r.status)).length} active
+                    {(() => {
+                      const activeReqs = requests.filter(r => ['pending', 'accepted'].includes(r.status));
+                      const pendingSuggs = songSuggestions.filter(s => s.status === 'pending');
+                      const totalActive = activeReqs.length + pendingSuggs.length;
+                      return `${totalActive} active`;
+                    })()}
                   </div>
                 </div>
                 
+                {/* Debug line - temporary for verification */}
+                <div className="bg-yellow-900/30 border border-yellow-500/50 rounded p-2 mb-3 text-xs text-yellow-200 font-mono">
+                  ActiveRequestsCount: {requests.filter(r => ['pending', 'accepted'].includes(r.status)).length} | 
+                  PendingSuggestionsCount: {songSuggestions.filter(s => s.status === 'pending').length} | 
+                  ActiveItemsCount: {(() => {
+                    const activeReqs = requests.filter(r => ['pending', 'accepted'].includes(r.status)).map(r => ({...r, type: 'request'}));
+                    const pendingSuggs = songSuggestions.filter(s => s.status === 'pending').map(s => ({
+                      ...s,
+                      type: 'suggestion',
+                      song_title: s.suggested_title,
+                      song_artist: s.suggested_artist,
+                      dedication: s.message
+                    }));
+                    return activeReqs.length + pendingSuggs.length;
+                  })()}
+                </div>
+                
                 <div className="space-y-3">
-                  {requests
-                    .filter(r => ['pending', 'accepted'].includes(r.status))
-                    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-                    .map((request) => (
-                      <div key={request.id} className="bg-purple-800/50 rounded-lg p-4">
-                        <h4 className="font-bold text-lg text-white">
-                          {request.song_title}
-                        </h4>
-                        <p className="text-purple-200">{request.song_artist}</p>
-                        <p className="text-sm text-gray-300 mt-2">
-                          From: <strong className="text-white">{request.requester_name}</strong>
-                        </p>
-                        {request.dedication && (
-                          <p className="text-sm text-purple-200 mt-1 italic">
-                            "{request.dedication}"
-                          </p>
-                        )}
-                        {request.tip_amount > 0 && (
-                          <div className="text-sm text-green-400 mt-1 font-medium">
-                            💰 ${request.tip_amount} tip
+                  {(() => {
+                    // Merge active requests and pending suggestions
+                    const activeReqs = requests.filter(r => ['pending', 'accepted'].includes(r.status)).map(r => ({...r, type: 'request'}));
+                    const pendingSuggs = songSuggestions.filter(s => s.status === 'pending').map(s => ({
+                      ...s,
+                      type: 'suggestion',
+                      song_title: s.suggested_title,
+                      song_artist: s.suggested_artist,
+                      dedication: s.message,
+                      requester_name: s.requester_name
+                    }));
+                    const activeItems = [...activeReqs, ...pendingSuggs].sort((a, b) => 
+                      new Date(a.created_at) - new Date(b.created_at)
+                    );
+                    
+                    if (activeItems.length === 0) {
+                      return (
+                        <div className="text-center py-8 text-gray-400">
+                          <p>No active requests or suggestions</p>
+                        </div>
+                      );
+                    }
+                    
+                    return activeItems.map((item) => (
+                      item.type === 'suggestion' ? (
+                        // Render suggestion
+                        <div key={item.id} className="bg-orange-900/30 rounded-lg p-4 border-l-4 border-orange-400">
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="px-2 py-1 rounded-full text-xs font-bold bg-orange-600 text-white">
+                              SUGGESTION
+                            </span>
                           </div>
-                        )}
-                        
-                        <div className="flex space-x-2 mt-3">
-                          <button
-                            onClick={() => updateRequestStatus(request.id, 'up_next')}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition duration-300"
-                          >
-                            ↗ Up Next
-                          </button>
-                          <button
-                            onClick={() => updateRequestStatus(request.id, 'played')}
-                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition duration-300"
-                          >
-                            ✓ Played
-                          </button>
-                          <button
-                            onClick={() => updateRequestStatus(request.id, 'rejected')}
-                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition duration-300"
-                          >
-                            ✗ Reject
+                          <h4 className="font-bold text-lg text-orange-100">
+                            {item.suggested_title || item.song_title}
+                          </h4>
+                          <p className="text-orange-200">by {item.suggested_artist || item.song_artist}</p>
+                          <p className="text-sm text-gray-300 mt-2">
+                            From: <strong className="text-white">{item.requester_name}</strong>
+                          </p>
+                          {item.message && (
+                            <p className="text-sm text-orange-200 mt-1 italic">
+                              "{item.message}"
+                            </p>
+                          )}
+                          <div className="flex space-x-2 mt-3">
+                            <button
+                              onClick={() => {
+                                // Match to song action - for now, just add to repertoire
+                                handleSuggestionAction(item.id, 'added', item.suggested_title);
+                              }}
+                              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition duration-300"
+                            >
+                              Match to Song
+                            </button>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const token = localStorage.getItem('token');
+                                  await axios.put(
+                                    `${API}/song-suggestions/${item.id}/learn-later`,
+                                    {},
+                                    { headers: { 'Authorization': `Bearer ${token}` } }
+                                  );
+                                  fetchSongSuggestions();
+                                } catch (error) {
+                                  console.error('Error marking learn later:', error);
+                                }
+                              }}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition duration-300"
+                            >
+                              Learn it later
+                            </button>
+                            <button
+                              onClick={() => handleSuggestionAction(item.id, 'rejected', item.suggested_title)}
+                              className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm transition duration-300"
+                              title="Skip"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        // Render normal request
+                        <div key={item.id} className="bg-purple-800/50 rounded-lg p-4">
+                          <h4 className="font-bold text-lg text-white">
+                            {item.song_title}
+                          </h4>
+                          <p className="text-purple-200">{item.song_artist}</p>
+                          <p className="text-sm text-gray-300 mt-2">
+                            From: <strong className="text-white">{item.requester_name}</strong>
+                          </p>
+                          {item.dedication && (
+                            <p className="text-sm text-purple-200 mt-1 italic">
+                              "{item.dedication}"
+                            </p>
+                          )}
+                          {item.tip_amount > 0 && (
+                            <div className="text-sm text-green-400 mt-1 font-medium">
+                              💰 ${item.tip_amount} tip
+                            </div>
+                          )}
+                          
+                          <div className="flex space-x-2 mt-3">
+                            <button
+                              onClick={() => updateRequestStatus(item.id, 'up_next')}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition duration-300"
+                            >
+                              ↗ Up Next
+                            </button>
+                            <button
+                              onClick={() => updateRequestStatus(item.id, 'played')}
+                              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition duration-300"
+                            >
+                              ✓ Played
+                            </button>
+                            <button
+                              onClick={() => updateRequestStatus(item.id, 'rejected')}
+                              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition duration-300"
+                            >
+                              ✗ Skip
                           </button>
                         </div>
                       </div>
