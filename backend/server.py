@@ -734,6 +734,53 @@ async def activate_audience_link(musician_id: str, reason: str = "subscription_a
         "timestamp": datetime.utcnow().isoformat()
     })
 
+# Analytics Event Helper - Non-blocking, append-only
+async def emit_analytics_event(
+    event_type: str,
+    musician_id: str,
+    show_id: Optional[str] = None,
+    entity_id: Optional[str] = None,
+    entity_type: Optional[str] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+    requester_email: Optional[str] = None
+) -> None:
+    """
+    Emit an analytics event to the append-only ledger.
+    
+    - Non-blocking with short timeout
+    - Swallows all errors (never blocks user actions)
+    - Logs errors for debugging
+    - Normalizes requester email (lower().strip())
+    """
+    if not ANALYTICS_EVENTS_ENABLED:
+        return
+    
+    try:
+        # Normalize email if provided
+        normalized_email = requester_email.lower().strip() if requester_email else None
+        
+        event = {
+            "id": str(uuid.uuid4()),
+            "event_type": event_type,
+            "musician_id": musician_id,
+            "show_id": show_id,
+            "entity_id": entity_id,
+            "entity_type": entity_type,
+            "metadata": metadata or {},
+            "requester_email": normalized_email,
+            "timestamp": datetime.utcnow()  # UTC datetime, not ISO string
+        }
+        
+        # Insert with short timeout (200ms) - non-blocking
+        await asyncio.wait_for(
+            db.analytics_events.insert_one(event),
+            timeout=0.2
+        )
+    except asyncio.TimeoutError:
+        logging.warning(f"Analytics event timed out: {event_type} for musician {musician_id}")
+    except Exception as e:
+        logging.warning(f"Analytics event failed: {event_type} - {str(e)}")
+
 def init_stripe_checkout(request: FastAPIRequest):
     """Initialize Stripe checkout with webhook URL"""
     if not BILLING_ENABLED:
