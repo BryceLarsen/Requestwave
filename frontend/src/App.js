@@ -1311,7 +1311,7 @@ const MusicianDashboard = () => {
 
   // Set default show based on musician's current_show_id or most recent active show
   useEffect(() => {
-    if (activeTab === 'requests' && shows.length > 0 && musician) {
+    if ((activeTab === 'requests' || activeTab === 'onstage') && shows.length > 0 && musician) {
       // Use backend's current_show_id if available
       if (musician.current_show_id) {
         const backendCurrentShow = shows.find(show => show.id === musician.current_show_id && show.status === 'active');
