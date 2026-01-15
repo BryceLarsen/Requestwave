@@ -5444,10 +5444,7 @@ const MusicianDashboard = () => {
                                   </div>
                                   <div className="flex items-center space-x-1">
                                     <button
-                                      onClick={() => {
-                                        setMatchingSuggestion(suggestion);
-                                        setShowMatchModal(true);
-                                      }}
+                                      onClick={() => setMatchingSuggestion(suggestion)}
                                       className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
                                       title="Match to existing song"
                                     >
