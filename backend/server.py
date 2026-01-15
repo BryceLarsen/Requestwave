@@ -3167,6 +3167,7 @@ async def update_suggestion_status(
         if not suggestion:
             raise HTTPException(status_code=404, detail="Song suggestion not found")
         
+        previous_status = suggestion.get("status")
         new_status = status_data.get("status")
         valid_statuses = ["pending", "learn_later", "rejected", "added"]
         if new_status not in valid_statuses:
@@ -3210,6 +3211,48 @@ async def update_suggestion_status(
             {"id": suggestion_id},
             {"$set": update_data}
         )
+        
+        # Emit analytics events based on status transition
+        # Get musician's current show for show_id
+        musician = await db.musicians.find_one({"id": musician_id})
+        current_show_id = musician.get("current_show_id") if musician else None
+        
+        if new_status == "rejected":
+            await emit_analytics_event(
+                event_type="musician.suggestion_skipped",
+                musician_id=musician_id,
+                source="musician",
+                entity_type="suggestion",
+                show_id=current_show_id,
+                entity_id=suggestion_id,
+                metadata={
+                    "previous_status": previous_status
+                }
+            )
+        elif new_status == "learn_later":
+            await emit_analytics_event(
+                event_type="musician.suggestion_learn_later",
+                musician_id=musician_id,
+                source="musician",
+                entity_type="suggestion",
+                show_id=current_show_id,
+                entity_id=suggestion_id,
+                metadata={
+                    "previous_status": previous_status
+                }
+            )
+        elif new_status == "pending" and previous_status in ["rejected", "learn_later"]:
+            await emit_analytics_event(
+                event_type="musician.suggestion_restored",
+                musician_id=musician_id,
+                source="musician",
+                entity_type="suggestion",
+                show_id=current_show_id,
+                entity_id=suggestion_id,
+                metadata={
+                    "previous_status": previous_status
+                }
+            )
         
         return {"success": True, "message": f"Song suggestion {new_status} successfully"}
         
