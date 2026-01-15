@@ -3853,6 +3853,7 @@ async def create_request(request_data: RequestCreate):
     current_show_name = musician.get("current_show_name") if musician else None
     
     # AUTO-SHOW CREATION: If no active show exists, create one automatically
+    auto_show_created = False
     if not current_show_id:
         # Check if any active show exists
         active_show = await db.shows.find_one({
@@ -3880,6 +3881,7 @@ async def create_request(request_data: RequestCreate):
             await db.shows.insert_one(new_show)
             current_show_id = show_id
             current_show_name = new_show["name"]
+            auto_show_created = True
             
             # Update musician's current show ID and name
             await db.musicians.update_one(
@@ -3888,6 +3890,19 @@ async def create_request(request_data: RequestCreate):
                     "current_show_id": current_show_id,
                     "current_show_name": current_show_name
                 }}
+            )
+            
+            # Emit system.auto_show_created event
+            await emit_analytics_event(
+                event_type="system.auto_show_created",
+                musician_id=musician_id,
+                source="system",
+                entity_type="show",
+                show_id=show_id,
+                entity_id=show_id,
+                metadata={
+                    "trigger": "no_active_show"
+                }
             )
         else:
             current_show_id = active_show["id"]
