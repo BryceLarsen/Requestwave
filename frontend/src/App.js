@@ -6139,6 +6139,8 @@ const MusicianDashboard = () => {
                 )}
               </div>
             </div>
+            </>
+            )}
           </div>
         )}
 
