@@ -6055,7 +6055,7 @@ const MusicianDashboard = () => {
                 </div>
               </div>
 
-              {/* Handled Requests Panel */}
+              {/* Handled Requests Panel - Scoped to current show */}
               <div className="bg-green-900/50 rounded-xl p-6">
                 <div className="mb-4">
                   <div className="flex items-center justify-between">
@@ -6065,7 +6065,7 @@ const MusicianDashboard = () => {
                     </div>
                     <div className="flex items-center space-x-2">
                       <div className="text-sm text-gray-400">
-                        {requests.filter(r => ['played', 'rejected'].includes(r.status)).length} done
+                        {requests.filter(r => r.show_id === currentShow.id && ['played', 'rejected'].includes(r.status)).length} done
                       </div>
                       <button
                         onClick={() => setCompletedSectionCollapsed(!completedSectionCollapsed)}
