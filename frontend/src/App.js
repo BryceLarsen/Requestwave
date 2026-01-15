@@ -1007,10 +1007,9 @@ const MusicianDashboard = () => {
       try {
         await axios.delete(`${API}/requests/${requestId}`);
         fetchGroupedRequests();
-        alert('Request deleted successfully!');
       } catch (error) {
         console.error('Error deleting request:', error);
-        alert('Error deleting request. Please try again.');
+        showErrorToast(error.response?.data?.detail || 'Error deleting request. Please try again.', error);
       }
     }
   };
