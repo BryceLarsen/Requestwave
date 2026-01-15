@@ -1886,7 +1886,7 @@ async def register_musician(musician_data: MusicianRegister):
             "show_year": True,
             "show_notes": True
         },
-        "created_at": datetime.utcnow().isoformat()
+        "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
     }
     
     await db.musicians.insert_one(musician_dict)
@@ -2491,7 +2491,7 @@ async def emergent_oauth_login(request: FastAPIRequest, response: Response):
                 "profile_picture": picture,
                 "emergent_session_token": session_token,
                 "emergent_user_id": emergent_user_id,
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string,
                 "last_login": datetime.utcnow().isoformat(),
                 # In free mode, give everyone pro access
                 "subscription_status": "active" if not BILLING_ENABLED else "trial",
@@ -2511,7 +2511,7 @@ async def emergent_oauth_login(request: FastAPIRequest, response: Response):
             "musician_id": musician_id,
             "emergent_user_id": emergent_user_id,
             "email": email,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string,
             "expires_at": (datetime.utcnow() + timedelta(days=7)).isoformat()
         }
         
@@ -2649,7 +2649,7 @@ async def forgot_password(reset_data: PasswordReset):
                 "reset_token": reset_token,
                 "expires_at": (datetime.utcnow() + timedelta(minutes=60)).isoformat(),
                 "used": False,
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
             }
         },
         upsert=True
@@ -3046,7 +3046,7 @@ async def import_from_playlist(import_data: PlaylistImport, musician_id: str = D
                     "moods": song_data.get('moods', ['Feel Good']),
                     "year": int(song_data.get('year', 2023)) if song_data.get('year') else None,
                     "notes": song_data.get('notes', ''),
-                    "created_at": datetime.utcnow().isoformat()
+                    "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
                 }
                 
                 # Calculate decade from year
@@ -3177,7 +3177,7 @@ async def create_song_suggestion(suggestion_data: dict):
             "status": "pending",
             "show_id": current_show_id,
             "show_name": current_show_name,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
         }
         
         await db.song_suggestions.insert_one(suggestion)
@@ -3258,7 +3258,7 @@ async def update_suggestion_status(
                     "notes": f"Added from audience suggestion by {suggestion['requester_name']}",
                     "request_count": 0,
                     "hidden": False,
-                    "created_at": datetime.utcnow().isoformat()
+                    "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
                 }
                 await db.songs.insert_one(song_dict)
         
@@ -3564,7 +3564,7 @@ async def create_song(song_data: SongCreate, musician_id: str = Depends(get_curr
         "decade": decade,  # NEW: Auto-calculated decade
         "request_count": 0,  # Initialize request count
         "hidden": False,  # NEW: Default to visible
-        "created_at": datetime.utcnow().isoformat()
+        "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
     })
     
     await db.songs.insert_one(song_dict)
@@ -3980,7 +3980,7 @@ async def create_request(request_data: RequestCreate):
         "show_name": current_show_name,  # Display only
         "tip_clicked": False,
         "social_clicks": [],
-        "created_at": datetime.utcnow().isoformat()
+        "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
     })
     
     await db.requests.insert_one(request_dict)
@@ -4124,7 +4124,7 @@ async def create_musician_request(
         "show_name": current_show_name,  # Display only
         "tip_clicked": False,
         "social_clicks": [],
-        "created_at": datetime.utcnow().isoformat()
+        "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
     })
     
     # Update song request count
@@ -4674,7 +4674,7 @@ async def upload_csv_songs(
                 "year": song_data['year'],
                 "notes": song_data['notes'],
                 "request_count": 0,
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
             }
             
             # NEW: Optional automatic metadata enrichment
@@ -4820,7 +4820,7 @@ async def upload_lst_songs(
                     "notes": song_data.get("notes", ""),
                     "request_count": 0,
                     "hidden": False,
-                    "created_at": datetime.utcnow().isoformat()
+                    "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
                 }
                 
                 # Calculate decade from year if available
@@ -5141,7 +5141,7 @@ async def record_tip(
             "platform": tip_data.platform,
             "tipper_name": tip_data.tipper_name,
             "message": tip_data.message,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
         }
         
         # Insert tip record
@@ -5311,7 +5311,7 @@ async def create_show(
         show_dict.update({
             "id": str(uuid.uuid4()),
             "musician_id": musician_id,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
         })
         
         await db.shows.insert_one(show_dict)
@@ -5421,7 +5421,7 @@ async def start_show(
             "date": datetime.utcnow().strftime("%Y-%m-%d"),
             "venue": show_data.get("venue", ""),
             "notes": show_data.get("notes", ""),
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
         }
         
         await db.shows.insert_one(show_dict)
@@ -6598,7 +6598,7 @@ async def send_contact_message(contact: ContactRequest):
             "email": contact.email,
             "message": contact.message,
             "musician_id": contact.musician_id,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string,
             "status": "received"
         }
         
