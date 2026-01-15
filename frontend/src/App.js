@@ -11630,7 +11630,7 @@ const OnStageInterface = () => {
           )}
         </div>
 
-        {/* COMPLETED REQUESTS Section */}
+        {/* HANDLED REQUESTS Section */}
         {completedRequests.length > 0 && (
           <div className="bg-gray-800 rounded-xl border-2 border-gray-600">
             <div 
@@ -11639,7 +11639,10 @@ const OnStageInterface = () => {
             >
               <div className="flex items-center space-x-2">
                 <span className="text-2xl">✅</span>
-                <h2 className="text-xl font-bold text-gray-300">Completed Requests ({completedRequests.length})</h2>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-300">Handled ({completedRequests.length})</h2>
+                  <p className="text-sm text-gray-400">Played, skipped, or saved for later.</p>
+                </div>
               </div>
               <span className={`text-xl transition-transform ${completedSectionCollapsed ? 'rotate-90' : 'rotate-0'}`}>
                 ▶️
