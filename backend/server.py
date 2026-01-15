@@ -291,6 +291,18 @@ class Tip(BaseModel):
     message: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
+# Analytics Event Model - Append-only event ledger
+class AnalyticsEvent(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    event_type: str  # e.g., "audience.request_submitted", "audience.suggestion_submitted"
+    musician_id: str
+    show_id: Optional[str] = None
+    entity_id: Optional[str] = None  # request_id, suggestion_id, etc.
+    entity_type: Optional[str] = None  # "request", "suggestion", etc.
+    metadata: Dict[str, Any] = {}  # Additional event-specific data
+    requester_email: Optional[str] = None  # Normalized email (lower().strip()) - only for audience events
+    timestamp: datetime = Field(default_factory=datetime.utcnow)  # UTC datetime
+
 # NEW: Payment link generation model
 class PaymentLinkResponse(BaseModel):
     paypal_link: Optional[str] = None
