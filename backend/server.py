@@ -2512,7 +2512,7 @@ async def emergent_oauth_login(request: FastAPIRequest, response: Response):
             "musician_id": musician_id,
             "emergent_user_id": emergent_user_id,
             "email": email,
-            "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string,
+            "created_at": datetime.now(timezone.utc),  # Store as UTC Date, not string
             "expires_at": (datetime.utcnow() + timedelta(days=7)).isoformat()
         }
         
