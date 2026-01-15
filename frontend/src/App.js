@@ -5218,65 +5218,202 @@ const MusicianDashboard = () => {
                           </button>
                         </div>
                       </summary>
-                      <div className="px-4 pb-4 space-y-2">
-                        {requests.filter(r => r.show_id === show.id)
-                          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Most recent first
-                          .map((request) => (
-                          <div key={request.id} className="bg-gray-600 p-3 rounded flex items-center space-x-3">
-                            <input
-                              type="checkbox"
-                              checked={selectedRequests.has(request.id)}
-                              onChange={() => toggleRequestSelection(request.id)}
-                              className="rounded bg-gray-600 border-gray-500 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
-                            />
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-1">
-                                <span className="font-medium text-blue-400 text-sm">{request.song_title}</span>
-                                <span className="text-gray-400 text-sm">by {request.song_artist}</span>
-                                {request.tip_clicked && <span className="text-green-400 text-xs">💰</span>}
-                                {request.social_clicks?.length > 0 && (
-                                  <span className="text-purple-400 text-xs">📱 {request.social_clicks.length}</span>
-                                )}
-                              </div>
-                              <p className="text-xs text-gray-300">
-                                From: {request.requester_name}
-                                {request.dedication && <span className="italic ml-1">"{request.dedication}"</span>}
-                              </p>
-                            </div>
+                      <div className="px-4 pb-4 space-y-4">
+                        {/* Requests Section */}
+                        <details open className="bg-gray-600/50 rounded-lg">
+                          <summary className="cursor-pointer p-3 font-medium hover:bg-gray-600 rounded-lg transition duration-300 flex justify-between items-center">
                             <div className="flex items-center space-x-2">
-                              <span className={`px-2 py-1 rounded text-xs ${
-                                request.status === 'pending' ? 'bg-yellow-600/20 text-yellow-400' :
-                                request.status === 'played' ? 'bg-blue-600/20 text-blue-400' :
-                                'bg-red-600/20 text-red-400'
-                              }`}>
-                                {getStatusLabel(request.status)}
-                              </span>
-                              {request.status === 'pending' && (
-                                <div className="flex space-x-1">
-                                  <button
-                                    onClick={() => updateRequestStatus(request.id, 'played')}
-                                    className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 rounded"
-                                  >
-                                    Play
-                                  </button>
-                                  <button
-                                    onClick={() => updateRequestStatus(request.id, 'rejected')}
-                                    className="bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
-                                  >
-                                    Reject
-                                  </button>
-                                </div>
-                              )}
-                              <button
-                                onClick={() => handleDeleteRequest(request.id, request.song_title)}
-                                className="bg-gray-600 hover:bg-red-600 text-white text-xs px-2 py-1 rounded transition duration-300"
-                                title="Delete this request permanently"
-                              >
-                                🗑️
-                              </button>
+                              <input
+                                type="checkbox"
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) => {
+                                  const showRequests = requests.filter(r => r.show_id === show.id);
+                                  if (e.target.checked) {
+                                    selectAllRequests(showRequests);
+                                  } else {
+                                    clearRequestSelection();
+                                  }
+                                }}
+                                className="rounded bg-gray-600 border-gray-500 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
+                                title="Select all requests"
+                              />
+                              <span>🎵 Requests ({requests.filter(r => r.show_id === show.id).length})</span>
                             </div>
+                          </summary>
+                          <div className="p-3 space-y-2">
+                            {requests.filter(r => r.show_id === show.id).length === 0 ? (
+                              <p className="text-gray-400 text-sm italic">No requests for this show</p>
+                            ) : (
+                              requests.filter(r => r.show_id === show.id)
+                                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                                .map((request) => (
+                                <div key={request.id} className="bg-gray-600 p-3 rounded flex items-center space-x-3">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedRequests.has(request.id)}
+                                    onChange={() => toggleRequestSelection(request.id)}
+                                    className="rounded bg-gray-600 border-gray-500 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
+                                  />
+                                  <div className="flex-1">
+                                    <div className="flex items-center space-x-2 mb-1">
+                                      <span className="font-medium text-blue-400 text-sm">{request.song_title}</span>
+                                      <span className="text-gray-400 text-sm">by {request.song_artist}</span>
+                                      {request.tip_clicked && <span className="text-green-400 text-xs">💰</span>}
+                                      {request.social_clicks?.length > 0 && (
+                                        <span className="text-purple-400 text-xs">📱 {request.social_clicks.length}</span>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-gray-300">
+                                      From: {request.requester_name}
+                                      {request.dedication && <span className="italic ml-1">"{request.dedication}"</span>}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <span className={`px-2 py-1 rounded text-xs ${
+                                      request.status === 'pending' ? 'bg-yellow-600/20 text-yellow-400' :
+                                      request.status === 'played' ? 'bg-blue-600/20 text-blue-400' :
+                                      'bg-red-600/20 text-red-400'
+                                    }`}>
+                                      {getStatusLabel(request.status)}
+                                    </span>
+                                    {request.status === 'pending' && (
+                                      <div className="flex space-x-1">
+                                        <button
+                                          onClick={() => updateRequestStatus(request.id, 'played')}
+                                          className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 rounded"
+                                        >
+                                          Play
+                                        </button>
+                                        <button
+                                          onClick={() => updateRequestStatus(request.id, 'rejected')}
+                                          className="bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
+                                        >
+                                          Reject
+                                        </button>
+                                      </div>
+                                    )}
+                                    <button
+                                      onClick={() => handleDeleteRequest(request.id, request.song_title)}
+                                      className="bg-gray-600 hover:bg-red-600 text-white text-xs px-2 py-1 rounded transition duration-300"
+                                      title="Delete this request permanently"
+                                    >
+                                      🗑️
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
+                            )}
                           </div>
-                        ))}
+                        </details>
+                        
+                        {/* Suggestions Section */}
+                        <details className="bg-gray-600/50 rounded-lg">
+                          <summary className="cursor-pointer p-3 font-medium hover:bg-gray-600 rounded-lg transition duration-300 flex justify-between items-center">
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) => {
+                                  const showSuggestions = songSuggestions.filter(s => s.show_id === show.id && s.status === 'pending');
+                                  if (e.target.checked) {
+                                    selectAllSuggestions(showSuggestions);
+                                  } else {
+                                    clearSuggestionSelection();
+                                  }
+                                }}
+                                className="rounded bg-gray-600 border-gray-500 text-yellow-600 focus:ring-yellow-500 focus:ring-offset-0"
+                                title="Select all suggestions"
+                              />
+                              <span>💡 Suggestions ({songSuggestions.filter(s => s.show_id === show.id && s.status === 'pending').length})</span>
+                            </div>
+                            {selectedSuggestions.size > 0 && songSuggestions.filter(s => s.show_id === show.id && selectedSuggestions.has(s.id)).length > 0 && (
+                              <div className="flex space-x-1" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  onClick={() => batchSuggestionAction('learn_later')}
+                                  className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs px-2 py-1 rounded"
+                                  title="Mark selected as Learn Later"
+                                >
+                                  📚 Learn Later
+                                </button>
+                                <button
+                                  onClick={() => batchSuggestionAction('rejected')}
+                                  className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1 rounded"
+                                  title="Skip selected"
+                                >
+                                  ⏭️ Skip
+                                </button>
+                                <button
+                                  onClick={() => batchDeleteSuggestions()}
+                                  className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded"
+                                  title="Delete selected permanently"
+                                >
+                                  🗑️ Trash
+                                </button>
+                              </div>
+                            )}
+                          </summary>
+                          <div className="p-3 space-y-2">
+                            {songSuggestions.filter(s => s.show_id === show.id && s.status === 'pending').length === 0 ? (
+                              <p className="text-gray-400 text-sm italic">No suggestions for this show</p>
+                            ) : (
+                              songSuggestions.filter(s => s.show_id === show.id && s.status === 'pending')
+                                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                                .map((suggestion) => (
+                                <div key={suggestion.id} className="bg-gray-600 p-3 rounded flex items-center space-x-3">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedSuggestions.has(suggestion.id)}
+                                    onChange={() => toggleSuggestionSelection(suggestion.id)}
+                                    className="rounded bg-gray-600 border-gray-500 text-yellow-600 focus:ring-yellow-500 focus:ring-offset-0"
+                                  />
+                                  <div className="flex-1">
+                                    <div className="flex items-center space-x-2 mb-1">
+                                      <span className="font-medium text-yellow-400 text-sm">{suggestion.suggested_title}</span>
+                                      <span className="text-gray-400 text-sm">by {suggestion.suggested_artist}</span>
+                                    </div>
+                                    <p className="text-xs text-gray-300">
+                                      Suggested by: {suggestion.requester_name}
+                                      {suggestion.message && <span className="italic ml-1">"{suggestion.message}"</span>}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center space-x-1">
+                                    <button
+                                      onClick={() => {
+                                        setMatchingSuggestion(suggestion);
+                                        setShowMatchModal(true);
+                                      }}
+                                      className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
+                                      title="Match to existing song"
+                                    >
+                                      🎯 Match
+                                    </button>
+                                    <button
+                                      onClick={() => handleLearnLater(suggestion.id)}
+                                      className="bg-yellow-600 hover:bg-yellow-700 text-xs px-2 py-1 rounded"
+                                      title="Learn it later"
+                                    >
+                                      📚
+                                    </button>
+                                    <button
+                                      onClick={() => handleSuggestionAction(suggestion.id, 'rejected', suggestion.suggested_title)}
+                                      className="bg-orange-600 hover:bg-orange-700 text-xs px-2 py-1 rounded"
+                                      title="Skip"
+                                    >
+                                      ⏭️
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteSuggestion(suggestion.id, suggestion.suggested_title)}
+                                      className="bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
+                                      title="Delete permanently"
+                                    >
+                                      🗑️
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </details>
                       </div>
                     </details>
                   ))}
