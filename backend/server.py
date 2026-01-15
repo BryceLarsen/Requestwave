@@ -2492,7 +2492,7 @@ async def emergent_oauth_login(request: FastAPIRequest, response: Response):
                 "profile_picture": picture,
                 "emergent_session_token": session_token,
                 "emergent_user_id": emergent_user_id,
-                "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string,
+                "created_at": datetime.now(timezone.utc),  # Store as UTC Date, not string
                 "last_login": datetime.utcnow().isoformat(),
                 # In free mode, give everyone pro access
                 "subscription_status": "active" if not BILLING_ENABLED else "trial",
