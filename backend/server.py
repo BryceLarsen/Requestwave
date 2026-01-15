@@ -5350,6 +5350,11 @@ async def stop_show(
 ):
     """Stop the current active show"""
     try:
+        # Get current show info BEFORE clearing it
+        musician = await db.musicians.find_one({"id": musician_id})
+        previous_show_id = musician.get("current_show_id") if musician else None
+        previous_show_name = musician.get("current_show_name") if musician else None
+        
         # Clear musician's current active show
         await db.musicians.update_one(
             {"id": musician_id},
@@ -5358,6 +5363,20 @@ async def stop_show(
                 "current_show_name": None
             }}
         )
+        
+        # Emit analytics event only if there was an active show
+        if previous_show_id:
+            await emit_analytics_event(
+                event_type="musician.show_stopped",
+                musician_id=musician_id,
+                source="musician",
+                entity_type="show",
+                show_id=previous_show_id,
+                entity_id=previous_show_id,
+                metadata={
+                    "show_name": previous_show_name
+                }
+            )
         
         logger.info(f"Stopped active show for musician {musician_id}")
         return {
