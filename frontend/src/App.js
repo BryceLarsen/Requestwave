@@ -5949,17 +5949,12 @@ const MusicianDashboard = () => {
                               className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition duration-300"
                             >
                               ✗ Skip
-                          </button>
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  
-                  {requests.filter(r => ['pending', 'accepted'].includes(r.status)).length === 0 && (
-                    <div className="text-center py-8 text-gray-400">
-                      <p>No active requests</p>
-                      <p className="text-sm mt-1">New requests will appear here</p>
-                    </div>
-                  )}
+                      )
+                    ));
+                  })()}
                 </div>
               </div>
 
