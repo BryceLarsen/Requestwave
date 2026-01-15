@@ -5896,14 +5896,14 @@ const MusicianDashboard = () => {
                 </div>
               )}
 
-              {/* Active Requests Panel */}
+              {/* Active Requests Panel - Scoped to current show */}
               <div className="bg-purple-900/50 rounded-xl p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-bold text-purple-300">🎸 Live Requests</h3>
                   <div className="text-sm text-gray-400">
                     {(() => {
-                      const activeReqs = requests.filter(r => ['pending', 'accepted'].includes(r.status));
-                      const pendingSuggs = songSuggestions.filter(s => s.status === 'pending');
+                      const activeReqs = requests.filter(r => r.show_id === currentShow.id && ['pending', 'accepted'].includes(r.status));
+                      const pendingSuggs = songSuggestions.filter(s => s.show_id === currentShow.id && s.status === 'pending');
                       const totalActive = activeReqs.length + pendingSuggs.length;
                       return `${totalActive} active`;
                     })()}
@@ -5912,9 +5912,9 @@ const MusicianDashboard = () => {
                 
                 <div className="space-y-3">
                   {(() => {
-                    // Merge active requests and pending suggestions
-                    const activeReqs = requests.filter(r => ['pending', 'accepted'].includes(r.status)).map(r => ({...r, type: 'request'}));
-                    const pendingSuggs = songSuggestions.filter(s => s.status === 'pending').map(s => ({
+                    // Merge active requests and pending suggestions - scoped to current show
+                    const activeReqs = requests.filter(r => r.show_id === currentShow.id && ['pending', 'accepted'].includes(r.status)).map(r => ({...r, type: 'request'}));
+                    const pendingSuggs = songSuggestions.filter(s => s.show_id === currentShow.id && s.status === 'pending').map(s => ({
                       ...s,
                       type: 'suggestion',
                       song_title: s.suggested_title,
