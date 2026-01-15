@@ -6080,9 +6080,9 @@ const MusicianDashboard = () => {
                 {!completedSectionCollapsed && (
                   <div className="space-y-3">
                     {(() => {
-                      // Merge completed requests and handled suggestions
-                      const completedReqs = requests.filter(r => ['played', 'rejected'].includes(r.status)).map(r => ({...r, type: 'request'}));
-                      const handledSuggs = songSuggestions.filter(s => s.status === 'learn_later' || s.status === 'rejected').map(s => ({
+                      // Merge completed requests and handled suggestions - scoped to current show
+                      const completedReqs = requests.filter(r => r.show_id === currentShow.id && ['played', 'rejected'].includes(r.status)).map(r => ({...r, type: 'request'}));
+                      const handledSuggs = songSuggestions.filter(s => s.show_id === currentShow.id && (s.status === 'learn_later' || s.status === 'rejected')).map(s => ({
                         ...s,
                         type: 'suggestion',
                         song_title: s.suggested_title,
