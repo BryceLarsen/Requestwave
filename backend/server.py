@@ -5404,7 +5404,7 @@ async def get_requests_grouped_by_show(
 # NEW: Enhanced show management with active show tracking
 @api_router.post("/shows/start")
 async def start_show(
-    show_data: dict,  # {"name": "Show Name"}
+    show_data: dict,  # {"name": "Show Name", "timezone": "America/New_York" (optional)}
     musician_id: str = Depends(get_current_musician)
 ):
     """Start a new show - all subsequent requests will be assigned to this show"""
@@ -5413,26 +5413,37 @@ async def start_show(
         if not show_name:
             raise HTTPException(status_code=400, detail="Show name is required")
         
+        # Extract timezone from request (sent from frontend browser)
+        show_timezone = show_data.get("timezone")  # IANA timezone string, e.g., "America/New_York"
+        
         # Create show record
         show_dict = {
             "id": str(uuid.uuid4()),
             "musician_id": musician_id,
             "name": show_name,
-            "date": datetime.utcnow().strftime("%Y-%m-%d"),
+            "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "venue": show_data.get("venue", ""),
             "notes": show_data.get("notes", ""),
+            "timezone": show_timezone,  # Store show timezone for display/analytics
             "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
         }
         
         await db.shows.insert_one(show_dict)
         
         # Update musician's current active show
+        update_data = {
+            "current_show_id": show_dict["id"],
+            "current_show_name": show_name
+        }
+        
+        # If musician doesn't have a timezone set yet, set it from this show
+        musician = await db.musicians.find_one({"id": musician_id})
+        if musician and not musician.get("timezone") and show_timezone:
+            update_data["timezone"] = show_timezone
+        
         await db.musicians.update_one(
             {"id": musician_id},
-            {"$set": {
-                "current_show_id": show_dict["id"],
-                "current_show_name": show_name
-            }}
+            {"$set": update_data}
         )
         
         # Emit analytics event
