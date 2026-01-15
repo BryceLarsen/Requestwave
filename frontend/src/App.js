@@ -4798,6 +4798,95 @@ const MusicianDashboard = () => {
                   />
                 </div>
 
+                {/* Learn Later Toggle and Section */}
+                <div className="mb-4">
+                  <button
+                    onClick={() => setShowLearnLater(!showLearnLater)}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition duration-300 ${
+                      showLearnLater 
+                        ? 'bg-yellow-600 text-white' 
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    <span>📚</span>
+                    <span>Learn Later</span>
+                    {songSuggestions.filter(s => s.status === 'learn_later').length > 0 && (
+                      <span className="bg-yellow-500 text-white text-xs px-2 py-0.5 rounded-full ml-1">
+                        {songSuggestions.filter(s => s.status === 'learn_later').length}
+                      </span>
+                    )}
+                  </button>
+                </div>
+
+                {/* Learn Later Content */}
+                {showLearnLater && (
+                  <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 mb-6">
+                    <h3 className="text-lg font-bold text-yellow-400 mb-3">📚 Songs to Learn Later</h3>
+                    {songSuggestions.filter(s => s.status === 'learn_later').length === 0 ? (
+                      <p className="text-gray-400 text-sm">
+                        No songs marked as "Learn Later" yet. Use the Learn Later action on suggestions to add songs here.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {songSuggestions.filter(s => s.status === 'learn_later').map((suggestion) => (
+                          <div key={suggestion.id} className="bg-gray-700 p-3 rounded-lg flex items-center justify-between">
+                            <div>
+                              <div className="flex items-center space-x-2">
+                                <span className="font-medium text-yellow-400">{suggestion.suggested_title}</span>
+                                <span className="text-gray-400">by {suggestion.suggested_artist}</span>
+                              </div>
+                              <p className="text-xs text-gray-400 mt-1">
+                                Suggested by {suggestion.requester_name}
+                                {suggestion.message && <span className="italic ml-1">- "{suggestion.message}"</span>}
+                              </p>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <button
+                                onClick={() => {
+                                  setMatchingSuggestion(suggestion);
+                                  setShowMatchModal(true);
+                                }}
+                                className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
+                                title="Match to existing song in your library"
+                              >
+                                🎯 Match
+                              </button>
+                              <button
+                                onClick={() => handleSuggestionAction(suggestion.id, 'added', suggestion.suggested_title)}
+                                className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 rounded"
+                                title="Add as new song"
+                              >
+                                ➕ Add
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await axios.put(`${API}/song-suggestions/${suggestion.id}/status`, { status: 'pending' });
+                                    fetchSongSuggestions();
+                                  } catch (error) {
+                                    console.error('Error restoring suggestion:', error);
+                                  }
+                                }}
+                                className="bg-gray-600 hover:bg-gray-500 text-xs px-2 py-1 rounded"
+                                title="Restore to pending suggestions"
+                              >
+                                ↩️ Restore
+                              </button>
+                              <button
+                                onClick={() => handleDeleteSuggestion(suggestion.id, suggestion.suggested_title)}
+                                className="bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
+                                title="Delete permanently"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Batch Operations Bar */}
                 {filteredSongs.length > 0 && (
                   <div className="flex justify-between items-center mb-4">
