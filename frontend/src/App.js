@@ -1138,10 +1138,9 @@ const MusicianDashboard = () => {
       try {
         await axios.delete(`${API}/song-suggestions/${suggestionId}`);
         fetchSongSuggestions();
-        alert('Suggestion deleted successfully!');
       } catch (error) {
         console.error('Error deleting suggestion:', error);
-        alert('Error deleting suggestion. Please try again.');
+        showErrorToast(error.response?.data?.detail || 'Error deleting suggestion. Please try again.', error);
       }
     }
   };
