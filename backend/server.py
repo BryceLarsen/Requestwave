@@ -4240,20 +4240,68 @@ async def update_request_status(
     musician_id: str = Depends(get_current_musician)
 ):
     """Update request status (pending, up_next, accepted, played, rejected) - UPDATED: Added up_next status for On Stage mode"""
-    status = status_data.status
-    if status not in ["pending", "up_next", "accepted", "played", "rejected"]:
+    new_status = status_data.status
+    if new_status not in ["pending", "up_next", "accepted", "played", "rejected"]:
         raise HTTPException(status_code=400, detail="Invalid status. Must be: pending, up_next, accepted, played, or rejected")
     
-    # Verify request belongs to musician
-    result = await db.requests.update_one(
-        {"id": request_id, "musician_id": musician_id},
-        {"$set": {"status": status}}
-    )
-    
-    if result.matched_count == 0:
+    # Fetch request first to get previous_status and show_id for analytics
+    request = await db.requests.find_one({"id": request_id, "musician_id": musician_id})
+    if not request:
         raise HTTPException(status_code=404, detail="Request not found")
     
-    return {"success": True, "message": "Request status updated successfully", "new_status": status}
+    previous_status = request.get("status")
+    show_id = request.get("show_id")
+    song_id = request.get("song_id")
+    
+    # Update the status
+    await db.requests.update_one(
+        {"id": request_id, "musician_id": musician_id},
+        {"$set": {"status": new_status}}
+    )
+    
+    # Emit analytics events based on status transition
+    if new_status == "played":
+        await emit_analytics_event(
+            event_type="musician.request_played",
+            musician_id=musician_id,
+            source="musician",
+            entity_type="request",
+            show_id=show_id,
+            entity_id=request_id,
+            metadata={
+                "song_id": song_id,
+                "previous_status": previous_status
+            }
+        )
+    elif new_status == "rejected":
+        await emit_analytics_event(
+            event_type="musician.request_skipped",
+            musician_id=musician_id,
+            source="musician",
+            entity_type="request",
+            show_id=show_id,
+            entity_id=request_id,
+            metadata={
+                "song_id": song_id,
+                "previous_status": previous_status
+            }
+        )
+    elif new_status == "accepted" and previous_status in ["played", "rejected"]:
+        # Restore: only emit when transitioning FROM played/rejected TO accepted
+        await emit_analytics_event(
+            event_type="musician.request_restored",
+            musician_id=musician_id,
+            source="musician",
+            entity_type="request",
+            show_id=show_id,
+            entity_id=request_id,
+            metadata={
+                "song_id": song_id,
+                "previous_status": previous_status
+            }
+        )
+    
+    return {"success": True, "message": "Request status updated successfully", "new_status": new_status}
 
 @api_router.get("/requests/updates/{musician_id}")
 async def get_request_updates(musician_id: str):
