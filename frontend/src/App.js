@@ -964,7 +964,7 @@ const MusicianDashboard = () => {
 
   const handleStartShow = async () => {
     if (!newShowName.trim()) {
-      alert('Please enter a show name');
+      showErrorToast('Please enter a show name');
       return;
     }
 
@@ -977,26 +977,24 @@ const MusicianDashboard = () => {
       setNewShowName('');
       fetchCurrentShow();
       fetchShows();
-      alert(`Show "${newShowName}" started! All new requests will be organized under this show.`);
     } catch (error) {
       console.error('Error starting show:', error);
-      alert('Error starting show. Please try again.');
+      showErrorToast(error.response?.data?.detail || 'Error starting show. Please try again.', error);
     }
   };
 
   const handleStopShow = async () => {
     if (!currentShow) return;
 
-    if (confirm(`Stop the current show "${currentShow.name}"? New requests will go to the main requests list.`)) {
+    if (confirm(`Stop this show "${currentShow.name}"?`)) {
       try {
         await axios.post(`${API}/shows/stop`); // Removed manual headers - axios already has auth token set
 
         setCurrentShow(null);
         fetchGroupedRequests();
-        alert('Show stopped successfully!');
       } catch (error) {
         console.error('Error stopping show:', error);
-        alert('Error stopping show. Please try again.');
+        showErrorToast(error.response?.data?.detail || 'Error stopping show. Please try again.', error);
       }
     }
   };
