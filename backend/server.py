@@ -5318,6 +5318,19 @@ async def start_show(
             }}
         )
         
+        # Emit analytics event
+        await emit_analytics_event(
+            event_type="musician.show_started",
+            musician_id=musician_id,
+            source="musician",
+            entity_type="show",
+            show_id=show_dict["id"],
+            entity_id=show_dict["id"],
+            metadata={
+                "show_name": show_name
+            }
+        )
+        
         logger.info(f"Started show '{show_name}' for musician {musician_id}")
         return {
             "success": True,
