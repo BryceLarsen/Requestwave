@@ -971,7 +971,13 @@ const MusicianDashboard = () => {
     }
 
     try {
-      await axios.post(`${API}/shows/start`, { name: newShowName }, {
+      // Capture browser timezone to send with show creation
+      const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
+      await axios.post(`${API}/shows/start`, { 
+        name: newShowName,
+        timezone: browserTimezone  // Send IANA timezone string for display/analytics
+      }, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
 
