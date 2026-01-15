@@ -5847,19 +5847,19 @@ const MusicianDashboard = () => {
                 : 'lg:grid-cols-2'
             }`}>
               
-              {/* Up Next Panel - Only show if there are up_next songs */}
-              {requests.filter(r => r.status === 'up_next').length > 0 && (
+              {/* Up Next Panel - Only show if there are up_next songs for current show */}
+              {requests.filter(r => r.show_id === currentShow.id && r.status === 'up_next').length > 0 && (
                 <div className="bg-blue-900/50 rounded-xl p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-bold text-blue-300">🎵 Up Next</h3>
                     <div className="text-sm text-gray-400">
-                      {requests.filter(r => r.status === 'up_next').length} songs
+                      {requests.filter(r => r.show_id === currentShow.id && r.status === 'up_next').length} songs
                     </div>
                   </div>
                   
                   <div className="space-y-3">
                     {requests
-                      .filter(r => r.status === 'up_next')
+                      .filter(r => r.show_id === currentShow.id && r.status === 'up_next')
                       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
                       .map((request) => (
                         <div key={request.id} className="bg-blue-800/50 rounded-lg p-4">
