@@ -4284,6 +4284,24 @@ async def get_daily_analytics(
 ):
     """Get daily analytics for the specified number of days (None = all time)"""
     try:
+        # Import zoneinfo for timezone handling
+        from zoneinfo import ZoneInfo
+        import os
+        
+        # Fetch musician to get their timezone
+        musician = await db.musicians.find_one({"id": musician_id})
+        musician_timezone = musician.get("timezone") if musician else None
+        
+        # Fallback to America/New_York if musician timezone is not set
+        # This is documented behavior: default timezone until profile is saved
+        tz_str = musician_timezone or "America/New_York"
+        try:
+            tz = ZoneInfo(tz_str)
+        except Exception:
+            # If invalid timezone string, fall back to default
+            tz = ZoneInfo("America/New_York")
+            tz_str = "America/New_York"
+        
         # Build query filter
         query_filter = {
             "musician_id": musician_id,
@@ -4294,12 +4312,36 @@ async def get_daily_analytics(
         # Handle mixed created_at types: some are datetime, some are ISO 8601 strings
         # Use $or to match both: datetime with $gte/$lte, strings with lexicographic comparison
         if days is not None:
-            end_date = datetime.utcnow()
-            start_date = end_date - timedelta(days=days)
+            # Compute boundaries in musician's local timezone
+            now_utc = datetime.now(timezone.utc)
+            now_local = now_utc.astimezone(tz)
             
-            # ISO 8601 string bounds for lexicographic comparison
+            if days == 1:
+                # "Today" means from local midnight to now
+                start_local = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
+                end_local = now_local
+            else:
+                # Rolling window: N days back from now in local time
+                start_local = now_local - timedelta(days=days)
+                end_local = now_local
+            
+            # Convert local boundaries to UTC for database query
+            start_utc = start_local.astimezone(timezone.utc)
+            end_utc = end_local.astimezone(timezone.utc)
+            
+            # Remove timezone info for MongoDB comparison (MongoDB stores naive UTC)
+            start_date = start_utc.replace(tzinfo=None)
+            end_date = end_utc.replace(tzinfo=None)
+            
+            # ISO 8601 string bounds for lexicographic comparison (no timezone suffix)
             start_str = start_date.strftime("%Y-%m-%dT%H:%M:%S")
             end_str = end_date.strftime("%Y-%m-%dT%H:%M:%S")
+            
+            # Dev-only logging for debugging timezone boundaries
+            if os.environ.get("NODE_ENV") == "development":
+                logger.info(f"[Analytics] musician_timezone={tz_str}")
+                logger.info(f"[Analytics] now_local={now_local.isoformat()}, start_local={start_local.isoformat()}, end_local={end_local.isoformat()}")
+                logger.info(f"[Analytics] start_utc={start_date.isoformat()}, end_utc={end_date.isoformat()}")
             
             # Dual-path filter: match datetime OR ISO string within range
             query_filter["$or"] = [
