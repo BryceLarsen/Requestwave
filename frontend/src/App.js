@@ -5822,10 +5822,27 @@ const MusicianDashboard = () => {
         {/* On Stage Tab - Dedicated tab for live performance management */}
         {activeTab === 'onstage' && (
           <div className="space-y-6">
+            {/* Show empty state if no active show */}
+            {!currentShow ? (
+              <div className="text-center py-16 bg-gray-800/50 rounded-xl">
+                <div className="text-6xl mb-4">🎤</div>
+                <h2 className="text-2xl font-bold text-white mb-2">No Active Show</h2>
+                <p className="text-gray-400 mb-6">Start a show to see live requests and manage your performance.</p>
+                <button
+                  onClick={() => setActiveTab('requests')}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-bold transition duration-300"
+                  data-testid="start-show-btn"
+                >
+                  Start Show
+                </button>
+              </div>
+            ) : (
+            <>
             {/* Three-Panel Layout: Up Next | Active Requests | Completed Requests */}
             {/* NOTE: Up Next panel is conditionally rendered only when there are up_next songs */}
+            {/* SCOPED: Only show requests/suggestions for the current active show */}
             <div className={`grid grid-cols-1 gap-6 ${
-              requests.filter(r => r.status === 'up_next').length > 0 
+              requests.filter(r => r.show_id === currentShow.id && r.status === 'up_next').length > 0 
                 ? 'lg:grid-cols-3' 
                 : 'lg:grid-cols-2'
             }`}>
