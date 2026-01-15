@@ -5816,23 +5816,6 @@ const MusicianDashboard = () => {
                   </div>
                 </div>
                 
-                {/* Debug line - temporary for verification */}
-                <div className="bg-yellow-900/30 border border-yellow-500/50 rounded p-2 mb-3 text-xs text-yellow-200 font-mono">
-                  ActiveRequestsCount: {requests.filter(r => ['pending', 'accepted'].includes(r.status)).length} | 
-                  PendingSuggestionsCount: {songSuggestions.filter(s => s.status === 'pending').length} | 
-                  ActiveItemsCount: {(() => {
-                    const activeReqs = requests.filter(r => ['pending', 'accepted'].includes(r.status)).map(r => ({...r, type: 'request'}));
-                    const pendingSuggs = songSuggestions.filter(s => s.status === 'pending').map(s => ({
-                      ...s,
-                      type: 'suggestion',
-                      song_title: s.suggested_title,
-                      song_artist: s.suggested_artist,
-                      dedication: s.message
-                    }));
-                    return activeReqs.length + pendingSuggs.length;
-                  })()}
-                </div>
-                
                 <div className="space-y-3">
                   {(() => {
                     // Merge active requests and pending suggestions
