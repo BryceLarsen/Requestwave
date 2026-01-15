@@ -3275,6 +3275,8 @@ async def match_suggestion_to_song(
         if not suggestion:
             raise HTTPException(status_code=404, detail="Song suggestion not found")
         
+        previous_status = suggestion.get("status")
+        
         song_id = match_data.get("song_id")
         if not song_id:
             raise HTTPException(status_code=400, detail="song_id is required")
@@ -3323,6 +3325,21 @@ async def match_suggestion_to_song(
         await db.songs.update_one(
             {"id": song_id},
             {"$inc": {"request_count": 1}}
+        )
+        
+        # Emit analytics event AFTER request is created
+        await emit_analytics_event(
+            event_type="musician.suggestion_matched",
+            musician_id=musician_id,
+            source="musician",
+            entity_type="suggestion",
+            show_id=current_show_id,
+            entity_id=suggestion_id,
+            metadata={
+                "matched_song_id": song_id,
+                "new_request_id": request_dict["id"],
+                "previous_status": previous_status
+            }
         )
         
         return {"success": True, "request_id": request_dict["id"], "message": "Suggestion matched to song successfully"}
