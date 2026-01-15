@@ -273,9 +273,10 @@ class Show(BaseModel):
     venue: Optional[str] = None
     notes: Optional[str] = None
     status: str = "active"  # active, archived
+    timezone: Optional[str] = None  # IANA timezone string, e.g., "America/New_York"
     archived_at: Optional[datetime] = None
     restored_at: Optional[datetime] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 # NEW: Tip tracking model
 class TipCreate(BaseModel):
