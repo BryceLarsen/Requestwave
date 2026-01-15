@@ -4848,10 +4848,7 @@ const MusicianDashboard = () => {
                             </div>
                             <div className="flex items-center space-x-1">
                               <button
-                                onClick={() => {
-                                  setMatchingSuggestion(suggestion);
-                                  setShowMatchModal(true);
-                                }}
+                                onClick={() => setMatchingSuggestion(suggestion)}
                                 className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
                                 title="Match to existing song in your library"
                               >
@@ -4865,25 +4862,11 @@ const MusicianDashboard = () => {
                                 ➕ Add
                               </button>
                               <button
-                                onClick={async () => {
-                                  try {
-                                    await axios.put(`${API}/song-suggestions/${suggestion.id}/status`, { status: 'pending' });
-                                    fetchSongSuggestions();
-                                  } catch (error) {
-                                    console.error('Error restoring suggestion:', error);
-                                  }
-                                }}
-                                className="bg-gray-600 hover:bg-gray-500 text-xs px-2 py-1 rounded"
-                                title="Restore to pending suggestions"
-                              >
-                                ↩️ Restore
-                              </button>
-                              <button
                                 onClick={() => handleDeleteSuggestion(suggestion.id, suggestion.suggested_title)}
                                 className="bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
                                 title="Delete permanently"
                               >
-                                🗑️
+                                🗑️ Trash
                               </button>
                             </div>
                           </div>
