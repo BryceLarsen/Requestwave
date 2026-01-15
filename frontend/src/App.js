@@ -2842,17 +2842,17 @@ const MusicianDashboard = () => {
       return;
     }
 
-    const actionText = action === 'added' ? 'add to repertoire' : 'reject';
+    const actionText = action === 'added' ? 'add to repertoire' : 
+                       action === 'learn_later' ? 'mark as learn later' : 'reject';
     const confirmMessage = `${actionText.charAt(0).toUpperCase() + actionText.slice(1)} ${selectedSuggestions.size} selected suggestion(s)?`;
     if (!confirm(confirmMessage)) return;
 
     try {
       const token = localStorage.getItem('token');
       const updatePromises = Array.from(selectedSuggestions).map(suggestionId =>
-        axios.put(`${API}/song-suggestions/${suggestionId}/status`, 
-          { status: action },
-          { headers: { 'Authorization': `Bearer ${token}` } }
-        )
+        action === 'learn_later' 
+          ? axios.put(`${API}/song-suggestions/${suggestionId}/learn-later`, {}, { headers: { 'Authorization': `Bearer ${token}` } })
+          : axios.put(`${API}/song-suggestions/${suggestionId}/status`, { status: action }, { headers: { 'Authorization': `Bearer ${token}` } })
       );
 
       await Promise.all(updatePromises);
@@ -2861,10 +2861,7 @@ const MusicianDashboard = () => {
       clearSuggestionSelection();
       fetchSongSuggestions();
       
-      const successMessage = action === 'added' 
-        ? `Successfully added ${selectedSuggestions.size} suggestion(s) to your repertoire`
-        : `Successfully rejected ${selectedSuggestions.size} suggestion(s)`;
-      alert(successMessage);
+      // UI update implies success - no alert needed for batch actions
     } catch (error) {
       console.error('Error batch updating suggestions:', error);
       alert('Error updating suggestions. Please try again.');
