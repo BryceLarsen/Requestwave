@@ -583,6 +583,7 @@ const MusicianDashboard = () => {
   const [playlistFilter, setPlaylistFilter] = useState('');
   const [moodFilter, setMoodFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
+  const [showLearnLater, setShowLearnLater] = useState(false);  // NEW: Learn Later filter toggle
   
   // NEW: Sort functionality state
   const [sortOption, setSortOption] = useState('most-popular'); // 'most-popular', 'alphabetical', 'newest', 'random'
@@ -597,6 +598,7 @@ const MusicianDashboard = () => {
     years: [],
     decades: []
   });
+
 
   // NEW: Phase 2 - Sorting and popularity state
   const [sortBy, setSortBy] = useState('created_at'); // 'created_at', 'popularity', 'title', 'artist', 'year'
