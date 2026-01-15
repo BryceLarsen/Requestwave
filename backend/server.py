@@ -6613,7 +6613,7 @@ async def send_contact_message(contact: ContactRequest):
             "email": contact.email,
             "message": contact.message,
             "musician_id": contact.musician_id,
-            "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string,
+            "created_at": datetime.now(timezone.utc),  # Store as UTC Date, not string
             "status": "received"
         }
         
