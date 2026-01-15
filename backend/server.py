@@ -3092,13 +3092,15 @@ async def create_song_suggestion(suggestion_data: dict):
         if not musician:
             raise HTTPException(status_code=404, detail="Musician not found")
         
+        musician_id = musician["id"]
+        
         # Check if song suggestions are enabled (Pro feature)
         if not musician.get("design_settings", {}).get("allow_song_suggestions", True):
             raise HTTPException(status_code=403, detail="Song suggestions are not enabled for this artist")
         
         # Check for duplicate suggestions
         existing = await db.song_suggestions.find_one({
-            "musician_id": musician["id"],
+            "musician_id": musician_id,
             "suggested_title": {"$regex": f"^{re.escape(suggestion_data['suggested_title'])}$", "$options": "i"},
             "suggested_artist": {"$regex": f"^{re.escape(suggestion_data['suggested_artist'])}$", "$options": "i"}
         })
@@ -3106,26 +3108,84 @@ async def create_song_suggestion(suggestion_data: dict):
         if existing:
             raise HTTPException(status_code=400, detail="This song has already been suggested")
         
-        # Create suggestion
+        # Get or create active show (same logic as requests)
+        current_show_id = musician.get("current_show_id")
+        current_show_name = musician.get("current_show_name")
+        
+        # AUTO-SHOW CREATION: If no active show exists, create one automatically
+        if not current_show_id:
+            active_show = await db.shows.find_one({
+                "musician_id": musician_id,
+                "status": "active"
+            })
+            
+            if not active_show:
+                # Create a new auto-generated show
+                from datetime import date
+                today = date.today().strftime("%B %d, %Y")
+                show_id = str(uuid.uuid4())
+                new_show = {
+                    "id": show_id,
+                    "musician_id": musician_id,
+                    "name": f"Show - {today}",
+                    "date": date.today().isoformat(),
+                    "venue": None,
+                    "notes": "Auto-created show",
+                    "status": "active",
+                    "archived_at": None,
+                    "restored_at": None,
+                    "created_at": datetime.utcnow()
+                }
+                await db.shows.insert_one(new_show)
+                current_show_id = show_id
+                current_show_name = new_show["name"]
+                
+                # Update musician's current show
+                await db.musicians.update_one(
+                    {"id": musician_id},
+                    {"$set": {
+                        "current_show_id": current_show_id,
+                        "current_show_name": current_show_name
+                    }}
+                )
+                
+                # Emit system.auto_show_created event
+                await emit_analytics_event(
+                    event_type="system.auto_show_created",
+                    musician_id=musician_id,
+                    source="system",
+                    entity_type="show",
+                    show_id=show_id,
+                    entity_id=show_id,
+                    metadata={
+                        "trigger": "no_active_show"
+                    }
+                )
+            else:
+                current_show_id = active_show["id"]
+                current_show_name = active_show["name"]
+        
+        # Create suggestion with show_id
         suggestion = {
             "id": str(uuid.uuid4()),
-            "musician_id": musician["id"],
+            "musician_id": musician_id,
             "suggested_title": suggestion_data["suggested_title"],
             "suggested_artist": suggestion_data["suggested_artist"],
             "requester_name": suggestion_data["requester_name"],
             "requester_email": suggestion_data["requester_email"],
             "message": suggestion_data.get("message", ""),
             "status": "pending",
+            "show_id": current_show_id,
+            "show_name": current_show_name,
             "created_at": datetime.utcnow().isoformat()
         }
         
         await db.song_suggestions.insert_one(suggestion)
         
         # Emit analytics event: audience.suggestion_submitted
-        current_show_id = musician.get("current_show_id")
         await emit_analytics_event(
             event_type="audience.suggestion_submitted",
-            musician_id=musician["id"],
+            musician_id=musician_id,
             source="audience",
             entity_type="suggestion",
             show_id=current_show_id,
