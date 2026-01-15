@@ -738,37 +738,44 @@ async def activate_audience_link(musician_id: str, reason: str = "subscription_a
 async def emit_analytics_event(
     event_type: str,
     musician_id: str,
+    source: str,  # "audience" | "musician" | "system"
+    entity_type: str,  # "request" | "suggestion" | "show" | "tip"
     show_id: Optional[str] = None,
     entity_id: Optional[str] = None,
-    entity_type: Optional[str] = None,
     metadata: Optional[Dict[str, Any]] = None,
-    requester_email: Optional[str] = None
+    requester_email_norm: Optional[str] = None  # Only for audience submission events
 ) -> None:
     """
     Emit an analytics event to the append-only ledger.
     
-    - Non-blocking with short timeout
+    - Non-blocking with short timeout (200ms)
     - Swallows all errors (never blocks user actions)
     - Logs errors for debugging
-    - Normalizes requester email (lower().strip())
+    - requester_email_norm: normalized email (lower().strip()) - ONLY for audience submission events
     """
     if not ANALYTICS_EVENTS_ENABLED:
         return
     
     try:
-        # Normalize email if provided
-        normalized_email = requester_email.lower().strip() if requester_email else None
+        # Build metadata with schema_version
+        event_metadata = {"schema_version": 1}
+        if metadata:
+            event_metadata.update(metadata)
+        
+        # Add requester_email_norm to metadata ONLY if provided (audience submissions only)
+        if requester_email_norm:
+            event_metadata["requester_email_norm"] = requester_email_norm.lower().strip()
         
         event = {
             "id": str(uuid.uuid4()),
             "event_type": event_type,
+            "timestamp": datetime.utcnow(),  # UTC datetime object
             "musician_id": musician_id,
             "show_id": show_id,
-            "entity_id": entity_id,
+            "source": source,
             "entity_type": entity_type,
-            "metadata": metadata or {},
-            "requester_email": normalized_email,
-            "timestamp": datetime.utcnow()  # UTC datetime, not ISO string
+            "entity_id": entity_id,
+            "metadata": event_metadata
         }
         
         # Insert with short timeout (200ms) - non-blocking
