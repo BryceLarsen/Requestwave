@@ -1,10 +1,135 @@
 # RequestWave Current Build Inventory
 # Canonical source of truth: /app/memory/current_build_inventory.yaml
 # Generated: 2026-01-16
-# Last Updated: 2026-01-16 (Phase 1 show_id scoping)
+# Last Updated: 2026-01-16 (Phase 2 audience_id instrumentation)
 
 # =============================================================================
-# SECTION 1: ENDPOINTS WITH SHOW_ID QUERY PARAMETER
+# SECTION 1: PHASE 2 - AUDIENCE INTERACTION CAPTURE
+# =============================================================================
+# Phase 2 implements stable anonymous audience identification and event logging.
+
+audience_identity:
+  description: >
+    Anonymous, stable identifier for tracking audience actions across a session
+    and repeat visits on the same device/browser without requiring login.
+  
+  client_implementation:
+    location: /app/frontend/src/App.js
+    storage: localStorage
+    key: requestwave_audience_id
+    generation: crypto.randomUUID()
+    behavior: >
+      Generated on first audience interaction, persisted across sessions.
+      Same audience_id reused for all requests/tips from same browser.
+    
+  backend_models_updated:
+    - model: RequestCreate
+      field: audience_id
+      type: Optional[str]
+      
+    - model: TipCreate
+      field: audience_id
+      type: Optional[str]
+      
+    - model: Request
+      field: audience_id
+      type: Optional[str]
+
+  endpoints_accepting_audience_id:
+    - route: POST /api/requests
+      field_in_body: audience_id
+      stored_on: request document
+      
+    - route: POST /api/musicians/{slug}/requests
+      field_in_body: audience_id
+      stored_on: request document
+      
+    - route: POST /api/musicians/{slug}/tips
+      field_in_body: audience_id
+      stored_on: tip document
+      
+    - route: POST /api/requests/{id}/track-click
+      field_in_body: audience_id
+      used_in: analytics events only (not stored on request)
+
+# =============================================================================
+# SECTION 2: PHASE 2 - ANALYTICS EVENTS
+# =============================================================================
+# Four new event types added for audience interaction capture.
+
+phase2_analytics_events:
+  
+  # ─────────────────────────────────────────────────────────────────────────────
+  # EVENT 1: audience.dedication_submitted
+  # ─────────────────────────────────────────────────────────────────────────────
+  - event_type: audience.dedication_submitted
+    trigger: "Request created with non-empty, non-whitespace dedication"
+    emitted_from:
+      - POST /api/requests
+      - POST /api/musicians/{slug}/requests
+    context_fields:
+      - musician_id: "Always present"
+      - show_id: "From musician's current_show_id"
+      - entity_id: "request_id"
+      - entity_type: "request"
+    metadata:
+      - song_id: "ID of requested song"
+      - song_title: "Title of requested song"
+      - dedication_length: "Character count of dedication text"
+      - audience_id: "Client-provided anonymous ID (may be null)"
+    conditional: "Only emitted if dedication.strip() is non-empty"
+  
+  # ─────────────────────────────────────────────────────────────────────────────
+  # EVENT 2: audience.tip_clicked
+  # ─────────────────────────────────────────────────────────────────────────────
+  - event_type: audience.tip_clicked
+    trigger: "Audience clicks a tip payment link (Venmo, PayPal, etc.)"
+    emitted_from:
+      - POST /api/requests/{id}/track-click
+    context_fields:
+      - musician_id: "From request document"
+      - show_id: "From request document"
+      - entity_id: "request_id"
+      - entity_type: "request"
+    metadata:
+      - platform: "venmo | paypal | cashapp | zelle"
+      - audience_id: "Client-provided anonymous ID (may be null)"
+  
+  # ─────────────────────────────────────────────────────────────────────────────
+  # EVENT 3: audience.follow_clicked
+  # ─────────────────────────────────────────────────────────────────────────────
+  - event_type: audience.follow_clicked
+    trigger: "Audience clicks a social follow link (Instagram, Spotify, etc.)"
+    emitted_from:
+      - POST /api/requests/{id}/track-click
+    context_fields:
+      - musician_id: "From request document"
+      - show_id: "From request document"
+      - entity_id: "request_id"
+      - entity_type: "request"
+    metadata:
+      - platform: "instagram | facebook | tiktok | spotify | apple_music"
+      - audience_id: "Client-provided anonymous ID (may be null)"
+  
+  # ─────────────────────────────────────────────────────────────────────────────
+  # EVENT 4: audience.tip_completed
+  # ─────────────────────────────────────────────────────────────────────────────
+  - event_type: audience.tip_completed
+    trigger: "Audience submits a tip record"
+    emitted_from:
+      - POST /api/musicians/{slug}/tips
+    context_fields:
+      - musician_id: "From musician lookup"
+      - show_id: "From tip_data.show_id or musician's current_show_id"
+      - entity_id: "tip_id"
+      - entity_type: "tip"
+    metadata:
+      - amount: "Tip amount in dollars"
+      - platform: "venmo | paypal | cashapp | zelle"
+      - audience_id: "Client-provided anonymous ID (may be null)"
+
+# =============================================================================
+# SECTION 3: ENDPOINTS WITH SHOW_ID QUERY PARAMETER
 # =============================================================================
 # These 3 endpoints accept an optional show_id query parameter.
 # Scoping rules are explicit per endpoint below.
