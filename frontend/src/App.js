@@ -9288,7 +9288,8 @@ const AudienceInterface = () => {
       const response = await axios.post(`${API}/requests`, {
         song_id: song.id,
         ...requestForm,
-        tip_amount: parseFloat(tipAmount) || 0.0
+        tip_amount: parseFloat(tipAmount) || 0.0,
+        audience_id: audienceId  // Phase 2: Include stable audience identifier
       });
       
       // Store request ID for analytics
