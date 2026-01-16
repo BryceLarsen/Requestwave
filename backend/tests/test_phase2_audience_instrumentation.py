@@ -255,7 +255,7 @@ async def test_tip_clicked_event_has_correct_context(test_musician, test_show, t
 # =============================================================================
 
 @pytest.mark.asyncio
-async def test_follow_clicked_event_has_correct_context(test_musician, test_show, test_song):
+async def test_follow_clicked_event_has_correct_context(test_musician, test_show, test_song, test_db):
     """audience.follow_clicked event has correct musician_id, show_id, audience_id."""
     audience_id = f"test-audience-{uuid4().hex[:8]}"
     
