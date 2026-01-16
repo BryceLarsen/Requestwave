@@ -360,3 +360,584 @@ known_data_anomalies:
   - issue: "Frontend App.js is monolithic"
     observed: "~12,000+ lines in single file"
     impact: "Maintenance complexity (not a Phase 1 blocker)"
+
+# =============================================================================
+# SECTION 7: AUDIENCE EXPERIENCE (CURRENT STATE)
+# =============================================================================
+# Factual snapshot of audience-facing functionality as implemented.
+
+audience_experience_current_state:
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 1. Entry and Routing
+  # ─────────────────────────────────────────────────────────────────────────────
+  entry_and_routing:
+    audience_url_pattern: "/musician/:slug"
+    example_url: "https://[domain]/musician/john-doe"
+    qr_destination: "Same as audience_url_pattern (musician's personalized request page)"
+    redirects: "None - direct access to musician's page"
+    prerequisites:
+      - "Musician must exist with matching slug"
+      - "Musician's audience_link_active must be true (checked via /api/musicians/{slug}/access-check)"
+    access_denied_behavior: >
+      If access_check returns access_granted=false, page displays access denied message
+      and does not load songs or allow requests.
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 2. Screen/Step Sequence
+  # ─────────────────────────────────────────────────────────────────────────────
+  screen_sequence:
+    structure: "Single-page application (SPA)"
+    flow_type: "Single page with modal overlays for interactions"
+    
+    steps:
+      - step: 1
+        name: "Page Load"
+        description: >
+          Audience arrives at /musician/:slug. Page fetches musician profile,
+          songs, filters, playlists, and design settings. Access check is performed.
+        visible_elements:
+          - "Musician name/bio header"
+          - "Artist photo (if configured)"
+          - "Search bar"
+          - "Filter dropdowns (genre, playlist, mood, decade)"
+          - "Sort options (Most Popular, A-Z, Newest, Random)"
+          - "Song grid or list (based on layout_mode)"
+          - "Suggest a Song button"
+          
+      - step: 2
+        name: "Song Selection"
+        description: >
+          Audience browses/filters/searches songs. Clicks on a song card to
+          open request modal.
+        user_actions:
+          - "Search by title/artist"
+          - "Filter by genre/playlist/mood/decade"
+          - "Sort songs"
+          - "Click song to open request modal"
+          - "Click 'Pick Random Song' button"
+          - "Click 'Suggest a Song' for unlisted songs"
+          
+      - step: 3
+        name: "Request Form Modal"
+        description: >
+          Modal appears with selected song details. Audience fills in name, email,
+          optional dedication. Submits request.
+        user_actions:
+          - "Enter requester name (required)"
+          - "Enter requester email (required)"
+          - "Enter dedication/note (optional)"
+          - "Submit request"
+          
+      - step: 4
+        name: "Post-Request Tip Modal"
+        description: >
+          After successful request submission, if musician has tips_enabled=true,
+          tip modal appears prompting for optional tip.
+        conditional: "Only shown if musician.tips_enabled is true"
+        user_actions:
+          - "Select preset amount ($1, $5, $10, $20) or enter custom"
+          - "Enter optional tip message"
+          - "Select payment platform (Venmo/PayPal/CashApp/Zelle)"
+          - "Submit tip (opens external payment link)"
+          - "Skip (closes modal, proceeds to social follow)"
+          
+      - step: 5
+        name: "Social Follow Modal"
+        description: >
+          After tip flow (or if tips disabled), social follow modal appears
+          with links to musician's social profiles.
+        user_actions:
+          - "Click social links (Instagram, Facebook, TikTok, Spotify, Apple Music)"
+          - "Close modal to return to song list"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 3. Inputs and Requirements
+  # ─────────────────────────────────────────────────────────────────────────────
+  inputs:
+    request_form:
+      - field: "requester_name"
+        label_shown: "Your Name"
+        required: true
+        stored_on: "request document"
+        validation: "Must be non-empty"
+        
+      - field: "requester_email"
+        label_shown: "Your Email"
+        required: true
+        stored_on: "request document"
+        validation: "Must be non-empty (no format validation)"
+        
+      - field: "dedication"
+        label_shown: "Dedication (optional)"
+        required: false
+        stored_on: "request document"
+        validation: "None (can be empty or any text)"
+        
+      - field: "tip_amount"
+        label_shown: "Tip Amount"
+        required: false
+        stored_on: "request document (tip_amount field)"
+        validation: "If provided, must be valid number between 0 and 500"
+        note: "Stored on request but actual payment handled externally"
+
+    tip_form:
+      - field: "amount"
+        label_shown: "Amount ($)"
+        required: true
+        stored_on: "tips collection document"
+        validation: "Must be positive number, max $500"
+        
+      - field: "platform"
+        label_shown: "Payment Method (selector)"
+        required: true
+        stored_on: "tips collection document"
+        validation: "One of: paypal, venmo, cashapp, zelle"
+        
+      - field: "tipper_name"
+        label_shown: "(auto-filled from request form or 'Anonymous')"
+        required: false
+        stored_on: "tips collection document"
+        
+      - field: "message"
+        label_shown: "Message"
+        required: false
+        stored_on: "tips collection document"
+
+    suggestion_form:
+      - field: "suggested_title"
+        label_shown: "Song Title"
+        required: true
+        stored_on: "song_suggestions collection"
+        
+      - field: "suggested_artist"
+        label_shown: "Artist"
+        required: true
+        stored_on: "song_suggestions collection"
+        
+      - field: "requester_name"
+        label_shown: "Your Name"
+        required: false
+        stored_on: "song_suggestions collection"
+        
+      - field: "requester_email"
+        label_shown: "Your Email"
+        required: false
+        stored_on: "song_suggestions collection"
+        
+      - field: "message"
+        label_shown: "Message"
+        required: false
+        stored_on: "song_suggestions collection"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 4. Identity (Phase 2)
+  # ─────────────────────────────────────────────────────────────────────────────
+  identity:
+    audience_id:
+      generation_method: "crypto.randomUUID()"
+      persistence_mechanism: "localStorage"
+      storage_key: "requestwave_audience_id"
+      generation_timing: "On first AudienceInterface component mount"
+      lifecycle: "Persists indefinitely until user clears browser storage"
+      
+      attached_to:
+        - action: "Request submission"
+          endpoint: "POST /api/requests"
+          payload_field: "audience_id"
+          stored_in: "requests collection (audience_id field)"
+          
+        - action: "Tip submission"
+          endpoint: "POST /api/musicians/{slug}/tips"
+          payload_field: "audience_id"
+          stored_in: "tips collection (audience_id field)"
+          
+        - action: "Click tracking (tip links)"
+          endpoint: "POST /api/requests/{id}/track-click"
+          payload_field: "audience_id"
+          stored_in: "analytics_events only (metadata.audience_id)"
+          
+        - action: "Click tracking (social links)"
+          endpoint: "POST /api/requests/{id}/track-click"
+          payload_field: "audience_id"
+          stored_in: "analytics_events only (metadata.audience_id)"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 5. Audience Actions → Backend → Analytics
+  # ─────────────────────────────────────────────────────────────────────────────
+  actions_to_analytics:
+    
+    - action_name: "Request Submitted"
+      frontend_trigger: "Submit button in request form modal"
+      backend_endpoint: "POST /api/requests"
+      payload_fields:
+        - "song_id"
+        - "requester_name"
+        - "requester_email"
+        - "dedication"
+        - "tip_amount"
+        - "audience_id"
+      analytics_events_emitted:
+        - event_type: "audience.request_submitted"
+          always: true
+          context: "musician_id, show_id (from musician's current_show_id)"
+          metadata: "song_id, song_title, song_artist, has_dedication, tip_amount, audience_id"
+        - event_type: "audience.dedication_submitted"
+          conditional: "Only if dedication is non-empty after trim()"
+          context: "musician_id, show_id, entity_id (request_id)"
+          metadata: "song_id, song_title, dedication_length, audience_id"
+          
+    - action_name: "Tip Link Clicked"
+      frontend_trigger: "Click on Venmo/PayPal/CashApp tip button in post-request modal"
+      backend_endpoint: "POST /api/requests/{id}/track-click"
+      payload_fields:
+        - "type: 'tip'"
+        - "platform (venmo|paypal|cashapp|zelle)"
+        - "audience_id"
+      analytics_events_emitted:
+        - event_type: "audience.tip_clicked"
+          always: true
+          context: "musician_id (from request), show_id (from request), entity_id (request_id)"
+          metadata: "platform, audience_id"
+          
+    - action_name: "Social/Follow Link Clicked"
+      frontend_trigger: "Click on Instagram/Facebook/TikTok/Spotify/Apple Music link in social modal"
+      backend_endpoint: "POST /api/requests/{id}/track-click"
+      payload_fields:
+        - "type: 'social'"
+        - "platform (instagram|facebook|tiktok|spotify|apple_music)"
+        - "audience_id"
+      analytics_events_emitted:
+        - event_type: "audience.follow_clicked"
+          always: true
+          context: "musician_id (from request), show_id (from request), entity_id (request_id)"
+          metadata: "platform, audience_id"
+          
+    - action_name: "Tip Submitted"
+      frontend_trigger: "Submit tip button (after entering amount and selecting platform)"
+      backend_endpoint: "POST /api/musicians/{slug}/tips"
+      payload_fields:
+        - "amount"
+        - "platform"
+        - "tipper_name"
+        - "message"
+        - "audience_id"
+        - "show_id (from musician's current_show_id if available)"
+      analytics_events_emitted:
+        - event_type: "audience.tip_completed"
+          always: true
+          context: "musician_id, show_id (from payload or musician's current_show_id), entity_id (tip_id)"
+          metadata: "amount, platform, audience_id"
+          
+    - action_name: "Song Suggestion Submitted"
+      frontend_trigger: "Submit button in suggestion modal"
+      backend_endpoint: "POST /api/song-suggestions"
+      payload_fields:
+        - "suggested_title"
+        - "suggested_artist"
+        - "requester_name"
+        - "requester_email"
+        - "message"
+      analytics_events_emitted:
+        - event_type: "audience.suggestion_submitted"
+          always: true
+          context: "musician_id, show_id (auto-assigned or created)"
+          metadata: "suggested_title, suggested_artist, has_message"
+      note: "audience_id is NOT currently sent with suggestions"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 6. Known Limitations
+  # ─────────────────────────────────────────────────────────────────────────────
+  known_limitations:
+    - limitation: "No email validation"
+      observed: "Email field accepts any non-empty string"
+      
+    - limitation: "No duplicate request prevention"
+      observed: "Same audience can submit unlimited requests for same song"
+      
+    - limitation: "Tip payment is external only"
+      observed: "App generates payment links; actual payment happens outside app. No payment confirmation flow."
+      
+    - limitation: "audience_id not attached to suggestions"
+      observed: "Song suggestions do not include audience_id in payload"
+      
+    - limitation: "No request confirmation email"
+      observed: "Audience provides email but receives no confirmation"
+      
+    - limitation: "Access check is session-based"
+      observed: "Access check runs on page load; no real-time update if access changes mid-session"
+
+# =============================================================================
+# SECTION 8: MUSICIAN EXPERIENCE (CURRENT STATE)
+# =============================================================================
+# Factual snapshot of musician-facing functionality as implemented.
+
+musician_experience_current_state:
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 1. Entry and Authentication
+  # ─────────────────────────────────────────────────────────────────────────────
+  entry_and_authentication:
+    login_url: "/ (root - shows login form)"
+    authentication_method: "JWT token stored in localStorage"
+    login_endpoint: "POST /api/auth/login"
+    registration_endpoint: "POST /api/auth/register"
+    session_persistence: "Token stored in localStorage; persists across browser sessions"
+    prerequisites_for_dashboard:
+      - "Valid JWT token in localStorage"
+      - "Token verified on each API request"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 2. Show Lifecycle
+  # ─────────────────────────────────────────────────────────────────────────────
+  show_lifecycle:
+    show_creation:
+      explicit: "Musician clicks 'Start a Show' button, enters show name"
+      implicit: "Auto-created when first request or suggestion arrives and no active show exists"
+      endpoint: "POST /api/shows/start"
+      
+    active_show_definition: >
+      A show is "active" when musician.current_show_id is set to that show's ID.
+      Only one show can be active at a time per musician.
+      
+    show_end:
+      explicit: "Musician clicks 'Stop Show' button"
+      endpoint: "POST /api/shows/stop"
+      behavior: "Clears musician.current_show_id and current_show_name"
+      note: "Show remains in 'active' status (not archived); can be reopened"
+      
+    show_archival:
+      trigger: "Musician clicks 'Archive' button on a show"
+      endpoint: "PUT /api/shows/{id}/archive"
+      behavior: "Sets show.status to 'archived'; show moves to archived section"
+      
+    show_restore:
+      trigger: "Musician clicks 'Restore' button on archived show"
+      endpoint: "PUT /api/shows/{id}/restore"
+      behavior: "Sets show.status back to 'active'"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 3. Primary Views/Tabs
+  # ─────────────────────────────────────────────────────────────────────────────
+  primary_views:
+    
+    - tab_name: "On Stage"
+      tab_id: "onstage"
+      purpose: "Live performance management - focused view for active shows"
+      data_shown:
+        - "Up Next panel: requests with status='up_next' for current show"
+        - "Live Requests panel: merged pending requests + pending suggestions for current show"
+        - "Completed panel: played/rejected requests and handled suggestions for current show"
+      scoping: "Strictly scoped to current_show_id only"
+      actions_available:
+        - "Mark request as Played"
+        - "Mark request as Skipped (rejected)"
+        - "Move request to Up Next"
+        - "Match suggestion to existing song"
+        - "Mark suggestion as Learn Later"
+        - "Skip suggestion"
+      empty_state: "Shows 'No Active Show' message with button to start show"
+      
+    - tab_name: "Songs"
+      tab_id: "songs"
+      purpose: "Manage song library"
+      data_shown:
+        - "List/grid of all songs for musician"
+        - "Playlists"
+        - "Learn Later toggle (shows suggestions marked as learn_later)"
+      actions_available:
+        - "Add single song"
+        - "CSV upload (bulk import)"
+        - "Edit song metadata"
+        - "Delete song"
+        - "Hide/unhide song from audience view"
+        - "Create/edit playlists"
+        - "Manage Learn Later suggestions"
+      scoping: "Shows all songs regardless of show"
+      
+    - tab_name: "Requests"
+      tab_id: "requests"
+      purpose: "View and manage all requests across shows"
+      data_shown:
+        - "Shows grouped by show_name (expandable folders)"
+        - "Requests within each show"
+        - "Song suggestions section (pending suggestions)"
+        - "Archived shows section (collapsed by default)"
+      scoping: "All shows visible; can expand any show to see its requests"
+      actions_available:
+        - "Start/Stop show"
+        - "Open/view specific show"
+        - "Archive show"
+        - "Batch select requests"
+        - "Batch mark as Played/Skipped"
+        - "Batch archive/delete requests"
+        - "Handle song suggestions (Match, Learn Later, Skip)"
+        - "Restore archived shows"
+        
+    - tab_name: "Analytics"
+      tab_id: "analytics"
+      purpose: "View performance statistics"
+      data_shown:
+        - "Total requests count"
+        - "Unique requesters count"
+        - "Most requested songs (top songs list)"
+        - "Top requesters (with request counts, tip totals)"
+        - "Period selector: Today, 7 days, 30 days, 365 days, All Time"
+      scoping: "Filtered by selected time period; spans all shows"
+      actions_available:
+        - "Change time period filter"
+        - "Expand top requesters list"
+        
+    - tab_name: "Profile"
+      tab_id: "profile"
+      purpose: "Manage musician account and settings"
+      data_shown:
+        - "Account info (name, email, slug)"
+        - "Social media links"
+        - "Tip platform settings (PayPal, Venmo, CashApp, Zelle)"
+        - "Audience link settings"
+      actions_available:
+        - "Update profile info"
+        - "Configure tip platforms"
+        - "Enable/disable requests"
+        - "Enable/disable tips"
+        
+    - tab_name: "Subscription"
+      tab_id: "subscription"
+      conditional: "Only shown if BILLING_ENABLED=true"
+      purpose: "Manage subscription and billing"
+      data_shown:
+        - "Current plan status"
+        - "Trial info (if applicable)"
+        - "Billing dates"
+      actions_available:
+        - "Upgrade plan"
+        - "Cancel subscription"
+        
+    - tab_name: "Design"
+      tab_id: "design"
+      purpose: "Customize audience-facing page appearance"
+      data_shown:
+        - "Color theme options"
+        - "Layout mode (grid/list)"
+        - "Artist photo"
+        - "Bio/name display settings"
+      actions_available:
+        - "Change color theme"
+        - "Change layout mode"
+        - "Upload artist photo"
+        - "Update displayed name/bio"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 4. Live vs Non-Live Behavior
+  # ─────────────────────────────────────────────────────────────────────────────
+  live_vs_nonlive:
+    when_show_active:
+      - "On Stage tab shows live requests/suggestions scoped to active show"
+      - "Green 'Live' indicator in header/nav"
+      - "'Stop Show' button visible"
+      - "New requests automatically associated with active show"
+      
+    when_no_active_show:
+      - "On Stage tab shows 'No Active Show' empty state"
+      - "'Start a Show' button visible"
+      - "Requests tab shows past shows but no live indicator"
+      - "Incoming requests/suggestions trigger auto-show creation"
+      
+    safeguards_against_cross_show_leakage:
+      - "On Stage tab queries include show_id parameter (API-level filtering)"
+      - "Frontend filters displayed items by show_id match"
+      - "Requests endpoint accepts optional show_id query param for scoped queries"
+      - "Suggestions endpoint accepts optional show_id query param for scoped queries"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 5. Request Handling
+  # ─────────────────────────────────────────────────────────────────────────────
+  request_handling:
+    entry_point: "Requests created by audience via POST /api/requests"
+    association: "Each request has show_id linking to the show active at creation time"
+    
+    statuses:
+      - status: "pending"
+        meaning: "New request, not yet handled"
+      - status: "accepted"
+        meaning: "Acknowledged but not yet played"
+      - status: "up_next"
+        meaning: "Queued for immediate play (shown in Up Next panel)"
+      - status: "played"
+        meaning: "Song was performed"
+      - status: "rejected"
+        meaning: "Request was skipped/declined"
+      - status: "archived"
+        meaning: "Hidden from active views but preserved in database"
+        
+    musician_actions:
+      - action: "Mark as Played"
+        sets_status: "played"
+        emits_event: "musician.request_played"
+      - action: "Mark as Skipped"
+        sets_status: "rejected"
+        emits_event: "musician.request_skipped"
+      - action: "Move to Up Next"
+        sets_status: "up_next"
+        emits_event: null
+      - action: "Archive"
+        sets_status: "archived"
+        emits_event: null
+      - action: "Restore"
+        sets_status: "pending"
+        emits_event: "musician.request_restored"
+      - action: "Delete"
+        behavior: "Permanently removes from database"
+        emits_event: null
+        
+    ordering: "Requests displayed in chronological order (oldest first) within each panel"
+    grouping: "In Requests tab, requests grouped by show_name in expandable folders"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 6. Tips and Follows Visibility
+  # ─────────────────────────────────────────────────────────────────────────────
+  tips_and_follows_visibility:
+    tip_visibility:
+      where_shown:
+        - "Analytics tab: Top Requesters shows total_tips per requester"
+        - "Individual request cards: tip_amount shown if > 0"
+      real_time: false
+      note: "Tips recorded in tips collection; displayed in aggregate in analytics"
+      
+    follow_click_visibility:
+      where_shown: "Not currently displayed to musicians in any UI"
+      stored_in: "analytics_events collection only"
+      note: "Data is captured but no musician-facing UI shows follow metrics"
+      
+    tip_click_visibility:
+      where_shown: "Not currently displayed to musicians in any UI"
+      stored_in: "analytics_events collection only"
+      note: "Data is captured but no musician-facing UI shows tip click metrics"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 7. Known Limitations
+  # ─────────────────────────────────────────────────────────────────────────────
+  known_limitations:
+    - limitation: "No show rename functionality"
+      observed: "Once created, show name cannot be changed"
+      
+    - limitation: "No request reordering"
+      observed: "Requests displayed chronologically; no drag-and-drop or manual ordering"
+      
+    - limitation: "Follow/tip click analytics not surfaced in UI"
+      observed: "Events logged but no dashboard view to see engagement metrics"
+      
+    - limitation: "Tips not verified"
+      observed: "Tip records created on intent; no confirmation that external payment completed"
+      
+    - limitation: "Single active show constraint"
+      observed: "Only one show can be active at a time; cannot run parallel shows"
+      
+    - limitation: "No real-time push updates"
+      observed: "Dashboard polls for new requests; not instant push notifications"
+      polling_interval: "On Stage tab polls every few seconds when active"
+      
+    - limitation: "Monolithic frontend"
+      observed: "App.js contains all components (~12,000+ lines)"
+      impact: "Maintenance complexity, slow hot reloads"
