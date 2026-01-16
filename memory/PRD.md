@@ -3,9 +3,30 @@
 ## Original Problem Statement
 Live music request platform enabling musicians to receive song requests from audiences during performances, with features for managing requests, suggestions, tips, and analytics.
 
-## Current State (as of January 15, 2026)
+## Current State (as of January 16, 2026)
+
+### Phase Status
+- **Phase 1: Foundation and Correctness** - COMPLETE (Signed off 2026-01-16)
+- **Phase 2: Audience Interaction Capture** - COMPLETE (2026-01-16)
+- **Phase 3: Post-Show Reflection** - NOT STARTED
 
 ### Completed Features
+
+#### Phase 2: Audience Interaction Capture (Latest - January 16, 2026)
+- ✅ **Anonymous audience_id**: Client-side UUID generation, persisted in localStorage
+- ✅ **audience_id stored**: Included in request and tip documents
+- ✅ **4 new analytics events** with correct context (musician_id, show_id, audience_id):
+  - `audience.dedication_submitted` (conditional on non-empty dedication)
+  - `audience.tip_clicked` (when tip payment link clicked)
+  - `audience.follow_clicked` (when social follow link clicked)
+  - `audience.tip_completed` (when tip record submitted)
+- ✅ **Backend models updated**: RequestCreate, TipCreate accept audience_id
+- ✅ **Documentation updated**: current_build_inventory.yaml, requestwave_combined_planning.yaml
+
+#### Phase 1: Foundation and Correctness (Completed January 16, 2026)
+- ✅ **Analytics Period Filters Fixed**: All 5 periods validated with multi-day test data
+- ✅ **Learn Later Actions Fixed**: Match button errors resolved, UX cleaned up
+- ✅ **On Stage Tab Scope Fixed**: API-level show_id filtering implemented
 
 #### Core Features
 - ✅ CSV export with genre, mood, playlists, and year metadata
@@ -23,8 +44,12 @@ Live music request platform enabling musicians to receive song requests from aud
 - ✅ `ANALYTICS_EVENTS_ENABLED` feature flag
 
 **Implemented Events:**
-- `audience.request_submitted` - when audience submits request
+- `audience.request_submitted` - when audience submits request (includes audience_id)
 - `audience.suggestion_submitted` - when audience submits suggestion
+- `audience.dedication_submitted` - when request includes dedication (Phase 2)
+- `audience.tip_clicked` - when audience clicks tip link (Phase 2)
+- `audience.follow_clicked` - when audience clicks social link (Phase 2)
+- `audience.tip_completed` - when audience submits tip (Phase 2)
 - `musician.request_played` - when musician marks request as played
 - `musician.request_skipped` - when musician rejects request
 - `musician.request_restored` - when musician restores request
@@ -37,7 +62,7 @@ Live music request platform enabling musicians to receive song requests from aud
 - `musician.show_archived` - when musician archives a show
 - `system.auto_show_created` - when system auto-creates show
 
-#### Show-Scoped Architecture (Latest - January 15, 2026)
+#### Show-Scoped Architecture
 - ✅ Suggestions now have `show_id` and `show_name` fields
 - ✅ Suggestions auto-create shows when no active show exists
 - ✅ Requests tab displays shows with both Requests and Suggestions sections
@@ -46,7 +71,7 @@ Live music request platform enabling musicians to receive song requests from aud
 - ✅ Learn Later toggle on Songs tab showing learn_later suggestions
 - ✅ Restore archived shows without success popup
 
-### Bug Fixes (January 15, 2026)
+### Bug Fixes (January 15-16, 2026)
 
 #### P0: Analytics Period Filters - FIXED
 - **Issue**: `days=0` (All Time) returned 0 results instead of all requests
