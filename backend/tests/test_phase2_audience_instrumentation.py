@@ -124,7 +124,7 @@ async def test_song(test_musician, test_db):
 # =============================================================================
 
 @pytest.mark.asyncio
-async def test_audience_id_stored_on_request(test_musician, test_show, test_song):
+async def test_audience_id_stored_on_request(test_musician, test_show, test_song, test_db):
     """audience_id is stored on the request document when provided."""
     audience_id = f"test-audience-{uuid4().hex[:8]}"
     
