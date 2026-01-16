@@ -297,9 +297,10 @@ async def test_dedication_submitted_event_emitted_when_dedication_present(
 
 @pytest.mark.asyncio
 async def test_dedication_submitted_event_not_emitted_when_dedication_empty(
-    test_musician, test_show, test_song, cleanup_analytics, cleanup_requests
+    test_musician, test_show, test_song, cleanup_analytics, cleanup_requests, test_db_conn
 ):
     """audience.dedication_submitted event is NOT emitted when dedication is empty."""
+    db = test_db_conn
     audience_id = f"test-audience-{uuid4().hex[:8]}"
     
     transport = ASGITransport(app=app)
@@ -321,11 +322,10 @@ async def test_dedication_submitted_event_not_emitted_when_dedication_empty(
         request_id = data["id"]
         
         # Give a moment for async event to potentially be written
-        import asyncio
         await asyncio.sleep(0.3)
         
         # Verify audience.dedication_submitted event was NOT emitted
-        event = await test_db.analytics_events.find_one({
+        event = await db.analytics_events.find_one({
             "event_type": "audience.dedication_submitted",
             "entity_id": request_id
         })
