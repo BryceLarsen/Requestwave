@@ -110,9 +110,11 @@ Live music request platform enabling musicians to receive song requests from aud
 - On Stage tab shows empty state when no active show, filters by currentShow when active
 
 ## Key API Endpoints
-- `/api/requests` - Create request
-- `/api/musicians/{slug}/requests` - Audience request submission
+- `/api/requests` - Create request (accepts audience_id)
+- `/api/musicians/{slug}/requests` - Audience request submission (accepts audience_id)
 - `/api/requests/{id}/status` - Update request status
+- `/api/requests/{id}/track-click` - Track tip/social clicks (accepts audience_id)
+- `/api/musicians/{slug}/tips` - Submit tip (accepts audience_id, show_id)
 - `/api/song-suggestions` - Create suggestion (with auto-show)
 - `/api/song-suggestions/{id}/status` - Update suggestion status
 - `/api/song-suggestions/{id}/match` - Match suggestion to song
