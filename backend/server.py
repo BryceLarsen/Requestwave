@@ -286,6 +286,8 @@ class TipCreate(BaseModel):
     platform: str  # "paypal", "venmo", or "zelle"
     tipper_name: Optional[str] = None
     message: Optional[str] = None
+    audience_id: Optional[str] = None  # Phase 2: Stable anonymous audience identifier
+    show_id: Optional[str] = None  # Phase 2: Show context for analytics
 
 class Tip(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
