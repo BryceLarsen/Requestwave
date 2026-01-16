@@ -196,7 +196,7 @@ async def test_audience_id_stored_on_tip(test_musician, test_show, test_db):
 # =============================================================================
 
 @pytest.mark.asyncio
-async def test_tip_clicked_event_has_correct_context(test_musician, test_show, test_song):
+async def test_tip_clicked_event_has_correct_context(test_musician, test_show, test_song, test_db):
     """audience.tip_clicked event has correct musician_id, show_id, audience_id."""
     audience_id = f"test-audience-{uuid4().hex[:8]}"
     
