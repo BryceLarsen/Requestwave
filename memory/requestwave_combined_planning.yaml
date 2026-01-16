@@ -1,0 +1,149 @@
+project: RequestWave
+document_type: Combined Planning and Emergent Execution Contract
+governing_document: true
+
+planning_version: 0.7-combined
+last_updated: 2026-01-16
+
+hierarchy:
+  - Execution rules in this document are enforceable constraints for Emergent.
+  - Planning sections provide intent and context but do not expand scope beyond the active phase.
+  - If any ambiguity remains, default to escalation_policy and phase_gate_rules.
+
+mission: >
+  Build a live music request system that preserves musician authority,
+  minimizes cognitive load during performances,
+  and supports intentional, authored audience interaction.
+
+operating_principles:
+  - Composure over excitement
+  - Control over automation
+  - Fewer strong features over broad functionality
+  - Separate planning, live execution, and post-event review modes
+  - Technology assists judgment but never replaces it
+
+authority_model:
+  principle: Clear WHAT, flexible HOW. Authority over intent remains human.
+  emergent_controls:
+    - implementation details
+    - internal structure
+    - test coverage
+    - performance optimizations
+    - bug fixes within allowed phase
+  human_controls:
+    - live show behavior changes
+    - data meaning or semantics
+    - analytics interpretation or ranking
+    - introduction of new user choices
+    - anything affecting cognitive load during performance
+
+phase_gate_rules:
+  - Emergent may only implement tasks explicitly listed under the active phase.
+  - Discovering an issue outside the active phase requires stopping and reporting, not fixing.
+  - Improvements, refactors, or polish are forbidden unless explicitly requested.
+  - If phase membership is ambiguous, assume it is out of scope and ask.
+
+current_phase: Phase 1
+
+phase_definitions:
+  Phase 1:
+    name: Foundation and Correctness
+    status: SIGNED OFF
+    sign_off_date: 2026-01-16
+    purpose: >
+      Ensure the system behaves predictably and data can be trusted in live use.
+    allowed_work:
+      - request and suggestion flow correctness
+      - show scoping enforcement at the API level
+      - backend data integrity
+      - analytics period accuracy
+      - runtime and logic bug fixes
+      - removal of misleading or broken UI
+      - documentation alignment to current behavior
+    forbidden_work:
+      - new user-facing features
+      - UX polish not required for correctness
+      - analytics expansion beyond accuracy and correctness
+      - optimization of engagement or conversion
+      - automation, recommendations, or prioritization logic
+    done_when:
+      - All live views are correctly scoped by show_id at the API level (not only frontend filtering)
+      - Analytics period filters pass multi-day, multi-show tests with exact expected counts
+      - No frontend-only enforcement of critical constraints
+      - current_build_inventory.yaml matches actual behavior
+    completion_evidence:
+      - show_id query param added to 3 GET endpoints
+      - On Stage tab calls API with show_id when currentShow exists
+      - Analytics validated with multi-day test data (all 5 periods match exact counts)
+      - current_build_inventory.yaml updated with explicit endpoint documentation
+
+  Phase 2:
+    name: Audience Interaction Capture
+    status: NOT STARTED
+    purpose: >
+      Capture audience actions and intent without interpreting or acting on them.
+    allowed_work:
+      - logging of requests, follows, tips, and dedications
+      - association of interactions to users and shows
+      - backend event capture and storage
+    forbidden_work:
+      - ranking or prioritization logic
+      - recommendations or suggestions
+      - live analytics displays
+      - nudges, alerts, or performance scoring
+    transition_rule:
+      - Phase 2 may not begin until Phase 1 is explicitly marked done.
+
+  Phase 3:
+    name: Post-Show Reflection
+    status: NOT STARTED
+    purpose: >
+      Provide musicians with post-event visibility into patterns over time.
+    allowed_work:
+      - summary analytics
+      - reports and exports
+      - historical views and filtering
+    forbidden_work:
+      - real-time analytics
+      - prescriptive insights
+      - rankings, leaderboards, or performance scoring
+    transition_rule:
+      - Phase 3 work must not alter live show behavior.
+
+ui_constraints:
+  - UI must support fast decisions, not analysis.
+  - If a control is not required during a show, it must not appear in live mode.
+  - No duplicate controls for the same action.
+  - No confirmation steps unless destructive.
+  - No explanatory UI that requires reading during performance.
+
+analytics_constraints:
+  - Analytics are descriptive only.
+  - No rankings, scores, or leaderboards.
+  - No alerts, nudges, or recommendations based on analytics.
+  - No real-time analytics during shows.
+
+explicit_non_goals:
+  monetization:
+    - audience conversion funnels
+    - engagement gamification
+    - audience-facing upsells
+  intelligence:
+    - inferred preferences
+    - behavioral modeling
+    - automatic ranking or prioritization
+  automation:
+    - auto-queueing
+    - auto-accepting requests
+    - autonomous live decisions
+
+escalation_policy:
+  - If a change affects live behavior, stop and ask.
+  - If a change alters data meaning or semantics, stop and ask.
+  - If a change adds user choices or options, stop and ask.
+  - If a change removes user choices or options, proceed.
+  - If uncertain, stop and ask.
+
+source_of_truth:
+  - current_build_inventory.yaml
+  - requestwave_build_plan.yaml
