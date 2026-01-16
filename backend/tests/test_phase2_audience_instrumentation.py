@@ -493,9 +493,10 @@ async def test_follow_clicked_event_emitted(
 
 @pytest.mark.asyncio
 async def test_tip_completed_event_emitted(
-    test_musician, test_show, cleanup_analytics, cleanup_tips
+    test_musician, test_show, cleanup_analytics, cleanup_tips, test_db_conn
 ):
     """audience.tip_completed event is emitted when tip is submitted."""
+    db = test_db_conn
     audience_id = f"test-audience-{uuid4().hex[:8]}"
     
     transport = ASGITransport(app=app)
@@ -517,11 +518,10 @@ async def test_tip_completed_event_emitted(
         tip_id = data["tip_id"]
         
         # Give a moment for async event to be written
-        import asyncio
         await asyncio.sleep(0.3)
         
         # Verify audience.tip_completed event was emitted
-        event = await test_db.analytics_events.find_one({
+        event = await db.analytics_events.find_one({
             "event_type": "audience.tip_completed",
             "entity_id": tip_id
         })
