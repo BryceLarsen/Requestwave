@@ -5277,7 +5277,7 @@ async def record_tip(
 @api_router.post("/requests/{request_id}/track-click")
 async def track_request_click(
     request_id: str,
-    click_data: dict  # {"type": "tip" | "social", "platform": "venmo" | "instagram" etc}
+    click_data: dict  # {"type": "tip" | "social", "platform": "venmo" | "instagram" etc, "audience_id": optional}
 ):
     """Track when audience clicks tip or social links from request confirmation"""
     try:
@@ -5288,12 +5288,28 @@ async def track_request_click(
         
         click_type = click_data.get("type")
         platform = click_data.get("platform")
+        audience_id = click_data.get("audience_id")  # Phase 2
         
         update_data = {}
         
         if click_type == "tip":
             update_data["tip_clicked"] = True
             logger.info(f"Request {request_id}: Tip clicked via {platform}")
+            
+            # Phase 2: Emit audience.tip_clicked event
+            await emit_analytics_event(
+                event_type="audience.tip_clicked",
+                musician_id=request["musician_id"],
+                source="audience",
+                entity_type="request",
+                show_id=request.get("show_id"),
+                entity_id=request_id,
+                metadata={
+                    "platform": platform,
+                    "audience_id": audience_id
+                }
+            )
+            
         elif click_type == "social":
             # Add to social_clicks array if not already present
             social_clicks = request.get("social_clicks", [])
@@ -5301,6 +5317,20 @@ async def track_request_click(
                 social_clicks.append(platform)
                 update_data["social_clicks"] = social_clicks
             logger.info(f"Request {request_id}: Social link clicked - {platform}")
+            
+            # Phase 2: Emit audience.follow_clicked event
+            await emit_analytics_event(
+                event_type="audience.follow_clicked",
+                musician_id=request["musician_id"],
+                source="audience",
+                entity_type="request",
+                show_id=request.get("show_id"),
+                entity_id=request_id,
+                metadata={
+                    "platform": platform,
+                    "audience_id": audience_id
+                }
+            )
         
         if update_data:
             await db.requests.update_one(
