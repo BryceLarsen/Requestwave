@@ -435,9 +435,10 @@ async def test_tip_clicked_event_emitted(
 
 @pytest.mark.asyncio
 async def test_follow_clicked_event_emitted(
-    test_musician, test_show, test_song, cleanup_analytics, cleanup_requests
+    test_musician, test_show, test_song, cleanup_analytics, cleanup_requests, test_db_conn
 ):
     """audience.follow_clicked event is emitted when social link is clicked."""
+    db = test_db_conn
     audience_id = f"test-audience-{uuid4().hex[:8]}"
     
     # First create a request
@@ -471,11 +472,10 @@ async def test_follow_clicked_event_emitted(
         assert click_response.status_code == 200
         
         # Give a moment for async event to be written
-        import asyncio
         await asyncio.sleep(0.3)
         
         # Verify audience.follow_clicked event was emitted
-        event = await test_db.analytics_events.find_one({
+        event = await db.analytics_events.find_one({
             "event_type": "audience.follow_clicked",
             "entity_id": request_id
         })
