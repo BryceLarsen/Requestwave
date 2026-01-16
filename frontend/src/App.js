@@ -953,9 +953,13 @@ const MusicianDashboard = () => {
     }
   };
 
-  const fetchGroupedRequests = async () => {
+  const fetchGroupedRequests = async (showId = null) => {
     try {
-      const response = await axios.get(`${API}/requests/grouped`, {
+      // If showId is provided, filter by show; otherwise get all grouped requests
+      const url = showId
+        ? `${API}/requests/grouped?show_id=${showId}`
+        : `${API}/requests/grouped`;
+      const response = await axios.get(url, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       setGroupedRequests(response.data);
