@@ -119,8 +119,9 @@ async def test_show(test_musician, test_db_conn):
 
 
 @pytest_asyncio.fixture
-async def test_song(test_musician):
+async def test_song(test_musician, test_db_conn):
     """Create a test song for request tests."""
+    db = test_db_conn
     song_id = f"song-p2-{uuid4().hex[:8]}"
     
     song_data = {
@@ -137,11 +138,11 @@ async def test_song(test_musician):
         "created_at": datetime.now(timezone.utc),
     }
     
-    await test_db.songs.insert_one(song_data)
+    await db.songs.insert_one(song_data)
     yield song_data
     
     # Cleanup
-    await test_db.songs.delete_one({"id": song_id})
+    await db.songs.delete_one({"id": song_id})
 
 
 @pytest_asyncio.fixture
