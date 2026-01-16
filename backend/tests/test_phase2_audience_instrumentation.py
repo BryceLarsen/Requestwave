@@ -46,8 +46,18 @@ async def get_test_db():
 # =============================================================================
 
 @pytest_asyncio.fixture
-async def test_musician():
+async def test_db_conn():
+    """Get test database connection."""
+    client = AsyncIOMotorClient(TEST_MONGO_URL)
+    db = client[TEST_DB_NAME]
+    yield db
+    client.close()
+
+
+@pytest_asyncio.fixture
+async def test_musician(test_db_conn):
     """Create a test musician for Phase 2 tests."""
+    db = test_db_conn
     musician_id = f"test-musician-p2-{uuid4().hex[:8]}"
     email = f"test-p2-{uuid4().hex[:8]}@example.com"
     slug = f"test-musician-p2-{uuid4().hex[:8]}"
@@ -71,10 +81,10 @@ async def test_musician():
         "current_show_id": None,  # Will be set by test_show
         "created_at": datetime.now(timezone.utc),
     }
-    await test_db.musicians.insert_one(musician_data)
+    await db.musicians.insert_one(musician_data)
     yield musician_data
     # Cleanup
-    await test_db.musicians.delete_one({"id": musician_id})
+    await db.musicians.delete_one({"id": musician_id})
 
 
 @pytest_asyncio.fixture
