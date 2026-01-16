@@ -5249,6 +5249,9 @@ async def record_tip(
         if tip_data.platform not in ["paypal", "venmo", "cashapp", "zelle"]:
             raise HTTPException(status_code=400, detail="Platform must be 'paypal', 'venmo', 'cashapp', or 'zelle'")
         
+        # Phase 2: Use provided show_id or fall back to musician's current show
+        show_id = tip_data.show_id or musician.get("current_show_id")
+        
         # Create tip record
         tip_dict = {
             "id": str(uuid.uuid4()),
@@ -5257,11 +5260,28 @@ async def record_tip(
             "platform": tip_data.platform,
             "tipper_name": tip_data.tipper_name,
             "message": tip_data.message,
+            "audience_id": tip_data.audience_id,  # Phase 2
+            "show_id": show_id,  # Phase 2
             "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
         }
         
         # Insert tip record
         await db.tips.insert_one(tip_dict)
+        
+        # Phase 2: Emit audience.tip_completed event
+        await emit_analytics_event(
+            event_type="audience.tip_completed",
+            musician_id=musician['id'],
+            source="audience",
+            entity_type="tip",
+            show_id=show_id,
+            entity_id=tip_dict["id"],
+            metadata={
+                "amount": tip_data.amount,
+                "platform": tip_data.platform,
+                "audience_id": tip_data.audience_id
+            }
+        )
         
         return {
             "success": True,
