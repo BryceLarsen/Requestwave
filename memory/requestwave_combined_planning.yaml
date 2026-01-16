@@ -2,7 +2,7 @@ project: RequestWave
 document_type: Combined Planning and Emergent Execution Contract
 governing_document: true
 
-planning_version: 0.7-combined
+planning_version: 0.8-combined
 last_updated: 2026-01-16
 
 hierarchy:
