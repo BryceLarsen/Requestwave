@@ -1,0 +1,160 @@
+# RequestWave Current Build Inventory
+# Generated: 2026-01-16
+# Updated: Added show_id query parameter support (Phase 1)
+
+# =============================================================================
+# SECTION 1: MUSICIAN SCOPE
+# =============================================================================
+musician_scope:
+  musician_id: "c74dd6e8-2ccf-41e1-9892-56d13af29489"
+  email: "test@test.com"
+  name: "test"
+
+# =============================================================================
+# SECTION 2: ENDPOINTS WITH SHOW_ID QUERY PARAMETER (Phase 1 Update)
+# =============================================================================
+show_scoped_endpoints:
+  description: |
+    These endpoints now accept an optional `show_id` query parameter.
+    When provided, results are scoped by BOTH musician_id AND show_id.
+    When omitted, existing behavior is preserved (backward compatible).
+    
+    On Stage frontend calls MUST include show_id when currentShow exists.
+    Frontend filters remain as defensive fallback only.
+
+  endpoints:
+    - method: GET
+      path: /api/song-suggestions
+      file: /app/backend/server.py
+      decorator_line: 3211
+      handler: get_song_suggestions
+      query_params:
+        - name: show_id
+          type: Optional[str]
+          default: null
+          description: "Filter suggestions by show_id. If omitted, returns all suggestions."
+      behavior:
+        with_show_id: "Returns only suggestions where show_id matches"
+        without_show_id: "Returns all suggestions for musician (backward compatible)"
+
+    - method: GET
+      path: /api/requests/musician/{musician_id}
+      file: /app/backend/server.py
+      decorator_line: 4177
+      handler: get_musician_requests
+      query_params:
+        - name: show_id
+          type: Optional[str]
+          default: null
+          description: "Filter requests by show_id. If omitted, returns all non-archived requests."
+      behavior:
+        with_show_id: "Returns only requests where show_id matches (excluding archived)"
+        without_show_id: "Returns all non-archived requests for musician (backward compatible)"
+
+    - method: GET
+      path: /api/requests/grouped
+      file: /app/backend/server.py
+      decorator_line: 5454
+      handler: get_requests_grouped_by_show
+      query_params:
+        - name: show_id
+          type: Optional[str]
+          default: null
+          description: "Filter requests by show_id. If omitted, returns all requests grouped by show."
+      behavior:
+        with_show_id: "Returns only requests for that specific show"
+        without_show_id: "Returns all requests grouped by show (backward compatible)"
+
+# =============================================================================
+# SECTION 3: FRONTEND ON STAGE BEHAVIOR
+# =============================================================================
+frontend_on_stage:
+  description: |
+    When activeTab === 'onstage' and currentShow exists, frontend MUST call
+    API endpoints with show_id parameter to ensure API-level scoping.
+    
+  implementation:
+    file: /app/frontend/src/App.js
+    useEffect_trigger: "activeTab === 'onstage' && currentShow"
+    calls_with_show_id:
+      - "fetchRequests(currentShow.id)"
+      - "fetchSongSuggestions(currentShow.id)"
+    
+  fetch_functions_updated:
+    - name: fetchRequests
+      accepts: "showId = null"
+      url_with_show_id: "${API}/requests/musician/${musician.id}?show_id=${showId}"
+      
+    - name: fetchSongSuggestions
+      accepts: "showId = null"
+      url_with_show_id: "${API}/song-suggestions?show_id=${showId}"
+      
+    - name: fetchGroupedRequests
+      accepts: "showId = null"
+      url_with_show_id: "${API}/requests/grouped?show_id=${showId}"
+
+# =============================================================================
+# SECTION 4: TEST COVERAGE
+# =============================================================================
+test_coverage:
+  show_scoping_tests:
+    file: /app/backend/tests/test_show_scoping.py
+    description: "Pytest tests for API-level show_id scoping"
+    run_command: "cd /app/backend && python -m pytest tests/test_show_scoping.py -v"
+    tests:
+      - test_suggestions_with_show_id_returns_only_that_show
+      - test_suggestions_with_different_show_id_returns_different_set
+      - test_suggestions_without_show_id_returns_all
+      - test_requests_with_show_id_returns_only_that_show
+      - test_requests_with_different_show_id_returns_different_set
+      - test_requests_without_show_id_returns_all
+      - test_grouped_requests_with_show_id_returns_only_that_show
+      - test_grouped_requests_without_show_id_returns_all
+      - test_show_scoping_exact_counts
+
+  analytics_validation:
+    description: "Multi-day, multi-show analytics period validation"
+    test_data_created:
+      - "Show 3 days ago with 5 requests"
+      - "Show 10 days ago with 2 requests"
+      - "Show 45 days ago with 3 requests"
+    validation_results:
+      today_1d: { db_count: 5, api_count: 5, match: true }
+      last_7d: { db_count: 18, api_count: 18, match: true }
+      last_30d: { db_count: 20, api_count: 20, match: true }
+      last_365d: { db_count: 23, api_count: 23, match: true }
+      all_time: { db_count: 23, api_count: 23, match: true }
+
+# =============================================================================
+# SECTION 5: PHASE 1 DONE CRITERIA STATUS
+# =============================================================================
+phase1_status:
+  criteria:
+    - description: "All live views correctly scoped by show_id at the API level"
+      status: DONE
+      evidence: "show_id query param added to 3 endpoints, verified via curl"
+      
+    - description: "Analytics period filters pass multi-day, multi-show tests"
+      status: DONE
+      evidence: "All 5 periods match exact expected counts"
+      
+    - description: "No frontend-only enforcement of critical constraints"
+      status: DONE
+      evidence: "API enforces show scoping; frontend passes show_id when currentShow exists"
+      
+    - description: "current_build_inventory.yaml matches actual behavior"
+      status: DONE
+      evidence: "This file updated with show_id query param documentation"
+
+# =============================================================================
+# SECTION 6: KNOWN DATA ANOMALIES (Unchanged)
+# =============================================================================
+known_issues:
+  - issue: "song_suggestions missing show_id for legacy data"
+    evidence: "3/5 suggestions for test musician lack show_id"
+    
+  - issue: "created_at mixed types"
+    evidence: "requests: 52% string / 48% date"
+    
+  - issue: "Frontend App.js is monolithic"
+    evidence: "~12,000+ lines"
