@@ -3209,10 +3209,21 @@ async def create_song_suggestion(suggestion_data: dict):
         raise HTTPException(status_code=500, detail="Error creating song suggestion")
 
 @api_router.get("/song-suggestions", response_model=List[SongSuggestion])
-async def get_song_suggestions(musician_id: str = Depends(get_current_musician)):
-    """Get all song suggestions for a musician"""
+async def get_song_suggestions(
+    musician_id: str = Depends(get_current_musician),
+    show_id: Optional[str] = Query(None, description="Filter suggestions by show_id. If omitted, returns all suggestions.")
+):
+    """Get song suggestions for a musician, optionally filtered by show_id.
+    
+    - If show_id is provided: returns only suggestions for that specific show
+    - If show_id is omitted: returns all suggestions (backward compatible)
+    """
     try:
-        suggestions = await db.song_suggestions.find({"musician_id": musician_id}).sort("created_at", DESCENDING).to_list(length=None)
+        query = {"musician_id": musician_id}
+        if show_id is not None:
+            query["show_id"] = show_id
+        
+        suggestions = await db.song_suggestions.find(query).sort("created_at", DESCENDING).to_list(length=None)
         return [SongSuggestion(**suggestion) for suggestion in suggestions]
     except Exception as e:
         logger.error(f"Error getting song suggestions: {str(e)}")
