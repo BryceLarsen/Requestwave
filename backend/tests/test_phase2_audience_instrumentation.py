@@ -572,11 +572,12 @@ async def test_audience_id_stored_on_tip(
 
 @pytest.mark.asyncio
 async def test_all_events_have_correct_context(
-    test_musician, test_show, test_song, cleanup_analytics, cleanup_requests, cleanup_tips
+    test_musician, test_show, test_song, cleanup_analytics, cleanup_requests, cleanup_tips, test_db_conn
 ):
     """
     Summary test: All Phase 2 events include correct musician_id, show_id, and audience_id.
     """
+    db = test_db_conn
     audience_id = f"test-audience-{uuid4().hex[:8]}"
     
     transport = ASGITransport(app=app)
@@ -622,7 +623,6 @@ async def test_all_events_have_correct_context(
         assert tip_response.status_code == 200
         
         # Give time for all async events
-        import asyncio
         await asyncio.sleep(0.5)
         
         # Verify all 4 event types
@@ -634,7 +634,7 @@ async def test_all_events_have_correct_context(
         ]
         
         for event_type in event_types:
-            event = await test_db.analytics_events.find_one({
+            event = await db.analytics_events.find_one({
                 "event_type": event_type,
                 "metadata.audience_id": audience_id
             })
