@@ -219,9 +219,10 @@ async def test_audience_id_stored_on_request(
 
 @pytest.mark.asyncio
 async def test_request_without_audience_id_still_works(
-    test_musician, test_show, test_song, cleanup_analytics, cleanup_requests
+    test_musician, test_show, test_song, cleanup_analytics, cleanup_requests, test_db_conn
 ):
     """Requests can be created without audience_id (backward compatible)."""
+    db = test_db_conn
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.post(
@@ -241,7 +242,7 @@ async def test_request_without_audience_id_still_works(
         request_id = data["id"]
         
         # Verify request was created
-        request_doc = await test_db.requests.find_one({"id": request_id})
+        request_doc = await db.requests.find_one({"id": request_id})
         assert request_doc is not None
         # audience_id should be None or not present
         assert request_doc.get("audience_id") is None
