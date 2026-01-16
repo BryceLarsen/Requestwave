@@ -94,6 +94,26 @@ phase_definitions:
       - nudges, alerts, or performance scoring
     transition_rule:
       - Phase 2 may not begin until Phase 1 is explicitly marked done.
+    audience_identity:
+      purpose: >
+        Provide a stable anonymous identifier so audience actions can be associated
+        across a session and (when possible) across repeat visits on the same device,
+        without requiring email and without interpretation.
+      rules:
+        - Generate audience_id on first audience web app load or first interaction.
+        - audience_id exists even when email and name are null.
+        - Persist audience_id on the client (cookie or localStorage) to keep it stable across multiple requests from the same device/browser.
+        - Include audience_id in requests, tips, and analytics_events whenever available.
+        - Email and name are optional attributes that may be attached later; they do not replace audience_id.
+        - No identity merging across devices or emails in Phase 2.
+        - No new UI is allowed solely to support identity.
+      required_fields_when_available:
+        - audience_id
+      explicitly_forbidden:
+        - cross-device identity merges
+        - scoring, ranking, or behavioral modeling
+        - personalized suggestions or prioritization
+        - marketing workflows or consent flows (unless already existing)
 
   Phase 3:
     name: Post-Show Reflection
