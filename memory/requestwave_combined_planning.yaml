@@ -43,7 +43,7 @@ phase_gate_rules:
   - Improvements, refactors, or polish are forbidden unless explicitly requested.
   - If phase membership is ambiguous, assume it is out of scope and ask.
 
-current_phase: Phase 2
+current_phase: Phase 3
 
 phase_definitions:
   Phase 1:
