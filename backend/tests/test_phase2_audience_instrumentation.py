@@ -362,7 +362,7 @@ async def test_tip_completed_event_has_show_id(test_musician, test_show, test_db
 # =============================================================================
 
 @pytest.mark.asyncio
-async def test_dedication_event_fires_when_dedication_present(test_musician, test_show, test_song):
+async def test_dedication_event_fires_when_dedication_present(test_musician, test_show, test_song, test_db):
     """audience.dedication_submitted is emitted when dedication is non-empty."""
     audience_id = f"test-audience-{uuid4().hex[:8]}"
     dedication_text = "Happy Birthday to my friend!"
@@ -406,7 +406,7 @@ async def test_dedication_event_fires_when_dedication_present(test_musician, tes
 
 
 @pytest.mark.asyncio
-async def test_dedication_event_does_not_fire_when_empty(test_musician, test_show, test_song):
+async def test_dedication_event_does_not_fire_when_empty(test_musician, test_show, test_song, test_db):
     """audience.dedication_submitted is NOT emitted when dedication is empty."""
     audience_id = f"test-audience-{uuid4().hex[:8]}"
     
@@ -445,7 +445,7 @@ async def test_dedication_event_does_not_fire_when_empty(test_musician, test_sho
 
 
 @pytest.mark.asyncio
-async def test_dedication_event_does_not_fire_when_whitespace_only(test_musician, test_show, test_song):
+async def test_dedication_event_does_not_fire_when_whitespace_only(test_musician, test_show, test_song, test_db):
     """audience.dedication_submitted is NOT emitted when dedication is whitespace only."""
     audience_id = f"test-audience-{uuid4().hex[:8]}"
     
