@@ -8779,6 +8779,18 @@ const AudienceInterface = () => {
   const [showPostRequestModal, setShowPostRequestModal] = useState(false);
   const [currentRequestId, setCurrentRequestId] = useState(null);
   
+  // Phase 2: Stable anonymous audience_id for event tracking
+  // Generated once per device/browser, persisted in localStorage
+  const [audienceId] = useState(() => {
+    const STORAGE_KEY = 'requestwave_audience_id';
+    let id = localStorage.getItem(STORAGE_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(STORAGE_KEY, id);
+    }
+    return id;
+  });
+  
   // NEW: Multi-step post-request flow
   const [showTipChoiceModal, setShowTipChoiceModal] = useState(false);
   const [showSocialFollowModal, setShowSocialFollowModal] = useState(false);
