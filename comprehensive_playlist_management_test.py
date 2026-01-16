@@ -39,7 +39,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://requestwave-fix.preview.emergentagent.com/api"
+BASE_URL = "https://audience-tracker-4.preview.emergentagent.com/api"
 
 # Pro account for playlist testing
 PRO_MUSICIAN = {

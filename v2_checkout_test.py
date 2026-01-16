@@ -26,7 +26,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration - Use the correct backend URL from frontend/.env
-BASE_URL = "https://requestwave-fix.preview.emergentagent.com/api"
+BASE_URL = "https://audience-tracker-4.preview.emergentagent.com/api"
 
 # Pro account credentials
 PRO_MUSICIAN = {

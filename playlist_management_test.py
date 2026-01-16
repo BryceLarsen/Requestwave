@@ -17,7 +17,7 @@ import json
 import time
 
 # Configuration
-BASE_URL = "https://requestwave-fix.preview.emergentagent.com/api"
+BASE_URL = "https://audience-tracker-4.preview.emergentagent.com/api"
 PRO_MUSICIAN = {
     "email": "brycelarsenmusic@gmail.com",
     "password": "RequestWave2024!"

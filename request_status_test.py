@@ -12,7 +12,7 @@ from datetime import datetime
 import time
 
 # Configuration
-EXTERNAL_BASE_URL = "https://requestwave-fix.preview.emergentagent.com/api"
+EXTERNAL_BASE_URL = "https://audience-tracker-4.preview.emergentagent.com/api"
 TEST_EMAIL = "brycelarsenmusic@gmail.com"
 TEST_PASSWORD = "RequestWave2024!"
 

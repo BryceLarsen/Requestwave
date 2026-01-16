@@ -1,602 +1,2086 @@
 <analysis>**original_problem_statement**:
-The user's initial high-level goal is to stabilize and enhance the RequestWave application. This session focused on two main phases:
-1.  **Analytics Implementation**: Implement a robust, append-only analytics event ledger ( collection) to track all significant user and system actions without altering existing logic. This was completed.
-2.  **Bug Fixing & Refinement**: Address three specific issues:
-    *   **Issue 1**: Broken analytics period filters (Today, 7d, 30d, etc.).
-    *   **Issue 2**: Broken actions on the Learn Later list in the Songs tab.
-    *   **Issue 3**: The On Stage tab showing all items instead of only items for the active show.
+The user's high-level goal is to stabilize and enhance the RequestWave application through a structured, phased approach. The project is governed by a planning contract ().
 
-The current priority is to fix these three issues sequentially, starting with the analytics filters.
+**Phase 1 (Completed):** Focused on Foundation and Correctness. This involved fixing three critical bugs (broken analytics filters, broken Learn Later actions, and incorrect On Stage tab scoping) and ensuring data integrity and predictable system behavior. A key outcome was implementing API-level enforcement for show scoping, moving logic from the frontend to the backend.
+
+**Phase 2 (In Progress):** Focuses on Audience Interaction Capture. This phase is strictly for instrumentation and involves implementing a stable, anonymous  to track user actions across a session and logging key audience interactions (, , , ) into the  collection without adding new UI or interpretive logic.
 
 **PRODUCT REQUIREMENTS**
-- Store all new timestamps in MongoDB as UTC  objects, not strings.
-- Capture the musician's timezone (IANA string) and use it as the source of truth for UI display and analytics period boundaries.
-- Do not migrate existing data; fixes should handle the present mixed data types.
-- **Analytics Filters**: Must correctly filter data for Today, Last 7 days, Last 30 days, and Last year based on the musician's local timezone boundaries.
-- **Learn Later Actions**: The Match, Add, and Trash buttons must function correctly. The Restore button should be removed.
-- **On Stage Scope**: The On Stage tab must only display items associated with the current active show. If no show is active, it should display an empty state with a Start Show button.
+- Adhere to the phased plan outlined in .
+- For Phase 2, implement a stable, anonymous  persisted in .
+- This  must be included in requests, tips, and analytics events.
+- Implement event logging for key audience actions: , , , and .
+- All work in Phase 2 is instrumentation only. No new UI, ranking, or recommendations.
 
----
 **User's preferred language**: English
 
----
 **what currently exists?**
-- A complete, append-only analytics event system has been implemented in the  collection, tracking all major request, suggestion, and show lifecycle events.
-- Path B features are complete: auto-show creation for suggestions, show-scoped request/suggestion lists, batch actions for suggestions, and a Learn Later view on the Songs tab.
-- **Timestamp Standardization**: The agent has updated all backend write paths (, , ) to store new timestamps as UTC  objects instead of strings.
-- **Timezone Capture**: The  endpoint now captures the musician's browser timezone and stores it on the show and musician profiles.
-- **Analytics Filter Fix (In Progress)**: The  endpoint was updated to handle mixed  types (string and date) and to compute date ranges based on the musician's timezone. However, the initial test results were suspicious, prompting a deeper validation phase.
+- A stable application with all Phase 1 bug fixes completed and validated.
+- **API-Level Show Scoping:** Endpoints (, , ) now accept an optional  query parameter to return show-specific data. The On Stage tab correctly uses this for filtering.
+- **Analytics Filters:** The analytics dashboard date filters are validated with multi-day test data and function correctly.
+- **Phase 2 Implementation (Code Complete, Not Tested):**
+    - **Frontend:** The  in  now generates a UUID for , persists it in , and includes it in payloads for creating requests, submitting tips, and tracking clicks.
+    - **Backend:**  has been updated. The relevant Pydantic models (, ) and API endpoints (, , ) now accept . The backend emits new events (, , , ) with the correct context (, , ).
 
----
 **Last working item**:
-- **Last item agent was working**: Validating the fix for Issue 1: Analytics period filters broken. The agent just added detailed, development-only logging to the  endpoint in  to print the musician's timezone, local/UTC date boundaries, and the final MongoDB query for each filter period.
+- **Last item agent was working**: Completing the implementation of Phase 2 tasks. The final code change was updating the  endpoint in  to accept  and , store them on the tip record, and emit an  analytics event. All required code changes for Phase 2 appear to be complete.
 - **Status**: IN PROGRESS
-- **Agent Testing Done**: Y (initial tests were done, but deeper validation is now required and in progress).
-- **Which testing method agent to use?**: Backend testing. The agent needs to trigger the analytics endpoint for each period, check the backend logs for the new debug output, and run direct MongoDB queries to cross-verify the counts and date boundaries.
+- **Agent Testing Done**: N
+- **Which testing method agent to use?**: both
+    - **Backend**: Create a new ============================= test session starts ==============================
+platform linux -- Python 3.11.14, pytest-8.4.1, pluggy-1.6.0
+rootdir: /app
+plugins: anyio-4.9.0, asyncio-1.3.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 38 items
+
+backend/tests/test_show_scoping.py .EEEEEEEE                             [ 23%]
+browser_simulation_test.py ..                                            [ 28%]
+frontend_environment_test.py .                                           [ 31%]
+historical_requests_test.py F                                            [ 34%]
+playlist_final_test.py .                                                 [ 36%]
+pro_access_test.py .                                                     [ 39%]
+search_edge_test.py .                                                    [ 42%]
+tests/test_requestwave_fixes.py .....................                    [ 97%]
+trial_test.py .                                                          [100%]
+
+==================================== ERRORS ====================================
+_ ERROR at setup of test_suggestions_with_different_show_id_returns_different_set _
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+________ ERROR at setup of test_suggestions_without_show_id_returns_all ________
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_____ ERROR at setup of test_requests_with_show_id_returns_only_that_show ______
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_ ERROR at setup of test_requests_with_different_show_id_returns_different_set _
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_________ ERROR at setup of test_requests_without_show_id_returns_all __________
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_ ERROR at setup of test_grouped_requests_with_show_id_returns_only_that_show __
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_____ ERROR at setup of test_grouped_requests_without_show_id_returns_all ______
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_______________ ERROR at setup of test_show_scoping_exact_counts _______________
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+=================================== FAILURES ===================================
+___________________________ test_historical_requests ___________________________
+
+    def test_historical_requests():
+        print("🎯 PRIORITY 4: Test Historical Requests")
+        print("=" * 80)
+    
+        # Login
+        login_data = {
+            "email": PRO_MUSICIAN["email"],
+            "password": PRO_MUSICIAN["password"]
+        }
+    
+        login_response = requests.post(f"{BASE_URL}/auth/login", json=login_data)
+    
+        if login_response.status_code != 200:
+            print(f"❌ Login failed: {login_response.status_code}")
+            return
+    
+        login_result = login_response.json()
+        auth_token = login_result["token"]
+        musician_id = login_result["musician"]["id"]
+    
+        headers = {"Authorization": f"Bearer {auth_token}"}
+    
+        print(f"✅ Logged in as: {login_result['musician']['name']}")
+        print(f"✅ Musician ID: {musician_id}")
+    
+        # Get all requests from main dashboard
+        print("📊 Step 1: Get all requests from main dashboard")
+    
+        dashboard_response = requests.get(f"{BASE_URL}/requests/musician/{musician_id}", headers=headers)
+    
+        if dashboard_response.status_code != 200:
+            print(f"❌ Failed to get dashboard requests: {dashboard_response.status_code}")
+            return
+    
+        dashboard_requests = dashboard_response.json()
+        print(f"   📊 Total requests in dashboard: {len(dashboard_requests)}")
+    
+        # Get requests from polling endpoint
+        print("📊 Step 2: Get requests from polling endpoint")
+    
+        polling_response = requests.get(f"{BASE_URL}/requests/updates/{musician_id}", headers=headers)
+    
+        if polling_response.status_code != 200:
+            print(f"❌ Failed to get polling requests: {polling_response.status_code}")
+            return
+    
+        polling_data = polling_response.json()
+        polling_requests = polling_data.get("requests", [])
+        print(f"   📊 Total requests in polling: {len(polling_requests)}")
+    
+        # Compare dashboard vs polling requests
+        print("📊 Step 3: Compare dashboard vs polling requests")
+    
+        # Filter dashboard requests to only active ones (should match polling)
+>       active_dashboard_requests = [req for req in dashboard_requests if req.get("status") not in ["archived"]]
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+historical_requests_test.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <dict_keyiterator object at 0xf970b02660c0>
+
+>   active_dashboard_requests = [req for req in dashboard_requests if req.get("status") not in ["archived"]]
+                                                                      ^^^^^^^
+E   AttributeError: 'str' object has no attribute 'get'
+
+historical_requests_test.py:72: AttributeError
+----------------------------- Captured stdout call -----------------------------
+🎯 PRIORITY 4: Test Historical Requests
+================================================================================
+✅ Logged in as: Bryce Larsen
+✅ Musician ID: a39296f0-20da-4516-85d1-56af59eb772f
+📊 Step 1: Get all requests from main dashboard
+   📊 Total requests in dashboard: 3
+📊 Step 2: Get requests from polling endpoint
+   📊 Total requests in polling: 50
+📊 Step 3: Compare dashboard vs polling requests
+=============================== warnings summary ===============================
+../root/.venv/lib/python3.11/site-packages/starlette/formparsers.py:12
+  /root/.venv/lib/python3.11/site-packages/starlette/formparsers.py:12: PendingDeprecationWarning: Please use `import python_multipart` instead.
+    import multipart
+
+backend/server.py:7082
+  /app/backend/server.py:7082: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+../root/.venv/lib/python3.11/site-packages/fastapi/applications.py:4495
+../root/.venv/lib/python3.11/site-packages/fastapi/applications.py:4495
+  /root/.venv/lib/python3.11/site-packages/fastapi/applications.py:4495: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)
+
+backend/server.py:7172
+  /app/backend/server.py:7172: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("shutdown")
+
+../root/.venv/lib/python3.11/site-packages/motor/core.py:961
+  /root/.venv/lib/python3.11/site-packages/motor/core.py:961: PytestCollectionWarning: cannot collect 'test_db' because it is not a function.
+    def __call__(self, *args, **kwargs):
+
+browser_simulation_test.py::test_cors_preflight
+  /root/.venv/lib/python3.11/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning: Test functions should return None, but browser_simulation_test.py::test_cors_preflight returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+browser_simulation_test.py::test_different_request_scenarios
+  /root/.venv/lib/python3.11/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning: Test functions should return None, but browser_simulation_test.py::test_different_request_scenarios returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+frontend_environment_test.py::test_frontend_environment_detection
+  /root/.venv/lib/python3.11/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning: Test functions should return None, but frontend_environment_test.py::test_frontend_environment_detection returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED historical_requests_test.py::test_historical_requests - AttributeError...
+ERROR backend/tests/test_show_scoping.py::test_suggestions_with_different_show_id_returns_different_set
+ERROR backend/tests/test_show_scoping.py::test_suggestions_without_show_id_returns_all
+ERROR backend/tests/test_show_scoping.py::test_requests_with_show_id_returns_only_that_show
+ERROR backend/tests/test_show_scoping.py::test_requests_with_different_show_id_returns_different_set
+ERROR backend/tests/test_show_scoping.py::test_requests_without_show_id_returns_all
+ERROR backend/tests/test_show_scoping.py::test_grouped_requests_with_show_id_returns_only_that_show
+ERROR backend/tests/test_show_scoping.py::test_grouped_requests_without_show_id_returns_all
+ERROR backend/tests/test_show_scoping.py::test_show_scoping_exact_counts - Ru...
+============= 1 failed, 29 passed, 9 warnings, 8 errors in 12.88s ============== file to provide test coverage for the new Phase 2 functionality, as mandated by the user's instructions. This should test that  is stored correctly and that all new analytics events are emitted with the correct data.
+    - **Frontend**: Use the  to verify that the  () correctly generates and stores  in  and that submitting requests/tips still works as expected.
 - **User Testing Done**: N
 
----
 **All Pending/In progress Issue list**:
-- **Issue 1 (P0)**: Analytics period filters broken.
-- **Issue 2 (P1)**: Songs tab “Learn Later” list actions are broken or noisy.
-- **Issue 3 (P2)**: On Stage tab should be active-show only.
+There are no outstanding bugs. The work is organized into tasks within the current phase.
 
-**Issues Detail**:
-- **Issue 1: Analytics period filters broken**
-    - **Attempted fixes**: The agent implemented a dual-path query in  to handle mixed  and Thu Jan 15 18:04:05 UTC 2026 types for . It also introduced timezone-aware boundary calculations. However, initial tests showed identical counts for 7, 30, and 365-day filters, suggesting a potential logic error or a test data anomaly.
-    - **Next debug checklist**:
-        1.  In , click each analytics period filter (Today, 7d, 30d, 365d, All Time).
-        2.  Check backend logs (==> /var/log/supervisor/backend.err.log <==
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
-    self.run()
-  File "/usr/local/lib/python3.11/multiprocessing/process.py", line 108, in run
-    self._target(*self._args, **self._kwargs)
-  File "/root/.venv/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
-    target(sockets=sockets)
-  File "/root/.venv/lib/python3.11/site-packages/uvicorn/server.py", line 61, in run
-    return asyncio.run(self.serve(sockets=sockets))
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
-    return runner.run(main)
-           ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
-    return self._loop.run_until_complete(task)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
-    return future.result()
-           ^^^^^^^^^^^^^^^
-  File "/root/.venv/lib/python3.11/site-packages/uvicorn/server.py", line 68, in serve
-    config.load()
-  File "/root/.venv/lib/python3.11/site-packages/uvicorn/config.py", line 467, in load
-    self.loaded_app = import_from_string(self.app)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/root/.venv/lib/python3.11/site-packages/uvicorn/importer.py", line 21, in import_from_string
-    module = importlib.import_module(module_str)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
-  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
-  File "<frozen importlib._bootstrap_external>", line 936, in exec_module
-  File "<frozen importlib._bootstrap_external>", line 1074, in get_code
-  File "<frozen importlib._bootstrap_external>", line 1004, in source_to_code
-  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
-  File "/app/backend/server.py", line 2495
-    "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string,
-                  
-SyntaxError: invalid syntax. Perhaps you forgot a comma?
-WARNING:  WatchFiles detected changes in 'server.py'. Reloading...
-Process SpawnProcess-9:
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
-    self.run()
-  File "/usr/local/lib/python3.11/multiprocessing/process.py", line 108, in run
-    self._target(*self._args, **self._kwargs)
-  File "/root/.venv/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
-    target(sockets=sockets)
-  File "/root/.venv/lib/python3.11/site-packages/uvicorn/server.py", line 61, in run
-    return asyncio.run(self.serve(sockets=sockets))
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
-    return runner.run(main)
-           ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
-    return self._loop.run_until_complete(task)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
-    return future.result()
-           ^^^^^^^^^^^^^^^
-  File "/root/.venv/lib/python3.11/site-packages/uvicorn/server.py", line 68, in serve
-    config.load()
-  File "/root/.venv/lib/python3.11/site-packages/uvicorn/config.py", line 467, in load
-    self.loaded_app = import_from_string(self.app)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/root/.venv/lib/python3.11/site-packages/uvicorn/importer.py", line 21, in import_from_string
-    module = importlib.import_module(module_str)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
-  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
-  File "<frozen importlib._bootstrap_external>", line 936, in exec_module
-  File "<frozen importlib._bootstrap_external>", line 1074, in get_code
-  File "<frozen importlib._bootstrap_external>", line 1004, in source_to_code
-  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
-  File "/app/backend/server.py", line 2515
-    "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string,
-                  
-SyntaxError: invalid syntax. Perhaps you forgot a comma?
-WARNING:  WatchFiles detected changes in 'server.py'. Reloading...
-Process SpawnProcess-10:
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
-    self.run()
-  File "/usr/local/lib/python3.11/multiprocessing/process.py", line 108, in run
-    self._target(*self._args, **self._kwargs)
-  File "/root/.venv/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
-    target(sockets=sockets)
-  File "/root/.venv/lib/python3.11/site-packages/uvicorn/server.py", line 61, in run
-    return asyncio.run(self.serve(sockets=sockets))
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
-    return runner.run(main)
-           ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
-    return self._loop.run_until_complete(task)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
-    return future.result()
-           ^^^^^^^^^^^^^^^
-  File "/root/.venv/lib/python3.11/site-packages/uvicorn/server.py", line 68, in serve
-    config.load()
-  File "/root/.venv/lib/python3.11/site-packages/uvicorn/config.py", line 467, in load
-    self.loaded_app = import_from_string(self.app)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/root/.venv/lib/python3.11/site-packages/uvicorn/importer.py", line 21, in import_from_string
-    module = importlib.import_module(module_str)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
-  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
-  File "<frozen importlib._bootstrap_external>", line 936, in exec_module
-  File "<frozen importlib._bootstrap_external>", line 1074, in get_code
-  File "<frozen importlib._bootstrap_external>", line 1004, in source_to_code
-  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
-  File "/app/backend/server.py", line 6616
-    "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string,
-                  
-SyntaxError: invalid syntax. Perhaps you forgot a comma?
-WARNING:  WatchFiles detected changes in 'server.py'. Reloading...
-INFO:     Started server process [5097]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [5097]
-INFO:     Stopping reloader process [47]
-INFO:     Will watch for changes in these directories: ['/app/backend']
-INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-INFO:     Started reloader process [5500] using WatchFiles
-INFO:     Started server process [5502]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:server:Started show 'Timezone Test Show' for musician c74dd6e8-2ccf-41e1-9892-56d13af29489
-INFO:server:Stopped active show for musician c74dd6e8-2ccf-41e1-9892-56d13af29489
-INFO:     Will watch for changes in these directories: ['/app/backend']
-INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-INFO:     Started reloader process [41] using WatchFiles
-INFO:     Started server process [84]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  WatchFiles detected changes in 'server.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [84]
-INFO:     Started server process [275]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:server:[Analytics] musician_timezone=America/New_York
-INFO:server:[Analytics] now_local=2026-01-15T11:22:24.534615-05:00, start_local=2026-01-15T00:00:00-05:00, end_local=2026-01-15T11:22:24.534615-05:00
-INFO:server:[Analytics] start_utc=2026-01-15T05:00:00, end_utc=2026-01-15T16:22:24.534615
-INFO:server:[Analytics] musician_timezone=America/New_York
-INFO:server:[Analytics] now_local=2026-01-15T11:22:24.618034-05:00, start_local=2026-01-08T11:22:24.618034-05:00, end_local=2026-01-15T11:22:24.618034-05:00
-INFO:server:[Analytics] start_utc=2026-01-08T16:22:24.618034, end_utc=2026-01-15T16:22:24.618034
-INFO:server:[Analytics] musician_timezone=America/New_York
-INFO:server:[Analytics] now_local=2026-01-15T11:22:24.701875-05:00, start_local=2025-12-16T11:22:24.701875-05:00, end_local=2026-01-15T11:22:24.701875-05:00
-INFO:server:[Analytics] start_utc=2025-12-16T16:22:24.701875, end_utc=2026-01-15T16:22:24.701875
-INFO:server:[Analytics] musician_timezone=America/New_York
-INFO:server:[Analytics] now_local=2026-01-15T11:22:24.782725-05:00, start_local=2025-01-15T11:22:24.782725-05:00, end_local=2026-01-15T11:22:24.782725-05:00
-INFO:server:[Analytics] start_utc=2025-01-15T16:22:24.782725, end_utc=2026-01-15T16:22:24.782725
-INFO:server:Started show 'Timezone Verify Show' for musician c74dd6e8-2ccf-41e1-9892-56d13af29489
-INFO:server:Stopped active show for musician c74dd6e8-2ccf-41e1-9892-56d13af29489
-INFO:server:[Analytics] musician_timezone=America/New_York
-INFO:server:[Analytics] now_local=2026-01-15T11:22:50.166831-05:00, start_local=2026-01-15T00:00:00-05:00, end_local=2026-01-15T11:22:50.166831-05:00
-INFO:server:[Analytics] start_utc=2026-01-15T05:00:00, end_utc=2026-01-15T16:22:50.166831
-INFO:server:Started show 'Regression Test Show' for musician c74dd6e8-2ccf-41e1-9892-56d13af29489
-INFO:server:Stopped active show for musician c74dd6e8-2ccf-41e1-9892-56d13af29489
-INFO:     Will watch for changes in these directories: ['/app/backend']
-INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-INFO:     Started reloader process [47] using WatchFiles
-INFO:     Started server process [98]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  WatchFiles detected changes in 'server.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [98]
-INFO:     Started server process [262]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Will watch for changes in these directories: ['/app/backend']
-INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-INFO:     Started reloader process [41] using WatchFiles
-INFO:     Started server process [84]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-
-==> /var/log/supervisor/backend.out.log <==
-  POST       /api/subscription/checkout               -> create_freemium_checkout_session
-  POST       /api/subscription/checkout-test          -> test_checkout_route
-  POST       /api/test/subscription                   -> test_subscription_endpoint
-  POST       /api/v2/subscription/cancel              -> cancel_freemium_subscription
-  POST       /v2/api/subscription/cancel              -> cancel_freemium_subscription
-
-📊 TOTAL ROUTES: 101
-🔗 Webhook Routes: 1
-💳 Subscription Routes: 8
-
-================================================================================
-
-================================================================================
-🔍 FREEMIUM BACKEND STARTUP DIAGNOSTICS:
-================================================================================
-🔑 Stripe API Key Prefix: NOT_SET
-🔗 Webhook Secret Set: No
-💰 Price IDs: STARTUP=None, MONTHLY=None, ANNUAL=None
-⚠️  NON-LIVE KEYS DETECTED: NOT_SET
-
-📋 FULL ROUTE LIST:
---------------------------------------------------
-🔗 WEBHOOK ROUTES:
-  POST       /api/stripe/webhook                      -> stripe_webhook_handler
-
-💳 SUBSCRIPTION ROUTES:
-  GET        /api/subscription/status                 -> freemium_subscription_status_endpoint
-  GET        /v2/api/subscription/checkout/status/{session_id} -> get_freemium_checkout_status
-  POST       /api/subscription/cancel                 -> cancel_freemium_subscription
-  POST       /api/subscription/checkout               -> create_freemium_checkout_session
-  POST       /api/subscription/checkout-test          -> test_checkout_route
-  POST       /api/test/subscription                   -> test_subscription_endpoint
-  POST       /api/v2/subscription/cancel              -> cancel_freemium_subscription
-  POST       /v2/api/subscription/cancel              -> cancel_freemium_subscription
-
-📊 TOTAL ROUTES: 101
-🔗 Webhook Routes: 1
-💳 Subscription Routes: 8
-
-================================================================================
-
-================================================================================
-🔍 FREEMIUM BACKEND STARTUP DIAGNOSTICS:
-================================================================================
-🔑 Stripe API Key Prefix: NOT_SET
-🔗 Webhook Secret Set: No
-💰 Price IDs: STARTUP=None, MONTHLY=None, ANNUAL=None
-⚠️  NON-LIVE KEYS DETECTED: NOT_SET
-
-📋 FULL ROUTE LIST:
---------------------------------------------------
-🔗 WEBHOOK ROUTES:
-  POST       /api/stripe/webhook                      -> stripe_webhook_handler
-
-💳 SUBSCRIPTION ROUTES:
-  GET        /api/subscription/status                 -> freemium_subscription_status_endpoint
-  GET        /v2/api/subscription/checkout/status/{session_id} -> get_freemium_checkout_status
-  POST       /api/subscription/cancel                 -> cancel_freemium_subscription
-  POST       /api/subscription/checkout               -> create_freemium_checkout_session
-  POST       /api/subscription/checkout-test          -> test_checkout_route
-  POST       /api/test/subscription                   -> test_subscription_endpoint
-  POST       /api/v2/subscription/cancel              -> cancel_freemium_subscription
-  POST       /v2/api/subscription/cancel              -> cancel_freemium_subscription
-
-📊 TOTAL ROUTES: 101
-🔗 Webhook Routes: 1
-💳 Subscription Routes: 8
-
-================================================================================
-INFO:     10.64.128.21:55510 - "POST /api/auth/login HTTP/1.1" 200 OK
-INFO:     10.64.128.21:55510 - "POST /api/shows/start HTTP/1.1" 200 OK
-INFO:     10.64.128.233:49326 - "POST /api/musicians/test/requests HTTP/1.1" 200 OK
-INFO:     10.64.128.20:54018 - "POST /api/song-suggestions HTTP/1.1" 200 OK
-INFO:     10.64.131.254:46972 - "POST /api/auth/login HTTP/1.1" 200 OK
-INFO:     10.64.128.21:57566 - "GET /api/requests/musician/me HTTP/1.1" 200 OK
-INFO:     10.64.128.21:57566 - "GET /api/song-suggestions HTTP/1.1" 200 OK
-INFO:     10.64.134.14:35174 - "GET /api/shows HTTP/1.1" 200 OK
-INFO:     10.64.128.199:53330 - "GET /api/analytics/daily HTTP/1.1" 200 OK
-INFO:     10.64.128.21:57566 - "POST /api/shows/stop HTTP/1.1" 200 OK
-
-================================================================================
-🔍 FREEMIUM BACKEND STARTUP DIAGNOSTICS:
-================================================================================
-🔑 Stripe API Key Prefix: NOT_SET
-🔗 Webhook Secret Set: No
-💰 Price IDs: STARTUP=None, MONTHLY=None, ANNUAL=None
-⚠️  NON-LIVE KEYS DETECTED: NOT_SET
-
-📋 FULL ROUTE LIST:
---------------------------------------------------
-🔗 WEBHOOK ROUTES:
-  POST       /api/stripe/webhook                      -> stripe_webhook_handler
-
-💳 SUBSCRIPTION ROUTES:
-  GET        /api/subscription/status                 -> freemium_subscription_status_endpoint
-  GET        /v2/api/subscription/checkout/status/{session_id} -> get_freemium_checkout_status
-  POST       /api/subscription/cancel                 -> cancel_freemium_subscription
-  POST       /api/subscription/checkout               -> create_freemium_checkout_session
-  POST       /api/subscription/checkout-test          -> test_checkout_route
-  POST       /api/test/subscription                   -> test_subscription_endpoint
-  POST       /api/v2/subscription/cancel              -> cancel_freemium_subscription
-  POST       /v2/api/subscription/cancel              -> cancel_freemium_subscription
-
-📊 TOTAL ROUTES: 101
-🔗 Webhook Routes: 1
-💳 Subscription Routes: 8
-
-================================================================================
-
-================================================================================
-🔍 FREEMIUM BACKEND STARTUP DIAGNOSTICS:
-================================================================================
-🔑 Stripe API Key Prefix: NOT_SET
-🔗 Webhook Secret Set: No
-💰 Price IDs: STARTUP=None, MONTHLY=None, ANNUAL=None
-⚠️  NON-LIVE KEYS DETECTED: NOT_SET
-
-📋 FULL ROUTE LIST:
---------------------------------------------------
-🔗 WEBHOOK ROUTES:
-  POST       /api/stripe/webhook                      -> stripe_webhook_handler
-
-💳 SUBSCRIPTION ROUTES:
-  GET        /api/subscription/status                 -> freemium_subscription_status_endpoint
-  GET        /v2/api/subscription/checkout/status/{session_id} -> get_freemium_checkout_status
-  POST       /api/subscription/cancel                 -> cancel_freemium_subscription
-  POST       /api/subscription/checkout               -> create_freemium_checkout_session
-  POST       /api/subscription/checkout-test          -> test_checkout_route
-  POST       /api/test/subscription                   -> test_subscription_endpoint
-  POST       /api/v2/subscription/cancel              -> cancel_freemium_subscription
-  POST       /v2/api/subscription/cancel              -> cancel_freemium_subscription
-
-📊 TOTAL ROUTES: 101
-🔗 Webhook Routes: 1
-💳 Subscription Routes: 8
-
-================================================================================
-INFO:     10.64.131.242:37090 - "POST /api/auth/login HTTP/1.1" 200 OK
-INFO:     10.64.134.14:44778 - "GET /api/analytics/daily HTTP/1.1" 200 OK
-INFO:     10.64.131.254:50716 - "GET /api/analytics/daily?days=1 HTTP/1.1" 200 OK
-INFO:     10.64.131.254:50716 - "GET /api/analytics/daily?days=7 HTTP/1.1" 200 OK
-INFO:     10.64.128.203:46060 - "GET /api/analytics/daily?days=30 HTTP/1.1" 200 OK
-INFO:     10.64.128.21:53578 - "GET /api/analytics/daily?days=365 HTTP/1.1" 200 OK
-INFO:     10.64.134.14:36242 - "POST /api/auth/login HTTP/1.1" 200 OK
-INFO:     10.64.131.254:42740 - "POST /api/shows/start HTTP/1.1" 200 OK
-INFO:     10.64.131.242:46132 - "POST /api/shows/stop HTTP/1.1" 200 OK
-INFO:     10.64.137.79:55626 - "GET /api/analytics/daily?days=1 HTTP/1.1" 200 OK
-INFO:     10.64.137.79:33430 - "POST /api/auth/login HTTP/1.1" 200 OK
-INFO:     10.64.129.142:36114 - "GET /api/requests/musician/me HTTP/1.1" 200 OK
-INFO:     10.64.137.145:42872 - "GET /api/song-suggestions HTTP/1.1" 200 OK
-INFO:     10.64.131.242:48612 - "GET /api/shows HTTP/1.1" 200 OK
-INFO:     10.64.131.242:48612 - "POST /api/shows/start HTTP/1.1" 200 OK
-INFO:     10.64.128.203:47464 - "POST /api/shows/stop HTTP/1.1" 200 OK
-INFO:     10.64.128.21:57160 - "POST /api/musicians/test/requests HTTP/1.1" 200 OK
-
-================================================================================
-🔍 FREEMIUM BACKEND STARTUP DIAGNOSTICS:
-================================================================================
-🔑 Stripe API Key Prefix: NOT_SET
-🔗 Webhook Secret Set: No
-💰 Price IDs: STARTUP=None, MONTHLY=None, ANNUAL=None
-⚠️  NON-LIVE KEYS DETECTED: NOT_SET
-
-📋 FULL ROUTE LIST:
---------------------------------------------------
-🔗 WEBHOOK ROUTES:
-  POST       /api/stripe/webhook                      -> stripe_webhook_handler
-
-💳 SUBSCRIPTION ROUTES:
-  GET        /api/subscription/status                 -> freemium_subscription_status_endpoint
-  GET        /v2/api/subscription/checkout/status/{session_id} -> get_freemium_checkout_status
-  POST       /api/subscription/cancel                 -> cancel_freemium_subscription
-  POST       /api/subscription/checkout               -> create_freemium_checkout_session
-  POST       /api/subscription/checkout-test          -> test_checkout_route
-  POST       /api/test/subscription                   -> test_subscription_endpoint
-  POST       /api/v2/subscription/cancel              -> cancel_freemium_subscription
-  POST       /v2/api/subscription/cancel              -> cancel_freemium_subscription
-
-📊 TOTAL ROUTES: 101
-🔗 Webhook Routes: 1
-💳 Subscription Routes: 8
-
-================================================================================
-INFO:     10.64.129.142:53576 - "POST /api/auth/login HTTP/1.1" 200 OK
-INFO:     10.64.129.142:53576 - "GET /api/requests/musician/88cf1515-2650-4fdb-8e82-bfdd3d910b68 HTTP/1.1" 200 OK
-INFO:     10.64.129.135:38422 - "GET /api/requests/updates/88cf1515-2650-4fdb-8e82-bfdd3d910b68 HTTP/1.1" 200 OK
-INFO:     10.64.129.135:38430 - "GET /api/design/settings HTTP/1.1" 200 OK
-INFO:     10.64.129.142:53588 - "GET /api/requests/grouped HTTP/1.1" 200 OK
-INFO:     10.64.129.135:38410 - "GET /api/song-suggestions HTTP/1.1" 200 OK
-INFO:     10.64.129.135:38446 - "GET /api/shows/current HTTP/1.1" 200 OK
-INFO:     10.64.129.142:53604 - "GET /api/shows HTTP/1.1" 200 OK
-INFO:     10.64.129.142:53624 - "GET /api/musicians/adventure-sound-live/filters HTTP/1.1" 200 OK
-INFO:     10.64.129.135:38404 - "GET /api/songs?sort_by=created_at HTTP/1.1" 200 OK
-INFO:     10.64.129.142:53620 - "GET /api/playlists HTTP/1.1" 200 OK
-INFO:     10.64.129.142:53588 - "GET /api/requests/updates/88cf1515-2650-4fdb-8e82-bfdd3d910b68 HTTP/1.1" 200 OK
-INFO:     10.64.129.142:53588 - "GET /api/requests/updates/88cf1515-2650-4fdb-8e82-bfdd3d910b68 HTTP/1.1" 200 OK
-INFO:     10.64.129.135:39620 - "GET /api/requests/updates/88cf1515-2650-4fdb-8e82-bfdd3d910b68 HTTP/1.1" 200 OK
-INFO:     10.64.129.142:54858 - "GET /api/requests/updates/88cf1515-2650-4fdb-8e82-bfdd3d910b68 HTTP/1.1" 200 OK
-INFO:     10.64.129.142:54858 - "GET /api/requests/updates/88cf1515-2650-4fdb-8e82-bfdd3d910b68 HTTP/1.1" 200 OK
-INFO:     10.64.129.135:47466 - "GET /api/requests/updates/88cf1515-2650-4fdb-8e82-bfdd3d910b68 HTTP/1.1" 200 OK) to verify the new logging shows the correct , different / boundaries, and the correct  for each period.
-        3.  Run direct MongoDB queries () to manually count requests for the same musician and confirm the BSON type distribution ( vs. Thu Jan 15 18:04:05 UTC 2026) and date range of existing records.
-        4.  Compare the log output with the manual DB query results to explain why the counts were previously identical and confirm the fix is now working as expected.
-    - **Why fix this issue and what will be achieved with the fix?**: This will make the Analytics tab functional and provide the musician with accurate insights into their request history over different time periods.
-    - **Status**: IN PROGRESS
-    - **Is recurring issue?** N
-    - **Should Test frontend/backend/both after fix?**: Backend.
-
-- **Issue 2: Songs tab “Learn Later” list actions broken or noisy**
-    - **Status**: NOT STARTED
-- **Issue 3: On Stage should be active-show only**
-    - **Status**: NOT STARTED
-
----
 **In progress Task List**:
-- **Task 1: Validate the analytics filter fix**
-    - **Where to resume**: The detailed logging has just been added to  in . The next agent must proceed with the debug checklist outlined in Issue 1 above to test the changes and report the findings.
-    - **What will be achieved with this?**: This will confirm whether the analytics filter logic is correct or if it needs further refinement.
+- **Task 1: Complete Phase 2: Audience Interaction Capture (P0)**
+    - **Where to resume**: The agent has just finished implementing the necessary code changes. The next step is to execute the remaining tasks from the user's instructions for Phase 2:
+        1.  **Task 3 (Testing):** Add ============================= test session starts ==============================
+platform linux -- Python 3.11.14, pytest-8.4.1, pluggy-1.6.0
+rootdir: /app
+plugins: anyio-4.9.0, asyncio-1.3.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 38 items
+
+backend/tests/test_show_scoping.py .EEEEEEEE                             [ 23%]
+browser_simulation_test.py ..                                            [ 28%]
+frontend_environment_test.py .                                           [ 31%]
+historical_requests_test.py F                                            [ 34%]
+playlist_final_test.py .                                                 [ 36%]
+pro_access_test.py .                                                     [ 39%]
+search_edge_test.py .                                                    [ 42%]
+tests/test_requestwave_fixes.py .....................                    [ 97%]
+trial_test.py .                                                          [100%]
+
+==================================== ERRORS ====================================
+_ ERROR at setup of test_suggestions_with_different_show_id_returns_different_set _
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+________ ERROR at setup of test_suggestions_without_show_id_returns_all ________
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_____ ERROR at setup of test_requests_with_show_id_returns_only_that_show ______
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_ ERROR at setup of test_requests_with_different_show_id_returns_different_set _
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_________ ERROR at setup of test_requests_without_show_id_returns_all __________
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_ ERROR at setup of test_grouped_requests_with_show_id_returns_only_that_show __
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_____ ERROR at setup of test_grouped_requests_without_show_id_returns_all ______
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_______________ ERROR at setup of test_show_scoping_exact_counts _______________
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+=================================== FAILURES ===================================
+___________________________ test_historical_requests ___________________________
+
+    def test_historical_requests():
+        print("🎯 PRIORITY 4: Test Historical Requests")
+        print("=" * 80)
+    
+        # Login
+        login_data = {
+            "email": PRO_MUSICIAN["email"],
+            "password": PRO_MUSICIAN["password"]
+        }
+    
+        login_response = requests.post(f"{BASE_URL}/auth/login", json=login_data)
+    
+        if login_response.status_code != 200:
+            print(f"❌ Login failed: {login_response.status_code}")
+            return
+    
+        login_result = login_response.json()
+        auth_token = login_result["token"]
+        musician_id = login_result["musician"]["id"]
+    
+        headers = {"Authorization": f"Bearer {auth_token}"}
+    
+        print(f"✅ Logged in as: {login_result['musician']['name']}")
+        print(f"✅ Musician ID: {musician_id}")
+    
+        # Get all requests from main dashboard
+        print("📊 Step 1: Get all requests from main dashboard")
+    
+        dashboard_response = requests.get(f"{BASE_URL}/requests/musician/{musician_id}", headers=headers)
+    
+        if dashboard_response.status_code != 200:
+            print(f"❌ Failed to get dashboard requests: {dashboard_response.status_code}")
+            return
+    
+        dashboard_requests = dashboard_response.json()
+        print(f"   📊 Total requests in dashboard: {len(dashboard_requests)}")
+    
+        # Get requests from polling endpoint
+        print("📊 Step 2: Get requests from polling endpoint")
+    
+        polling_response = requests.get(f"{BASE_URL}/requests/updates/{musician_id}", headers=headers)
+    
+        if polling_response.status_code != 200:
+            print(f"❌ Failed to get polling requests: {polling_response.status_code}")
+            return
+    
+        polling_data = polling_response.json()
+        polling_requests = polling_data.get("requests", [])
+        print(f"   📊 Total requests in polling: {len(polling_requests)}")
+    
+        # Compare dashboard vs polling requests
+        print("📊 Step 3: Compare dashboard vs polling requests")
+    
+        # Filter dashboard requests to only active ones (should match polling)
+>       active_dashboard_requests = [req for req in dashboard_requests if req.get("status") not in ["archived"]]
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+historical_requests_test.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <dict_keyiterator object at 0xf919a5c62430>
+
+>   active_dashboard_requests = [req for req in dashboard_requests if req.get("status") not in ["archived"]]
+                                                                      ^^^^^^^
+E   AttributeError: 'str' object has no attribute 'get'
+
+historical_requests_test.py:72: AttributeError
+----------------------------- Captured stdout call -----------------------------
+🎯 PRIORITY 4: Test Historical Requests
+================================================================================
+✅ Logged in as: Bryce Larsen
+✅ Musician ID: a39296f0-20da-4516-85d1-56af59eb772f
+📊 Step 1: Get all requests from main dashboard
+   📊 Total requests in dashboard: 3
+📊 Step 2: Get requests from polling endpoint
+   📊 Total requests in polling: 50
+📊 Step 3: Compare dashboard vs polling requests
+=============================== warnings summary ===============================
+../root/.venv/lib/python3.11/site-packages/starlette/formparsers.py:12
+  /root/.venv/lib/python3.11/site-packages/starlette/formparsers.py:12: PendingDeprecationWarning: Please use `import python_multipart` instead.
+    import multipart
+
+backend/server.py:7082
+  /app/backend/server.py:7082: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+../root/.venv/lib/python3.11/site-packages/fastapi/applications.py:4495
+../root/.venv/lib/python3.11/site-packages/fastapi/applications.py:4495
+  /root/.venv/lib/python3.11/site-packages/fastapi/applications.py:4495: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)
+
+backend/server.py:7172
+  /app/backend/server.py:7172: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("shutdown")
+
+../root/.venv/lib/python3.11/site-packages/motor/core.py:961
+  /root/.venv/lib/python3.11/site-packages/motor/core.py:961: PytestCollectionWarning: cannot collect 'test_db' because it is not a function.
+    def __call__(self, *args, **kwargs):
+
+browser_simulation_test.py::test_cors_preflight
+  /root/.venv/lib/python3.11/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning: Test functions should return None, but browser_simulation_test.py::test_cors_preflight returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+browser_simulation_test.py::test_different_request_scenarios
+  /root/.venv/lib/python3.11/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning: Test functions should return None, but browser_simulation_test.py::test_different_request_scenarios returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+frontend_environment_test.py::test_frontend_environment_detection
+  /root/.venv/lib/python3.11/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning: Test functions should return None, but frontend_environment_test.py::test_frontend_environment_detection returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED historical_requests_test.py::test_historical_requests - AttributeError...
+ERROR backend/tests/test_show_scoping.py::test_suggestions_with_different_show_id_returns_different_set
+ERROR backend/tests/test_show_scoping.py::test_suggestions_without_show_id_returns_all
+ERROR backend/tests/test_show_scoping.py::test_requests_with_show_id_returns_only_that_show
+ERROR backend/tests/test_show_scoping.py::test_requests_with_different_show_id_returns_different_set
+ERROR backend/tests/test_show_scoping.py::test_requests_without_show_id_returns_all
+ERROR backend/tests/test_show_scoping.py::test_grouped_requests_with_show_id_returns_only_that_show
+ERROR backend/tests/test_show_scoping.py::test_grouped_requests_without_show_id_returns_all
+ERROR backend/tests/test_show_scoping.py::test_show_scoping_exact_counts - Ru...
+============== 1 failed, 29 passed, 9 warnings, 8 errors in 8.55s ============== coverage to prove that  is stored correctly and that all new analytics events (, , , ) are written with the correct context.
+        2.  **Task 4 (Documentation):** Update  to document the new  behavior, the new event types, and the updated endpoint parameters.
+    - **What will be achieved with this?**: This will complete the instrumentation of audience actions, providing valuable signals for future analytics and features, and fulfilling all requirements for Phase 2.
     - **Status**: IN PROGRESS
-    - **Should Test frontend/backend/both after fix?**: Backend
+    - **Should Test frontend/backend/both after fix?**: Both
     - **Blocked on something**: No.
 
----
 **Upcoming and Future Tasks**
 - **Upcoming Tasks**:
-  - **P1**: Fix Issue 2: Broken Learn Later list actions on the Songs tab.
-  - **P2**: Fix Issue 3: Scope the On Stage tab to the active show only.
-  - **P3**: Implement Increment 4: Update the UI to format and display all timestamps in the musician's local timezone.
+    - **Phase 3: Post-Show Reflection**: As defined in , this phase focuses on features that help musicians review and act on data after a show is over, such as exporting setlists and managing learned songs.
 - **Future Tasks**:
-  - Build a new analytics UI that is powered by the  collection.
-  - Refactor the monolithic  file into smaller components.
-  - Integrate with the Spotify Web API for song data enrichment.
-  - Deploy the stabilized features to production.
+    - **Phase 4: Musician Experience Polish**: Focus on UX improvements for the musician dashboard.
+    - Refactor the monolithic  into smaller, manageable components.
+    - Integrate with the Spotify Web API for song data enrichment.
+    - Build a new analytics UI powered by the  collection.
 
----
 **Completed work in this session**
-- Implemented the full append-only analytics event system ( collection) for 12+ distinct event types.
-- Implemented features from Path B:
-    - Auto-show creation for suggestions without an active show.
-    - Scoped  and  into collapsible sections within each show tile on the Requests tab.
-    - Added batch actions (, , ) for suggestions.
-    - Created a Learn Later toggle view on the Songs tab.
-    - Removed redundant success popups on show restoration.
-- Enforced UTC  object storage for all new timestamps in , , and .
-- Implemented timezone capture on the  endpoint, storing the IANA timezone on the musician and show documents.
-- Partially fixed analytics date filters by handling mixed  types and introducing timezone-aware boundaries (validation in progress).
+- **Phase 1 Signed Off:**
+    - **Analytics Filters Validated (P0):** Fixed the  (All Time) bug and validated all period filters with multi-day, multi-show test data, confirming their accuracy.
+    - **Learn Later Actions Fixed (P1):** Resolved runtime errors on the Match button and performed UX cleanup on action buttons.
+    - **On Stage Scope Fixed (P2):** Migrated show scoping from a frontend-only filter to a robust API-level implementation, ensuring the On Stage tab only ever receives data for the active show.
+- **Phase 2 Implementation Started:**
+    - Updated planning documents () to version  and began Phase 2.
+    - Implemented anonymous  generation, client-side persistence (), and inclusion in all relevant frontend payloads.
+    - Modified backend endpoints to accept, store, and log .
+    - Implemented backend logic to emit four new analytics events: , , , and .
 
----
-**Earlier issues found/mentioned but not fixed**:
-None. The agent is working through the user-provided list in order.
+**Earlier issues found/mentioned but not fixed**
+- None. All identified issues have been resolved or are being addressed within the current phased plan.
 
----
-**Known issue recurrence from previous fork**:
-None.
+**Known issue recurrence from previous fork**
+- None.
 
----
 **Code Architecture**
-- **Backend**: A single file, , containing all FastAPI logic, Pydantic models, and database interactions with MongoDB.
-- **Frontend**: A monolithic React application in a single file, , which has grown to over 12,000 lines and is a significant source of technical debt.
+- **Backend**: Monolithic FastAPI application in . Contains all API logic, Pydantic models, and database interactions. A  directory exists for ============================= test session starts ==============================
+platform linux -- Python 3.11.14, pytest-8.4.1, pluggy-1.6.0
+rootdir: /app
+plugins: anyio-4.9.0, asyncio-1.3.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 38 items
+
+backend/tests/test_show_scoping.py .EEEEEEEE                             [ 23%]
+browser_simulation_test.py ..                                            [ 28%]
+frontend_environment_test.py .                                           [ 31%]
+historical_requests_test.py F                                            [ 34%]
+playlist_final_test.py .                                                 [ 36%]
+pro_access_test.py .                                                     [ 39%]
+search_edge_test.py .                                                    [ 42%]
+tests/test_requestwave_fixes.py .....................                    [ 97%]
+trial_test.py .                                                          [100%]
+
+==================================== ERRORS ====================================
+_ ERROR at setup of test_suggestions_with_different_show_id_returns_different_set _
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+________ ERROR at setup of test_suggestions_without_show_id_returns_all ________
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_____ ERROR at setup of test_requests_with_show_id_returns_only_that_show ______
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_ ERROR at setup of test_requests_with_different_show_id_returns_different_set _
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_________ ERROR at setup of test_requests_without_show_id_returns_all __________
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_ ERROR at setup of test_grouped_requests_with_show_id_returns_only_that_show __
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_____ ERROR at setup of test_grouped_requests_without_show_id_returns_all ______
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_______________ ERROR at setup of test_show_scoping_exact_counts _______________
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+=================================== FAILURES ===================================
+___________________________ test_historical_requests ___________________________
+
+    def test_historical_requests():
+        print("🎯 PRIORITY 4: Test Historical Requests")
+        print("=" * 80)
+    
+        # Login
+        login_data = {
+            "email": PRO_MUSICIAN["email"],
+            "password": PRO_MUSICIAN["password"]
+        }
+    
+        login_response = requests.post(f"{BASE_URL}/auth/login", json=login_data)
+    
+        if login_response.status_code != 200:
+            print(f"❌ Login failed: {login_response.status_code}")
+            return
+    
+        login_result = login_response.json()
+        auth_token = login_result["token"]
+        musician_id = login_result["musician"]["id"]
+    
+        headers = {"Authorization": f"Bearer {auth_token}"}
+    
+        print(f"✅ Logged in as: {login_result['musician']['name']}")
+        print(f"✅ Musician ID: {musician_id}")
+    
+        # Get all requests from main dashboard
+        print("📊 Step 1: Get all requests from main dashboard")
+    
+        dashboard_response = requests.get(f"{BASE_URL}/requests/musician/{musician_id}", headers=headers)
+    
+        if dashboard_response.status_code != 200:
+            print(f"❌ Failed to get dashboard requests: {dashboard_response.status_code}")
+            return
+    
+        dashboard_requests = dashboard_response.json()
+        print(f"   📊 Total requests in dashboard: {len(dashboard_requests)}")
+    
+        # Get requests from polling endpoint
+        print("📊 Step 2: Get requests from polling endpoint")
+    
+        polling_response = requests.get(f"{BASE_URL}/requests/updates/{musician_id}", headers=headers)
+    
+        if polling_response.status_code != 200:
+            print(f"❌ Failed to get polling requests: {polling_response.status_code}")
+            return
+    
+        polling_data = polling_response.json()
+        polling_requests = polling_data.get("requests", [])
+        print(f"   📊 Total requests in polling: {len(polling_requests)}")
+    
+        # Compare dashboard vs polling requests
+        print("📊 Step 3: Compare dashboard vs polling requests")
+    
+        # Filter dashboard requests to only active ones (should match polling)
+>       active_dashboard_requests = [req for req in dashboard_requests if req.get("status") not in ["archived"]]
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+historical_requests_test.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <dict_keyiterator object at 0xfc1eca3e6200>
+
+>   active_dashboard_requests = [req for req in dashboard_requests if req.get("status") not in ["archived"]]
+                                                                      ^^^^^^^
+E   AttributeError: 'str' object has no attribute 'get'
+
+historical_requests_test.py:72: AttributeError
+----------------------------- Captured stdout call -----------------------------
+🎯 PRIORITY 4: Test Historical Requests
+================================================================================
+✅ Logged in as: Bryce Larsen
+✅ Musician ID: a39296f0-20da-4516-85d1-56af59eb772f
+📊 Step 1: Get all requests from main dashboard
+   📊 Total requests in dashboard: 3
+📊 Step 2: Get requests from polling endpoint
+   📊 Total requests in polling: 50
+📊 Step 3: Compare dashboard vs polling requests
+=============================== warnings summary ===============================
+../root/.venv/lib/python3.11/site-packages/starlette/formparsers.py:12
+  /root/.venv/lib/python3.11/site-packages/starlette/formparsers.py:12: PendingDeprecationWarning: Please use `import python_multipart` instead.
+    import multipart
+
+backend/server.py:7082
+  /app/backend/server.py:7082: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+../root/.venv/lib/python3.11/site-packages/fastapi/applications.py:4495
+../root/.venv/lib/python3.11/site-packages/fastapi/applications.py:4495
+  /root/.venv/lib/python3.11/site-packages/fastapi/applications.py:4495: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)
+
+backend/server.py:7172
+  /app/backend/server.py:7172: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("shutdown")
+
+../root/.venv/lib/python3.11/site-packages/motor/core.py:961
+  /root/.venv/lib/python3.11/site-packages/motor/core.py:961: PytestCollectionWarning: cannot collect 'test_db' because it is not a function.
+    def __call__(self, *args, **kwargs):
+
+browser_simulation_test.py::test_cors_preflight
+  /root/.venv/lib/python3.11/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning: Test functions should return None, but browser_simulation_test.py::test_cors_preflight returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+browser_simulation_test.py::test_different_request_scenarios
+  /root/.venv/lib/python3.11/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning: Test functions should return None, but browser_simulation_test.py::test_different_request_scenarios returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+frontend_environment_test.py::test_frontend_environment_detection
+  /root/.venv/lib/python3.11/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning: Test functions should return None, but frontend_environment_test.py::test_frontend_environment_detection returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED historical_requests_test.py::test_historical_requests - AttributeError...
+ERROR backend/tests/test_show_scoping.py::test_suggestions_with_different_show_id_returns_different_set
+ERROR backend/tests/test_show_scoping.py::test_suggestions_without_show_id_returns_all
+ERROR backend/tests/test_show_scoping.py::test_requests_with_show_id_returns_only_that_show
+ERROR backend/tests/test_show_scoping.py::test_requests_with_different_show_id_returns_different_set
+ERROR backend/tests/test_show_scoping.py::test_requests_without_show_id_returns_all
+ERROR backend/tests/test_show_scoping.py::test_grouped_requests_with_show_id_returns_only_that_show
+ERROR backend/tests/test_show_scoping.py::test_grouped_requests_without_show_id_returns_all
+ERROR backend/tests/test_show_scoping.py::test_show_scoping_exact_counts - Ru...
+============= 1 failed, 29 passed, 9 warnings, 8 errors in 44.25s ============== files.
+- **Frontend**: Monolithic React application in . This single file contains all UI components, pages, and logic, including the .
 - **Database**: MongoDB.
+- **Configuration & Planning**: Key project documents like  and  are stored in .
 
----
 **Key Technical Concepts**
-- **Backend**: FastAPI, Pydantic, Motor (async MongoDB driver).
-- **Frontend**: React, Axios.
-- **Timezones**: Using Python's  library for server-side timezone conversions and the browser's  for detection.
-- **Data Integrity**: Handling mixed data types ( vs. ) in MongoDB queries for backward compatibility while enforcing  objects for all new writes.
+- **Backend**: FastAPI, Pydantic, Motor (async MongoDB).
+- **Frontend**: React, Axios,  for client-side persistence.
+- **Anonymous ID**: Using  on the frontend to generate a stable, anonymous identifier for audience members.
+- **Event-Driven Analytics**: An append-only  collection in MongoDB for tracking user and system actions.
 
----
 **key DB schema**
-- : { ..., : America/New_York }
-- : { ..., : datetime, : America/New_York }
-- : { ..., : mixed(string/datetime) }
-- : { ..., : mixed(string/datetime) }
-- : { uid=0(root) gid=0(root) groups=0(root), , , , , , , ,  }
+- : { ..., : mixed(string/date), : string, : Optional[string] }
+-  (collection for tip transactions): { ..., : float, : string, : Optional[string], : Optional[string] }
+- : { uid=0(root) gid=0(root) groups=0(root), , , , , : { ..., : Optional[string] } }
 
----
-**changes in tech stack**:
-No changes to the core stack.  from Python's standard library was introduced for timezone management.
+**changes in tech stack**
+- No changes to the core technology stack.
 
----
 **All files of reference**
-- : The entire backend. Contains the analytics logic being debugged and all recent timestamp/timezone changes.
-- : The entire frontend. Contains the UI for analytics filters and was modified to send the timezone on Start Show.
-- : Used for toggling  to enable/disable dev-only logging.
+- : Modified to accept  and emit new analytics events.
+- : Modified the  to generate, persist, and send .
+- : The governing project plan, updated to version  and reflects the start of Phase 2.
+- : The inventory of the current build, which will need to be updated as the final step of Phase 2.
+- : An existing test file demonstrating the pattern for new tests.
 
----
 **Areas that need refactoring**:
-- The monolithic  is the highest priority for refactoring. Its size and complexity make new feature implementation and bug fixing increasingly difficult and risky.
+- The monolithic  file is over 12,000 lines long and is a significant source of technical debt. It is a high-priority candidate for future refactoring.
 
----
 **key api endpoints**
-- : The endpoint currently being debugged for date filtering.
-- : Used to manage musician profile data.
-- : Modified to capture the musician's timezone.
-- : Endpoint for creating song requests.
-- : Endpoint for creating song suggestions.
+- : Now accepts an optional  in the request body.
+- : Now accepts an optional  and emits  or  events.
+- : Now accepts optional  and  and emits an  event.
 
----
 **Critical Info for New Agent**
-- The immediate task is to validate the analytics filter fix. Do not proceed to other issues until this is confirmed working correctly.
-- The user expects a methodical, code-grounded approach. First, investigate and report findings with code/data evidence, then propose a fix.
-- The  field in the  and  collections contains a mix of ISO 8601 strings and native BSON Date objects. The analytics query must continue to support both types.
-- All new timestamps must be stored as timezone-aware UTC  objects ().
+- You are in the middle of Phase 2: Audience Interaction Capture. The code implementation is complete.
+- Your immediate tasks are to **add ============================= test session starts ==============================
+platform linux -- Python 3.11.14, pytest-8.4.1, pluggy-1.6.0
+rootdir: /app
+plugins: anyio-4.9.0, asyncio-1.3.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 38 items
 
----
+backend/tests/test_show_scoping.py .EEEEEEEE                             [ 23%]
+browser_simulation_test.py ..                                            [ 28%]
+frontend_environment_test.py .                                           [ 31%]
+historical_requests_test.py F                                            [ 34%]
+playlist_final_test.py .                                                 [ 36%]
+pro_access_test.py .                                                     [ 39%]
+search_edge_test.py .                                                    [ 42%]
+tests/test_requestwave_fixes.py .....................                    [ 97%]
+trial_test.py .                                                          [100%]
+
+==================================== ERRORS ====================================
+_ ERROR at setup of test_suggestions_with_different_show_id_returns_different_set _
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+________ ERROR at setup of test_suggestions_without_show_id_returns_all ________
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_____ ERROR at setup of test_requests_with_show_id_returns_only_that_show ______
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_ ERROR at setup of test_requests_with_different_show_id_returns_different_set _
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_________ ERROR at setup of test_requests_without_show_id_returns_all __________
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_ ERROR at setup of test_grouped_requests_with_show_id_returns_only_that_show __
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_____ ERROR at setup of test_grouped_requests_without_show_id_returns_all ______
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+_______________ ERROR at setup of test_show_scoping_exact_counts _______________
+
+    @pytest_asyncio.fixture
+    async def test_musician():
+        """Create a test musician for scoping tests."""
+        musician_id = f"test-musician-{uuid4().hex[:8]}"
+        email = f"test-{uuid4().hex[:8]}@example.com"
+        musician_data = {
+            "id": musician_id,
+            "email": email,
+            "email_lc": email.lower(),
+            "name": "Test Musician",
+            "slug": f"test-musician-{uuid4().hex[:8]}",
+            "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
+            "bio": "",
+            "website": "",
+            "created_at": datetime.now(timezone.utc),
+        }
+>       await test_db.musicians.insert_one(musician_data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/test_show_scoping.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.venv/lib/python3.11/site-packages/motor/metaprogramming.py:74: in method
+    return framework.run_on_executor(
+/root/.venv/lib/python3.11/site-packages/motor/frameworks/asyncio/__init__.py:85: in run_on_executor
+    return loop.run_in_executor(_EXECUTOR, functools.partial(fn, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:817: in run_in_executor
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+/usr/local/lib/python3.11/asyncio/base_events.py:520: RuntimeError
+=================================== FAILURES ===================================
+___________________________ test_historical_requests ___________________________
+
+    def test_historical_requests():
+        print("🎯 PRIORITY 4: Test Historical Requests")
+        print("=" * 80)
+    
+        # Login
+        login_data = {
+            "email": PRO_MUSICIAN["email"],
+            "password": PRO_MUSICIAN["password"]
+        }
+    
+        login_response = requests.post(f"{BASE_URL}/auth/login", json=login_data)
+    
+        if login_response.status_code != 200:
+            print(f"❌ Login failed: {login_response.status_code}")
+            return
+    
+        login_result = login_response.json()
+        auth_token = login_result["token"]
+        musician_id = login_result["musician"]["id"]
+    
+        headers = {"Authorization": f"Bearer {auth_token}"}
+    
+        print(f"✅ Logged in as: {login_result['musician']['name']}")
+        print(f"✅ Musician ID: {musician_id}")
+    
+        # Get all requests from main dashboard
+        print("📊 Step 1: Get all requests from main dashboard")
+    
+        dashboard_response = requests.get(f"{BASE_URL}/requests/musician/{musician_id}", headers=headers)
+    
+        if dashboard_response.status_code != 200:
+            print(f"❌ Failed to get dashboard requests: {dashboard_response.status_code}")
+            return
+    
+        dashboard_requests = dashboard_response.json()
+        print(f"   📊 Total requests in dashboard: {len(dashboard_requests)}")
+    
+        # Get requests from polling endpoint
+        print("📊 Step 2: Get requests from polling endpoint")
+    
+        polling_response = requests.get(f"{BASE_URL}/requests/updates/{musician_id}", headers=headers)
+    
+        if polling_response.status_code != 200:
+            print(f"❌ Failed to get polling requests: {polling_response.status_code}")
+            return
+    
+        polling_data = polling_response.json()
+        polling_requests = polling_data.get("requests", [])
+        print(f"   📊 Total requests in polling: {len(polling_requests)}")
+    
+        # Compare dashboard vs polling requests
+        print("📊 Step 3: Compare dashboard vs polling requests")
+    
+        # Filter dashboard requests to only active ones (should match polling)
+>       active_dashboard_requests = [req for req in dashboard_requests if req.get("status") not in ["archived"]]
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+historical_requests_test.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <dict_keyiterator object at 0xfdf01382a110>
+
+>   active_dashboard_requests = [req for req in dashboard_requests if req.get("status") not in ["archived"]]
+                                                                      ^^^^^^^
+E   AttributeError: 'str' object has no attribute 'get'
+
+historical_requests_test.py:72: AttributeError
+----------------------------- Captured stdout call -----------------------------
+🎯 PRIORITY 4: Test Historical Requests
+================================================================================
+✅ Logged in as: Bryce Larsen
+✅ Musician ID: a39296f0-20da-4516-85d1-56af59eb772f
+📊 Step 1: Get all requests from main dashboard
+   📊 Total requests in dashboard: 3
+📊 Step 2: Get requests from polling endpoint
+   📊 Total requests in polling: 50
+📊 Step 3: Compare dashboard vs polling requests
+=============================== warnings summary ===============================
+../root/.venv/lib/python3.11/site-packages/starlette/formparsers.py:12
+  /root/.venv/lib/python3.11/site-packages/starlette/formparsers.py:12: PendingDeprecationWarning: Please use `import python_multipart` instead.
+    import multipart
+
+backend/server.py:7082
+  /app/backend/server.py:7082: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+../root/.venv/lib/python3.11/site-packages/fastapi/applications.py:4495
+../root/.venv/lib/python3.11/site-packages/fastapi/applications.py:4495
+  /root/.venv/lib/python3.11/site-packages/fastapi/applications.py:4495: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)
+
+backend/server.py:7172
+  /app/backend/server.py:7172: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("shutdown")
+
+../root/.venv/lib/python3.11/site-packages/motor/core.py:961
+  /root/.venv/lib/python3.11/site-packages/motor/core.py:961: PytestCollectionWarning: cannot collect 'test_db' because it is not a function.
+    def __call__(self, *args, **kwargs):
+
+browser_simulation_test.py::test_cors_preflight
+  /root/.venv/lib/python3.11/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning: Test functions should return None, but browser_simulation_test.py::test_cors_preflight returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+browser_simulation_test.py::test_different_request_scenarios
+  /root/.venv/lib/python3.11/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning: Test functions should return None, but browser_simulation_test.py::test_different_request_scenarios returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+frontend_environment_test.py::test_frontend_environment_detection
+  /root/.venv/lib/python3.11/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning: Test functions should return None, but frontend_environment_test.py::test_frontend_environment_detection returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED historical_requests_test.py::test_historical_requests - AttributeError...
+ERROR backend/tests/test_show_scoping.py::test_suggestions_with_different_show_id_returns_different_set
+ERROR backend/tests/test_show_scoping.py::test_suggestions_without_show_id_returns_all
+ERROR backend/tests/test_show_scoping.py::test_requests_with_show_id_returns_only_that_show
+ERROR backend/tests/test_show_scoping.py::test_requests_with_different_show_id_returns_different_set
+ERROR backend/tests/test_show_scoping.py::test_requests_without_show_id_returns_all
+ERROR backend/tests/test_show_scoping.py::test_grouped_requests_with_show_id_returns_only_that_show
+ERROR backend/tests/test_show_scoping.py::test_grouped_requests_without_show_id_returns_all
+ERROR backend/tests/test_show_scoping.py::test_show_scoping_exact_counts - Ru...
+============= 1 failed, 29 passed, 9 warnings, 8 errors in 10.26s ============== tests** for the new backend functionality and then **update the ** file. Do not start new features.
+- All work must strictly follow the plan outlined in .
+- The  is a core concept of this phase. It must be a client-side, anonymous, persistent UUID.
+
 **documents and test reports created in this job**
--  has been updated with the latest progress.
+- 
+-  (updated)
+- 
 
----
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User**: Stop building. I have 3 issues. Propose a plan to fix them one at a time.
-2.  **Agent**: Analyzed the issues and proposed a speculative plan with questions.
-3.  **User**: Plan is too speculative. Provide a code-grounded plan with exact locations, root causes, and test checklists.
-4.  **Agent**: Investigated the code, identified exact locations and root causes for all 3 issues, and provided a detailed plan.
-5.  **User**: Proceed with Issue 1 (Analytics filters) only. Provided detailed requirements for the fix.
-6.  **Agent**: Implemented the fix for Issue 1 in  and ran tests, which gave suspicious results (identical counts for different periods).
-7.  **User**: Asked for samples of  string values.
-8.  **Agent**: Provided samples, confirming the ISO 8601 format.
-9.  **User**: Outlined a new, more robust plan to handle timestamps and timezones consistently going forward, breaking it into increments.
-10. **Agent**: Implemented Increments 1 (UTC date enforcement) & 2 (timezone capture) and reported success.
-11. **User**: Instructed the agent to proceed with Increment 3 (Analytics boundary correction).
-12. **Agent**: Implemented the timezone-aware analytics boundaries and reported success.
-13. **User**: **PENDING**: Instructed the agent to stop, add more detailed logging to the analytics endpoint, and perform a much deeper validation to ensure the fix is not a false positive.
+1.  **User**: Instructed agent to update the planning YAML to include a new  section for Phase 2.
+2.  **Agent**: Updated the YAML, inserted the section, and recommended a version bump to .
+3.  **User**: Approved the version bump and provided a detailed task list for implementing Phase 2, focusing on  and new analytics events.
+4.  **Agent**: Updated the planning file version and began investigating the codebase to check for ambiguities before implementation.
+5.  **Agent**: Reported findings, confirming no blocking ambiguities.
+6.  **Agent**: Began frontend implementation for  in .
+7.  **Agent**: Completed frontend implementation.
+8.  **Agent**: Began backend implementation for  and new analytics events in .
+9.  **Agent**: Completed backend implementation.
+10. **Agent**: Was in the process of investigating a minor ambiguity about which request endpoint the audience interface uses, confirming it's , and then continued with implementation.
 
----
 **Project Health Check:**
-- **Broken**:
-    - Analytics tab period filters (fix is in progress but requires validation).
-    - Action buttons (Add, Trash, Match) on the Learn Later list.
-    - The On Stage tab does not filter by active show.
+- **Broken**: No core features are broken.
 - **Mocked**: None.
+- **Awaiting Test:** The Phase 2 audience instrumentation features have been implemented but are not yet tested.
 
----
 **3rd Party Integrations**
-None.
+- None.
 
----
 **Testing status**
-- **Testing agent used after significant changes**: NO
-- **Troubleshoot agent used after agent stuck in loop**: NO
-- **Test files created**: None. All testing has been manual via ,  scripts, or .
-- **Known regressions**: None confirmed, but the user is cautious about the analytics fix, which is why deep validation is required.
+- **Testing agent used after significant changes**: YES (for Phase 1 bug fixes).
+- **Troubleshoot agent used after agent stuck in loop**: NO.
+- **Test files created**: . A new test file is required for the Phase 2 work.
+- **Known regressions**: None.
 
----
 **Credentials to test flow:**
 - **Email**: 
 - **Password**: 
 
----
 **What agent forgot to execute**
-The agent has been following the user's instructions closely. The current task is a direct command from the user to perform deeper validation on a previous step. Nothing has been forgotten.</analysis>
+- The agent has not forgotten anything. It is in the middle of a multi-step task and needs to proceed to the testing and documentation steps for Phase 2.</analysis>

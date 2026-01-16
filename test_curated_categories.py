@@ -9,7 +9,7 @@ import json
 import os
 
 # Configuration
-BASE_URL = "https://requestwave-fix.preview.emergentagent.com/api"
+BASE_URL = "https://audience-tracker-4.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
     "name": "Test Musician Categories",
     "email": "test.categories@requestwave.com",
