@@ -10,21 +10,34 @@ import sys
 import os
 from datetime import datetime, timezone
 from uuid import uuid4
+from motor.motor_asyncio import AsyncIOMotorClient
 
-# Add backend to path
+# Set up test database connection directly
+TEST_MONGO_URL = "mongodb://localhost:27017"
+TEST_DB_NAME = "test_database"
+
+test_client = AsyncIOMotorClient(TEST_MONGO_URL)
+test_db = test_client[TEST_DB_NAME]
+
+# Add backend to path and import app
 sys.path.insert(0, '/app/backend')
 
-from server import app, db
+# Override the db before importing app
+os.environ["MONGO_URL"] = TEST_MONGO_URL
+os.environ["DB_NAME"] = TEST_DB_NAME
+
+from server import app
 
 
 @pytest_asyncio.fixture
 async def test_musician():
     """Create a test musician for scoping tests."""
     musician_id = f"test-musician-{uuid4().hex[:8]}"
+    email = f"test-{uuid4().hex[:8]}@example.com"
     musician_data = {
         "id": musician_id,
-        "email": f"test-{uuid4().hex[:8]}@example.com",
-        "email_lc": f"test-{uuid4().hex[:8]}@example.com".lower(),
+        "email": email,
+        "email_lc": email.lower(),
         "name": "Test Musician",
         "slug": f"test-musician-{uuid4().hex[:8]}",
         "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V4ferBqGFbLhGi",  # "test"
@@ -32,10 +45,10 @@ async def test_musician():
         "website": "",
         "created_at": datetime.now(timezone.utc),
     }
-    await db.musicians.insert_one(musician_data)
+    await test_db.musicians.insert_one(musician_data)
     yield musician_data
     # Cleanup
-    await db.musicians.delete_one({"id": musician_id})
+    await test_db.musicians.delete_one({"id": musician_id})
 
 
 @pytest_asyncio.fixture
@@ -68,12 +81,12 @@ async def test_shows(test_musician):
     ]
     
     for show in shows:
-        await db.shows.insert_one(show)
+        await test_db.shows.insert_one(show)
     
     yield {"show1_id": show1_id, "show2_id": show2_id}
     
     # Cleanup
-    await db.shows.delete_many({"id": {"$in": [show1_id, show2_id]}})
+    await test_db.shows.delete_many({"id": {"$in": [show1_id, show2_id]}})
 
 
 @pytest_asyncio.fixture
@@ -85,7 +98,7 @@ async def test_requests(test_musician, test_shows):
     for i in range(3):
         req_id = f"req-s1-{i}-{uuid4().hex[:8]}"
         request_ids.append(req_id)
-        await db.requests.insert_one({
+        await test_db.requests.insert_one({
             "id": req_id,
             "musician_id": test_musician["id"],
             "show_id": test_shows["show1_id"],
@@ -107,7 +120,7 @@ async def test_requests(test_musician, test_shows):
     for i in range(2):
         req_id = f"req-s2-{i}-{uuid4().hex[:8]}"
         request_ids.append(req_id)
-        await db.requests.insert_one({
+        await test_db.requests.insert_one({
             "id": req_id,
             "musician_id": test_musician["id"],
             "show_id": test_shows["show2_id"],
@@ -128,7 +141,7 @@ async def test_requests(test_musician, test_shows):
     yield request_ids
     
     # Cleanup
-    await db.requests.delete_many({"id": {"$in": request_ids}})
+    await test_db.requests.delete_many({"id": {"$in": request_ids}})
 
 
 @pytest_asyncio.fixture
@@ -140,7 +153,7 @@ async def test_suggestions(test_musician, test_shows):
     for i in range(2):
         sugg_id = f"sugg-s1-{i}-{uuid4().hex[:8]}"
         suggestion_ids.append(sugg_id)
-        await db.song_suggestions.insert_one({
+        await test_db.song_suggestions.insert_one({
             "id": sugg_id,
             "musician_id": test_musician["id"],
             "show_id": test_shows["show1_id"],
@@ -158,7 +171,7 @@ async def test_suggestions(test_musician, test_shows):
     for i in range(3):
         sugg_id = f"sugg-s2-{i}-{uuid4().hex[:8]}"
         suggestion_ids.append(sugg_id)
-        await db.song_suggestions.insert_one({
+        await test_db.song_suggestions.insert_one({
             "id": sugg_id,
             "musician_id": test_musician["id"],
             "show_id": test_shows["show2_id"],
@@ -175,7 +188,7 @@ async def test_suggestions(test_musician, test_shows):
     # 1 legacy suggestion without show_id
     legacy_id = f"sugg-legacy-{uuid4().hex[:8]}"
     suggestion_ids.append(legacy_id)
-    await db.song_suggestions.insert_one({
+    await test_db.song_suggestions.insert_one({
         "id": legacy_id,
         "musician_id": test_musician["id"],
         # No show_id - legacy data
@@ -191,14 +204,16 @@ async def test_suggestions(test_musician, test_shows):
     yield suggestion_ids
     
     # Cleanup
-    await db.song_suggestions.delete_many({"id": {"$in": suggestion_ids}})
+    await test_db.song_suggestions.delete_many({"id": {"$in": suggestion_ids}})
 
 
 @pytest_asyncio.fixture
 async def auth_headers(test_musician):
     """Get auth token for test musician."""
     import jwt
-    from server import JWT_SECRET, JWT_ALGORITHM
+    
+    JWT_SECRET = os.environ.get("JWT_SECRET", "your-secret-key-change-in-production")
+    JWT_ALGORITHM = "HS256"
     
     payload = {
         "musician_id": test_musician["id"],
