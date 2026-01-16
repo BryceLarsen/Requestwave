@@ -254,9 +254,10 @@ async def test_request_without_audience_id_still_works(
 
 @pytest.mark.asyncio
 async def test_dedication_submitted_event_emitted_when_dedication_present(
-    test_musician, test_show, test_song, cleanup_analytics, cleanup_requests
+    test_musician, test_show, test_song, cleanup_analytics, cleanup_requests, test_db_conn
 ):
     """audience.dedication_submitted event is emitted when dedication is non-empty."""
+    db = test_db_conn
     audience_id = f"test-audience-{uuid4().hex[:8]}"
     dedication_text = "Happy Birthday to my friend!"
     
@@ -279,11 +280,10 @@ async def test_dedication_submitted_event_emitted_when_dedication_present(
         request_id = data["id"]
         
         # Give a moment for async event to be written
-        import asyncio
         await asyncio.sleep(0.3)
         
         # Verify audience.dedication_submitted event was emitted
-        event = await test_db.analytics_events.find_one({
+        event = await db.analytics_events.find_one({
             "event_type": "audience.dedication_submitted",
             "entity_id": request_id
         })
