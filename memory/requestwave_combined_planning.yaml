@@ -79,8 +79,9 @@ phase_definitions:
 
   Phase 2:
     name: Audience Interaction Capture
-    status: IN PROGRESS
+    status: COMPLETE
     start_date: 2026-01-16
+    completion_date: 2026-01-16
     purpose: >
       Capture audience actions and intent without interpreting or acting on them.
     allowed_work:
@@ -114,6 +115,22 @@ phase_definitions:
         - scoring, ranking, or behavioral modeling
         - personalized suggestions or prioritization
         - marketing workflows or consent flows (unless already existing)
+    done_when:
+      - audience_id is generated client-side and persisted in localStorage
+      - audience_id is included in request, tip, and click-tracking payloads
+      - Four analytics events are emitted with correct context (musician_id, show_id, audience_id):
+        - audience.dedication_submitted (conditional on non-empty dedication)
+        - audience.tip_clicked
+        - audience.follow_clicked  
+        - audience.tip_completed
+      - current_build_inventory.yaml documents the new behavior
+    completion_evidence:
+      - Frontend generates UUID via crypto.randomUUID(), stores in localStorage under 'requestwave_audience_id'
+      - Backend models RequestCreate, TipCreate updated to accept audience_id
+      - Both POST /api/requests and POST /api/musicians/{slug}/requests emit events with audience_id
+      - POST /api/musicians/{slug}/tips emits audience.tip_completed with audience_id
+      - POST /api/requests/{id}/track-click emits tip_clicked/follow_clicked with audience_id
+      - All 4 event types validated via curl testing with correct context fields
 
   Phase 3:
     name: Post-Show Reflection
