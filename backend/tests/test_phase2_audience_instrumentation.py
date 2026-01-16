@@ -536,9 +536,10 @@ async def test_tip_completed_event_emitted(
 
 @pytest.mark.asyncio
 async def test_audience_id_stored_on_tip(
-    test_musician, test_show, cleanup_analytics, cleanup_tips
+    test_musician, test_show, cleanup_analytics, cleanup_tips, test_db_conn
 ):
     """audience_id is stored on the tip document when provided."""
+    db = test_db_conn
     audience_id = f"test-audience-{uuid4().hex[:8]}"
     
     transport = ASGITransport(app=app)
@@ -559,7 +560,7 @@ async def test_audience_id_stored_on_tip(
         tip_id = data["tip_id"]
         
         # Verify audience_id is stored in the tip
-        tip_doc = await test_db.tips.find_one({"id": tip_id})
+        tip_doc = await db.tips.find_one({"id": tip_id})
         assert tip_doc is not None
         assert tip_doc.get("audience_id") == audience_id
         assert tip_doc.get("show_id") == test_show["id"]
