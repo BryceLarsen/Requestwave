@@ -4,6 +4,7 @@ Tests for API-level show_id scoping on requests and suggestions endpoints.
 Phase 1 Requirement: All live views must be correctly scoped by show_id at the API level.
 """
 import pytest
+import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 import sys
 import os
@@ -16,7 +17,7 @@ sys.path.insert(0, '/app/backend')
 from server import app, db
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def test_musician():
     """Create a test musician for scoping tests."""
     musician_id = f"test-musician-{uuid4().hex[:8]}"
@@ -37,7 +38,7 @@ async def test_musician():
     await db.musicians.delete_one({"id": musician_id})
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def test_shows(test_musician):
     """Create two test shows for the musician."""
     show1_id = f"show-1-{uuid4().hex[:8]}"
@@ -75,7 +76,7 @@ async def test_shows(test_musician):
     await db.shows.delete_many({"id": {"$in": [show1_id, show2_id]}})
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def test_requests(test_musician, test_shows):
     """Create test requests for both shows."""
     request_ids = []
@@ -130,7 +131,7 @@ async def test_requests(test_musician, test_shows):
     await db.requests.delete_many({"id": {"$in": request_ids}})
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def test_suggestions(test_musician, test_shows):
     """Create test suggestions for both shows and some without show_id (legacy)."""
     suggestion_ids = []
@@ -193,7 +194,7 @@ async def test_suggestions(test_musician, test_shows):
     await db.song_suggestions.delete_many({"id": {"$in": suggestion_ids}})
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def auth_headers(test_musician):
     """Get auth token for test musician."""
     import jwt
