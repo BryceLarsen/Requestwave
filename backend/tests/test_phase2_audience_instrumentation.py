@@ -17,13 +17,14 @@ import os
 from datetime import datetime, timezone
 from uuid import uuid4
 from motor.motor_asyncio import AsyncIOMotorClient
+import asyncio
+
+# Configure pytest-asyncio to use session scope for event loop
+pytestmark = pytest.mark.asyncio
 
 # Set up test database connection directly
 TEST_MONGO_URL = "mongodb://localhost:27017"
 TEST_DB_NAME = "test_database"
-
-test_client = AsyncIOMotorClient(TEST_MONGO_URL)
-test_db = test_client[TEST_DB_NAME]
 
 # Add backend to path and import app
 sys.path.insert(0, '/app/backend')
@@ -32,7 +33,12 @@ sys.path.insert(0, '/app/backend')
 os.environ["MONGO_URL"] = TEST_MONGO_URL
 os.environ["DB_NAME"] = TEST_DB_NAME
 
-from server import app, db
+from server import app
+
+# Create db connection inside fixture to avoid event loop issues
+async def get_test_db():
+    client = AsyncIOMotorClient(TEST_MONGO_URL)
+    return client[TEST_DB_NAME]
 
 
 # =============================================================================
