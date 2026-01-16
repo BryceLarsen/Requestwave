@@ -4190,10 +4190,29 @@ async def create_musician_request(
             "song_title": song["title"],
             "song_artist": song["artist"],
             "has_dedication": bool(request_data.dedication),
-            "tip_amount": request_data.tip_amount
+            "tip_amount": request_data.tip_amount,
+            "audience_id": request_data.audience_id  # Phase 2
         },
         requester_email_norm=request_data.requester_email
     )
+    
+    # Phase 2: Emit dedication_submitted if dedication is present
+    if request_data.dedication and request_data.dedication.strip():
+        await emit_analytics_event(
+            event_type="audience.dedication_submitted",
+            musician_id=musician_id,
+            source="audience",
+            entity_type="request",
+            show_id=current_show_id,
+            entity_id=request_dict["id"],
+            metadata={
+                "song_id": request_data.song_id,
+                "song_title": song["title"],
+                "dedication_length": len(request_data.dedication),
+                "audience_id": request_data.audience_id
+            },
+            requester_email_norm=request_data.requester_email
+        )
     
     # Add musician info for response
     request_dict["musician_name"] = musician["name"]
