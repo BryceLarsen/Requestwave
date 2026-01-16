@@ -314,7 +314,7 @@ async def test_follow_clicked_event_has_correct_context(test_musician, test_show
 # =============================================================================
 
 @pytest.mark.asyncio
-async def test_tip_completed_event_has_show_id(test_musician, test_show):
+async def test_tip_completed_event_has_show_id(test_musician, test_show, test_db):
     """audience.tip_completed event includes show_id when provided."""
     audience_id = f"test-audience-{uuid4().hex[:8]}"
     
