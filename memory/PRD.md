@@ -132,6 +132,7 @@ Live music request platform enabling musicians to receive song requests from aud
 4. `created_at` field in requests/suggestions has mixed types (string/datetime)
 
 ## Upcoming Tasks (Backlog)
+- **Phase 3: Post-Show Reflection** - Summary analytics, exports, historical views
 - Build analytics UI powered by `analytics_events`
 - Spotify Web API integration for playlist enrichment
 - Show rename functionality
