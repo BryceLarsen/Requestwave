@@ -1349,6 +1349,19 @@ const MusicianDashboard = () => {
     }
   }, [activeTab, shows, musician]);
 
+  // On Stage tab: Re-fetch data scoped by show_id when currentShow changes
+  // This ensures API-level filtering, not just frontend filtering
+  useEffect(() => {
+    if (activeTab === 'onstage' && currentShow) {
+      // Fetch requests and suggestions scoped to the current show
+      fetchRequests(currentShow.id);
+      fetchSongSuggestions(currentShow.id);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[On Stage] Fetching data scoped to show:', currentShow.id, currentShow.name);
+      }
+    }
+  }, [activeTab, currentShow]);
+
   useEffect(() => {
     if (showProfile) {
       fetchProfile();
