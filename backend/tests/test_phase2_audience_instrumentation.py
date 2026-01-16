@@ -160,7 +160,7 @@ async def test_audience_id_stored_on_request(test_musician, test_show, test_song
 # =============================================================================
 
 @pytest.mark.asyncio
-async def test_audience_id_stored_on_tip(test_musician, test_show):
+async def test_audience_id_stored_on_tip(test_musician, test_show, test_db):
     """audience_id is stored on the tip document when provided."""
     audience_id = f"test-audience-{uuid4().hex[:8]}"
     
