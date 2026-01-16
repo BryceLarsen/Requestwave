@@ -15,22 +15,14 @@ import sys
 import os
 from datetime import datetime, timezone
 from uuid import uuid4
-from motor.motor_asyncio import AsyncIOMotorClient
 import asyncio
-
-# Set up test database connection directly
-TEST_MONGO_URL = "mongodb://localhost:27017"
-TEST_DB_NAME = "test_database"
-
-test_client = AsyncIOMotorClient(TEST_MONGO_URL)
-test_db = test_client[TEST_DB_NAME]
 
 # Add backend to path and import app
 sys.path.insert(0, '/app/backend')
 
 # Override the db before importing app
-os.environ["MONGO_URL"] = TEST_MONGO_URL
-os.environ["DB_NAME"] = TEST_DB_NAME
+os.environ["MONGO_URL"] = "mongodb://localhost:27017"
+os.environ["DB_NAME"] = "test_database"
 
 from server import app
 
@@ -39,8 +31,8 @@ from server import app
 # FIXTURES
 # =============================================================================
 
-@pytest_asyncio.fixture
-async def test_musician():
+@pytest_asyncio.fixture(scope="function")
+async def test_musician(test_db):
     """Create a test musician for Phase 2 tests."""
     musician_id = f"test-musician-p2-{uuid4().hex[:8]}"
     email = f"test-p2-{uuid4().hex[:8]}@example.com"
@@ -71,8 +63,8 @@ async def test_musician():
     await test_db.musicians.delete_one({"id": musician_id})
 
 
-@pytest_asyncio.fixture
-async def test_show(test_musician):
+@pytest_asyncio.fixture(scope="function")
+async def test_show(test_musician, test_db):
     """Create a test show and set it as current for the musician."""
     show_id = f"show-p2-{uuid4().hex[:8]}"
     
@@ -101,8 +93,8 @@ async def test_show(test_musician):
     await test_db.shows.delete_one({"id": show_id})
 
 
-@pytest_asyncio.fixture
-async def test_song(test_musician):
+@pytest_asyncio.fixture(scope="function")
+async def test_song(test_musician, test_db):
     """Create a test song for request tests."""
     song_id = f"song-p2-{uuid4().hex[:8]}"
     
