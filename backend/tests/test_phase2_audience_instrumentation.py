@@ -187,9 +187,10 @@ async def cleanup_tips(test_musician, test_db_conn):
 
 @pytest.mark.asyncio
 async def test_audience_id_stored_on_request(
-    test_musician, test_show, test_song, cleanup_analytics, cleanup_requests
+    test_musician, test_show, test_song, cleanup_analytics, cleanup_requests, test_db_conn
 ):
     """audience_id is stored on the request document when provided."""
+    db = test_db_conn
     audience_id = f"test-audience-{uuid4().hex[:8]}"
     
     transport = ASGITransport(app=app)
@@ -211,7 +212,7 @@ async def test_audience_id_stored_on_request(
         request_id = data["id"]
         
         # Verify audience_id is stored in the request
-        request_doc = await test_db.requests.find_one({"id": request_id})
+        request_doc = await db.requests.find_one({"id": request_id})
         assert request_doc is not None
         assert request_doc.get("audience_id") == audience_id
 
