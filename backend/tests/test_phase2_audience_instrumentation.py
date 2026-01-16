@@ -88,8 +88,9 @@ async def test_musician(test_db_conn):
 
 
 @pytest_asyncio.fixture
-async def test_show(test_musician):
+async def test_show(test_musician, test_db_conn):
     """Create a test show for the musician."""
+    db = test_db_conn
     show_id = f"show-p2-{uuid4().hex[:8]}"
     
     show_data = {
@@ -103,10 +104,10 @@ async def test_show(test_musician):
         "created_at": datetime.now(timezone.utc),
     }
     
-    await test_db.shows.insert_one(show_data)
+    await db.shows.insert_one(show_data)
     
     # Update musician's current_show_id
-    await test_db.musicians.update_one(
+    await db.musicians.update_one(
         {"id": test_musician["id"]},
         {"$set": {"current_show_id": show_id, "current_show_name": "Phase 2 Test Show"}}
     )
@@ -114,7 +115,7 @@ async def test_show(test_musician):
     yield show_data
     
     # Cleanup
-    await test_db.shows.delete_one({"id": show_id})
+    await db.shows.delete_one({"id": show_id})
 
 
 @pytest_asyncio.fixture
