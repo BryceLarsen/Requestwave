@@ -790,13 +790,10 @@ async def emit_analytics_event(
             db.analytics_events.insert_one(event),
             timeout=0.2
         )
-        logging.info(f"Analytics event emitted: {event_type}")
     except asyncio.TimeoutError:
         logging.warning(f"Analytics event timed out: {event_type} for musician {musician_id}")
     except Exception as e:
         logging.warning(f"Analytics event failed: {event_type} - {str(e)}")
-        import traceback
-        logging.warning(traceback.format_exc())
 
 def init_stripe_checkout(request: FastAPIRequest):
     """Initialize Stripe checkout with webhook URL"""
