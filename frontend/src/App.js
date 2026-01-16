@@ -8845,7 +8845,8 @@ const AudienceInterface = () => {
     try {
       await axios.post(`${API}/requests/${currentRequestId}/track-click`, {
         type: type, // "tip" or "social"
-        platform: platform // "venmo", "paypal", "instagram", etc.
+        platform: platform, // "venmo", "paypal", "instagram", etc.
+        audience_id: audienceId  // Phase 2: Include stable audience identifier
       });
     } catch (error) {
       console.error('Error tracking click:', error);
