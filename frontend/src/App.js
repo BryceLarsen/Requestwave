@@ -9366,7 +9366,9 @@ const AudienceInterface = () => {
               amount: amount,
               platform: tipPlatform,
               tipper_name: requesterName || 'Anonymous',
-              message: tipMessage
+              message: tipMessage,
+              audience_id: audienceId,  // Phase 2: Include stable audience identifier
+              show_id: musician?.current_show_id || null  // Phase 2: Include show context if available
             });
           } catch (error) {
             console.log('Tip tracking failed:', error); // Non-critical
