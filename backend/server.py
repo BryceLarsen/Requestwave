@@ -4176,12 +4176,23 @@ async def create_musician_request(
     return Request(**request_dict)
 
 @api_router.get("/requests/musician/{musician_id}")
-async def get_musician_requests(musician_id: str = Depends(get_current_musician)):
-    """Get all requests for the authenticated musician (excluding archived) - Same format as updates"""
-    requests = await db.requests.find({
+async def get_musician_requests(
+    musician_id: str = Depends(get_current_musician),
+    show_id: Optional[str] = Query(None, description="Filter requests by show_id. If omitted, returns all non-archived requests.")
+):
+    """Get requests for the authenticated musician, optionally filtered by show_id.
+    
+    - If show_id is provided: returns only requests for that specific show (excluding archived)
+    - If show_id is omitted: returns all non-archived requests (backward compatible)
+    """
+    query = {
         "musician_id": musician_id,
-        "status": {"$ne": "archived"}  # Exclude archived requests for consistency
-    }).sort("created_at", DESCENDING).limit(50).to_list(50)
+        "status": {"$ne": "archived"}
+    }
+    if show_id is not None:
+        query["show_id"] = show_id
+    
+    requests = await db.requests.find(query).sort("created_at", DESCENDING).limit(50).to_list(50)
     
     # Convert to Request objects for proper serialization
     request_objects = []
