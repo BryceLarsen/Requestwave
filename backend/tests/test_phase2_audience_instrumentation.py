@@ -377,9 +377,10 @@ async def test_dedication_submitted_event_not_emitted_when_dedication_whitespace
 
 @pytest.mark.asyncio
 async def test_tip_clicked_event_emitted(
-    test_musician, test_show, test_song, cleanup_analytics, cleanup_requests
+    test_musician, test_show, test_song, cleanup_analytics, cleanup_requests, test_db_conn
 ):
     """audience.tip_clicked event is emitted when tip link is clicked."""
+    db = test_db_conn
     audience_id = f"test-audience-{uuid4().hex[:8]}"
     
     # First create a request
@@ -413,11 +414,10 @@ async def test_tip_clicked_event_emitted(
         assert click_response.status_code == 200
         
         # Give a moment for async event to be written
-        import asyncio
         await asyncio.sleep(0.3)
         
         # Verify audience.tip_clicked event was emitted
-        event = await test_db.analytics_events.find_one({
+        event = await db.analytics_events.find_one({
             "event_type": "audience.tip_clicked",
             "entity_id": request_id
         })
