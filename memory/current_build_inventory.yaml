@@ -97,9 +97,10 @@ endpoints_with_show_id:
       - view: "Requests tab"
         must_pass_show_id: false
         call: "fetchGroupedRequests()"
-      - view: "On Stage tab (if used)"
-        must_pass_show_id: true
-        call: "fetchGroupedRequests(currentShow.id)"
+    
+    not_called_by:
+      - view: "On Stage tab"
+        reason: "On Stage uses GET /api/requests/musician/{id}?show_id=... instead (excludes archived)"
 
 # =============================================================================
 # SECTION 2: FRONTEND FETCH FUNCTIONS
