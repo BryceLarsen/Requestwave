@@ -146,11 +146,12 @@ async def test_song(test_musician, test_db_conn):
 
 
 @pytest_asyncio.fixture
-async def cleanup_analytics():
+async def cleanup_analytics(test_db_conn):
     """Clean up analytics events after each test."""
+    db = test_db_conn
     yield
     # Clean up Phase 2 test analytics events
-    await test_db.analytics_events.delete_many({
+    await db.analytics_events.delete_many({
         "event_type": {
             "$in": [
                 "audience.dedication_submitted",
@@ -165,17 +166,19 @@ async def cleanup_analytics():
 
 
 @pytest_asyncio.fixture
-async def cleanup_requests(test_musician):
+async def cleanup_requests(test_musician, test_db_conn):
     """Clean up test requests after tests."""
+    db = test_db_conn
     yield
-    await test_db.requests.delete_many({"musician_id": test_musician["id"]})
+    await db.requests.delete_many({"musician_id": test_musician["id"]})
 
 
 @pytest_asyncio.fixture
-async def cleanup_tips(test_musician):
+async def cleanup_tips(test_musician, test_db_conn):
     """Clean up test tips after tests."""
+    db = test_db_conn
     yield
-    await test_db.tips.delete_many({"musician_id": test_musician["id"]})
+    await db.tips.delete_many({"musician_id": test_musician["id"]})
 
 
 # =============================================================================
