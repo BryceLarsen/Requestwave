@@ -1110,9 +1110,13 @@ const MusicianDashboard = () => {
   };
 
   // NEW: Song suggestions management functions
-  const fetchSongSuggestions = async () => {
+  const fetchSongSuggestions = async (showId = null) => {
     try {
-      const response = await axios.get(`${API}/song-suggestions`);
+      // If showId is provided, filter by show; otherwise get all suggestions
+      const url = showId 
+        ? `${API}/song-suggestions?show_id=${showId}`
+        : `${API}/song-suggestions`;
+      const response = await axios.get(url);
       setSongSuggestions(response.data);
     } catch (error) {
       console.error('Error fetching song suggestions:', error);
