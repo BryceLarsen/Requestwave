@@ -223,6 +223,7 @@ class RequestCreate(BaseModel):
     requester_email: str
     dedication: str = ""
     tip_amount: float = 0.0
+    audience_id: Optional[str] = None  # Phase 2: Stable anonymous audience identifier
 
 class Request(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -234,6 +235,7 @@ class Request(BaseModel):
     requester_email: str
     dedication: str = ""
     tip_amount: float = 0.0
+    audience_id: Optional[str] = None  # Phase 2: Stable anonymous audience identifier
     # Artist-controlled show grouping (not provided by audience)
     show_id: Optional[str] = None  # Artist can assign later
     show_name: Optional[str] = None  # Display only, not for filtering
