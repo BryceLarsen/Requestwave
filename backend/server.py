@@ -5461,12 +5461,21 @@ async def assign_request_to_show(
 
 @api_router.get("/requests/grouped")
 async def get_requests_grouped_by_show(
-    musician_id: str = Depends(get_current_musician)
+    musician_id: str = Depends(get_current_musician),
+    show_id: Optional[str] = Query(None, description="Filter requests by show_id. If omitted, returns all requests grouped by show.")
 ):
-    """Get requests grouped by show"""
+    """Get requests grouped by show, optionally filtered to a specific show.
+    
+    - If show_id is provided: returns only requests for that specific show
+    - If show_id is omitted: returns all requests grouped by show (backward compatible)
+    """
     try:
-        # Get all requests for the musician
-        requests = await db.requests.find({"musician_id": musician_id}).sort("created_at", DESCENDING).to_list(None)
+        # Build query
+        query = {"musician_id": musician_id}
+        if show_id is not None:
+            query["show_id"] = show_id
+        
+        requests = await db.requests.find(query).sort("created_at", DESCENDING).to_list(None)
         
         # Group requests by show_name and date
         grouped = {
