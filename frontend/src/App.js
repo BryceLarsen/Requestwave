@@ -1508,9 +1508,13 @@ const MusicianDashboard = () => {
     }
   };
 
-  const fetchRequests = async () => {
+  const fetchRequests = async (showId = null) => {
     try {
-      const response = await axios.get(`${API}/requests/musician/${musician.id}`);
+      // If showId is provided, filter by show; otherwise get all requests
+      const url = showId
+        ? `${API}/requests/musician/${musician.id}?show_id=${showId}`
+        : `${API}/requests/musician/${musician.id}`;
+      const response = await axios.get(url);
       setRequests(response.data.requests); // Updated to handle new response format
     } catch (error) {
       console.error('Error fetching requests:', error);
