@@ -587,7 +587,8 @@ specification_status:
       description: >
         Before Orientation can be implemented, the sequencing of tip and follow
         actions must be defined relative to: Orientation, Moment 3, and post-request state.
-      status: "PENDING - Next prompt"
+      status: "RESOLVED - See /app/memory/tip_follow_sequencing_spec.yaml"
+      resolution_date: "2026-01-21"
       
   next_steps:
     - "Define tip/follow sequencing (next prompt)"
