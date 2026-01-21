@@ -9266,18 +9266,27 @@ const AudienceInterface = () => {
   };
   
   // Handle Moment 3 completion (skip or add email)
+  const [followUpError, setFollowUpError] = useState('');
+  
   const handleFollowUpComplete = async (addEmail = false) => {
+    setFollowUpError('');
+    
     if (addEmail && followUpEmail && submittedRequestId) {
-      // TODO: Backend endpoint needed to attach email to request post-submission
-      // For now, store email client-side. This will be addressed in a future prompt.
-      // Proposed endpoint: PATCH /api/requests/{request_id}/email
-      // Payload: { "email": followUpEmail }
-      console.log('Email to attach to request:', followUpEmail, 'Request ID:', submittedRequestId);
-      
-      // Store in localStorage as fallback until backend support is added
-      const pendingEmails = JSON.parse(localStorage.getItem('requestwave_pending_emails') || '{}');
-      pendingEmails[submittedRequestId] = followUpEmail;
-      localStorage.setItem('requestwave_pending_emails', JSON.stringify(pendingEmails));
+      try {
+        // Call backend endpoint to attach email to request
+        await axios.post(`${API}/requests/${submittedRequestId}/email`, {
+          email: followUpEmail,
+          audience_id: audienceId
+        });
+        
+        // Clear the email input on success
+        setFollowUpEmail('');
+      } catch (error) {
+        console.error('Error attaching email:', error);
+        const errorMessage = error.response?.data?.detail || 'Failed to add email. Please try again.';
+        setFollowUpError(errorMessage);
+        return; // Don't proceed if email attachment failed
+      }
     }
     
     // Close the modal and reset state
