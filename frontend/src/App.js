@@ -9970,65 +9970,109 @@ const AudienceInterface = () => {
           </div>
         )}
 
-        {/* Request Modal - Mobile Optimized */}
+        {/* Request Modal - Two-Step Flow (Moment 1B → Moment 2) */}
         {selectedSong && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center p-4 z-50">
             <div className="bg-gray-800 rounded-t-xl md:rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1 min-w-0 mr-4">
-                  <h2 className="text-xl font-bold mb-1 truncate">Request: {selectedSong.title}</h2>
-                  <p className="text-gray-300 truncate">by {selectedSong.artist}</p>
-                </div>
-                <button
-                  onClick={() => setSelectedSong(null)}
-                  className="text-gray-400 hover:text-white text-2xl leading-none"
-                >
-                  ×
-                </button>
-              </div>
               
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Your Name"
-                  value={requestForm.requester_name}
-                  onChange={(e) => setRequestForm({...requestForm, requester_name: e.target.value})}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
-                  required
-                />
-                
-                <input
-                  type="email"
-                  placeholder="Your Email"
-                  value={requestForm.requester_email}
-                  onChange={(e) => setRequestForm({...requestForm, requester_email: e.target.value})}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
-                  required
-                />
-                
-                <textarea
-                  placeholder="Dedication message (optional)"
-                  value={requestForm.dedication}
-                  onChange={(e) => setRequestForm({...requestForm, dedication: e.target.value})}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
-                  rows="3"
-                />
-              </div>
+              {/* Moment 1B: Commit to Song */}
+              {requestStep === 'commit' && (
+                <>
+                  <div className="text-center mb-6">
+                    <h2 className="text-2xl font-bold mb-2 text-white">{selectedSong.title}</h2>
+                    <p className="text-gray-400 text-lg">{selectedSong.artist}</p>
+                  </div>
+                  
+                  <div className="flex flex-col space-y-3">
+                    <button
+                      onClick={() => setRequestStep('identity')}
+                      data-testid="commit-continue-btn"
+                      className={`w-full ${colors.button} py-4 rounded-lg font-bold text-lg transition duration-300`}
+                    >
+                      Continue
+                    </button>
+                    <button
+                      onClick={() => setSelectedSong(null)}
+                      data-testid="commit-back-btn"
+                      className="w-full bg-gray-700 hover:bg-gray-600 py-3 rounded-lg text-gray-300 transition duration-300"
+                    >
+                      Back
+                    </button>
+                  </div>
+                </>
+              )}
               
-              <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 mt-6">
-                <button
-                  onClick={() => setSelectedSong(null)}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 py-3 rounded-lg transition duration-300 order-2 md:order-1"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleRequest(selectedSong)}
-                  className={`flex-1 ${colors.button} py-3 rounded-lg font-bold transition duration-300 order-1 md:order-2`}
-                >
-                  Send Request
-                </button>
-              </div>
+              {/* Moment 2: Identity + Dedication */}
+              {requestStep === 'identity' && (
+                <>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1 min-w-0 mr-4">
+                      <h2 className="text-xl font-bold mb-1 truncate">Request: {selectedSong.title}</h2>
+                      <p className="text-gray-400 text-sm truncate">{selectedSong.artist}</p>
+                    </div>
+                    <button
+                      onClick={() => setSelectedSong(null)}
+                      className="text-gray-400 hover:text-white text-2xl leading-none"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Your Name"
+                        value={requestForm.requester_name}
+                        onChange={(e) => setRequestForm({...requestForm, requester_name: e.target.value})}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
+                        required
+                        data-testid="request-name-input"
+                      />
+                    </div>
+                    
+                    <div>
+                      <input
+                        type="email"
+                        placeholder="Your Email"
+                        value={requestForm.requester_email}
+                        onChange={(e) => setRequestForm({...requestForm, requester_email: e.target.value})}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
+                        required
+                        data-testid="request-email-input"
+                      />
+                    </div>
+                    
+                    <div>
+                      <textarea
+                        placeholder="Optional note for the artist (celebration or dedication)"
+                        value={requestForm.dedication}
+                        onChange={(e) => setRequestForm({...requestForm, dedication: e.target.value})}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
+                        rows="3"
+                        data-testid="request-dedication-input"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 mt-6">
+                    <button
+                      onClick={() => setRequestStep('commit')}
+                      className="flex-1 bg-gray-600 hover:bg-gray-700 py-3 rounded-lg transition duration-300 order-2 md:order-1"
+                      data-testid="identity-back-btn"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={() => handleRequest(selectedSong)}
+                      className={`flex-1 ${colors.button} py-3 rounded-lg font-bold transition duration-300 order-1 md:order-2`}
+                      data-testid="request-submit-btn"
+                    >
+                      Send Request
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
