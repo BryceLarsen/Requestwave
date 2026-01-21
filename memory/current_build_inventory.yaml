@@ -1080,7 +1080,7 @@ audience_experience_moment_mapping:
   alignment_summary:
     total_elements_analyzed: 20
     
-    aligned: 10
+    aligned: 11
     aligned_elements:
       - "Artist Header / Artist Name Display"
       - "Artist Photo"
@@ -1092,6 +1092,7 @@ audience_experience_moment_mapping:
       - "Name Field"
       - "Dedication Field"
       - "Request Submit Button"
+      - "Email Field (moved to Moment 3)"
     
     partially_aligned: 5
     partially_aligned_elements:
