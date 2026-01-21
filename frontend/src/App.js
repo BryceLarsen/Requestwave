@@ -10063,18 +10063,6 @@ const AudienceInterface = () => {
                     </div>
                     
                     <div>
-                      <input
-                        type="email"
-                        placeholder="Your Email"
-                        value={requestForm.requester_email}
-                        onChange={(e) => setRequestForm({...requestForm, requester_email: e.target.value})}
-                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
-                        required
-                        data-testid="request-email-input"
-                      />
-                    </div>
-                    
-                    <div>
                       <textarea
                         placeholder="Optional note for the artist (celebration or dedication)"
                         value={requestForm.dedication}
@@ -10100,6 +10088,54 @@ const AudienceInterface = () => {
                       data-testid="request-submit-btn"
                     >
                       Send Request
+                    </button>
+                  </div>
+                </>
+              )}
+              
+              {/* Moment 3: Optional Email Follow-Up */}
+              {requestStep === 'followup' && (
+                <>
+                  <div className="text-center mb-6">
+                    <div className="w-12 h-12 bg-green-600/20 rounded-full mx-auto mb-4 flex items-center justify-center">
+                      <span className="text-green-400 text-2xl">✓</span>
+                    </div>
+                    <h2 className="text-xl font-bold mb-2 text-white">Request Sent!</h2>
+                    <p className="text-gray-400 text-sm">
+                      Optional: Requests with an email are easier for the artist to follow up on.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <input
+                      type="email"
+                      placeholder="Your Email (optional)"
+                      value={followUpEmail}
+                      onChange={(e) => setFollowUpEmail(e.target.value)}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
+                      data-testid="followup-email-input"
+                    />
+                  </div>
+                  
+                  <div className="flex flex-col space-y-3 mt-6">
+                    <button
+                      onClick={() => handleFollowUpComplete(true)}
+                      disabled={!followUpEmail}
+                      className={`w-full py-3 rounded-lg font-bold transition duration-300 ${
+                        followUpEmail 
+                          ? colors.button 
+                          : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                      }`}
+                      data-testid="followup-add-email-btn"
+                    >
+                      Add Email
+                    </button>
+                    <button
+                      onClick={() => handleFollowUpComplete(false)}
+                      className="w-full bg-gray-700 hover:bg-gray-600 py-3 rounded-lg text-gray-300 transition duration-300"
+                      data-testid="followup-skip-btn"
+                    >
+                      Skip
                     </button>
                   </div>
                 </>
