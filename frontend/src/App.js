@@ -9716,8 +9716,8 @@ const AudienceInterface = () => {
 
         {/* Moment 1A: Primary instruction - visible without scrolling */}
         {musician?.requests_enabled !== false && (
-          <div className="text-center mb-4 md:mb-6">
-            <p className="text-lg md:text-xl text-gray-300 font-medium">
+          <div className="text-center mb-5 md:mb-6">
+            <p className="text-lg md:text-xl text-gray-200 font-medium tracking-wide">
               Tap a song to request it.
             </p>
           </div>
