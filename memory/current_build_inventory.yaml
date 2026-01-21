@@ -1107,12 +1107,8 @@ audience_experience_moment_mapping:
       - element: "Suggestion Form Modal"
         reason: "Parallel flow outside Moment Model scope"
     
-    misaligned: 5
+    misaligned: 4
     misaligned_elements:
-      - element: "Email Field (Request Form)"
-        reason: "Required in moment_2_identity but model places in moment_3_follow_up as optional"
-        severity: "high"
-        principle_violated: "No optional action may block requesting"
       - element: "Post-Request Tip Modal"
         reason: "Tips excluded from Moments but presented as flow step"
         severity: "medium"
