@@ -51,6 +51,14 @@ audience_identity:
     - route: POST /api/requests/{id}/track-click
       field_in_body: audience_id
       used_in: analytics events only (not stored on request)
+      
+    - route: POST /api/requests/{id}/email
+      field_in_body: audience_id
+      purpose: "Moment 3 email capture - attach email to request post-submission"
+      security: >
+        If request has audience_id AND body.audience_id differs: 403 Forbidden.
+        If request has no audience_id AND body.audience_id provided: sets it on request.
+      stored_on: request document (requester_email field)
 
 # =============================================================================
 # SECTION 2: PHASE 2 - ANALYTICS EVENTS
