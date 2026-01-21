@@ -351,6 +351,8 @@ class MusicianPublic(BaseModel):
     # NEW: Control settings for audience UI
     tips_enabled: Optional[bool] = True
     requests_enabled: Optional[bool] = True
+    # NEW: Live show context for Orientation
+    current_show_name: Optional[str] = None
 
 class MusicianProfile(BaseModel):
     id: Optional[str] = None  # Add musician ID
