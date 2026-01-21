@@ -141,18 +141,12 @@ exit_rules:
       destination: "moment_1a_browse"
       state_preserved: true
       description: >
-        Default exit. User returns to song list in same state as before
+        Default and ONLY exit. User returns to song list in same state as before
         entering Orientation. Scroll position, filters, search preserved.
         
-    - exit_id: "EXIT-02"
-      name: "Select Song from Orientation"
-      trigger: "User taps a song link/card IF songs are shown in Orientation"
-      destination: "moment_1b_commit"
-      state_preserved: true
-      description: >
-        If Orientation surfaces song recommendations (e.g., "Popular requests"),
-        tapping one closes Orientation and opens Moment 1B for that song.
-      note: "This is optional; Orientation may not include song selection"
+    # EXIT-02 (Song selection from Orientation) REMOVED
+    # Decision: 2026-01-21 - Songs are FORBIDDEN in Orientation
+    # Orientation exits only to Moment 1A, never directly to 1B
       
   forbidden_exit_destinations:
     
