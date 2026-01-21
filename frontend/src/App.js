@@ -8822,8 +8822,9 @@ const AudienceInterface = () => {
   // NEW: Bio expansion state
   const [bioExpanded, setBioExpanded] = useState(false);
   
-  // NEW: Profile dialog state  
-  const [showProfileDialog, setShowProfileDialog] = useState(false);
+  // Orientation Side Path state (bottom sheet)
+  // Entry points: header artist name tap, header Tip button
+  const [showOrientation, setShowOrientation] = useState(false);
   
   // NEW: Access control state
   const [accessDenied, setAccessDenied] = useState(false);
