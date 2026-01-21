@@ -9690,11 +9690,9 @@ const AudienceInterface = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
-                <span className="text-xs text-gray-500 mt-0.5 truncate max-w-full">
+                <span className="text-xs text-gray-500 mt-0.5 block truncate">
                   {musician?.current_show_name 
-                    ? `Live Now: ${musician.current_show_name.length > 32 
-                        ? musician.current_show_name.substring(0, 32) + '…' 
-                        : musician.current_show_name}`
+                    ? `Live Now: ${musician.current_show_name}`
                     : 'About · Tip · Follow'}
                 </span>
               </button>
