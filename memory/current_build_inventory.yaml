@@ -415,32 +415,78 @@ audience_experience_current_state:
     structure: "Single-page application (SPA)"
     flow_type: "Single page with modal overlays for interactions"
     
+    # ─────────────────────────────────────────────────────────────────────────
+    # Moment 0: Header (as-built 2026-01-21)
+    # ─────────────────────────────────────────────────────────────────────────
+    moment_0_header:
+      description: >
+        Identity-only header with no primary CTAs. Artist name is tappable
+        to open Orientation side path.
+      elements:
+        - element: "Artist name"
+          behavior: "Tappable - opens Orientation bottom sheet"
+          selector: '[data-testid="artist-header-orientation-trigger"]'
+        - element: "Dropdown chevron"
+          behavior: "Visual affordance indicating tappable header"
+        - element: "Helper line (conditional)"
+          behavior: >
+            Single line below artist name. Content is conditional:
+            - If musician.current_show_name exists: "Live Now: {show_name}"
+            - Else: "About · Tip · Follow"
+          truncation: >
+            CSS-based using Tailwind 'truncate' class (overflow-hidden,
+            text-overflow: ellipsis, white-space: nowrap). Responsive to
+            viewport width. No manual character limit.
+          styling: "text-xs text-gray-500"
+        - element: "RequestWave logo"
+          behavior: "Subtle branding, non-interactive"
+          styling: "opacity-50"
+      removed_elements:
+        - element: "Header Tip button"
+          removed_date: "2026-01-21"
+          reason: "Reduce cognitive load, preserve request-first intent"
+          tip_access: "Now exclusively via Orientation content"
+    
     steps:
       - step: 1
-        name: "Page Load"
+        name: "Page Load (Moment 0)"
         description: >
           Audience arrives at /musician/:slug. Page fetches musician profile,
           songs, filters, playlists, and design settings. Access check is performed.
         visible_elements:
-          - "Musician name/bio header"
-          - "Artist photo (if configured)"
+          - "Artist name header (tappable → Orientation)"
+          - "Helper line: 'Live Now: {show}' or 'About · Tip · Follow'"
           - "Search bar"
           - "Filter dropdowns (genre, playlist, mood, decade)"
           - "Sort options (Most Popular, A-Z, Newest, Random)"
           - "Song grid or list (based on layout_mode)"
           - "Suggest a Song button"
+          - "Surprise Me / Random button"
           
       - step: 2
-        name: "Song Selection"
+        name: "Song Selection (Moment 1A)"
         description: >
-          Audience browses/filters/searches songs. Clicks on a song card to
-          open request modal.
+          Audience browses/filters/searches songs. Song cards display title
+          and artist only (no genre/mood/year tags). Clicks on a song card
+          to open commit modal (Moment 1B).
+        song_card_display:
+          shown:
+            - "Song title"
+            - "Artist name"
+          hidden:
+            - "Genre tags"
+            - "Mood tags"
+            - "Year"
+            - "Notes"
+          note: >
+            Tag metadata (genre, mood, year) still powers filter/sort
+            functionality. Hidden from display only - no data model change.
         user_actions:
           - "Search by title/artist"
           - "Filter by genre/playlist/mood/decade"
           - "Sort songs"
-          - "Click song to open request modal"
-          - "Click 'Pick Random Song' button"
+          - "Tap song card → Moment 1B (commit)"
+          - "Click 'Surprise Me' button"
           - "Click 'Suggest a Song' for unlisted songs"
           
       - step: 3
