@@ -3,14 +3,28 @@
 ## Original Problem Statement
 Live music request platform enabling musicians to receive song requests from audiences during performances, with features for managing requests, suggestions, tips, and analytics.
 
-## Current State (as of January 16, 2026)
+## Current State (as of January 21, 2026)
 
 ### Phase Status
 - **Phase 1: Foundation and Correctness** - COMPLETE (Signed off 2026-01-16)
 - **Phase 2: Audience Interaction Capture** - COMPLETE (Signed off 2026-01-16)
-- **Phase 3: Post-Show Reflection** - NOT STARTED (Next)
+- **Audience Moment Model Refactor** - COMPLETE (Signed off 2026-01-21)
+- **Phase 3: Post-Show Reflection** - NOT STARTED (Deferred)
 
 ### Completed Features
+
+#### Audience Moment Model Refactor (January 21, 2026)
+The frontend has been refactored to align with the "Audience Moment Model" - an intent-based framework governing the audience user experience:
+
+- ✅ **Moment 1A (Browse)**: Landing view shows "Tap a song to request it" with tappable song cards
+- ✅ **Moment 1B (Commit)**: Song confirmation step with Continue/Back buttons
+- ✅ **Moment 2 (Identity)**: Name (required) + Dedication (optional) - NO email in this step
+- ✅ **Moment 3 (Follow-up)**: Optional email capture shown AFTER request submission, fully skippable
+- ✅ **New Endpoint**: `POST /api/requests/{request_id}/email` - Attaches email to existing request
+- ✅ **New Analytics Event**: `audience.email_submitted` - Logged when email provided (email_provided: true)
+- ✅ **Security**: audience_id validation on email endpoint prevents unauthorized updates
+- ✅ **Backend Tests**: `/app/backend/tests/test_moment3_email_endpoint.py` (5 tests passing)
+- ✅ **Documentation**: `current_build_inventory.yaml` updated with endpoint and gap resolution
 
 #### Phase 2: Audience Interaction Capture (Latest - January 16, 2026)
 - ✅ **Anonymous audience_id**: Client-side UUID generation, persisted in localStorage
