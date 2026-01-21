@@ -9230,7 +9230,8 @@ const AudienceInterface = () => {
       song_artist: randomSong.artist
     });
 
-    // Show the request modal
+    // Show the request modal at commit step (Moment 1B)
+    setRequestStep('commit');
     setSelectedSong(randomSong);
   };
 
