@@ -10578,79 +10578,153 @@ const AudienceInterface = () => {
           </div>
         )}
         
-        {/* NEW: Profile Dialog Modal */}
-        {showProfileDialog && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              {/* Dialog Header */}
-              <div className="sticky top-0 bg-gray-800 px-6 py-4 border-b border-gray-700 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-white">Artist Profile</h2>
-                <button
-                  onClick={() => setShowProfileDialog(false)}
-                  className="text-gray-400 hover:text-white text-2xl font-bold"
-                >
-                  ×
-                </button>
+        {/* Orientation Side Path - Bottom Sheet */}
+        {/* Entry: Artist header tap, Tip button tap */}
+        {/* Exit: Close button, tap outside, swipe down */}
+        {/* Per spec: Contains artist info + tip links, NO song lists */}
+        {showOrientation && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setShowOrientation(false);
+            }}
+            data-testid="orientation-overlay"
+          >
+            <div 
+              className="bg-gray-800 rounded-t-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto animate-slide-up"
+              style={{
+                animation: 'slideUp 0.3s ease-out'
+              }}
+              data-testid="orientation-bottom-sheet"
+            >
+              {/* Drag Handle */}
+              <div className="sticky top-0 bg-gray-800 pt-3 pb-2 rounded-t-2xl">
+                <div className="w-12 h-1 bg-gray-600 rounded-full mx-auto mb-2"></div>
+                <div className="flex items-center justify-between px-4">
+                  <h2 className="text-lg font-bold text-white">About the Artist</h2>
+                  <button
+                    onClick={() => setShowOrientation(false)}
+                    className="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700 transition"
+                    data-testid="orientation-close-btn"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
               
-              {/* Dialog Content */}
-              <div className="p-6 space-y-6">
-                {/* Large Artist Photo */}
-                {designSettings.artist_photo && (
-                  <div className="text-center">
+              {/* Orientation Content */}
+              <div className="px-4 pb-6 space-y-5">
+                {/* Artist Photo + Name */}
+                <div className="text-center pt-2">
+                  {designSettings.artist_photo ? (
                     <img
                       src={designSettings.artist_photo}
                       alt={designSettings.musician_name}
-                      className="w-32 h-32 md:w-48 md:h-48 rounded-full object-cover mx-auto"
+                      className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover mx-auto mb-3 border-2 border-gray-600"
                     />
-                  </div>
-                )}
-                
-                {/* Artist Name */}
-                <div className="text-center">
-                  <h1 className="text-2xl md:text-3xl font-bold text-white">
+                  ) : (
+                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 mx-auto mb-3 flex items-center justify-center text-3xl border-2 border-gray-600">
+                      {designSettings.musician_name?.charAt(0) || '🎵'}
+                    </div>
+                  )}
+                  <h1 className="text-xl md:text-2xl font-bold text-white">
                     {designSettings.musician_name}
                   </h1>
                 </div>
                 
-                {/* Banner Image (if available) */}
-                {designSettings.banner_image && (
-                  <div className="rounded-lg overflow-hidden">
-                    <img
-                      src={designSettings.banner_image}
-                      alt="Artist Banner"
-                      className="w-full h-48 object-cover"
-                    />
+                {/* Bio */}
+                {designSettings.bio && (
+                  <div className="bg-gray-700/50 rounded-lg p-4">
+                    <p className="text-gray-300 text-sm leading-relaxed">
+                      {designSettings.bio}
+                    </p>
                   </div>
                 )}
                 
-                {/* Bio */}
-                {designSettings.bio && (
+                {/* Support Section - Tip Links (Primary in Orientation) */}
+                {musician?.tips_enabled !== false && (musician.venmo_username || musician.paypal_username || musician.cash_app_username || (musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone))) && (
                   <div>
-                    <h3 className="text-lg font-bold text-white mb-3">About</h3>
-                    <p className="text-gray-300 leading-relaxed">
-                      {designSettings.bio}
-                    </p>
+                    <h3 className="text-base font-semibold text-white mb-3 flex items-center">
+                      <span className="mr-2">💰</span>
+                      Support {designSettings.musician_name || 'the Artist'}
+                    </h3>
+                    <div className="space-y-2">
+                      {musician.venmo_username && musician.venmo_enabled !== false && (
+                        <a
+                          href={`https://venmo.com/${musician.venmo_username}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full bg-blue-500 hover:bg-blue-600 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white"
+                          data-testid="orientation-venmo-link"
+                        >
+                          <span>Venmo</span>
+                        </a>
+                      )}
+                      {musician.paypal_username && musician.paypal_enabled !== false && (
+                        <a
+                          href={`https://paypal.me/${musician.paypal_username}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full bg-blue-700 hover:bg-blue-800 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white"
+                          data-testid="orientation-paypal-link"
+                        >
+                          <span>PayPal</span>
+                        </a>
+                      )}
+                      {musician.cash_app_username && musician.cash_app_enabled !== false && (
+                        <a
+                          href={`https://cash.app/${musician.cash_app_username}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full bg-green-600 hover:bg-green-700 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white"
+                          data-testid="orientation-cashapp-link"
+                        >
+                          <span>Cash App</span>
+                        </a>
+                      )}
+                      {musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone) && (
+                        <button
+                          onClick={() => {
+                            setShowOrientation(false);
+                            setZelleInfo({
+                              contact: musician.zelle_email || musician.zelle_phone,
+                              contactType: musician.zelle_email ? 'email' : 'phone',
+                              amount: '',
+                              message: ''
+                            });
+                            setShowZelleModal(true);
+                          }}
+                          className="w-full bg-purple-600 hover:bg-purple-700 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white"
+                          data-testid="orientation-zelle-link"
+                        >
+                          <span>Zelle</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
                 
                 {/* Social Links */}
                 {musician && ((musician.instagram_username && musician.instagram_username.trim() !== '') || 
                   (musician.facebook_username && musician.facebook_username.trim() !== '') || 
-                  (musician.tiktok_username && musician.tiktok_username.trim() !== '') || 
-                  (musician.website && musician.website.trim() !== '')) && (
+                  (musician.tiktok_username && musician.tiktok_username.trim() !== '')) && (
                   <div>
-                    <h3 className="text-lg font-bold text-white mb-3">Connect</h3>
-                    <div className="grid grid-cols-2 gap-3">
+                    <h3 className="text-base font-semibold text-white mb-3 flex items-center">
+                      <span className="mr-2">📱</span>
+                      Follow
+                    </h3>
+                    <div className="grid grid-cols-3 gap-2">
                       {musician.instagram_username && musician.instagram_username.trim() !== '' && (
                         <a
                           href={`https://instagram.com/${musician.instagram_username}`}
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="bg-pink-600 hover:bg-pink-700 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center space-x-2 text-center"
+                          className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 px-3 py-2 rounded-lg font-medium transition duration-300 flex items-center justify-center text-sm text-white"
+                          data-testid="orientation-instagram-link"
                         >
-                          <span>📸</span>
-                          <span>Instagram</span>
+                          Instagram
                         </a>
                       )}
                       {musician.facebook_username && musician.facebook_username.trim() !== '' && (
@@ -10660,10 +10734,10 @@ const AudienceInterface = () => {
                             `https://facebook.com/${musician.facebook_username}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center space-x-2 text-center"
+                          className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg font-medium transition duration-300 flex items-center justify-center text-sm text-white"
+                          data-testid="orientation-facebook-link"
                         >
-                          <span>📘</span>
-                          <span>Facebook</span>
+                          Facebook
                         </a>
                       )}
                       {musician.tiktok_username && musician.tiktok_username.trim() !== '' && (
@@ -10671,21 +10745,10 @@ const AudienceInterface = () => {
                           href={`https://tiktok.com/@${musician.tiktok_username}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="bg-black hover:bg-gray-800 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center space-x-2 text-center"
+                          className="bg-black hover:bg-gray-800 px-3 py-2 rounded-lg font-medium transition duration-300 flex items-center justify-center text-sm text-white border border-gray-600"
+                          data-testid="orientation-tiktok-link"
                         >
-                          <span>🎵</span>
-                          <span>TikTok</span>
-                        </a>
-                      )}
-                      {musician.website && musician.website.trim() !== '' && (
-                        <a
-                          href={musician.website.startsWith('http') ? musician.website : `https://${musician.website}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="bg-gray-600 hover:bg-gray-700 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center space-x-2 text-center"
-                        >
-                          <span>🌐</span>
-                          <span>Website</span>
+                          TikTok
                         </a>
                       )}
                     </div>
@@ -10696,17 +10759,20 @@ const AudienceInterface = () => {
                 {musician && ((musician.spotify_artist_url && musician.spotify_artist_url.trim() !== '') || 
                   (musician.apple_music_artist_url && musician.apple_music_artist_url.trim() !== '')) && (
                   <div>
-                    <h3 className="text-lg font-bold text-white mb-3">Listen</h3>
-                    <div className="grid grid-cols-2 gap-3">
+                    <h3 className="text-base font-semibold text-white mb-3 flex items-center">
+                      <span className="mr-2">🎧</span>
+                      Listen
+                    </h3>
+                    <div className="grid grid-cols-2 gap-2">
                       {musician.spotify_artist_url && musician.spotify_artist_url.trim() !== '' && (
                         <a
                           href={musician.spotify_artist_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="bg-green-600 hover:bg-green-700 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center space-x-2 text-center"
+                          className="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg font-medium transition duration-300 flex items-center justify-center text-sm text-white"
+                          data-testid="orientation-spotify-link"
                         >
-                          <span>🎶</span>
-                          <span>Spotify</span>
+                          Spotify
                         </a>
                       )}
                       {musician.apple_music_artist_url && musician.apple_music_artist_url.trim() !== '' && (
@@ -10714,35 +10780,38 @@ const AudienceInterface = () => {
                           href={musician.apple_music_artist_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="bg-gray-700 hover:bg-gray-600 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center space-x-2 text-center"
+                          className="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded-lg font-medium transition duration-300 flex items-center justify-center text-sm text-white"
+                          data-testid="orientation-apple-music-link"
                         >
-                          <span>🍎</span>
-                          <span>Apple Music</span>
+                          Apple Music
                         </a>
                       )}
                     </div>
                   </div>
                 )}
                 
-                {/* Tip Options - follow current tip settings */}
-                {musician?.tips_enabled !== false && (
+                {/* Website */}
+                {musician?.website && musician.website.trim() !== '' && (
                   <div>
-                    <h3 className="text-lg font-bold text-white mb-3">Support</h3>
-                    <button
-                      onClick={() => {
-                        setShowProfileDialog(false);
-                        setShowTipModal(true);
-                      }}
-                      className="w-full bg-green-600 hover:bg-green-700 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2"
+                    <a
+                      href={musician.website.startsWith('http') ? musician.website : `https://${musician.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full bg-gray-700 hover:bg-gray-600 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white"
+                      data-testid="orientation-website-link"
                     >
-                      <span>💰</span>
-                      <span>Leave a Tip</span>
-                    </button>
+                      <span>🌐</span>
+                      <span>Visit Website</span>
+                    </a>
                   </div>
                 )}
+                
+                {/* Bottom padding for safe area */}
+                <div className="h-4"></div>
               </div>
             </div>
           </div>
+        )}
         )}
         
         {/* NEW: Zelle Instructions Modal */}
