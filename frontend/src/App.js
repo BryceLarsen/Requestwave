@@ -9955,9 +9955,12 @@ const AudienceInterface = () => {
                   setSelectedSong(song);
                 }}
                 data-testid={`song-card-${song.id}`}
-                className={`w-full text-left bg-gray-800 rounded-xl p-4 md:p-5 hover:bg-gray-700 active:bg-gray-600 transition duration-200 cursor-pointer ${
-                  designSettings.layout_mode === 'list' ? 'flex items-center space-x-4' : ''
-                }`}
+                className={`w-full text-left bg-gray-800 rounded-xl p-4 md:p-5 
+                  hover:bg-gray-700 hover:shadow-lg hover:shadow-black/20
+                  active:bg-gray-750 active:scale-[0.98] active:shadow-inner
+                  transition-all duration-150 ease-out cursor-pointer
+                  border border-transparent hover:border-gray-600/50
+                  ${designSettings.layout_mode === 'list' ? 'flex items-center space-x-4' : ''}`}
               >
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-base md:text-lg mb-1 truncate text-white">{song.title}</h3>
