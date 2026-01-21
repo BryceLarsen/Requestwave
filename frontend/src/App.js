@@ -9697,12 +9697,22 @@ const AudienceInterface = () => {
                 </span>
               </button>
             </div>
-            {/* RequestWave logo - subtle branding */}
-            <img
-              src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png"
-              alt="RequestWave"
-              className="w-6 h-6 object-contain opacity-40"
-            />
+            {/* RequestWave logo - subtle ambient glow */}
+            <div className="relative">
+              <img
+                src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png"
+                alt="RequestWave"
+                className="w-6 h-6 object-contain opacity-50 relative z-10"
+              />
+              {/* Subtle ambient glow - slow breathing effect */}
+              <div 
+                className="absolute inset-0 w-6 h-6 rounded-full animate-logo-glow"
+                style={{
+                  background: 'radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%)',
+                  filter: 'blur(4px)',
+                }}
+              />
+            </div>
           </div>
         </div>
       </header>
