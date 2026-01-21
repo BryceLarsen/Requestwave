@@ -338,11 +338,13 @@ forbidden_content:
         No request is made in Orientation. Such messaging would be false.
         
     - forbidden_id: "FORBIDDEN-06"
-      name: "Song Selection as Primary Action"
-      description: "Prominent song list or 'Pick a Song' CTA"
+      name: "Song Lists or Song Selection"
+      description: "Any list of songs, song recommendations, or 'Pick a Song' CTA"
       reason: >
-        Song selection belongs in Moment 1A. Orientation may reference songs
-        (e.g., 'Popular songs') but must not be the primary song discovery path.
+        Song discovery belongs EXCLUSIVELY in Moment 1A (Browse). Orientation
+        must not provide any song selection path. This includes 'Popular songs',
+        'Frequently requested', or any song-related content.
+      decision_date: "2026-01-21"
         
     - forbidden_id: "FORBIDDEN-07"
       name: "Queue Position or Wait Time"
