@@ -9665,32 +9665,32 @@ const AudienceInterface = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {/* Mobile-Optimized Header */}
-      <header className="bg-gray-800 shadow-lg sticky top-0 z-40">
+      {/* Mobile-Optimized Header - Visual frame above song list */}
+      <header className="bg-gradient-to-b from-gray-800 to-gray-800/95 sticky top-0 z-40 border-b border-gray-700/50 shadow-md">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center space-x-4">
             {designSettings.artist_photo && (
               <img
                 src={designSettings.artist_photo}
                 alt={designSettings.musician_name}
-                className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover"
+                className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover ring-2 ring-gray-700/50"
               />
             )}
             <div className="flex-1 min-w-0">
               <button
                 onClick={() => setShowOrientation(true)}
-                className="flex flex-col hover:bg-gray-700/50 rounded-lg px-2 py-1 transition duration-300 w-full text-left"
+                className="flex flex-col hover:bg-gray-700/50 rounded-lg px-2 py-1.5 transition duration-300 w-full text-left"
                 data-testid="artist-header-orientation-trigger"
               >
                 <div className="flex items-center space-x-2">
                   <h1 className={`text-xl md:text-2xl font-bold ${colors.accent} truncate`}>
                     {designSettings.musician_name}
                   </h1>
-                  <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
-                <span className="text-xs text-gray-500 mt-0.5 block truncate">
+                <span className="text-xs text-gray-400 mt-1 block truncate">
                   {musician?.current_show_name 
                     ? `Live Now: ${musician.current_show_name} · About · Tip · Follow`
                     : 'About · Tip · Follow'}
@@ -9701,13 +9701,13 @@ const AudienceInterface = () => {
             <img
               src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png"
               alt="RequestWave"
-              className="w-6 h-6 object-contain opacity-50"
+              className="w-6 h-6 object-contain opacity-40"
             />
           </div>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 py-4 md:py-8">
+      <div className="max-w-4xl mx-auto px-4 py-5 md:py-8">
         {success && (
           <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 md:p-4 mb-4 md:mb-6 text-green-200">
             {success}
