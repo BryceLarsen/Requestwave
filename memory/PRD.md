@@ -126,6 +126,7 @@ The frontend has been refactored to align with the "Audience Moment Model" - an 
 
 ## Key API Endpoints
 - `/api/requests` - Create request (accepts audience_id)
+- `/api/requests/{request_id}/email` - Attach email post-submission (Moment 3)
 - `/api/musicians/{slug}/requests` - Audience request submission (accepts audience_id)
 - `/api/requests/{id}/status` - Update request status
 - `/api/requests/{id}/track-click` - Track tip/social clicks (accepts audience_id)
