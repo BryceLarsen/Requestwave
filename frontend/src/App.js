@@ -10604,7 +10604,13 @@ const AudienceInterface = () => {
               <div className="sticky top-0 bg-gray-800 pt-3 pb-2 rounded-t-2xl">
                 <div className="w-12 h-1 bg-gray-600 rounded-full mx-auto mb-2"></div>
                 <div className="flex items-center justify-between px-4">
-                  <h2 className="text-lg font-bold text-white">About the Artist</h2>
+                  <div>
+                    <div className="flex items-center space-x-2 mb-0.5">
+                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                      <span className="text-xs text-green-400 font-medium">Performing live</span>
+                    </div>
+                    <h2 className="text-lg font-bold text-white">About the Artist</h2>
+                  </div>
                   <button
                     onClick={() => setShowOrientation(false)}
                     className="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700 transition"
