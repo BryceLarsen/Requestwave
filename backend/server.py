@@ -5392,6 +5392,91 @@ async def track_request_click(
         logger.error(f"Error tracking click: {str(e)}")
         raise HTTPException(status_code=500, detail="Error tracking click")
 
+
+@api_router.post("/requests/{request_id}/email")
+async def attach_email_to_request(
+    request_id: str,
+    email_data: RequestEmailAttach
+):
+    """
+    Moment 3: Attach email to an existing request after submission.
+    
+    Security rules:
+    - If request has audience_id AND body.audience_id differs: 403 Forbidden
+    - If request has audience_id AND body.audience_id missing: allow but log warning
+    - If request has no audience_id AND body.audience_id provided: set it on request
+    """
+    import re
+    
+    try:
+        # Basic email format validation
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email_data.email):
+            raise HTTPException(status_code=400, detail="Invalid email format")
+        
+        # Find the request
+        request = await db.requests.find_one({"id": request_id})
+        if not request:
+            raise HTTPException(status_code=404, detail="Request not found")
+        
+        request_audience_id = request.get("audience_id")
+        provided_audience_id = email_data.audience_id
+        
+        # Security validation
+        if request_audience_id and provided_audience_id and request_audience_id != provided_audience_id:
+            logger.warning(f"Request {request_id}: Audience ID mismatch. Request has {request_audience_id}, provided {provided_audience_id}")
+            raise HTTPException(status_code=403, detail="Audience ID mismatch - not authorized to update this request")
+        
+        if request_audience_id and not provided_audience_id:
+            logger.warning(f"Request {request_id}: Email attach without audience_id, request has audience_id={request_audience_id}")
+        
+        # Prepare update
+        update_data = {
+            "requester_email": email_data.email.lower().strip()
+        }
+        
+        # If request has no audience_id but one is provided, set it
+        if not request_audience_id and provided_audience_id:
+            update_data["audience_id"] = provided_audience_id
+        
+        # Update the request
+        await db.requests.update_one(
+            {"id": request_id},
+            {"$set": update_data}
+        )
+        
+        # Get the final audience_id (may have been updated)
+        final_audience_id = provided_audience_id if not request_audience_id and provided_audience_id else request_audience_id
+        
+        # Emit analytics event - DO NOT include raw email in metadata
+        await emit_analytics_event(
+            event_type="audience.email_submitted",
+            musician_id=request["musician_id"],
+            source="audience",
+            entity_type="request",
+            show_id=request.get("show_id"),
+            entity_id=request_id,
+            metadata={
+                "email_provided": True,
+                "audience_id": final_audience_id
+            }
+        )
+        
+        logger.info(f"Request {request_id}: Email attached successfully")
+        
+        return {
+            "ok": True,
+            "request_id": request_id,
+            "email": email_data.email.lower().strip()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error attaching email to request: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error attaching email to request")
+
+
 # NEW: Request management endpoints
 @api_router.put("/requests/{request_id}/archive")
 async def archive_request(
