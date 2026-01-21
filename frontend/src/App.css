@@ -256,3 +256,20 @@ button:active {
 .active\:bg-gray-750:active {
   background-color: rgb(55, 65, 81); /* Between gray-700 (374151) and gray-800 (1f2937) */
 }
+
+
+/* RequestWave logo subtle ambient glow - slow breathing effect */
+@keyframes logoGlow {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+.animate-logo-glow {
+  animation: logoGlow 4s ease-in-out infinite;
+}
