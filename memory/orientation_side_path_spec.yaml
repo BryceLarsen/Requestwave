@@ -1,0 +1,585 @@
+# =============================================================================
+# AUDIENCE ORIENTATION SIDE PATH — SPECIFICATION
+# =============================================================================
+# Document Type: Structural Definition (NO CODE)
+# Created: 2026-01-21
+# Status: DRAFT - Awaiting Review
+# Related: /app/memory/current_build_inventory.yaml (SECTION 7A: Audience Moment Model)
+#
+# IMPORTANT: The primary audience flow (Moments 1A → 1B → 2 → 3) is FROZEN.
+# This specification defines a PARALLEL path that must not alter the request spine.
+# =============================================================================
+
+# =============================================================================
+# SECTION 1: ORIENTATION PURPOSE AND DEFINITION
+# =============================================================================
+
+orientation_definition:
+  
+  purpose: >
+    Orientation is a voluntary side path that allows audience members to learn
+    about the artist or support them without making a song request. It serves
+    users who scan the QR code seeking information rather than participation.
+    
+  what_orientation_is:
+    - A voluntary side path for learning about the artist
+    - A way to support the artist (tips, follows) outside the request flow
+    - Entered intentionally by explicit user action
+    - Exited without penalty, friction, or lost state
+    - Parallel to, not part of, the request spine
+    - Safe harbor for "just browsing" users
+    
+  what_orientation_is_not:
+    - A required step in any user journey
+    - A modal that interrupts requesting
+    - A substitute for requesting a song
+    - A marketing funnel or conversion path
+    - A gatekeeper to the song list
+    - An onboarding flow
+    - A tutorial or walkthrough
+
+  core_principle: >
+    Orientation must NEVER block, delay, or compete with requesting a song.
+    A user who wants to request should be able to do so without ever seeing
+    or interacting with Orientation content.
+
+# =============================================================================
+# SECTION 2: ENTRY RULES
+# =============================================================================
+
+entry_rules:
+  
+  governing_principle: >
+    Entry into Orientation must be EXPLICIT and INTENTIONAL. The user must
+    take a deliberate action to enter Orientation. Orientation must not
+    auto-trigger, pop up, or appear uninvited.
+    
+  allowed_entry_points:
+    
+    - entry_id: "ENTRY-01"
+      name: "Artist Header Tap"
+      trigger: "User taps on artist name or artist photo in header"
+      source_moment: "moment_1a_browse"
+      rationale: >
+        The artist header is clearly about the artist, not about songs.
+        Tapping it signals intent to learn more about the artist.
+      ui_element_type: "Tappable header area"
+      
+    - entry_id: "ENTRY-02"
+      name: "Explicit Info/About Button"
+      trigger: "User taps dedicated 'About' or 'Info' button/icon"
+      source_moment: "moment_1a_browse"
+      rationale: >
+        An explicit button makes entry intentional and unambiguous.
+        Button should be visually secondary to song cards.
+      ui_element_type: "Button or icon"
+      
+    - entry_id: "ENTRY-03"
+      name: "Tip Button (Header)"
+      trigger: "User taps the Tip button in header (before any request)"
+      source_moment: "moment_1a_browse"
+      rationale: >
+        A user who wants to tip without requesting should be able to.
+        This is a support action, not a request action.
+      ui_element_type: "Button"
+      note: "Distinct from post-request tip flow which is NOT Orientation"
+      
+  forbidden_entry_patterns:
+    
+    - pattern: "Auto-popup on page load"
+      reason: "Violates explicit entry requirement"
+      
+    - pattern: "Timed trigger (e.g., after 5 seconds)"
+      reason: "Violates intentional entry requirement"
+      
+    - pattern: "Scroll-triggered appearance"
+      reason: "Could interrupt song browsing"
+      
+    - pattern: "First-visit forced walkthrough"
+      reason: "Blocks requesting; onboarding is not Orientation"
+      
+    - pattern: "Interstitial before song list loads"
+      reason: "Delays access to primary action"
+      
+    - pattern: "Entry from within Moments 1B, 2, or 3"
+      reason: "User is mid-request; Orientation would interrupt"
+
+  entry_ui_presentation:
+    
+    conceptual_type: "Drawer, Sheet, or Overlay"
+    description: >
+      Orientation should appear as a layer OVER the existing browse state,
+      preserving the underlying context. This allows the user to dismiss
+      and return exactly where they were.
+    
+    must_not_be:
+      - "Full navigation away from /musician/:slug"
+      - "A separate route/URL"
+      - "A replacement of the song list"
+      
+    must_preserve:
+      - "Scroll position in song list"
+      - "Any active filters or search"
+      - "Selected song state (if applicable)"
+
+# =============================================================================
+# SECTION 3: EXIT RULES
+# =============================================================================
+
+exit_rules:
+  
+  governing_principle: >
+    Exit from Orientation must be frictionless and predictable. The user
+    must always know how to leave and where they will land. Orientation
+    must never trap the user or require completion of any action.
+    
+  allowed_exit_destinations:
+    
+    - exit_id: "EXIT-01"
+      name: "Return to Browse (Moment 1A)"
+      trigger: "Close/dismiss action (X button, swipe down, tap outside)"
+      destination: "moment_1a_browse"
+      state_preserved: true
+      description: >
+        Default exit. User returns to song list in same state as before
+        entering Orientation. Scroll position, filters, search preserved.
+        
+    - exit_id: "EXIT-02"
+      name: "Select Song from Orientation"
+      trigger: "User taps a song link/card IF songs are shown in Orientation"
+      destination: "moment_1b_commit"
+      state_preserved: true
+      description: >
+        If Orientation surfaces song recommendations (e.g., "Popular requests"),
+        tapping one closes Orientation and opens Moment 1B for that song.
+      note: "This is optional; Orientation may not include song selection"
+      
+  forbidden_exit_destinations:
+    
+    - destination: "moment_2_identity"
+      reason: >
+        Orientation must not bypass Moment 1B (Commit). A user cannot
+        jump directly from Orientation into providing their name/dedication.
+        
+    - destination: "moment_3_follow_up"
+      reason: >
+        Moment 3 is post-request only. Orientation has no request context.
+        
+    - destination: "External URL without user action"
+      reason: >
+        Tapping a social link may open external site, but this is user-initiated.
+        Orientation must not auto-redirect.
+        
+    - destination: "Different musician's page"
+      reason: >
+        Orientation is scoped to current artist only.
+
+  exit_friction_rules:
+    
+    - rule: "No confirmation dialogs on exit"
+      description: >
+        Dismissing Orientation should be instant. No "Are you sure?"
+        prompts, even if user has partially completed a form.
+        
+    - rule: "No progress loss warnings"
+      description: >
+        Orientation should not have multi-step flows that could be 'lost'.
+        Each action within Orientation is atomic.
+        
+    - rule: "Always provide visible close affordance"
+      description: >
+        X button or equivalent must be visible at all times.
+        User must never feel trapped in Orientation.
+
+# =============================================================================
+# SECTION 4: ALLOWED CONTENT
+# =============================================================================
+
+allowed_content:
+  
+  governing_principle: >
+    Orientation content is INFORMATIONAL or SUPPORT-ORIENTED. It helps
+    the user learn about the artist or contribute to them without making
+    a song request. All content must be optional to consume.
+    
+  content_items:
+    
+    - content_id: "CONTENT-01"
+      name: "Artist Bio"
+      description: "Short-form text about the artist"
+      format: "Text (1-3 paragraphs max)"
+      required: false
+      editable_by: "Musician (via dashboard)"
+      
+    - content_id: "CONTENT-02"
+      name: "Artist Photo(s)"
+      description: "Profile photo or gallery of artist images"
+      format: "Image(s)"
+      required: false
+      editable_by: "Musician (via dashboard)"
+      
+    - content_id: "CONTENT-03"
+      name: "Social Links"
+      description: "Links to artist's social media profiles"
+      platforms:
+        - Instagram
+        - Facebook
+        - TikTok
+        - Spotify
+        - Apple Music
+      format: "Clickable links/icons"
+      behavior: "Opens external URL in new tab"
+      required: false
+      editable_by: "Musician (via dashboard)"
+      
+    - content_id: "CONTENT-04"
+      name: "Tip Links"
+      description: "Payment links for tipping the artist"
+      platforms:
+        - Venmo
+        - PayPal
+        - CashApp
+        - Zelle
+      format: "Clickable links/buttons"
+      behavior: "Opens external payment URL"
+      required: false
+      editable_by: "Musician (via dashboard)"
+      note: "Distinct from post-request tip modal"
+      
+    - content_id: "CONTENT-05"
+      name: "Email List Join"
+      description: "Optional email capture for artist's mailing list"
+      format: "Single email input + submit button"
+      required_fields: "Email only"
+      behavior: "Stores email separately from request flow"
+      note: >
+        This is NOT the same as Moment 3 email capture. This is for users
+        who want to join mailing list without making a request.
+      required: false
+      editable_by: "Musician (via dashboard settings)"
+      
+    - content_id: "CONTENT-06"
+      name: "Upcoming Shows"
+      description: "List of artist's upcoming performances"
+      format: "List with date, venue, optional link"
+      required: false
+      editable_by: "Musician (via dashboard)"
+      status: "Future consideration - not currently implemented"
+      
+    - content_id: "CONTENT-07"
+      name: "Website Link"
+      description: "Link to artist's personal website"
+      format: "Clickable link"
+      behavior: "Opens external URL in new tab"
+      required: false
+      editable_by: "Musician (via dashboard)"
+
+  content_presentation_rules:
+    
+    - rule: "All content is view-only by default"
+      description: >
+        Content items should be consumable without user input.
+        Forms (email list) are the exception but must be clearly optional.
+        
+    - rule: "No content may block other content"
+      description: >
+        User should be able to scroll past any content item without
+        interacting with it.
+        
+    - rule: "Content order is not prescriptive"
+      description: >
+        Implementation may arrange content items as appropriate.
+        This spec defines WHAT, not visual layout.
+
+# =============================================================================
+# SECTION 5: FORBIDDEN CONTENT
+# =============================================================================
+
+forbidden_content:
+  
+  governing_principle: >
+    Orientation must not contain any element that implies, enables, or
+    mimics making a song request. Request actions belong to Moments 1-3 only.
+    
+  forbidden_items:
+    
+    - forbidden_id: "FORBIDDEN-01"
+      name: "Song Request Actions"
+      description: "Any button or flow that creates a request"
+      reason: >
+        Requests are made via Moments 1B → 2 → 3 only. Orientation must
+        not provide an alternate request path.
+        
+    - forbidden_id: "FORBIDDEN-02"
+      name: "Name Input Field"
+      description: "Text input for requester name"
+      reason: >
+        Name capture is part of Moment 2 (Identity). Collecting name in
+        Orientation would create request-like context.
+        
+    - forbidden_id: "FORBIDDEN-03"
+      name: "Dedication/Message Input"
+      description: "Text input for dedication to artist"
+      reason: >
+        Dedications are tied to requests (Moment 2). Dedications without
+        a request have no meaning in the data model.
+        
+    - forbidden_id: "FORBIDDEN-04"
+      name: "Required Email Field"
+      description: "Email input that is mandatory"
+      reason: >
+        Orientation email (mailing list) must be optional. Required email
+        conflicts with the principle that Orientation has no required actions.
+        
+    - forbidden_id: "FORBIDDEN-05"
+      name: "Request Confirmation Messaging"
+      description: "Text like 'Your request has been sent!' or 'Request Submitted'"
+      reason: >
+        No request is made in Orientation. Such messaging would be false.
+        
+    - forbidden_id: "FORBIDDEN-06"
+      name: "Song Selection as Primary Action"
+      description: "Prominent song list or 'Pick a Song' CTA"
+      reason: >
+        Song selection belongs in Moment 1A. Orientation may reference songs
+        (e.g., 'Popular songs') but must not be the primary song discovery path.
+        
+    - forbidden_id: "FORBIDDEN-07"
+      name: "Queue Position or Wait Time"
+      description: "Information about request queue or estimated wait"
+      reason: >
+        Queue info is request-context dependent. Orientation has no request.
+        
+    - forbidden_id: "FORBIDDEN-08"
+      name: "Tip Amount Pre-selection"
+      description: "Pre-selected tip amounts or 'suggested tip' prompts"
+      reason: >
+        Tip links in Orientation should be neutral. Pre-selection creates
+        friction and pressure that conflicts with voluntary participation.
+
+  boundary_cases:
+    
+    - case: "Song recommendations in Orientation"
+      ruling: "ALLOWED with constraints"
+      constraints:
+        - "Must be clearly informational ('Popular with audiences')"
+        - "Tapping song exits Orientation → Moment 1B (not direct request)"
+        - "Must not be labeled as 'Request this song'"
+        
+    - case: "Email input in Orientation"
+      ruling: "ALLOWED with constraints"
+      constraints:
+        - "Must be clearly optional"
+        - "Must be labeled as 'mailing list' or 'stay updated', NOT 'request notification'"
+        - "Email is stored separately from request.requester_email"
+        - "No auto-population into future request forms"
+
+# =============================================================================
+# SECTION 6: ANALYTICS DEFINITION
+# =============================================================================
+
+analytics_definition:
+  
+  governing_principle: >
+    Orientation analytics capture when users engage with artist information
+    or support actions OUTSIDE the request flow. These events help musicians
+    understand audience interest beyond song requests.
+    
+  events_to_emit:
+    
+    - event_id: "ANALYTICS-ORIENTATION-01"
+      event_type: "audience.orientation_opened"
+      trigger: "User enters Orientation via any entry point"
+      metadata:
+        - entry_point: "ENTRY-01 | ENTRY-02 | ENTRY-03"
+        - audience_id: "Client-provided anonymous ID"
+      rationale: "Measures interest in artist info vs. direct requesting"
+      
+    - event_id: "ANALYTICS-ORIENTATION-02"
+      event_type: "audience.orientation_social_clicked"
+      trigger: "User clicks a social link within Orientation"
+      metadata:
+        - platform: "instagram | facebook | tiktok | spotify | apple_music"
+        - audience_id: "Client-provided anonymous ID"
+      rationale: "Measures social engagement from non-requesters"
+      note: "Distinct from audience.follow_clicked which is post-request"
+      
+    - event_id: "ANALYTICS-ORIENTATION-03"
+      event_type: "audience.orientation_tip_clicked"
+      trigger: "User clicks a tip link within Orientation"
+      metadata:
+        - platform: "venmo | paypal | cashapp | zelle"
+        - audience_id: "Client-provided anonymous ID"
+      rationale: "Measures tip interest from non-requesters"
+      note: "Distinct from audience.tip_clicked which is post-request"
+      
+    - event_id: "ANALYTICS-ORIENTATION-04"
+      event_type: "audience.orientation_email_submitted"
+      trigger: "User submits email to mailing list from Orientation"
+      metadata:
+        - email_provided: true
+        - audience_id: "Client-provided anonymous ID"
+      rationale: "Measures mailing list interest from non-requesters"
+      note: "Distinct from audience.email_submitted which is Moment 3"
+      
+    - event_id: "ANALYTICS-ORIENTATION-05"
+      event_type: "audience.orientation_closed"
+      trigger: "User exits Orientation"
+      metadata:
+        - exit_type: "dismiss | song_selected"
+        - duration_seconds: "Time spent in Orientation"
+        - audience_id: "Client-provided anonymous ID"
+      rationale: "Measures engagement depth in Orientation"
+
+  events_not_to_emit:
+    
+    - event: "audience.request_submitted"
+      reason: "No request is made in Orientation"
+      
+    - event: "audience.dedication_submitted"
+      reason: "No dedication is captured in Orientation"
+      
+    - event: "Page view / screen view"
+      reason: "Orientation is an overlay, not a distinct page"
+
+  analytics_separation_rule: >
+    Orientation events must be clearly distinguishable from request-flow events.
+    Event types use 'orientation_' prefix to prevent confusion with Moment events.
+
+# =============================================================================
+# SECTION 7: RISKS AND GUARDRAILS
+# =============================================================================
+
+risks_and_guardrails:
+  
+  identified_risks:
+    
+    - risk_id: "RISK-01"
+      name: "Intent Dilution"
+      description: >
+        Making Orientation too prominent or content-rich may distract users
+        from the primary action (requesting). Users may spend time in
+        Orientation instead of requesting, reducing request volume.
+      mitigation:
+        - "Keep entry points visually secondary to song cards"
+        - "Limit Orientation content to essentials"
+        - "Measure conversion: Orientation opens that lead to requests"
+        
+    - risk_id: "RISK-02"
+      name: "Request Flow Contamination"
+      description: >
+        Over time, features may creep into Orientation that belong in the
+        request flow, or vice versa. This blurs the boundary and creates
+        inconsistent user experiences.
+      mitigation:
+        - "This specification serves as the boundary document"
+        - "Any proposed addition must be evaluated against forbidden content list"
+        - "Request spine (Moments 1-3) is FROZEN"
+        
+    - risk_id: "RISK-03"
+      name: "Duplicate Data Paths"
+      description: >
+        Email capture exists in both Orientation (mailing list) and Moment 3
+        (request follow-up). Users may be confused about which is which.
+        Data may end up in wrong place.
+      mitigation:
+        - "Use distinct labels: 'Join mailing list' vs 'Add email to your request'"
+        - "Store in separate fields: musician.mailing_list_emails vs request.requester_email"
+        - "Use distinct analytics events"
+        
+    - risk_id: "RISK-04"
+      name: "Tip Flow Confusion"
+      description: >
+        Tips exist in Orientation (support without request) and post-request
+        flow (thank you tip). Users may not understand the difference.
+      mitigation:
+        - "Orientation tip: 'Support [Artist Name]'"
+        - "Post-request tip: 'Say thanks for playing your song'"
+        - "Both are valid; context makes intent clear"
+        
+    - risk_id: "RISK-05"
+      name: "Mobile Usability"
+      description: >
+        On small screens, Orientation as drawer/sheet may feel cramped or
+        may obscure too much of the underlying browse state.
+      mitigation:
+        - "Implementation should consider mobile-first design"
+        - "Orientation should be dismissible with simple gesture (swipe down)"
+        - "Content should be vertically scrollable"
+
+  guardrails:
+    
+    - guardrail_id: "GUARD-01"
+      name: "Request Spine Immutability"
+      rule: >
+        Moments 1A, 1B, 2, and 3 are FROZEN. No Orientation work may modify
+        the request spine UI, logic, or data flow.
+        
+    - guardrail_id: "GUARD-02"
+      name: "Entry Point Audit"
+      rule: >
+        Before implementation, audit all proposed entry points against the
+        entry rules in this specification. Reject any that violate explicit
+        entry requirements.
+        
+    - guardrail_id: "GUARD-03"
+      name: "Content Audit"
+      rule: >
+        Before implementation, audit all proposed content against allowed
+        and forbidden lists. Any content not explicitly allowed should be
+        flagged for review.
+        
+    - guardrail_id: "GUARD-04"
+      name: "Analytics Naming Convention"
+      rule: >
+        All Orientation analytics events MUST use 'orientation_' prefix
+        to distinguish from request-flow events.
+        
+    - guardrail_id: "GUARD-05"
+      name: "No Auto-Trigger"
+      rule: >
+        Orientation may NEVER open automatically. Any implementation that
+        opens Orientation without explicit user tap must be rejected.
+
+# =============================================================================
+# SECTION 8: SPECIFICATION STATUS
+# =============================================================================
+
+specification_status:
+  
+  document_state: "DRAFT"
+  
+  approvals_required:
+    - "Product review of content boundaries"
+    - "UX review of entry/exit flow"
+    - "Engineering review of analytics events"
+    
+  open_questions:
+    
+    - question: "Should Orientation include 'Popular Songs' recommendations?"
+      options:
+        - "Yes - helps discovery, exits to Moment 1B"
+        - "No - keeps Orientation purely informational"
+      decision: "PENDING"
+      
+    - question: "Should mailing list email be captured in Orientation?"
+      options:
+        - "Yes - serves non-requesting users"
+        - "No - too similar to Moment 3, causes confusion"
+      decision: "PENDING"
+      
+    - question: "Should Orientation be musician-configurable?"
+      options:
+        - "Yes - musicians can enable/disable sections"
+        - "No - standard layout for consistency"
+      decision: "PENDING"
+
+  next_steps:
+    - "Review specification with stakeholder"
+    - "Resolve open questions"
+    - "Approve specification"
+    - "Create implementation prompt (separate from this document)"
+
+# =============================================================================
+# END OF SPECIFICATION
+# =============================================================================
