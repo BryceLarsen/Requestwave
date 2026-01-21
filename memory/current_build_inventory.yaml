@@ -786,11 +786,97 @@ audience_moment_model:
   related_specifications:
     orientation_side_path:
       document: "/app/memory/orientation_side_path_spec.yaml"
-      status: "DRAFT - Awaiting Review"
+      status: "APPROVED - Implemented (Minimal)"
       description: >
         Defines the Orientation side path: a voluntary, parallel path for
         learning about the artist or supporting them without making a request.
         Orientation is explicitly NOT part of the request spine (Moments 1-3).
+    tip_follow_sequencing:
+      document: "/app/memory/tip_follow_sequencing_spec.yaml"
+      status: "APPROVED"
+      description: >
+        Defines when and where tip/follow actions are allowed across surfaces.
+
+  orientation_implementation:
+    status: "IMPLEMENTED (Minimal - Phases A+B+C)"
+    implementation_date: "2026-01-21"
+    
+    ui_component:
+      type: "Bottom sheet"
+      trigger_state: "showOrientation"
+      file: "/app/frontend/src/App.js"
+      css_animation: "/app/frontend/src/App.css (slideUp keyframes)"
+    
+    entry_points:
+      - name: "Artist header tap"
+        selector: '[data-testid="artist-header-orientation-trigger"]'
+        behavior: "Opens Orientation bottom sheet"
+      - name: "Header Tip button"
+        selector: '[data-testid="header-tip-orientation-trigger"]'
+        behavior: "Opens Orientation bottom sheet (tip section visible)"
+    
+    exit_points:
+      - name: "Close button (X)"
+        selector: '[data-testid="orientation-close-btn"]'
+      - name: "Tap outside overlay"
+        behavior: "Closes on background tap"
+    
+    content_sections:
+      - section: "Artist photo + name"
+        conditional: false
+      - section: "Bio"
+        conditional: "Only if designSettings.bio is non-empty"
+      - section: "Tip links (Venmo, PayPal, Cash App, Zelle)"
+        conditional: "Only if musician.tips_enabled and platforms configured"
+      - section: "Social links (Instagram, Facebook, TikTok)"
+        conditional: "Only if usernames configured"
+      - section: "Streaming links (Spotify, Apple Music)"
+        conditional: "Only if URLs configured"
+      - section: "Website link"
+        conditional: "Only if musician.website configured"
+    
+    deferred_features:
+      - "Mailing list email capture"
+      - "Orientation-specific analytics events (orientation_* prefix)"
+      - "Musician configurability"
+
+  click_tracking_status:
+    description: >
+      Click tracking for outbound links (tip platforms, social media, streaming).
+      Off-platform completion cannot be tracked; only outbound click intent.
+    
+    post_request_tracking:
+      status: "IMPLEMENTED"
+      endpoint: "POST /api/requests/{request_id}/track-click"
+      tracked_actions:
+        - action: "Tip link click"
+          click_type: "tip"
+          platforms: ["venmo", "paypal", "cashapp", "zelle"]
+          event_emitted: "audience.tip_clicked"
+          request_id_required: true
+        - action: "Social/Follow link click"
+          click_type: "social"
+          platforms: ["instagram", "facebook", "tiktok", "spotify", "apple_music"]
+          event_emitted: "audience.follow_clicked"
+          request_id_required: true
+      implementation:
+        frontend_function: "trackClick(type, platform)"
+        guard: "if (!currentRequestId) return;"
+        file: "/app/frontend/src/App.js"
+    
+    orientation_tracking:
+      status: "NOT IMPLEMENTED"
+      limitation: >
+        Orientation link clicks are NOT tracked because no request_id exists.
+        The existing track-click endpoint requires a request_id to associate
+        the click with a specific request record.
+      reason: >
+        Per spec, we do not invent requests just for tracking, and no new
+        endpoints are created in this phase.
+      future_consideration: >
+        If tracking Orientation clicks becomes a requirement, a new endpoint
+        (e.g., POST /api/musicians/{slug}/orientation-click) would be needed
+        that does not require request_id but still logs to analytics_events.
 
 # =============================================================================
 # SECTION 7B: AUDIENCE EXPERIENCE → MOMENT MODEL MAPPING (ANALYSIS)
