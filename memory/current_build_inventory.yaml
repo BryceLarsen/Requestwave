@@ -928,17 +928,17 @@ audience_experience_moment_mapping:
       optional. Aligned with model.
 
   - element_name: "Email Field (Request Form)"
-    current_location: "Request form modal"
+    current_location: "Moment 3 follow-up step (post-request submission)"
     current_behavior: >
-      Text input labeled 'Your Email'. Currently REQUIRED. Must be non-empty
-      to submit request. No format validation.
-    mapped_moment: "moment_2_identity"
-    alignment_status: "misaligned"
+      Text input labeled 'Your Email'. Now OPTIONAL and shown after request
+      is submitted. Submits via POST /api/requests/{id}/email endpoint.
+      Basic format validation (regex). Fully skippable.
+    mapped_moment: "moment_3_follow_up"
+    alignment_status: "aligned"
     notes: >
-      Model places email capture in moment_3_follow_up as OPTIONAL and
-      "fully skippable". Current implementation requires email in
-      moment_2_identity, blocking request submission if empty. This
-      violates the principle "No optional action may block requesting."
+      RESOLVED: Email moved from required field in moment_2_identity to
+      optional field in moment_3_follow_up. Now aligned with model principle
+      "No optional action may block requesting."
 
   - element_name: "Request Submit Button"
     current_location: "Request form modal"
