@@ -800,6 +800,7 @@ audience_moment_model:
   orientation_implementation:
     status: "IMPLEMENTED (Minimal - Phases A+B+C)"
     implementation_date: "2026-01-21"
+    last_updated: "2026-01-21"
     
     ui_component:
       type: "Bottom sheet"
@@ -811,9 +812,8 @@ audience_moment_model:
       - name: "Artist header tap"
         selector: '[data-testid="artist-header-orientation-trigger"]'
         behavior: "Opens Orientation bottom sheet"
-      - name: "Header Tip button"
-        selector: '[data-testid="header-tip-orientation-trigger"]'
-        behavior: "Opens Orientation bottom sheet (tip section visible)"
+      # NOTE: Header Tip button REMOVED (2026-01-21)
+      # Tip access now exclusively via Orientation content
     
     exit_points:
       - name: "Close button (X)"
@@ -821,7 +821,16 @@ audience_moment_model:
       - name: "Tap outside overlay"
         behavior: "Closes on background tap"
     
+    live_context_display:
+      location: "Top of Orientation, above 'About the Artist' heading"
+      format: "Live Now: {current_show_name}"
+      indicator: "Green pulsing dot"
+      conditional: "Only shown if musician.current_show_name exists"
+      truncation: "None - full title always displayed in Orientation"
+    
     content_sections:
+      - section: "Live context indicator (Live Now: ...)"
+        conditional: "Only if musician.current_show_name is non-empty"
       - section: "Artist photo + name"
         conditional: false
       - section: "Bio"
