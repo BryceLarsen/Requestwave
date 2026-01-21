@@ -4,8 +4,10 @@
 # Document Type: Structural Definition (NO CODE)
 # Created: 2026-01-21
 # Last Updated: 2026-01-21
-# Status: DRAFT - Awaiting Tip/Follow Sequencing Definition
-# Related: /app/memory/current_build_inventory.yaml (SECTION 7A: Audience Moment Model)
+# Status: READY FOR APPROVAL (Sequencing dependency resolved)
+# Related: 
+#   - /app/memory/current_build_inventory.yaml (SECTION 7A: Audience Moment Model)
+#   - /app/memory/tip_follow_sequencing_spec.yaml (Tip/Follow Sequencing)
 #
 # IMPORTANT: The primary audience flow (Moments 1A → 1B → 2 → 3) is FROZEN.
 # This specification defines a PARALLEL path that must not alter the request spine.
@@ -14,8 +16,7 @@
 # - Song lists/recommendations: FORBIDDEN in Orientation
 # - Mailing list email: ALLOWED (separate from request flow)
 # - Musician configurability: DEFERRED (out of scope)
-#
-# BLOCKING: Tip/Follow sequencing must be defined before implementation.
+# - Tip/Follow in Orientation: ALLOWED per tip_follow_sequencing_spec.yaml
 # =============================================================================
 
 # =============================================================================
