@@ -136,6 +136,23 @@ phase2_analytics_events:
       - platform: "venmo | paypal | cashapp | zelle"
       - audience_id: "Client-provided anonymous ID (may be null)"
 
+  # ─────────────────────────────────────────────────────────────────────────────
+  # EVENT 5: audience.email_submitted
+  # ─────────────────────────────────────────────────────────────────────────────
+  - event_type: audience.email_submitted
+    trigger: "Audience submits email in Moment 3 (post-request follow-up)"
+    emitted_from:
+      - POST /api/requests/{id}/email
+    context_fields:
+      - musician_id: "From request document"
+      - show_id: "From request document"
+      - entity_id: "request_id"
+      - entity_type: "request"
+    metadata:
+      - email_provided: "true (boolean, raw email NOT included for privacy)"
+      - audience_id: "Client-provided anonymous ID (may be null)"
+    note: "Added for Audience Moment Model - captures optional follow-up email"
+
 # =============================================================================
 # SECTION 3: ENDPOINTS WITH SHOW_ID QUERY PARAMETER
 # =============================================================================
