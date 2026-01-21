@@ -10120,10 +10120,20 @@ const AudienceInterface = () => {
                       type="email"
                       placeholder="Your Email (optional)"
                       value={followUpEmail}
-                      onChange={(e) => setFollowUpEmail(e.target.value)}
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
+                      onChange={(e) => {
+                        setFollowUpEmail(e.target.value);
+                        setFollowUpError(''); // Clear error on input change
+                      }}
+                      className={`w-full bg-gray-700 border rounded-lg px-4 py-3 text-white placeholder-gray-400 ${
+                        followUpError ? 'border-red-500' : 'border-gray-600'
+                      }`}
                       data-testid="followup-email-input"
                     />
+                    {followUpError && (
+                      <p className="text-red-400 text-sm" data-testid="followup-error">
+                        {followUpError}
+                      </p>
+                    )}
                   </div>
                   
                   <div className="flex flex-col space-y-3 mt-6">
