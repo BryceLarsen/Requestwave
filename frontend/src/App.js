@@ -10605,10 +10605,12 @@ const AudienceInterface = () => {
                 <div className="w-12 h-1 bg-gray-600 rounded-full mx-auto mb-2"></div>
                 <div className="flex items-center justify-between px-4">
                   <div>
-                    <div className="flex items-center space-x-2 mb-0.5">
-                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                      <span className="text-xs text-green-400 font-medium">Performing live</span>
-                    </div>
+                    {musician?.current_show_name && (
+                      <div className="flex items-center space-x-2 mb-0.5">
+                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        <span className="text-xs text-green-400 font-medium">Live Now: {musician.current_show_name}</span>
+                      </div>
+                    )}
                     <h2 className="text-lg font-bold text-white">About the Artist</h2>
                   </div>
                   <button
