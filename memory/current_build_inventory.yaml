@@ -668,6 +668,84 @@ audience_experience_current_state:
       observed: "Access check runs on page load; no real-time update if access changes mid-session"
 
 # =============================================================================
+# SECTION 7A: AUDIENCE MOMENT MODEL (PROPOSED)
+# =============================================================================
+
+audience_moment_model:
+  description: >
+    The Audience Moment Model defines intent-based phases of interaction for
+    audience members using RequestWave. Moments represent shifts in intent,
+    not specific screens. UI may change over time, but Moments remain stable
+    unless explicitly revised.
+
+  principles:
+    - Requesting a song is the primary action.
+    - Orientation is a side path, not a required step.
+    - No optional action may block or interrupt requesting.
+    - Audience identity is lightweight and purpose-driven.
+    - Each Moment must have a clear entry and exit condition.
+
+  moments:
+    moment_0_arrival:
+      name: Arrival
+      intent: Awareness
+      entry:
+        - QR code scan
+        - Direct audience link
+      characteristics:
+        - No data collection
+        - Immediate signal that participation affects the live show
+      exit:
+        - User engages with song list
+        - User opens orientation side path
+
+    moment_1a_browse:
+      name: Browse and Decide
+      intent: Exploration
+      characteristics:
+        - Audience browses available songs
+        - Songs are tappable to request
+        - Secondary actions may exist but must not compete with requesting
+      exit:
+        - User selects a song (→ moment_1b_commit)
+
+    moment_1b_commit:
+      name: Commit to Song
+      intent: Participation
+      entry:
+        - Triggered only by selecting a song
+      characteristics:
+        - Confirms selected song
+        - Signals intent to request
+      exit:
+        - User proceeds to identity and dedication
+
+    moment_2_identity:
+      name: Identity and Dedication
+      intent: Recognition
+      requirements:
+        - Name is required
+      optional_fields:
+        - Dedication or short note to the artist
+      completion:
+        - Submitting this moment creates a song request
+
+    moment_3_follow_up:
+      name: Optional Follow-Up
+      intent: Continuity
+      characteristics:
+        - Optional email capture
+        - Framed as helping the artist follow up
+        - Fully skippable
+      exit:
+        - Completion or skip returns user to passive state
+
+  exclusions:
+    - Orientation content must not replace or delay requesting
+    - Tips, follows, and artist info are not Moments
+    - No Moment may be merged without a planning update
+
+# =============================================================================
 # SECTION 8: MUSICIAN EXPERIENCE (CURRENT STATE)
 # =============================================================================
 # Factual snapshot of musician-facing functionality as implemented.
