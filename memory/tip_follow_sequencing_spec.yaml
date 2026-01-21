@@ -1,0 +1,769 @@
+# =============================================================================
+# TIP AND FOLLOW SEQUENCING — SPECIFICATION
+# =============================================================================
+# Document Type: Structural Definition (NO CODE)
+# Created: 2026-01-21
+# Status: DRAFT - Awaiting Approval
+# Related: 
+#   - /app/memory/current_build_inventory.yaml (Audience Moment Model)
+#   - /app/memory/orientation_side_path_spec.yaml (Orientation Definition)
+#
+# PURPOSE: Define WHEN and WHERE tipping and following are allowed in the
+# audience experience, resolving intent collisions between requesting,
+# supporting financially, and following socially.
+#
+# NON-NEGOTIABLE CONSTRAINTS:
+# - Request spine (Moments 1A → 1B → 2 → 3) is FROZEN
+# - Orientation is a SIDE PATH, not part of request spine
+# - Tip and follow must NEVER weaken clarity or urgency of requesting
+# =============================================================================
+
+# =============================================================================
+# SECTION 1: CORE DEFINITIONS
+# =============================================================================
+
+definitions:
+
+  core_principle: >
+    Requesting a song is a PARTICIPATORY action.
+    Tipping and following are SUPPORTIVE actions.
+    Support must never precede participation in a way that replaces it.
+
+  request:
+    definition: >
+      A participatory action where the audience member asks the musician
+      to play a specific song. Requests are the primary purpose of the
+      audience experience.
+    creates_record: true
+    record_collection: "requests"
+    
+  tip:
+    definition: >
+      A voluntary financial contribution to the artist. May occur with or
+      without a request, but must not imply a request was made if none occurred.
+    creates_record: true
+    record_collection: "tips"
+    requires_request: false
+    monetary: true
+    
+  follow:
+    definition: >
+      A voluntary social or contact-based action connecting the audience
+      member to the artist's external presence. May occur with or without
+      a request. Must not be framed as "completing" a request unless one exists.
+    creates_record: false
+    record_type: "analytics event only"
+    requires_request: false
+    monetary: false
+
+  intent_hierarchy:
+    description: >
+      When multiple intents are possible, they are prioritized in this order.
+      Higher priority intents must not be displaced by lower priority ones.
+    order:
+      - priority: 1
+        intent: "Request a song"
+        action_type: "participatory"
+      - priority: 2
+        intent: "Learn about the artist"
+        action_type: "informational"
+      - priority: 3
+        intent: "Support the artist financially"
+        action_type: "supportive"
+      - priority: 4
+        intent: "Follow the artist socially"
+        action_type: "supportive"
+
+# =============================================================================
+# SECTION 2: SURFACE MAPPING TABLE
+# =============================================================================
+
+surface_mapping:
+
+  summary_table:
+    description: >
+      Definitive mapping of which surfaces allow tip and follow actions.
+      This table is the source of truth for implementation.
+      
+    # ┌─────────────────────┬─────────────┬──────────────┬─────────────────────┐
+    # │ Surface             │ Tip Allowed │ Follow Allow │ Notes               │
+    # ├─────────────────────┼─────────────┼──────────────┼─────────────────────┤
+    # │ Moment 1A (Browse)  │ NO*         │ NO*          │ *Only via Orient.   │
+    # │ Moment 1B (Commit)  │ NO          │ NO           │ Forbidden           │
+    # │ Moment 2 (Identity) │ NO          │ NO           │ Forbidden           │
+    # │ Moment 3 (Follow-up)│ YES**       │ YES**        │ **Post-request only │
+    # │ Orientation         │ YES         │ YES          │ Separate from req   │
+    # │ Post-Request State  │ YES         │ YES          │ After Moment 3      │
+    # └─────────────────────┴─────────────┴──────────────┴─────────────────────┘
+
+  detailed_mapping:
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # MOMENT 1A: BROWSE
+    # ─────────────────────────────────────────────────────────────────────────
+    moment_1a_browse:
+      surface_name: "Browse and Decide"
+      primary_intent: "Select a song to request"
+      
+      tip_allowed: false
+      tip_rationale: >
+        Tip actions in the browse state would compete with song selection.
+        A user browsing songs should not see tip prompts that could displace
+        the primary action. Users who want to tip without requesting can
+        enter Orientation via the header Tip button.
+      tip_exception: >
+        The header "Tip" button is visible but functions as an ENTRY POINT
+        to Orientation, not a direct tip action in Moment 1A.
+        
+      follow_allowed: false
+      follow_rationale: >
+        Follow links in the browse state would distract from song selection.
+        Social engagement belongs in Orientation or post-request state.
+      follow_exception: "None"
+      
+      visible_elements:
+        - element: "Tip button in header"
+          behavior: "Opens Orientation (not direct tip)"
+          allowed: true
+        - element: "Tip amount selector"
+          behavior: "N/A"
+          allowed: false
+        - element: "Social links"
+          behavior: "N/A"
+          allowed: false
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # MOMENT 1B: COMMIT
+    # ─────────────────────────────────────────────────────────────────────────
+    moment_1b_commit:
+      surface_name: "Commit to Song"
+      primary_intent: "Confirm song selection before providing identity"
+      
+      tip_allowed: false
+      tip_rationale: >
+        The commit step is a focused decision point. Introducing tip options
+        here would dilute the commitment and create decision fatigue.
+        Absolutely no tip-related content may appear in this moment.
+      tip_exception: "None - strictly forbidden"
+      
+      follow_allowed: false
+      follow_rationale: >
+        Same as tip. The commit moment is binary: proceed or go back.
+        No additional actions may be introduced.
+      follow_exception: "None - strictly forbidden"
+      
+      visible_elements:
+        - element: "Tip button"
+          allowed: false
+        - element: "Social links"
+          allowed: false
+        - element: "Any support CTA"
+          allowed: false
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # MOMENT 2: IDENTITY
+    # ─────────────────────────────────────────────────────────────────────────
+    moment_2_identity:
+      surface_name: "Identity and Dedication"
+      primary_intent: "Provide name and optional dedication for the request"
+      
+      tip_allowed: false
+      tip_rationale: >
+        Moment 2 is about recognition and attribution. Adding tip options
+        here would conflate identity with payment, implying that tipping
+        is expected or that it affects request handling.
+      tip_exception: "None - strictly forbidden"
+      
+      follow_allowed: false
+      follow_rationale: >
+        Identity capture must remain focused on name and dedication only.
+        Social actions would create scope creep and confusion.
+      follow_exception: "None - strictly forbidden"
+      
+      visible_elements:
+        - element: "Tip amount field"
+          allowed: false
+        - element: "Tip suggestion"
+          allowed: false
+        - element: "Social links"
+          allowed: false
+        - element: "Any support CTA"
+          allowed: false
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # MOMENT 3: POST-REQUEST FOLLOW-UP
+    # ─────────────────────────────────────────────────────────────────────────
+    moment_3_follow_up:
+      surface_name: "Optional Follow-Up"
+      primary_intent: "Capture optional email for request follow-up"
+      
+      tip_allowed: true
+      tip_rationale: >
+        After a request is confirmed, inviting a tip is appropriate.
+        The user has participated; support is now contextually relevant.
+        The tip is LINKED to the request that was just submitted.
+      tip_constraints:
+        - "Tip prompt must appear AFTER request confirmation, not before"
+        - "Tip must be clearly optional with visible skip option"
+        - "Language must frame tip as gratitude, not obligation"
+        - "No implication that tipping affects request priority"
+      tip_framing:
+        allowed:
+          - "Say thanks to [Artist]"
+          - "Leave a tip for [Artist]"
+          - "Support [Artist]'s music"
+        forbidden:
+          - "Tip to get your song played faster"
+          - "Support to improve your chances"
+          - "Premium request"
+          
+      follow_allowed: true
+      follow_rationale: >
+        After requesting, inviting social connection is appropriate.
+        The user has engaged; deepening the relationship is natural.
+        Follow clicks are LINKED to the request context.
+      follow_constraints:
+        - "Follow prompt must appear AFTER request confirmation"
+        - "Follow must be clearly optional"
+        - "No implication that following affects request handling"
+      follow_framing:
+        allowed:
+          - "Follow [Artist] on Instagram"
+          - "Stay connected"
+          - "Find [Artist] on Spotify"
+        forbidden:
+          - "Follow to see when your song is played"
+          - "Required for request updates"
+          
+      sequencing_within_moment_3:
+        description: >
+          Moment 3 contains multiple optional actions. This defines their order.
+        order:
+          - step: 1
+            action: "Request Confirmation"
+            content: "Request Sent! checkmark"
+            skippable: false
+          - step: 2
+            action: "Email Capture"
+            content: "Optional email for follow-up"
+            skippable: true
+            skip_label: "Skip"
+          - step: 3
+            action: "Tip Invitation"
+            content: "Optional tip prompt"
+            skippable: true
+            skip_label: "No Tip" or "Skip"
+            condition: "Only if musician.tips_enabled is true"
+          - step: 4
+            action: "Follow Invitation"
+            content: "Social links"
+            skippable: true
+            skip_label: "Close" or "Done"
+            condition: "Only if musician has social links configured"
+        
+        presentation_options:
+          option_a:
+            name: "Sequential Steps"
+            description: "Each action shown one at a time"
+            pros: "Clear focus, no overwhelm"
+            cons: "More taps to complete"
+          option_b:
+            name: "Combined View"
+            description: "Tip and follow shown together after email"
+            pros: "Fewer steps, user sees all options"
+            cons: "May feel like a wall of asks"
+          decision: "PENDING - Implementation detail"
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # ORIENTATION SIDE PATH
+    # ─────────────────────────────────────────────────────────────────────────
+    orientation:
+      surface_name: "Orientation Side Path"
+      primary_intent: "Learn about or support the artist without requesting"
+      
+      tip_allowed: true
+      tip_rationale: >
+        Orientation serves users who want to support without requesting.
+        Tips here are explicitly NOT linked to any request.
+      tip_constraints:
+        - "Tip must be framed as general support, not request-related"
+        - "No request_id attached to tip record"
+        - "Analytics event uses orientation prefix"
+        - "No 'thank you for your request' messaging"
+      tip_framing:
+        allowed:
+          - "Support [Artist]"
+          - "Send [Artist] a tip"
+          - "Buy [Artist] a coffee"
+        forbidden:
+          - "Tip for your request"
+          - "Say thanks for playing your song"
+          - Any request-implying language
+          
+      follow_allowed: true
+      follow_rationale: >
+        Orientation is the appropriate place for social discovery.
+        Users can follow the artist without making a request.
+      follow_constraints:
+        - "Follow clicks NOT linked to any request"
+        - "Analytics event uses orientation prefix"
+        - "No request context in event metadata"
+      follow_framing:
+        allowed:
+          - "Follow [Artist]"
+          - "Connect on Instagram"
+          - "Find on Spotify"
+        forbidden:
+          - "Follow for request updates"
+          - Any request-implying language
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # POST-REQUEST STATE (After completing Moment 3)
+    # ─────────────────────────────────────────────────────────────────────────
+    post_request_state:
+      surface_name: "Post-Request Passive State"
+      primary_intent: "User has completed request flow, returned to browse"
+      
+      tip_allowed: true
+      tip_rationale: >
+        If user returns to browse after requesting, subsequent tip actions
+        via Orientation are allowed. These tips are NOT automatically linked
+        to the previous request.
+      tip_linking_rule: >
+        Tips in post-request state follow Orientation rules (no request link)
+        UNLESS explicitly designed otherwise in future iterations.
+        
+      follow_allowed: true
+      follow_rationale: >
+        Same as tip. User can access Orientation and follow.
+      follow_linking_rule: >
+        Follows in post-request state are NOT linked to any request.
+
+# =============================================================================
+# SECTION 3: SEQUENCING RULES
+# =============================================================================
+
+sequencing_rules:
+
+  rule_set:
+  
+    - rule_id: "SEQ-01"
+      name: "No Pre-Request Tip Prompts"
+      rule: >
+        Tip prompts must NEVER appear before a song is requested, unless
+        the user has explicitly entered Orientation.
+      rationale: >
+        Presenting tips before requesting implies that tipping is a
+        prerequisite or that it replaces requesting.
+      enforcement: >
+        Tip UI elements must not render in Moments 1A, 1B, or 2.
+        Header Tip button routes to Orientation, not direct tip.
+        
+    - rule_id: "SEQ-02"
+      name: "Request Before Support Invitation"
+      rule: >
+        After a request is submitted, the system MAY invite support (tip/follow),
+        but must NOT imply obligation or transactional exchange.
+      rationale: >
+        Post-request support is contextually appropriate but must remain
+        clearly optional.
+      enforcement: >
+        All post-request tip/follow UI must include visible skip option.
+        Language must avoid obligation framing.
+        
+    - rule_id: "SEQ-03"
+      name: "Follow Actions Are Not Prerequisites"
+      rule: >
+        Follow actions must NEVER feel like a prerequisite for requests
+        being honored or visible to the musician.
+      rationale: >
+        Implying that following affects request handling would coerce
+        social engagement and undermine trust.
+      enforcement: >
+        No language suggesting follow affects request status.
+        No conditional logic that gates requests behind follows.
+        
+    - rule_id: "SEQ-04"
+      name: "Tip-Only Users Are Not Requesters"
+      rule: >
+        A user who only tips or follows must NOT be treated as having
+        requested a song. No request record is created.
+      rationale: >
+        Supporting and participating are distinct intents. Conflating
+        them corrupts data and misrepresents user behavior.
+      enforcement: >
+        Orientation tips create tip records with no request_id.
+        Analytics events distinguish orientation vs post-request context.
+        
+    - rule_id: "SEQ-05"
+      name: "Orientation Support Is Context-Free"
+      rule: >
+        Tips and follows initiated from Orientation must NOT automatically
+        attach to any request, even if user has made requests previously.
+      rationale: >
+        Orientation is a separate path. Attaching its actions to requests
+        would blur the boundary and create data inconsistencies.
+      enforcement: >
+        Orientation tip/follow events omit request_id from metadata.
+        Separate analytics event types with orientation_ prefix.
+        
+    - rule_id: "SEQ-06"
+      name: "Post-Request Support May Reference Request"
+      rule: >
+        Tips and follows initiated in Moment 3 (immediately after request
+        submission) MAY be linked to the just-submitted request.
+      rationale: >
+        In this context, the user is clearly supporting in response to
+        their participation. The link is semantically accurate.
+      enforcement: >
+        Moment 3 tip/follow events include request_id in metadata.
+        Use standard event types (not orientation_ prefix).
+        
+    - rule_id: "SEQ-07"
+      name: "No Support Gates"
+      rule: >
+        No request flow step may be gated behind tip or follow completion.
+        All support actions are bypassable.
+      rationale: >
+        Gating requests behind support converts voluntary support into
+        coercive extraction.
+      enforcement: >
+        Every tip/follow prompt has skip/close option.
+        Skip does not produce negative feedback or friction.
+
+# =============================================================================
+# SECTION 4: ANALYTICS DEFINITIONS
+# =============================================================================
+
+analytics_definitions:
+
+  governing_principle: >
+    Analytics events must clearly distinguish between support actions
+    taken in request context vs. orientation context. Event naming and
+    metadata must make context unambiguous.
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # POST-REQUEST CONTEXT (Moment 3 / Request-Linked)
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  post_request_events:
+  
+    - event_id: "ANALYTICS-PR-01"
+      event_type: "audience.tip_clicked"
+      context: "Post-request (Moment 3)"
+      trigger: "User clicks tip payment link after submitting request"
+      metadata:
+        - musician_id: "From request"
+        - show_id: "From request"
+        - request_id: "ID of just-submitted request"
+        - platform: "venmo | paypal | cashapp | zelle"
+        - audience_id: "Client-provided anonymous ID"
+      linked_to_request: true
+      existing_event: true
+      notes: "Already implemented in Phase 2"
+      
+    - event_id: "ANALYTICS-PR-02"
+      event_type: "audience.tip_completed"
+      context: "Post-request (Moment 3)"
+      trigger: "User submits tip record after requesting"
+      metadata:
+        - musician_id: "From musician lookup"
+        - show_id: "From request or musician's current_show_id"
+        - request_id: "ID of associated request (if available)"
+        - amount: "Tip amount"
+        - platform: "venmo | paypal | cashapp | zelle"
+        - audience_id: "Client-provided anonymous ID"
+      linked_to_request: true
+      existing_event: true
+      notes: "Already implemented in Phase 2"
+      
+    - event_id: "ANALYTICS-PR-03"
+      event_type: "audience.follow_clicked"
+      context: "Post-request (Moment 3)"
+      trigger: "User clicks social link after submitting request"
+      metadata:
+        - musician_id: "From request"
+        - show_id: "From request"
+        - request_id: "ID of just-submitted request"
+        - platform: "instagram | facebook | tiktok | spotify | apple_music"
+        - audience_id: "Client-provided anonymous ID"
+      linked_to_request: true
+      existing_event: true
+      notes: "Already implemented in Phase 2"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # ORIENTATION CONTEXT (No Request Link)
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  orientation_events:
+  
+    - event_id: "ANALYTICS-OR-01"
+      event_type: "audience.orientation_tip_clicked"
+      context: "Orientation side path"
+      trigger: "User clicks tip payment link within Orientation"
+      metadata:
+        - musician_id: "From musician profile"
+        - show_id: "From musician's current_show_id (may be null)"
+        - platform: "venmo | paypal | cashapp | zelle"
+        - audience_id: "Client-provided anonymous ID"
+      linked_to_request: false
+      request_id: "NOT INCLUDED"
+      new_event: true
+      notes: "Defined in orientation_side_path_spec.yaml"
+      
+    - event_id: "ANALYTICS-OR-02"
+      event_type: "audience.orientation_tip_completed"
+      context: "Orientation side path"
+      trigger: "User submits tip record from Orientation (no prior request)"
+      metadata:
+        - musician_id: "From musician lookup"
+        - show_id: "From musician's current_show_id (may be null)"
+        - amount: "Tip amount"
+        - platform: "venmo | paypal | cashapp | zelle"
+        - audience_id: "Client-provided anonymous ID"
+      linked_to_request: false
+      request_id: "NOT INCLUDED"
+      new_event: true
+      notes: "New event for Orientation tips"
+      
+    - event_id: "ANALYTICS-OR-03"
+      event_type: "audience.orientation_social_clicked"
+      context: "Orientation side path"
+      trigger: "User clicks social link within Orientation"
+      metadata:
+        - musician_id: "From musician profile"
+        - show_id: "From musician's current_show_id (may be null)"
+        - platform: "instagram | facebook | tiktok | spotify | apple_music"
+        - audience_id: "Client-provided anonymous ID"
+      linked_to_request: false
+      request_id: "NOT INCLUDED"
+      new_event: true
+      notes: "Defined in orientation_side_path_spec.yaml"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # ANALYTICS DISTINCTION SUMMARY
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  distinction_summary:
+    
+    tip_click_events:
+      post_request: "audience.tip_clicked (includes request_id)"
+      orientation: "audience.orientation_tip_clicked (NO request_id)"
+      
+    tip_completed_events:
+      post_request: "audience.tip_completed (includes request_id)"
+      orientation: "audience.orientation_tip_completed (NO request_id)"
+      
+    follow_events:
+      post_request: "audience.follow_clicked (includes request_id)"
+      orientation: "audience.orientation_social_clicked (NO request_id)"
+      
+    implementation_note: >
+      The presence or absence of request_id in metadata is the definitive
+      indicator of whether support was request-linked or standalone.
+
+# =============================================================================
+# SECTION 5: FORBIDDEN PATTERNS
+# =============================================================================
+
+forbidden_patterns:
+
+  description: >
+    These patterns are explicitly forbidden and must not appear in any
+    implementation. Violations undermine trust and corrupt user intent.
+
+  patterns:
+  
+    - pattern_id: "FORBID-01"
+      name: "Tip Gates Before Requesting"
+      description: >
+        Any UI or flow that requires or strongly encourages tipping before
+        a song request can be submitted.
+      examples:
+        - "Tip $1 to unlock requesting"
+        - "Premium requests require a tip"
+        - Tip modal that must be dismissed before accessing song list
+      violation: "Coerces payment; makes support a prerequisite for participation"
+      
+    - pattern_id: "FORBID-02"
+      name: "Priority Implication Language"
+      description: >
+        Any text or UI suggesting that tipping increases the likelihood
+        of a song being played or prioritizes the request.
+      examples:
+        - "Tip to move up in the queue"
+        - "Tipped requests are played first"
+        - "Support to get your song played faster"
+        - Star/badge on tipped requests visible to audience
+      violation: "Creates pay-to-win dynamic; undermines fair queuing"
+      
+    - pattern_id: "FORBID-03"
+      name: "Follow Requirements for Visibility"
+      description: >
+        Any logic or implication that following the artist affects whether
+        the musician sees or responds to the request.
+      examples:
+        - "Follow to ensure [Artist] sees your request"
+        - "Requests from followers are highlighted"
+        - Follow checkbox on request form
+      violation: "Coerces social engagement; misrepresents system behavior"
+      
+    - pattern_id: "FORBID-04"
+      name: "Support-As-Completion Framing"
+      description: >
+        Language that frames tipping or following as completing the request
+        process, when the request was already submitted.
+      examples:
+        - "Complete your request by leaving a tip"
+        - "Finish by following [Artist]"
+        - Progress bar that fills with tip/follow
+      violation: "Implies request is incomplete without support; creates false obligation"
+      
+    - pattern_id: "FORBID-05"
+      name: "Negative Skip Feedback"
+      description: >
+        Any UI feedback that makes skipping tip/follow feel like a bad choice.
+      examples:
+        - "Are you sure you don't want to support [Artist]?"
+        - Sad emoji or disappointed face on skip
+        - "No thanks, I don't want to help"
+        - Delay or friction added to skip action
+      violation: "Guilt-based manipulation; undermines voluntary nature"
+      
+    - pattern_id: "FORBID-06"
+      name: "Auto-Attached Tips"
+      description: >
+        Automatically linking a tip to a request when the user did not
+        intend that association (e.g., Orientation tips attached to
+        most recent request).
+      examples:
+        - Orientation tip silently linked to last request
+        - "We added your tip to your recent request"
+      violation: "Misrepresents user intent; corrupts data relationships"
+      
+    - pattern_id: "FORBID-07"
+      name: "Forced Sequential Support"
+      description: >
+        Requiring users to view or interact with tip prompt before they
+        can access follow prompt, or vice versa.
+      examples:
+        - Must tap "No Tip" before social links appear
+        - Must scroll past tip section to find close button
+      violation: "Creates friction; makes skipping punitive"
+
+# =============================================================================
+# SECTION 6: RISKS AND GUARDRAILS
+# =============================================================================
+
+risks_and_guardrails:
+
+  identified_risks:
+  
+    - risk_id: "RISK-TF-01"
+      name: "Support Fatigue"
+      description: >
+        If post-request flow has too many steps (email → tip → follow),
+        users may feel bombarded and develop negative association.
+      mitigation:
+        - "Keep each prompt minimal and clearly skippable"
+        - "Consider combined view option to reduce steps"
+        - "Measure skip rates to detect fatigue"
+        
+    - risk_id: "RISK-TF-02"
+      name: "Intent Confusion"
+      description: >
+        Users may not understand the difference between Orientation tips
+        and post-request tips, leading to incorrect expectations.
+      mitigation:
+        - "Use distinct framing language per context"
+        - "Analytics separation ensures data clarity"
+        - "Musician dashboard can show breakdown by context"
+        
+    - risk_id: "RISK-TF-03"
+      name: "Revenue Pressure Creep"
+      description: >
+        Over time, there may be pressure to make tips more prominent or
+        to add priority features, violating forbidden patterns.
+      mitigation:
+        - "This specification serves as boundary documentation"
+        - "Any proposed changes must be evaluated against forbidden patterns"
+        - "Prioritization features are explicitly out of scope"
+        
+    - risk_id: "RISK-TF-04"
+      name: "Incomplete Skip Paths"
+      description: >
+        Implementation may accidentally create flows where skip is
+        difficult to find or doesn't work correctly.
+      mitigation:
+        - "Explicit guardrail: every prompt has visible skip"
+        - "QA checklist must include skip path testing"
+        
+  guardrails:
+  
+    - guardrail_id: "GUARD-TF-01"
+      name: "Request Spine Immutability"
+      rule: >
+        Moments 1A, 1B, 2 request capture flow must not be modified to
+        include tip or follow prompts.
+        
+    - guardrail_id: "GUARD-TF-02"
+      name: "Visible Skip Requirement"
+      rule: >
+        Every tip and follow prompt must have a clearly visible and
+        functional skip/close option that requires no scrolling to find.
+        
+    - guardrail_id: "GUARD-TF-03"
+      name: "No Priority Features"
+      rule: >
+        No implementation may create visible or invisible prioritization
+        of tipped requests over non-tipped requests.
+        
+    - guardrail_id: "GUARD-TF-04"
+      name: "Context-Correct Linking"
+      rule: >
+        Tips/follows from Orientation must NOT link to requests.
+        Tips/follows from Moment 3 MUST link to the triggering request.
+        
+    - guardrail_id: "GUARD-TF-05"
+      name: "Language Review"
+      rule: >
+        All tip and follow UI copy must be reviewed against allowed and
+        forbidden framing lists before implementation.
+
+# =============================================================================
+# SECTION 7: SPECIFICATION STATUS
+# =============================================================================
+
+specification_status:
+
+  document_state: "DRAFT"
+  
+  dependencies_resolved:
+    - "Orientation definition (locked in orientation_side_path_spec.yaml)"
+    - "Moment 3 email capture (implemented)"
+    
+  open_decisions:
+  
+    - decision_id: "DECISION-TF-01"
+      topic: "Moment 3 Presentation Style"
+      question: "Sequential steps vs combined view for email/tip/follow?"
+      options:
+        - "Sequential: Email → Tip → Follow (current behavior)"
+        - "Combined: Email alone, then Tip+Follow together"
+        - "Fully Combined: All three visible at once"
+      status: "PENDING - Implementation detail"
+      
+  approvals_required:
+    - "Product review of sequencing rules"
+    - "Review of forbidden patterns list"
+    - "Confirmation of analytics event naming"
+    
+  next_steps:
+    - "Approve this specification"
+    - "Finalize Orientation specification (unblock on sequencing)"
+    - "Create implementation prompts for Orientation"
+    - "Update current_build_inventory.yaml with finalized rules"
+
+# =============================================================================
+# END OF SPECIFICATION
+# =============================================================================
