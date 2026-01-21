@@ -225,6 +225,11 @@ class RequestCreate(BaseModel):
     tip_amount: float = 0.0
     audience_id: Optional[str] = None  # Phase 2: Stable anonymous audience identifier
 
+class RequestEmailAttach(BaseModel):
+    """Moment 3: Attach email to an existing request after submission"""
+    email: str
+    audience_id: Optional[str] = None  # For security validation
+
 class Request(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     musician_id: str
