@@ -9690,7 +9690,11 @@ const AudienceInterface = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
-                <span className="text-xs text-gray-500 mt-0.5">About · Tip · Follow</span>
+                <span className="text-xs text-gray-500 mt-0.5">
+                  {musician?.current_show_name 
+                    ? `Live Now: ${musician.current_show_name}`
+                    : 'About · Tip · Follow'}
+                </span>
               </button>
             </div>
             {/* RequestWave logo - subtle branding */}
