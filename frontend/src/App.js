@@ -8761,11 +8761,12 @@ const AudienceInterface = () => {
   });
   const [requestForm, setRequestForm] = useState({
     requester_name: '',
-    requester_email: '',
     dedication: ''
   });
   const [selectedSong, setSelectedSong] = useState(null);
-  const [requestStep, setRequestStep] = useState('commit'); // 'commit' (Moment 1B) or 'identity' (Moment 2)
+  const [requestStep, setRequestStep] = useState('commit'); // 'commit' (Moment 1B), 'identity' (Moment 2), or 'followup' (Moment 3)
+  const [submittedRequestId, setSubmittedRequestId] = useState(null); // Track request ID for Moment 3 email attachment
+  const [followUpEmail, setFollowUpEmail] = useState(''); // Email captured in Moment 3
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState('');
   const [showFilters, setShowFilters] = useState(false);
