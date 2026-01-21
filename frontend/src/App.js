@@ -9670,164 +9670,154 @@ const AudienceInterface = () => {
           </div>
         )}
 
-        {/* NEW: Prominent Search Bar */}
-        <div className={`${colors.secondary} rounded-xl p-4 md:p-6 mb-4 md:mb-6`}>
-          <div className="flex flex-col space-y-3">
-            <div className="flex items-center space-x-3">
-              <div className="text-2xl">🔍</div>
-              <h2 className="text-xl md:text-2xl font-bold text-white">Search Songs</h2>
-            </div>
-            <div className="flex flex-col space-y-3">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search Song Title or Artist"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-gray-700 border-2 border-gray-600 focus:border-blue-500 rounded-xl px-4 md:px-6 py-3 md:py-4 text-white placeholder-gray-400 text-base md:text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition duration-300"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-              
-              {/* NEW: Sort Dropdown */}
-              <div className="flex items-center space-x-2">
-                <select
-                  value={sortOption}
-                  onChange={(e) => setSortOption(e.target.value)}
-                  className="bg-gray-700 border-2 border-gray-600 focus:border-blue-500 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
-                  aria-label="Sort by"
+        {/* Moment 1A: Primary instruction - visible without scrolling */}
+        {musician?.requests_enabled !== false && (
+          <div className="text-center mb-4 md:mb-6">
+            <p className="text-lg md:text-xl text-gray-300 font-medium">
+              Tap a song to request it.
+            </p>
+          </div>
+        )}
+
+        {/* Search Bar - De-emphasized styling */}
+        <div className="bg-gray-800/50 rounded-xl p-3 md:p-4 mb-3 md:mb-4">
+          <div className="flex flex-col space-y-2">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search songs..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-gray-700 border border-gray-600 focus:border-blue-500 rounded-lg px-4 py-2 md:py-3 text-white placeholder-gray-400 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition duration-300"
                 >
-                  <option value="most-popular">Sort: Most Popular</option>
-                  <option value="alphabetical">Sort: A→Z</option>
-                  <option value="newest">Sort: Newest</option>
-                  <option value="random">Sort: Random</option>
-                </select>
-                {sortOption === 'random' && (
-                  <button
-                    onClick={handleAudienceShuffle}
-                    className={`${colors.primary} px-3 py-2 rounded-lg font-medium transition duration-300 text-sm flex items-center space-x-1`}
-                    title="Shuffle"
-                    aria-label="Shuffle songs"
-                  >
-                    <span>🔀</span>
-                    <span className="hidden sm:inline">Shuffle</span>
-                  </button>
-                )}
-              </div>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            
+            {/* Sort and Filter Controls - Compact row */}
+            <div className="flex items-center justify-between gap-2">
+              <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+                className="bg-gray-700 border border-gray-600 focus:border-blue-500 rounded-lg px-2 py-1.5 text-gray-300 text-xs focus:outline-none transition-all duration-300"
+                aria-label="Sort by"
+              >
+                <option value="most-popular">Most Popular</option>
+                <option value="alphabetical">A→Z</option>
+                <option value="newest">Newest</option>
+                <option value="random">Random</option>
+              </select>
+              {sortOption === 'random' && (
+                <button
+                  onClick={handleAudienceShuffle}
+                  className="text-gray-400 hover:text-white px-2 py-1.5 rounded-lg text-xs flex items-center space-x-1 transition duration-300"
+                  title="Shuffle"
+                  aria-label="Shuffle songs"
+                >
+                  <span>🔀</span>
+                  <span className="hidden sm:inline">Shuffle</span>
+                </button>
+              )}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="text-gray-400 hover:text-white px-2 py-1.5 rounded-lg text-xs transition duration-300"
+              >
+                {showFilters ? 'Hide Filters' : 'Filters'}
+              </button>
             </div>
             {searchQuery && (
-              <p className="text-sm text-gray-300">
-                Searching for: "<span className="text-white font-medium">{searchQuery}</span>" in titles, artists, genres, moods, and years
+              <p className="text-xs text-gray-400">
+                Searching: "<span className="text-gray-300">{searchQuery}</span>"
               </p>
             )}
           </div>
         </div>
 
-        {/* NEW: View Filters Button - moved from header */}
-        <div className="flex justify-center mb-4">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`${colors.primary} px-4 py-2 rounded-lg font-medium transition duration-300 text-sm`}
-          >
-            View Filters
-          </button>
-        </div>
-
-        {/* NEW: Redesigned Filter Layout - No Labels */}
-        <div className={`${colors.secondary} rounded-xl p-4 md:p-6 mb-4 md:mb-8 ${showFilters ? 'block' : 'hidden md:block'}`}>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-            <h2 className="text-lg md:text-xl font-bold mb-2 md:mb-0">Advanced Filters</h2>
-            <div className="flex items-center space-x-2">
+        {/* Advanced Filters - Collapsed by default, de-emphasized */}
+        {showFilters && (
+          <div className="bg-gray-800/30 rounded-lg p-3 md:p-4 mb-3 md:mb-4 border border-gray-700/50">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-gray-400">Filters</span>
               <button
                 onClick={clearFilters}
-                className="text-gray-300 hover:text-white text-sm transition duration-300"
+                className="text-gray-500 hover:text-gray-300 text-xs transition duration-300"
               >
-                Clear All
-              </button>
-              <button
-                onClick={() => setShowFilters(false)}
-                className="md:hidden text-gray-300 hover:text-white"
-              >
-                ✕
+                Clear
               </button>
             </div>
-          </div>
-          
-          <div className="space-y-3">
-            {/* Playlists Dropdown - Full Width */}
-            <select
-              value={selectedFilters.playlist}
-              onChange={(e) => setSelectedFilters({...selectedFilters, playlist: e.target.value})}
-              className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
-            >
-              <option value="">All Playlists</option>
-              {playlists.map((playlist) => (
-                <option key={playlist.id} value={playlist.id}>
-                  {playlist.name} ({playlist.song_count} songs)
-                </option>
-              ))}
-            </select>
             
-            {/* Row 1: Genres (left) + Moods (right) */}
-            <div className="grid grid-cols-2 gap-3 md:gap-4">
+            <div className="space-y-2">
+              {/* Playlists Dropdown */}
               <select
-                value={selectedFilters.genre}
-                onChange={(e) => setSelectedFilters({...selectedFilters, genre: e.target.value})}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
+                value={selectedFilters.playlist}
+                onChange={(e) => setSelectedFilters({...selectedFilters, playlist: e.target.value})}
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-300 text-sm"
               >
-                <option value="">All Genres</option>
-                {filters.genres?.map((genre) => (
-                  <option key={genre} value={genre}>{genre}</option>
+                <option value="">All Playlists</option>
+                {playlists.map((playlist) => (
+                  <option key={playlist.id} value={playlist.id}>
+                    {playlist.name} ({playlist.song_count})
+                  </option>
                 ))}
               </select>
               
-              <select
-                value={selectedFilters.mood}
-                onChange={(e) => setSelectedFilters({...selectedFilters, mood: e.target.value})}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
-              >
-                <option value="">All Moods</option>
-                {filters.moods?.map((mood) => (
-                  <option key={mood} value={mood}>{mood}</option>
-                ))}
-              </select>
-            </div>
-            
-            {/* Row 2: Years (left) + Decades (right) */}
-            <div className="grid grid-cols-2 gap-3 md:gap-4">
-              <select
-                value={selectedFilters.year}
-                onChange={(e) => setSelectedFilters({...selectedFilters, year: e.target.value})}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
-              >
-                <option value="">All Years</option>
-                {filters.years?.map((year) => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-              
-              <select
-                value={selectedFilters.decade}
-                onChange={(e) => setSelectedFilters({...selectedFilters, decade: e.target.value})}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 md:px-4 py-2 text-white text-sm md:text-base"
-              >
-                <option value="">All Decades</option>
-                {filters.decades?.map((decade) => (
-                  <option key={decade} value={decade}>{decade}</option>
-                ))}
-              </select>
+              {/* Compact filter grid */}
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={selectedFilters.genre}
+                  onChange={(e) => setSelectedFilters({...selectedFilters, genre: e.target.value})}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-2 py-1.5 text-gray-300 text-sm"
+                >
+                  <option value="">Genre</option>
+                  {filters.genres?.map((genre) => (
+                    <option key={genre} value={genre}>{genre}</option>
+                  ))}
+                </select>
+                
+                <select
+                  value={selectedFilters.mood}
+                  onChange={(e) => setSelectedFilters({...selectedFilters, mood: e.target.value})}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-2 py-1.5 text-gray-300 text-sm"
+                >
+                  <option value="">Mood</option>
+                  {filters.moods?.map((mood) => (
+                    <option key={mood} value={mood}>{mood}</option>
+                  ))}
+                </select>
+                
+                <select
+                  value={selectedFilters.year}
+                  onChange={(e) => setSelectedFilters({...selectedFilters, year: e.target.value})}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-2 py-1.5 text-gray-300 text-sm"
+                >
+                  <option value="">Year</option>
+                  {filters.years?.map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+                
+                <select
+                  value={selectedFilters.decade}
+                  onChange={(e) => setSelectedFilters({...selectedFilters, decade: e.target.value})}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-2 py-1.5 text-gray-300 text-sm"
+                >
+                  <option value="">Decade</option>
+                  {filters.decades?.map((decade) => (
+                    <option key={decade} value={decade}>{decade}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Songs Display */}
         <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
