@@ -9908,7 +9908,10 @@ const AudienceInterface = () => {
             {filteredSongs.map((song) => (
               <button
                 key={song.id}
-                onClick={() => setSelectedSong(song)}
+                onClick={() => {
+                  setRequestStep('commit');
+                  setSelectedSong(song);
+                }}
                 data-testid={`song-card-${song.id}`}
                 className={`w-full text-left bg-gray-800 rounded-xl p-4 md:p-5 hover:bg-gray-700 active:bg-gray-600 transition duration-200 cursor-pointer ${
                   designSettings.layout_mode === 'list' ? 'flex items-center space-x-4' : ''
