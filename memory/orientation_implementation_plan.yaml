@@ -1,0 +1,547 @@
+# =============================================================================
+# ORIENTATION + TIP/FOLLOW IMPLEMENTATION PLAN
+# =============================================================================
+# Document Type: Implementation Planning (NO CODE YET)
+# Created: 2026-01-21
+# Status: DRAFT - Awaiting Approval Before Implementation
+#
+# GOVERNING SPECIFICATIONS (FROZEN):
+#   - /app/memory/orientation_side_path_spec.yaml
+#   - /app/memory/tip_follow_sequencing_spec.yaml
+#
+# CONSTRAINTS:
+#   - Moments 1A, 1B, 2, 3 are FROZEN (no modifications)
+#   - No new analytics usage or optimization logic
+#   - No musician configurability
+#   - Minimal UI changes only
+# =============================================================================
+
+# =============================================================================
+# SECTION 1: SCOPE SUMMARY
+# =============================================================================
+
+scope:
+
+  in_scope:
+    - "Orientation side path UI (drawer/sheet component)"
+    - "Entry points into Orientation (header tap, info button, tip button)"
+    - "Orientation content: artist bio, photo, social links, tip links"
+    - "Orientation mailing list email capture (optional)"
+    - "Orientation analytics events (4 new events)"
+    - "Tip/follow framing adjustments per sequencing spec"
+    
+  out_of_scope:
+    - "Any changes to Moments 1A, 1B, 2, or 3"
+    - "New analytics dashboards or reporting"
+    - "Musician-configurable Orientation settings"
+    - "Song lists or recommendations in Orientation"
+    - "Priority/premium request features"
+    - "New tip payment integrations"
+
+# =============================================================================
+# SECTION 2: IMPLEMENTATION PHASES
+# =============================================================================
+
+implementation_phases:
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # PHASE A: ORIENTATION CONTAINER
+  # ─────────────────────────────────────────────────────────────────────────
+  phase_a:
+    name: "Orientation Container Component"
+    description: >
+      Create the Orientation drawer/sheet component that overlays the
+      browse state without navigating away.
+    
+    tasks:
+      - task_id: "A1"
+        name: "Create OrientationDrawer component"
+        description: >
+          New React component that renders as a bottom sheet or side drawer.
+          Must preserve underlying browse state (scroll, filters, search).
+        location: "/app/frontend/src/App.js (inline) or separate component"
+        acceptance_criteria:
+          - "Renders as overlay, not page navigation"
+          - "Has visible close button (X or swipe down)"
+          - "Closing returns to exact previous state"
+          - "Does not block song cards underneath"
+          
+      - task_id: "A2"
+        name: "Add Orientation state management"
+        description: >
+          Add state variable to control Orientation visibility.
+        implementation: |
+          const [showOrientation, setShowOrientation] = useState(false);
+        acceptance_criteria:
+          - "Orientation opens/closes based on state"
+          - "State resets on page reload"
+          
+    dependencies: "None"
+    estimated_complexity: "Low"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # PHASE B: ENTRY POINTS
+  # ─────────────────────────────────────────────────────────────────────────
+  phase_b:
+    name: "Orientation Entry Points"
+    description: >
+      Wire up the allowed entry points per orientation_side_path_spec.yaml.
+    
+    tasks:
+      - task_id: "B1"
+        name: "Artist header tap → Orientation"
+        description: >
+          Make artist name/photo in header tappable to open Orientation.
+        spec_reference: "ENTRY-01"
+        current_behavior: "Header is not interactive"
+        new_behavior: "Tapping header opens Orientation drawer"
+        ui_change: "Add cursor pointer, subtle hover state"
+        acceptance_criteria:
+          - "Tapping artist name opens Orientation"
+          - "Tapping artist photo opens Orientation"
+          - "Does not interfere with dropdown menu if present"
+          
+      - task_id: "B2"
+        name: "Header Tip button → Orientation"
+        description: >
+          Change header Tip button behavior from direct tip to Orientation entry.
+        spec_reference: "ENTRY-03"
+        current_behavior: "Opens tip modal directly"
+        new_behavior: "Opens Orientation with tip section visible"
+        ui_change: "None (button exists, behavior changes)"
+        acceptance_criteria:
+          - "Tip button opens Orientation"
+          - "Orientation scrolls to or highlights tip section"
+          - "Does not open tip modal directly"
+          
+      - task_id: "B3"
+        name: "Add Info/About button (optional)"
+        description: >
+          If header does not have sufficient tap target, add explicit info icon.
+        spec_reference: "ENTRY-02"
+        conditional: "Only if B1 tap target is insufficient"
+        ui_change: "Add info icon near artist name"
+        acceptance_criteria:
+          - "Icon is visually secondary to song cards"
+          - "Tapping opens Orientation"
+          
+    dependencies: "Phase A"
+    estimated_complexity: "Low"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # PHASE C: ORIENTATION CONTENT
+  # ─────────────────────────────────────────────────────────────────────────
+  phase_c:
+    name: "Orientation Content Sections"
+    description: >
+      Populate Orientation with allowed content per spec.
+    
+    tasks:
+      - task_id: "C1"
+        name: "Artist bio section"
+        description: "Display musician.bio if present"
+        spec_reference: "CONTENT-01"
+        data_source: "musician.bio (already fetched)"
+        ui_change: "Text display in Orientation"
+        conditional: "Only show if bio is non-empty"
+        
+      - task_id: "C2"
+        name: "Artist photo section"
+        description: "Display artist photo larger than header"
+        spec_reference: "CONTENT-02"
+        data_source: "musician.artist_photo or profile image"
+        ui_change: "Image display in Orientation"
+        conditional: "Only show if image exists"
+        
+      - task_id: "C3"
+        name: "Social links section"
+        description: "Display social media links"
+        spec_reference: "CONTENT-03"
+        data_source: >
+          musician.instagram_username, facebook_username, 
+          tiktok_username, spotify_artist_url, apple_music_artist_url
+        ui_change: "Icon buttons that open external URLs"
+        conditional: "Only show platforms that have values"
+        analytics_event: "audience.orientation_social_clicked"
+        
+      - task_id: "C4"
+        name: "Tip links section"
+        description: "Display tip payment links"
+        spec_reference: "CONTENT-04"
+        data_source: >
+          musician.venmo_username, paypal_username,
+          cash_app_username, zelle_email/zelle_phone
+        ui_change: "Payment buttons that open external URLs"
+        conditional: "Only show platforms that are configured AND enabled"
+        analytics_event: "audience.orientation_tip_clicked"
+        framing: "Support [Artist Name]"
+        
+      - task_id: "C5"
+        name: "Website link section"
+        description: "Display link to artist website"
+        spec_reference: "CONTENT-07"
+        data_source: "musician.website"
+        ui_change: "Link/button that opens external URL"
+        conditional: "Only show if website is non-empty"
+        
+    dependencies: "Phase A"
+    estimated_complexity: "Medium"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # PHASE D: ORIENTATION MAILING LIST
+  # ─────────────────────────────────────────────────────────────────────────
+  phase_d:
+    name: "Orientation Email Capture (Mailing List)"
+    description: >
+      Add optional mailing list signup within Orientation.
+      This is SEPARATE from Moment 3 request email.
+    
+    tasks:
+      - task_id: "D1"
+        name: "Mailing list email input UI"
+        description: >
+          Email input field in Orientation for mailing list signup.
+        spec_reference: "CONTENT-05"
+        ui_elements:
+          - "Email input field"
+          - "Submit button (e.g., 'Join Mailing List')"
+          - "Success feedback after submit"
+        constraints:
+          - "Must be labeled as mailing list, NOT request-related"
+          - "Must be optional (no required indicator)"
+          - "Must not pre-populate from any request data"
+          
+      - task_id: "D2"
+        name: "Backend: Mailing list storage"
+        description: >
+          New collection or field to store mailing list emails separately
+          from request.requester_email.
+        implementation_options:
+          option_a:
+            name: "New collection"
+            collection: "mailing_list_subscribers"
+            schema:
+              - "email: str"
+              - "musician_id: str"
+              - "audience_id: Optional[str]"
+              - "subscribed_at: datetime"
+          option_b:
+            name: "Field on musician document"
+            field: "musician.mailing_list_emails: List[str]"
+        recommended: "option_a (separate collection)"
+        rationale: "Cleaner data model, easier to query/export"
+        
+      - task_id: "D3"
+        name: "Backend: Mailing list endpoint"
+        description: "API endpoint to submit mailing list signup"
+        endpoint: "POST /api/musicians/{slug}/mailing-list"
+        request_body:
+          - "email: str (required)"
+          - "audience_id: Optional[str]"
+        response: "{ ok: true }"
+        analytics_event: "audience.orientation_email_submitted"
+        
+    dependencies: "Phase A, Phase C"
+    estimated_complexity: "Medium"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # PHASE E: ORIENTATION ANALYTICS
+  # ─────────────────────────────────────────────────────────────────────────
+  phase_e:
+    name: "Orientation Analytics Events"
+    description: >
+      Implement the 4 new analytics events defined in orientation spec.
+    
+    tasks:
+      - task_id: "E1"
+        name: "audience.orientation_opened event"
+        trigger: "User opens Orientation"
+        metadata:
+          - "entry_point: header | tip_button | info_button"
+          - "audience_id"
+          - "musician_id"
+        backend_change: "None (emit from existing emit_analytics_event)"
+        frontend_change: "Call tracking endpoint on Orientation open"
+        
+      - task_id: "E2"
+        name: "audience.orientation_social_clicked event"
+        trigger: "User clicks social link in Orientation"
+        metadata:
+          - "platform: instagram | facebook | tiktok | spotify | apple_music"
+          - "audience_id"
+          - "musician_id"
+        note: "Distinct from audience.follow_clicked (post-request)"
+        
+      - task_id: "E3"
+        name: "audience.orientation_tip_clicked event"
+        trigger: "User clicks tip link in Orientation"
+        metadata:
+          - "platform: venmo | paypal | cashapp | zelle"
+          - "audience_id"
+          - "musician_id"
+        note: "Distinct from audience.tip_clicked (post-request)"
+        
+      - task_id: "E4"
+        name: "audience.orientation_email_submitted event"
+        trigger: "User submits mailing list email in Orientation"
+        metadata:
+          - "email_provided: true"
+          - "audience_id"
+          - "musician_id"
+        note: "Distinct from audience.email_submitted (Moment 3)"
+        
+      - task_id: "E5"
+        name: "audience.orientation_closed event"
+        trigger: "User closes Orientation"
+        metadata:
+          - "exit_type: dismiss"
+          - "duration_seconds"
+          - "audience_id"
+          - "musician_id"
+          
+    dependencies: "Phase A, Phase C, Phase D"
+    estimated_complexity: "Low-Medium"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # PHASE F: TIP BUTTON BEHAVIOR UPDATE
+  # ─────────────────────────────────────────────────────────────────────────
+  phase_f:
+    name: "Tip Button Routing Update"
+    description: >
+      Update header Tip button to route to Orientation instead of direct tip.
+      Per tip_follow_sequencing_spec.yaml, tips in browse state must go
+      through Orientation.
+    
+    tasks:
+      - task_id: "F1"
+        name: "Header Tip button behavior change"
+        current_behavior: "Opens TipModal directly"
+        new_behavior: "Opens Orientation, scrolls to tip section"
+        code_location: "AudienceInterface component, header section"
+        acceptance_criteria:
+          - "Tip button opens Orientation"
+          - "Orientation tip section is visible/highlighted"
+          - "User can still tip from Orientation"
+          - "Post-request tip flow (Moment 3) is UNCHANGED"
+          
+    dependencies: "Phase A, Phase B, Phase C"
+    estimated_complexity: "Low"
+    
+    important_note: >
+      The post-request tip modal (shown after Moment 3) is NOT changed.
+      This only affects the header Tip button in browse state.
+
+# =============================================================================
+# SECTION 3: IMPLEMENTATION SEQUENCE
+# =============================================================================
+
+implementation_sequence:
+
+  recommended_order:
+    - phase: "A"
+      name: "Orientation Container"
+      reason: "Foundation for all other phases"
+      
+    - phase: "B"
+      name: "Entry Points"
+      reason: "Allows opening Orientation"
+      
+    - phase: "C"
+      name: "Content Sections"
+      reason: "Populates Orientation with value"
+      
+    - phase: "F"
+      name: "Tip Button Update"
+      reason: "Completes entry point behavior per spec"
+      
+    - phase: "E"
+      name: "Analytics"
+      reason: "Adds tracking to existing UI"
+      
+    - phase: "D"
+      name: "Mailing List"
+      reason: "Optional enhancement, can be deferred"
+
+  minimum_viable_implementation:
+    description: >
+      If time-constrained, the following constitutes minimum viable Orientation:
+    phases: ["A", "B", "C4"]
+    delivers:
+      - "Orientation opens from header"
+      - "Tip links available in Orientation"
+      - "Satisfies spec requirement for Orientation tip path"
+    defers:
+      - "Bio, photo, social links"
+      - "Mailing list email"
+      - "Analytics events"
+
+# =============================================================================
+# SECTION 4: UI CHANGES INVENTORY
+# =============================================================================
+
+ui_changes_inventory:
+
+  new_components:
+    - component: "OrientationDrawer"
+      type: "New"
+      location: "/app/frontend/src/App.js or components/"
+      description: "Bottom sheet or side drawer for Orientation content"
+      
+  modified_components:
+    - component: "AudienceInterface header"
+      type: "Modified"
+      change: "Add tap handler to artist name/photo"
+      
+    - component: "Header Tip button"
+      type: "Modified"
+      change: "Route to Orientation instead of TipModal"
+      
+  unchanged_components:
+    - "Song grid/list"
+    - "Song card"
+    - "Request modal (Moments 1B, 2)"
+    - "Post-request flow (Moment 3)"
+    - "Post-request TipModal"
+    - "Post-request SocialModal"
+    - "Musician dashboard (all tabs)"
+
+# =============================================================================
+# SECTION 5: BACKEND CHANGES INVENTORY
+# =============================================================================
+
+backend_changes_inventory:
+
+  new_endpoints:
+    - endpoint: "POST /api/musicians/{slug}/mailing-list"
+      purpose: "Store mailing list email signup"
+      phase: "D"
+      
+    - endpoint: "POST /api/analytics/orientation-event"
+      purpose: "Track Orientation-specific events"
+      phase: "E"
+      note: "May use existing analytics endpoint with new event types"
+      
+  new_collections:
+    - collection: "mailing_list_subscribers"
+      purpose: "Store mailing list signups separate from requests"
+      phase: "D"
+      
+  modified_endpoints:
+    - "None - no existing endpoints are modified"
+    
+  unchanged_endpoints:
+    - "POST /api/requests"
+    - "POST /api/requests/{id}/email"
+    - "POST /api/requests/{id}/track-click"
+    - "POST /api/musicians/{slug}/tips"
+    - "All musician dashboard endpoints"
+
+# =============================================================================
+# SECTION 6: TESTING REQUIREMENTS
+# =============================================================================
+
+testing_requirements:
+
+  frontend_tests:
+    - test: "Orientation opens from header tap"
+    - test: "Orientation opens from Tip button"
+    - test: "Orientation closes with X button"
+    - test: "Orientation closes with outside tap"
+    - test: "Browse state preserved after Orientation close"
+    - test: "Social links open external URLs"
+    - test: "Tip links open external payment URLs"
+    - test: "Mailing list email submits successfully"
+    - test: "Post-request flow unchanged (regression)"
+    
+  backend_tests:
+    - test: "Mailing list endpoint stores email"
+    - test: "Mailing list email separate from request emails"
+    - test: "Orientation analytics events emit correctly"
+    - test: "Orientation events have no request_id"
+    
+  regression_tests:
+    - test: "Moment 1A browse works as before"
+    - test: "Moment 1B commit works as before"
+    - test: "Moment 2 identity works as before"
+    - test: "Moment 3 email capture works as before"
+    - test: "Post-request tip flow works as before"
+    - test: "Post-request social flow works as before"
+
+# =============================================================================
+# SECTION 7: RISKS AND MITIGATIONS
+# =============================================================================
+
+risks_and_mitigations:
+
+  - risk: "Orientation competes with song browsing"
+    mitigation: >
+      Keep entry points subtle (header only). Do not add prominent
+      Orientation buttons near song cards.
+      
+  - risk: "Users confused by two tip paths"
+    mitigation: >
+      Clear framing: Orientation tip is "Support [Artist]",
+      post-request tip is "Say thanks for your song request".
+      
+  - risk: "Mailing list email confused with request email"
+    mitigation: >
+      Label clearly: "Join [Artist]'s mailing list" in Orientation,
+      "Add your email to this request" in Moment 3.
+      
+  - risk: "App.js becomes even larger"
+    mitigation: >
+      OrientationDrawer can be extracted to separate file if needed.
+      Tech debt noted but not blocking.
+
+# =============================================================================
+# SECTION 8: APPROVAL CHECKLIST
+# =============================================================================
+
+approval_checklist:
+
+  spec_compliance:
+    - check: "No changes to Moments 1A, 1B, 2, 3"
+      status: "COMPLIANT"
+    - check: "No song lists in Orientation"
+      status: "COMPLIANT"
+    - check: "Mailing list email separate from requests"
+      status: "COMPLIANT"
+    - check: "No musician configurability"
+      status: "COMPLIANT"
+    - check: "Analytics events use orientation_ prefix"
+      status: "COMPLIANT"
+    - check: "Tip/follow sequencing per spec"
+      status: "COMPLIANT"
+      
+  open_questions:
+    - question: "Orientation UI style: bottom sheet vs side drawer?"
+      recommendation: "Bottom sheet (mobile-friendly)"
+      decision: "PENDING"
+      
+    - question: "Mailing list: implement in Phase D or defer?"
+      recommendation: "Include in initial implementation"
+      decision: "PENDING"
+
+# =============================================================================
+# SECTION 9: NEXT STEPS
+# =============================================================================
+
+next_steps:
+  - step: 1
+    action: "Review and approve this implementation plan"
+    
+  - step: 2
+    action: "Decide on open questions (UI style, mailing list scope)"
+    
+  - step: 3
+    action: "Begin implementation starting with Phase A"
+    
+  - step: 4
+    action: "Test each phase before proceeding to next"
+    
+  - step: 5
+    action: "Final E2E testing across all audience flows"
+
+# =============================================================================
+# END OF IMPLEMENTATION PLAN
+# =============================================================================
