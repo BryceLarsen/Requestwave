@@ -561,27 +561,33 @@ specification_status:
   open_questions:
     
     - question: "Should Orientation include 'Popular Songs' recommendations?"
-      options:
-        - "Yes - helps discovery, exits to Moment 1B"
-        - "No - keeps Orientation purely informational"
-      decision: "PENDING"
+      decision: "FORBIDDEN"
+      decision_date: "2026-01-21"
+      rationale: "Song lists of any kind belong in Moment 1A only"
       
     - question: "Should mailing list email be captured in Orientation?"
-      options:
-        - "Yes - serves non-requesting users"
-        - "No - too similar to Moment 3, causes confusion"
-      decision: "PENDING"
+      decision: "ALLOWED with constraints"
+      decision_date: "2026-01-21"
+      constraints:
+        - "Must be labeled as artist mailing list"
+        - "Must not attach to request records"
+        - "Must not reuse Moment 3 semantics"
       
     - question: "Should Orientation be musician-configurable?"
-      options:
-        - "Yes - musicians can enable/disable sections"
-        - "No - standard layout for consistency"
-      decision: "PENDING"
+      decision: "DEFERRED - Out of scope for this phase"
+      decision_date: "2026-01-21"
+      rationale: "Configurability adds complexity; standard layout for initial implementation"
 
+  blocking_dependencies:
+    - dependency: "Tip and Follow Sequencing Definition"
+      description: >
+        Before Orientation can be implemented, the sequencing of tip and follow
+        actions must be defined relative to: Orientation, Moment 3, and post-request state.
+      status: "PENDING - Next prompt"
+      
   next_steps:
-    - "Review specification with stakeholder"
-    - "Resolve open questions"
-    - "Approve specification"
+    - "Define tip/follow sequencing (next prompt)"
+    - "Finalize specification after sequencing is locked"
     - "Create implementation prompt (separate from this document)"
 
 # =============================================================================
