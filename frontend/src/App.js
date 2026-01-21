@@ -9897,51 +9897,42 @@ const AudienceInterface = () => {
             </div>
           </div>
         ) : (
-          /* Normal Songs Display */
+          /* Normal Songs Display - Tappable cards */
           <div className={`${
             designSettings.layout_mode === 'list' 
-              ? 'space-y-3 md:space-y-4' 
-              : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6'
+              ? 'space-y-2 md:space-y-3' 
+              : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4'
           }`}>
             {filteredSongs.map((song) => (
-              <div
+              <button
                 key={song.id}
-                className={`bg-gray-800 rounded-xl p-4 md:p-6 hover:bg-gray-700 transition duration-300 ${
+                onClick={() => setSelectedSong(song)}
+                data-testid={`song-card-${song.id}`}
+                className={`w-full text-left bg-gray-800 rounded-xl p-4 md:p-5 hover:bg-gray-700 active:bg-gray-600 transition duration-200 cursor-pointer ${
                   designSettings.layout_mode === 'list' ? 'flex items-center space-x-4' : ''
                 }`}
               >
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-lg md:text-xl mb-1 md:mb-2 truncate">{song.title}</h3>
-                  <p className="text-gray-300 mb-2 md:mb-3 truncate">by {song.artist}</p>
+                  <h3 className="font-bold text-base md:text-lg mb-1 truncate text-white">{song.title}</h3>
+                  <p className="text-gray-400 text-sm mb-2 truncate">{song.artist}</p>
                   
-                  <div className="flex flex-wrap gap-1 md:gap-2 mb-3 md:mb-4">
-                    {song.genres.map((genre, idx) => (
-                      <span key={idx} className="bg-blue-600 text-xs px-2 py-1 rounded whitespace-nowrap">{genre}</span>
+                  <div className="flex flex-wrap gap-1">
+                    {song.genres.slice(0, 2).map((genre, idx) => (
+                      <span key={idx} className="bg-blue-600/60 text-xs px-2 py-0.5 rounded whitespace-nowrap">{genre}</span>
                     ))}
-                    {song.moods.map((mood, idx) => (
-                      <span key={idx} className="bg-green-600 text-xs px-2 py-1 rounded whitespace-nowrap">{mood}</span>
+                    {song.moods.slice(0, 1).map((mood, idx) => (
+                      <span key={idx} className="bg-green-600/60 text-xs px-2 py-0.5 rounded whitespace-nowrap">{mood}</span>
                     ))}
                     {designSettings.show_year && song.year && (
-                      <span className="bg-gray-600 text-xs px-2 py-1 rounded whitespace-nowrap">{song.year}</span>
-                    )}
-                    {/* NEW: Show decade if available */}
-                    {song.decade && (
-                      <span className="bg-orange-600 text-xs px-2 py-1 rounded whitespace-nowrap">{song.decade}</span>
+                      <span className="bg-gray-600/60 text-xs px-2 py-0.5 rounded whitespace-nowrap">{song.year}</span>
                     )}
                   </div>
                   
                   {designSettings.show_notes && song.notes && (
-                    <p className="text-gray-400 text-xs md:text-sm italic mb-3 md:mb-4">"{song.notes}"</p>
+                    <p className="text-gray-500 text-xs italic mt-2 line-clamp-1">"{song.notes}"</p>
                   )}
                 </div>
-                
-                <button
-                  onClick={() => setSelectedSong(song)}
-                  className={`${colors.button} w-full md:w-auto px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold transition duration-300 text-sm md:text-base whitespace-nowrap`}
-                >
-                  Request Song
-                </button>
-              </div>
+              </button>
             ))}
             
             {filteredSongs.length === 0 && (
