@@ -783,6 +783,15 @@ audience_moment_model:
     - Tips, follows, and artist info are not Moments
     - No Moment may be merged without a planning update
 
+  related_specifications:
+    orientation_side_path:
+      document: "/app/memory/orientation_side_path_spec.yaml"
+      status: "DRAFT - Awaiting Review"
+      description: >
+        Defines the Orientation side path: a voluntary, parallel path for
+        learning about the artist or supporting them without making a request.
+        Orientation is explicitly NOT part of the request spine (Moments 1-3).
+
 # =============================================================================
 # SECTION 7B: AUDIENCE EXPERIENCE → MOMENT MODEL MAPPING (ANALYSIS)
 # =============================================================================
