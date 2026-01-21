@@ -9692,7 +9692,7 @@ const AudienceInterface = () => {
                 </div>
                 <span className="text-xs text-gray-500 mt-0.5 block truncate">
                   {musician?.current_show_name 
-                    ? `Live Now: ${musician.current_show_name}`
+                    ? `Live Now: ${musician.current_show_name} · About · Tip · Follow`
                     : 'About · Tip · Follow'}
                 </span>
               </button>
