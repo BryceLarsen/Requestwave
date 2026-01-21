@@ -9690,11 +9690,20 @@ const AudienceInterface = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
-              <p className="text-xs text-gray-500 truncate -mt-0.5">
-                {musician?.current_show_name 
-                  ? `Live Now: ${musician.current_show_name} · About · Tip · Follow`
-                  : 'About · Tip · Follow'}
-              </p>
+              {/* Helper line: Left (About·Tip·Follow) + Right (Live Now with glow) */}
+              <div className="flex items-center text-xs -mt-0.5 truncate">
+                <span className="text-gray-500">About · Tip · Follow</span>
+                {musician?.current_show_name && (
+                  <>
+                    <span className="text-gray-600 mx-1.5">·</span>
+                    <span className="relative inline-flex items-center">
+                      <span className="text-green-400 animate-live-pulse truncate">
+                        Live Now: {musician.current_show_name}
+                      </span>
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
             {/* RequestWave logo - subtle ambient glow */}
             <div className="relative flex-shrink-0 ml-2">
