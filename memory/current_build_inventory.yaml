@@ -746,6 +746,386 @@ audience_moment_model:
     - No Moment may be merged without a planning update
 
 # =============================================================================
+# SECTION 7B: AUDIENCE EXPERIENCE → MOMENT MODEL MAPPING (ANALYSIS)
+# =============================================================================
+# Gap analysis mapping current audience elements to the Audience Moment Model.
+# This is descriptive and analytical only. No fixes or proposals.
+
+audience_experience_moment_mapping:
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # ENTRY AND ARRIVAL ELEMENTS
+  # ─────────────────────────────────────────────────────────────────────────────
+  
+  - element_name: "Landing View (QR Entry)"
+    current_location: "/musician/:slug page load"
+    current_behavior: >
+      Page loads musician profile, songs, filters, playlists, and design settings.
+      Access check performed. Full song list displayed immediately with all UI
+      elements visible (search, filters, sort, header).
+    mapped_moment: "moment_0_arrival"
+    alignment_status: "partially_aligned"
+    notes: >
+      Model expects "Immediate signal that participation affects the live show"
+      but current UI shows full song browser without explicit live show context
+      or participation framing. No distinct arrival state exists; page loads
+      directly into browsing state.
+
+  - element_name: "Artist Header / Artist Name Display"
+    current_location: "Top of /musician/:slug page"
+    current_behavior: >
+      Displays musician name, bio, and artist photo (if configured). Header is
+      static and always visible. Tapping artist name/header has no action.
+    mapped_moment: "moment_0_arrival"
+    alignment_status: "aligned"
+    notes: >
+      Provides awareness of which artist the audience is interacting with.
+      Consistent with arrival intent. No blocking behavior.
+
+  - element_name: "Artist Photo"
+    current_location: "Header area of /musician/:slug page"
+    current_behavior: >
+      Displays artist photo if musician has configured one. Static display,
+      not interactive.
+    mapped_moment: "moment_0_arrival"
+    alignment_status: "aligned"
+    notes: >
+      Supports awareness and artist recognition. No blocking behavior.
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # BROWSE AND EXPLORATION ELEMENTS
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  - element_name: "Song List / Song Grid"
+    current_location: "Main content area of /musician/:slug page"
+    current_behavior: >
+      Displays all available songs in grid or list format (based on layout_mode).
+      Each song is tappable. Tapping opens request modal.
+    mapped_moment: "moment_1a_browse"
+    alignment_status: "aligned"
+    notes: >
+      Core browse element. Songs are tappable to request. Exit condition
+      (song selection) leads to request flow. Fully aligned with model.
+
+  - element_name: "Search Bar"
+    current_location: "Above song list on /musician/:slug page"
+    current_behavior: >
+      Text input for filtering songs by title or artist. Filters displayed
+      songs in real-time as user types.
+    mapped_moment: "moment_1a_browse"
+    alignment_status: "aligned"
+    notes: >
+      Supports exploration intent. Does not block or delay requesting.
+      Secondary action that enhances primary browse flow.
+
+  - element_name: "Filter Dropdowns (Genre, Playlist, Mood, Decade)"
+    current_location: "Filter bar above song list"
+    current_behavior: >
+      Dropdown selectors for filtering songs by genre, playlist, mood, and
+      decade. Multiple filters can be combined. Filters songs in real-time.
+    mapped_moment: "moment_1a_browse"
+    alignment_status: "aligned"
+    notes: >
+      Supports exploration intent. Does not block or delay requesting.
+      Secondary actions that enhance discovery.
+
+  - element_name: "Sort Options (Most Popular, A-Z, Newest, Random)"
+    current_location: "Sort selector near filter bar"
+    current_behavior: >
+      Dropdown or buttons to change song list ordering. Default varies.
+      Changes take effect immediately.
+    mapped_moment: "moment_1a_browse"
+    alignment_status: "aligned"
+    notes: >
+      Supports exploration intent. Does not compete with requesting.
+
+  - element_name: "Random Song Selector ('Pick Random Song' button)"
+    current_location: "Above or within song list area"
+    current_behavior: >
+      Button that selects a random song from the filtered list. Opens request
+      modal for the randomly selected song.
+    mapped_moment: "moment_1a_browse → moment_1b_commit"
+    alignment_status: "aligned"
+    notes: >
+      Alternative path to song selection. Bypasses manual browsing but
+      correctly triggers commit flow. Aligned with model.
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # COMMIT AND REQUEST ELEMENTS
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  - element_name: "Song Tap → Request Modal Open"
+    current_location: "Triggered by tapping song card"
+    current_behavior: >
+      Tapping a song card opens the request form modal. Modal displays
+      selected song title and artist. Contains name, email, dedication fields.
+    mapped_moment: "moment_1b_commit → moment_2_identity"
+    alignment_status: "partially_aligned"
+    notes: >
+      Model defines moment_1b_commit as confirming selected song and signaling
+      intent, separate from identity capture. Current implementation merges
+      commit and identity into a single modal. No distinct "confirm song"
+      step before identity fields appear.
+
+  - element_name: "Name Field (Request Form)"
+    current_location: "Request form modal"
+    current_behavior: >
+      Text input labeled 'Your Name'. Required field. Must be non-empty to
+      submit request.
+    mapped_moment: "moment_2_identity"
+    alignment_status: "aligned"
+    notes: >
+      Model requires name. Current implementation makes name required.
+      Aligned with model.
+
+  - element_name: "Dedication Field (Request Form)"
+    current_location: "Request form modal"
+    current_behavior: >
+      Text input labeled 'Dedication (optional)'. Optional field. Can be
+      empty or contain any text.
+    mapped_moment: "moment_2_identity"
+    alignment_status: "aligned"
+    notes: >
+      Model lists dedication as optional. Current implementation makes it
+      optional. Aligned with model.
+
+  - element_name: "Email Field (Request Form)"
+    current_location: "Request form modal"
+    current_behavior: >
+      Text input labeled 'Your Email'. Currently REQUIRED. Must be non-empty
+      to submit request. No format validation.
+    mapped_moment: "moment_2_identity"
+    alignment_status: "misaligned"
+    notes: >
+      Model places email capture in moment_3_follow_up as OPTIONAL and
+      "fully skippable". Current implementation requires email in
+      moment_2_identity, blocking request submission if empty. This
+      violates the principle "No optional action may block requesting."
+
+  - element_name: "Request Submit Button"
+    current_location: "Request form modal"
+    current_behavior: >
+      Button to submit the request. Validates required fields (name, email).
+      On success, creates request and proceeds to tip modal (if enabled)
+      or social modal.
+    mapped_moment: "moment_2_identity (completion)"
+    alignment_status: "aligned"
+    notes: >
+      Completes moment_2_identity by creating the request. Aligned with
+      model's completion definition.
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # POST-REQUEST ELEMENTS
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  - element_name: "Post-Request Tip Modal"
+    current_location: "Modal appearing after request submission"
+    current_behavior: >
+      If musician.tips_enabled is true, tip modal appears immediately after
+      request submission. Shows preset amounts ($1, $5, $10, $20), custom
+      input, and payment platform selection. Can be skipped.
+    mapped_moment: "Not a defined Moment"
+    alignment_status: "misaligned"
+    notes: >
+      Model explicitly excludes tips from Moments: "Tips, follows, and artist
+      info are not Moments." Current implementation presents tip modal as
+      a required step in the flow (even if skippable), interrupting the
+      path between request completion and follow-up. Violates principle
+      "No optional action may block or interrupt requesting."
+
+  - element_name: "Tip Amount Selector"
+    current_location: "Tip modal"
+    current_behavior: >
+      Preset buttons ($1, $5, $10, $20) and custom amount input. Selecting
+      amount is required to proceed with tip submission.
+    mapped_moment: "Not a defined Moment"
+    alignment_status: "misaligned"
+    notes: >
+      Part of tip flow which is excluded from Moment Model. Should not be
+      presented as a step in the core request flow.
+
+  - element_name: "Tip Payment Platform Selector"
+    current_location: "Tip modal"
+    current_behavior: >
+      Buttons or selector for Venmo, PayPal, CashApp, Zelle. Must select
+      platform to submit tip.
+    mapped_moment: "Not a defined Moment"
+    alignment_status: "misaligned"
+    notes: >
+      Part of tip flow which is excluded from Moment Model.
+
+  - element_name: "Tip Links (Venmo/PayPal/CashApp/Zelle buttons)"
+    current_location: "Tip modal"
+    current_behavior: >
+      Clicking a tip payment button opens external payment link in new tab
+      and records tip_clicked event.
+    mapped_moment: "Not a defined Moment"
+    alignment_status: "misaligned"
+    notes: >
+      Tips are explicitly excluded from Moments. Current placement as
+      post-request step conflicts with model.
+
+  - element_name: "Social Follow Modal"
+    current_location: "Modal appearing after tip flow (or if tips disabled)"
+    current_behavior: >
+      Displays links to musician's social profiles (Instagram, Facebook,
+      TikTok, Spotify, Apple Music). Can be closed to return to song list.
+    mapped_moment: "Not a defined Moment"
+    alignment_status: "misaligned"
+    notes: >
+      Model explicitly excludes follows from Moments: "Tips, follows, and
+      artist info are not Moments." Current implementation presents social
+      modal as a step in the flow. Model expects moment_3_follow_up to
+      handle optional email, not social links.
+
+  - element_name: "Social/Follow Links (Instagram, Spotify, etc.)"
+    current_location: "Social modal"
+    current_behavior: >
+      Clickable links/buttons that open musician's social profiles in new
+      tab and record follow_clicked event.
+    mapped_moment: "Not a defined Moment"
+    alignment_status: "misaligned"
+    notes: >
+      Follows are explicitly excluded from Moments. Should not be
+      presented as part of the request flow.
+
+  - element_name: "Post-Request Confirmation State"
+    current_location: "After completing tip/social modals"
+    current_behavior: >
+      No explicit confirmation state. After closing social modal, user
+      returns to song list. No persistent indicator that request was
+      submitted.
+    mapped_moment: "moment_3_follow_up (exit)"
+    alignment_status: "partially_aligned"
+    notes: >
+      Model expects exit from moment_3_follow_up to return user to
+      "passive state". Current implementation returns to browse state
+      which is reasonable. However, no confirmation of successful
+      request is shown, and no email capture opportunity exists
+      per moment_3_follow_up definition.
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # ALTERNATIVE FLOWS
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  - element_name: "Suggest-a-Song Button"
+    current_location: "Song list area (button visible when browsing)"
+    current_behavior: >
+      Opens suggestion form modal. Allows audience to suggest songs not in
+      musician's library. Separate flow from song request.
+    mapped_moment: "moment_1a_browse (alternative path)"
+    alignment_status: "partially_aligned"
+    notes: >
+      Represents an alternative to the primary request flow. Does not map
+      directly to any Moment. Model does not define a Moment for suggestions.
+      Current placement in browse area is reasonable but creates a
+      parallel flow outside the Moment Model.
+
+  - element_name: "Suggestion Form Modal"
+    current_location: "Modal opened by 'Suggest a Song' button"
+    current_behavior: >
+      Form with song title (required), artist (required), name (optional),
+      email (optional), message (optional). Submits to song_suggestions
+      collection.
+    mapped_moment: "Not a defined Moment"
+    alignment_status: "partially_aligned"
+    notes: >
+      Suggestion flow is a parallel path not covered by Moment Model.
+      Does not block or interrupt requesting. Identity fields are optional
+      unlike request form. Not inherently misaligned but represents
+      undefined territory.
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # SUMMARY: ALIGNMENT OVERVIEW
+  # ─────────────────────────────────────────────────────────────────────────────
+  
+  alignment_summary:
+    total_elements_analyzed: 20
+    
+    aligned: 10
+    aligned_elements:
+      - "Artist Header / Artist Name Display"
+      - "Artist Photo"
+      - "Song List / Song Grid"
+      - "Search Bar"
+      - "Filter Dropdowns"
+      - "Sort Options"
+      - "Random Song Selector"
+      - "Name Field"
+      - "Dedication Field"
+      - "Request Submit Button"
+    
+    partially_aligned: 5
+    partially_aligned_elements:
+      - element: "Landing View (QR Entry)"
+        reason: "No distinct arrival state or live show context signal"
+      - element: "Song Tap → Request Modal Open"
+        reason: "Merges moment_1b_commit and moment_2_identity"
+      - element: "Post-Request Confirmation State"
+        reason: "No email capture per moment_3_follow_up; no visible confirmation"
+      - element: "Suggest-a-Song Button"
+        reason: "Alternative flow not defined in Moment Model"
+      - element: "Suggestion Form Modal"
+        reason: "Parallel flow outside Moment Model scope"
+    
+    misaligned: 5
+    misaligned_elements:
+      - element: "Email Field (Request Form)"
+        reason: "Required in moment_2_identity but model places in moment_3_follow_up as optional"
+        severity: "high"
+        principle_violated: "No optional action may block requesting"
+      - element: "Post-Request Tip Modal"
+        reason: "Tips excluded from Moments but presented as flow step"
+        severity: "medium"
+        principle_violated: "Tips are not Moments"
+      - element: "Tip Amount Selector"
+        reason: "Part of excluded tip flow"
+        severity: "medium"
+      - element: "Tip Links"
+        reason: "Part of excluded tip flow"
+        severity: "medium"
+      - element: "Social Follow Modal"
+        reason: "Follows excluded from Moments but presented as flow step"
+        severity: "medium"
+        principle_violated: "Follows are not Moments"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # KEY GAPS IDENTIFIED
+  # ─────────────────────────────────────────────────────────────────────────────
+  
+  key_gaps:
+    
+    - gap_id: "GAP-01"
+      gap_name: "Email Required at Wrong Moment"
+      current_state: "Email required in request form (moment_2_identity)"
+      model_expectation: "Email optional in moment_3_follow_up"
+      impact: "Blocks request submission; violates core principle"
+      
+    - gap_id: "GAP-02"
+      gap_name: "No Distinct Arrival Experience"
+      current_state: "Page loads directly into full browse state"
+      model_expectation: "moment_0_arrival should signal live show participation"
+      impact: "Missed opportunity for engagement framing"
+      
+    - gap_id: "GAP-03"
+      gap_name: "Commit and Identity Merged"
+      current_state: "Song tap opens form with identity fields"
+      model_expectation: "moment_1b_commit confirms song before identity"
+      impact: "No clear separation of intent phases"
+      
+    - gap_id: "GAP-04"
+      gap_name: "Tips/Follows in Request Flow"
+      current_state: "Tip modal and social modal appear as post-request steps"
+      model_expectation: "Tips and follows are not Moments"
+      impact: "Optional actions interrupt primary flow"
+      
+    - gap_id: "GAP-05"
+      gap_name: "No moment_3_follow_up Implementation"
+      current_state: "No optional email capture after request"
+      model_expectation: "moment_3_follow_up offers optional email for artist continuity"
+      impact: "Model phase not implemented"
+
+# =============================================================================
 # SECTION 8: MUSICIAN EXPERIENCE (CURRENT STATE)
 # =============================================================================
 # Factual snapshot of musician-facing functionality as implemented.
