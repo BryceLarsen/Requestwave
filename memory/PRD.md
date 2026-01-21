@@ -148,7 +148,7 @@ The frontend has been refactored to align with the "Audience Moment Model" - an 
 4. `created_at` field in requests/suggestions has mixed types (string/datetime)
 
 ## Upcoming Tasks (Backlog)
-- **Phase 3: Post-Show Reflection** - Summary analytics, exports, historical views
+- **Phase 3: Post-Show Reflection** - Summary analytics, exports, historical views (DEFERRED)
 - Build analytics UI powered by `analytics_events`
 - Spotify Web API integration for playlist enrichment
 - Show rename functionality
