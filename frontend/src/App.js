@@ -9237,8 +9237,8 @@ const AudienceInterface = () => {
   };
 
   const handleRequest = async (song) => {
-    if (!requestForm.requester_name || !requestForm.requester_email) {
-      alert('Please enter your name and email');
+    if (!requestForm.requester_name) {
+      alert('Please enter your name');
       return;
     }
 
@@ -9252,37 +9252,65 @@ const AudienceInterface = () => {
       // Submit request first
       const submittedRequest = await submitRequestWithTip(song, 0);
       if (submittedRequest) {
-        // Close the request modal immediately after successful submission
-        setSelectedSong(null);
+        // Store the request ID for potential email attachment in Moment 3
+        setSubmittedRequestId(submittedRequest.id);
         
-        // Store the song for potential tip integration
-        setTipSongId(submittedRequest.id);
-        
-        // Check if tips are enabled
-        if (musician.tips_enabled === false) {
-          // Go straight to social follow modal
-          setShowSocialFollowModal(true);
-        } else {
-          // Show tip modal directly (no skip button)
-          setTipAmount('');
-          setTipMessage('');
-          // Set default platform based on what's available and enabled, in order: Venmo, PayPal, Cash App, Zelle
-          if (musician?.venmo_enabled && musician.venmo_username) {
-            setTipPlatform('venmo');
-          } else if (musician?.paypal_enabled && musician.paypal_username) {
-            setTipPlatform('paypal');
-          } else if (musician?.cash_app_enabled && musician.cash_app_username) {
-            setTipPlatform('cashapp');
-          } else if (musician?.zelle_enabled && (musician.zelle_email || musician.zelle_phone)) {
-            setTipPlatform('zelle');
-          }
-          
-          setShowTipModal(true);
-        }
+        // Transition to Moment 3: Optional Email Follow-Up
+        setRequestStep('followup');
+        setFollowUpEmail('');
       }
     } catch (error) {
       console.error('Error submitting request:', error);
       alert('Error creating request. Please try again.');
+    }
+  };
+  
+  // Handle Moment 3 completion (skip or add email)
+  const handleFollowUpComplete = async (addEmail = false) => {
+    if (addEmail && followUpEmail && submittedRequestId) {
+      // TODO: Backend endpoint needed to attach email to request post-submission
+      // For now, store email client-side. This will be addressed in a future prompt.
+      // Proposed endpoint: PATCH /api/requests/{request_id}/email
+      // Payload: { "email": followUpEmail }
+      console.log('Email to attach to request:', followUpEmail, 'Request ID:', submittedRequestId);
+      
+      // Store in localStorage as fallback until backend support is added
+      const pendingEmails = JSON.parse(localStorage.getItem('requestwave_pending_emails') || '{}');
+      pendingEmails[submittedRequestId] = followUpEmail;
+      localStorage.setItem('requestwave_pending_emails', JSON.stringify(pendingEmails));
+    }
+    
+    // Close the modal and reset state
+    setSelectedSong(null);
+    setRequestStep('commit');
+    setSubmittedRequestId(null);
+    setFollowUpEmail('');
+    
+    // Store the song for potential tip integration
+    if (submittedRequestId) {
+      setTipSongId(submittedRequestId);
+    }
+    
+    // Check if tips are enabled - proceed to tip flow after Moment 3
+    if (musician.tips_enabled === false) {
+      // Go straight to social follow modal
+      setShowSocialFollowModal(true);
+    } else {
+      // Show tip modal
+      setTipAmount('');
+      setTipMessage('');
+      // Set default platform based on what's available and enabled
+      if (musician?.venmo_enabled && musician.venmo_username) {
+        setTipPlatform('venmo');
+      } else if (musician?.paypal_enabled && musician.paypal_username) {
+        setTipPlatform('paypal');
+      } else if (musician?.cash_app_enabled && musician.cash_app_username) {
+        setTipPlatform('cashapp');
+      } else if (musician?.zelle_enabled && (musician.zelle_email || musician.zelle_phone)) {
+        setTipPlatform('zelle');
+      }
+      
+      setShowTipModal(true);
     }
   };
   
@@ -9291,7 +9319,9 @@ const AudienceInterface = () => {
     try {
       const response = await axios.post(`${API}/requests`, {
         song_id: song.id,
-        ...requestForm,
+        requester_name: requestForm.requester_name,
+        requester_email: '', // Email now captured in Moment 3, not at submission
+        dedication: requestForm.dedication || '',
         tip_amount: parseFloat(tipAmount) || 0.0,
         audience_id: audienceId  // Phase 2: Include stable audience identifier
       });
