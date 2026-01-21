@@ -9820,34 +9820,22 @@ const AudienceInterface = () => {
         )}
 
         {/* Songs Display */}
-        <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <p className="text-gray-400 text-sm md:text-base">
-            {searchQuery ? (
-              <>
-                <span className="text-white font-medium">{filteredSongs.length}</span> song{filteredSongs.length !== 1 ? 's' : ''} found for "<span className="text-white font-medium">{searchQuery}</span>"
-                {(selectedFilters.genre || selectedFilters.playlist || selectedFilters.mood || selectedFilters.year || selectedFilters.decade) && (
-                  <span> with additional filters applied</span>
-                )}
-              </>
-            ) : (
-              <>
-                <span className="text-white font-medium">{filteredSongs.length}</span> song{filteredSongs.length !== 1 ? 's' : ''} 
-                {(selectedFilters.genre || selectedFilters.playlist || selectedFilters.mood || selectedFilters.year || selectedFilters.decade) ? ' found with filters applied' : ' available'}
-              </>
-            )}
+        <div className="mb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <p className="text-gray-500 text-sm">
+            {filteredSongs.length} song{filteredSongs.length !== 1 ? 's' : ''}
+            {(selectedFilters.genre || selectedFilters.playlist || selectedFilters.mood || selectedFilters.year || selectedFilters.decade || searchQuery) && ' matching'}
           </p>
           
-          {/* Random Song Button */}
+          {/* Surprise Me Button */}
           {filteredSongs.length > 0 && musician?.requests_enabled !== false && (
-            <div className="flex justify-center sm:justify-end">
-              <button
-                onClick={handleRandomSong}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                <span>🎲</span>
-                <span>Random Song</span>
-              </button>
-            </div>
+            <button
+              onClick={handleRandomSong}
+              data-testid="surprise-me-btn"
+              className="text-gray-400 hover:text-white px-3 py-1.5 rounded-lg text-sm transition duration-300 flex items-center space-x-2 border border-gray-700 hover:border-gray-500"
+            >
+              <span>🎲</span>
+              <span>Surprise Me</span>
+            </button>
           )}
         </div>
 
