@@ -2117,7 +2117,9 @@ async def get_musician_by_slug(slug: str):
         apple_music_artist_url=musician.get("apple_music_artist_url"),
         # NEW: Include control settings for audience UI
         tips_enabled=musician.get("tips_enabled", True),
-        requests_enabled=musician.get("requests_enabled", True)
+        requests_enabled=musician.get("requests_enabled", True),
+        # NEW: Live show context for Orientation
+        current_show_name=musician.get("current_show_name")
     )
 
 @api_router.get("/musicians/{slug}/design")
