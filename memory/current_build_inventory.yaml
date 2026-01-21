@@ -670,6 +670,19 @@ audience_experience_current_state:
           metadata: "suggested_title, suggested_artist, has_message"
       note: "audience_id is NOT currently sent with suggestions"
 
+    - action_name: "Email Submitted (Moment 3)"
+      frontend_trigger: "Submit button in Moment 3 follow-up step (post-request)"
+      backend_endpoint: "POST /api/requests/{id}/email"
+      payload_fields:
+        - "email"
+        - "audience_id"
+      analytics_events_emitted:
+        - event_type: "audience.email_submitted"
+          always: true
+          context: "musician_id (from request), show_id (from request), entity_id (request_id)"
+          metadata: "email_provided: true, audience_id"
+      note: "Moment 3 optional follow-up. Raw email NOT included in analytics for privacy."
+
   # ─────────────────────────────────────────────────────────────────────────────
   # 6. Known Limitations
   # ─────────────────────────────────────────────────────────────────────────────
