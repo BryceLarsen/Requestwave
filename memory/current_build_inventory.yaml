@@ -1159,9 +1159,10 @@ audience_experience_moment_mapping:
       
     - gap_id: "GAP-05"
       gap_name: "No moment_3_follow_up Implementation"
-      current_state: "No optional email capture after request"
+      current_state: "RESOLVED - Optional email capture implemented in Moment 3 post-request step"
       model_expectation: "moment_3_follow_up offers optional email for artist continuity"
-      impact: "Model phase not implemented"
+      resolution: "POST /api/requests/{id}/email endpoint added; frontend shows optional email step after request submission"
+      status: "CLOSED"
 
 # =============================================================================
 # SECTION 8: MUSICIAN EXPERIENCE (CURRENT STATE)
