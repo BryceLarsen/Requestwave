@@ -9678,8 +9678,9 @@ const AudienceInterface = () => {
             )}
             <div className="flex-1 min-w-0">
               <button
-                onClick={() => setShowProfileDialog(true)}
+                onClick={() => setShowOrientation(true)}
                 className="flex items-center space-x-2 hover:bg-gray-700/50 rounded-lg px-2 py-1 transition duration-300 w-full text-left"
+                data-testid="artist-header-orientation-trigger"
               >
                 <h1 className={`text-xl md:text-2xl font-bold ${colors.accent} truncate`}>
                   {designSettings.musician_name}
@@ -9696,8 +9697,9 @@ const AudienceInterface = () => {
                 className="w-6 h-6 object-contain opacity-75"
               />
               <button
-                onClick={() => setShowTipModal(true)}
+                onClick={() => setShowOrientation(true)}
                 className="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg font-medium transition duration-300 text-sm"
+                data-testid="header-tip-orientation-trigger"
               >
                 💰 Tip
               </button>
