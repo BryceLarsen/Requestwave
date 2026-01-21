@@ -360,18 +360,22 @@ forbidden_content:
   boundary_cases:
     
     - case: "Song recommendations in Orientation"
-      ruling: "ALLOWED with constraints"
-      constraints:
-        - "Must be clearly informational ('Popular with audiences')"
-        - "Tapping song exits Orientation → Moment 1B (not direct request)"
-        - "Must not be labeled as 'Request this song'"
+      ruling: "FORBIDDEN"
+      decision_date: "2026-01-21"
+      rationale: >
+        Song lists of any kind are forbidden in Orientation. Song discovery
+        belongs exclusively in Moment 1A (Browse). Orientation is for artist
+        information and support, not song selection.
         
     - case: "Email input in Orientation"
       ruling: "ALLOWED with constraints"
+      decision_date: "2026-01-21"
       constraints:
-        - "Must be clearly optional"
-        - "Must be labeled as 'mailing list' or 'stay updated', NOT 'request notification'"
-        - "Email is stored separately from request.requester_email"
+        - "MUST be clearly labeled as artist mailing list (e.g., 'Join [Artist]'s mailing list')"
+        - "MUST be optional (no required fields)"
+        - "MUST NOT attach to request records"
+        - "MUST NOT reuse Moment 3 request email semantics"
+        - "Email stored in separate collection (e.g., mailing_list_subscribers), NOT request.requester_email"
         - "No auto-population into future request forms"
 
 # =============================================================================
