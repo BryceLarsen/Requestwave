@@ -1132,9 +1132,10 @@ audience_experience_moment_mapping:
     
     - gap_id: "GAP-01"
       gap_name: "Email Required at Wrong Moment"
-      current_state: "Email required in request form (moment_2_identity)"
+      current_state: "RESOLVED - Email moved to optional Moment 3 follow-up step"
       model_expectation: "Email optional in moment_3_follow_up"
-      impact: "Blocks request submission; violates core principle"
+      resolution: "Email removed from request form; now captured post-submission via dedicated endpoint"
+      status: "CLOSED"
       
     - gap_id: "GAP-02"
       gap_name: "No Distinct Arrival Experience"
