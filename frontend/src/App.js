@@ -9693,20 +9693,12 @@ const AudienceInterface = () => {
                 <span className="text-xs text-gray-500 mt-0.5">About · Tip · Follow</span>
               </button>
             </div>
-            <div className="flex items-center space-x-2">
-              <img
-                src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png"
-                alt="RequestWave"
-                className="w-6 h-6 object-contain opacity-75"
-              />
-              <button
-                onClick={() => setShowOrientation(true)}
-                className="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg font-medium transition duration-300 text-sm"
-                data-testid="header-tip-orientation-trigger"
-              >
-                💰 Tip
-              </button>
-            </div>
+            {/* RequestWave logo - subtle branding */}
+            <img
+              src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png"
+              alt="RequestWave"
+              className="w-6 h-6 object-contain opacity-50"
+            />
           </div>
         </div>
       </header>
