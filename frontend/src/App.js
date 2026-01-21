@@ -8765,6 +8765,7 @@ const AudienceInterface = () => {
     dedication: ''
   });
   const [selectedSong, setSelectedSong] = useState(null);
+  const [requestStep, setRequestStep] = useState('commit'); // 'commit' (Moment 1B) or 'identity' (Moment 2)
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState('');
   const [showFilters, setShowFilters] = useState(false);
