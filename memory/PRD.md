@@ -64,6 +64,7 @@ The frontend has been refactored to align with the "Audience Moment Model" - an 
 - `audience.tip_clicked` - when audience clicks tip link (Phase 2)
 - `audience.follow_clicked` - when audience clicks social link (Phase 2)
 - `audience.tip_completed` - when audience submits tip (Phase 2)
+- `audience.email_submitted` - when audience provides email in Moment 3 (new)
 - `musician.request_played` - when musician marks request as played
 - `musician.request_skipped` - when musician rejects request
 - `musician.request_restored` - when musician restores request
