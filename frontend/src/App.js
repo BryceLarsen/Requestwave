@@ -9961,23 +9961,9 @@ const AudienceInterface = () => {
               >
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-base md:text-lg mb-1 truncate text-white">{song.title}</h3>
-                  <p className="text-gray-400 text-sm mb-2 truncate">{song.artist}</p>
+                  <p className="text-gray-400 text-sm truncate">{song.artist}</p>
                   
-                  <div className="flex flex-wrap gap-1">
-                    {song.genres.slice(0, 2).map((genre, idx) => (
-                      <span key={idx} className="bg-blue-600/60 text-xs px-2 py-0.5 rounded whitespace-nowrap">{genre}</span>
-                    ))}
-                    {song.moods.slice(0, 1).map((mood, idx) => (
-                      <span key={idx} className="bg-green-600/60 text-xs px-2 py-0.5 rounded whitespace-nowrap">{mood}</span>
-                    ))}
-                    {designSettings.show_year && song.year && (
-                      <span className="bg-gray-600/60 text-xs px-2 py-0.5 rounded whitespace-nowrap">{song.year}</span>
-                    )}
-                  </div>
-                  
-                  {designSettings.show_notes && song.notes && (
-                    <p className="text-gray-500 text-xs italic mt-2 line-clamp-1">"{song.notes}"</p>
-                  )}
+                  {/* Genre/mood tags removed for cleaner scan - data preserved for filtering */}
                 </div>
               </button>
             ))}
