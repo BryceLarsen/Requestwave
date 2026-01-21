@@ -8,7 +8,7 @@ import requests
 import json
 
 # Configuration
-BASE_URL = "https://audience-tracker-4.preview.emergentagent.com/api"
+BASE_URL = "https://audience-flow.preview.emergentagent.com/api"
 
 # Pro account credentials
 PRO_MUSICIAN = {

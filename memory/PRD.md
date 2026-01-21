@@ -144,7 +144,7 @@ Live music request platform enabling musicians to receive song requests from aud
 - Refactoring into modular components required before scaling
 
 ## Environment
-- Preview URL: https://audience-tracker-4.preview.emergentagent.com
+- Preview URL: https://audience-flow.preview.emergentagent.com
 - Backend: FastAPI (Python)
 - Frontend: React
 - Database: MongoDB

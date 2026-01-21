@@ -16,7 +16,7 @@ import os
 from typing import Dict, Any
 
 # Configuration - Use the deployed URL from frontend/.env
-BASE_URL = "https://audience-tracker-4.preview.emergentagent.com/api"
+BASE_URL = "https://audience-flow.preview.emergentagent.com/api"
 
 # Pro account credentials
 PRO_MUSICIAN = {

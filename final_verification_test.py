@@ -29,7 +29,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration - Use the deployed URL from frontend/.env
-BASE_URL = "https://audience-tracker-4.preview.emergentagent.com/api"
+BASE_URL = "https://audience-flow.preview.emergentagent.com/api"
 
 # Test credentials as specified in review request
 TEST_CREDENTIALS = {

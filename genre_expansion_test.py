@@ -25,7 +25,7 @@ import io
 from typing import Dict, Any, Optional, List
 
 # Configuration
-BASE_URL = "https://audience-tracker-4.preview.emergentagent.com/api"
+BASE_URL = "https://audience-flow.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {
