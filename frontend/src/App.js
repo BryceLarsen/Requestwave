@@ -9679,15 +9679,18 @@ const AudienceInterface = () => {
             <div className="flex-1 min-w-0">
               <button
                 onClick={() => setShowOrientation(true)}
-                className="flex items-center space-x-2 hover:bg-gray-700/50 rounded-lg px-2 py-1 transition duration-300 w-full text-left"
+                className="flex flex-col hover:bg-gray-700/50 rounded-lg px-2 py-1 transition duration-300 w-full text-left"
                 data-testid="artist-header-orientation-trigger"
               >
-                <h1 className={`text-xl md:text-2xl font-bold ${colors.accent} truncate`}>
-                  {designSettings.musician_name}
-                </h1>
-                <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <div className="flex items-center space-x-2">
+                  <h1 className={`text-xl md:text-2xl font-bold ${colors.accent} truncate`}>
+                    {designSettings.musician_name}
+                  </h1>
+                  <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <span className="text-xs text-gray-500 mt-0.5">About · Tip · Follow</span>
               </button>
             </div>
             <div className="flex items-center space-x-2">
