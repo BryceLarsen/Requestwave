@@ -10812,7 +10812,6 @@ const AudienceInterface = () => {
             </div>
           </div>
         )}
-        )}
         
         {/* NEW: Zelle Instructions Modal */}
         {showZelleModal && (
