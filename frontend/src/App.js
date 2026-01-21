@@ -9665,39 +9665,39 @@ const AudienceInterface = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {/* Compact Single-Line Header - Maximum song density */}
+      {/* Compact Header with Helper Line Visible on Mobile */}
       <header className="bg-gray-800/95 sticky top-0 z-40 border-b border-gray-700/50">
-        <div className="max-w-4xl mx-auto px-4 py-2.5">
-          <div className="flex items-center justify-between">
-            {/* Artist identity - tappable to open Orientation */}
-            <button
-              onClick={() => setShowOrientation(true)}
-              className="flex items-center space-x-2 hover:bg-gray-700/50 rounded-lg px-2 py-1.5 transition duration-200 min-w-0 flex-1 mr-3"
-              data-testid="artist-header-orientation-trigger"
-            >
-              {designSettings.artist_photo && (
-                <img
-                  src={designSettings.artist_photo}
-                  alt={designSettings.musician_name}
-                  className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                />
-              )}
-              <div className="flex items-center min-w-0 flex-1">
-                <h1 className={`text-base md:text-lg font-semibold ${colors.accent} truncate`}>
+        <div className="max-w-4xl mx-auto px-4 py-2">
+          {/* Artist identity - tappable to open Orientation */}
+          <button
+            onClick={() => setShowOrientation(true)}
+            className="flex items-center w-full hover:bg-gray-700/30 rounded-lg px-1 py-1 transition duration-200"
+            data-testid="artist-header-orientation-trigger"
+          >
+            {designSettings.artist_photo && (
+              <img
+                src={designSettings.artist_photo}
+                alt={designSettings.musician_name}
+                className="w-9 h-9 rounded-full object-cover flex-shrink-0 mr-2.5"
+              />
+            )}
+            <div className="flex-1 min-w-0 text-left">
+              <div className="flex items-center">
+                <h1 className={`text-base font-semibold ${colors.accent} truncate`}>
                   {designSettings.musician_name}
                 </h1>
                 <svg className="w-3.5 h-3.5 text-gray-500 flex-shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
-                <span className="text-xs text-gray-500 ml-2 truncate hidden sm:inline">
-                  {musician?.current_show_name 
-                    ? `Live Now: ${musician.current_show_name}`
-                    : 'About · Tip · Follow'}
-                </span>
               </div>
-            </button>
+              <p className="text-xs text-gray-500 truncate -mt-0.5">
+                {musician?.current_show_name 
+                  ? `Live Now: ${musician.current_show_name} · About · Tip · Follow`
+                  : 'About · Tip · Follow'}
+              </p>
+            </div>
             {/* RequestWave logo - subtle ambient glow */}
-            <div className="relative flex-shrink-0">
+            <div className="relative flex-shrink-0 ml-2">
               <img
                 src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png"
                 alt="RequestWave"
@@ -9711,7 +9711,7 @@ const AudienceInterface = () => {
                 }}
               />
             </div>
-          </div>
+          </button>
         </div>
       </header>
 
