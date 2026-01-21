@@ -250,3 +250,9 @@ button:active {
 .animate-slide-up {
   animation: slideUp 0.3s ease-out forwards;
 }
+
+
+/* Song card active state - custom color between gray-700 and gray-800 */
+.active\:bg-gray-750:active {
+  background-color: rgb(55, 65, 81); /* Between gray-700 (374151) and gray-800 (1f2937) */
+}
