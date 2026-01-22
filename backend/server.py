@@ -134,8 +134,27 @@ class CustomAPIRoute(APIRoute):
         
         return custom_route_handler
 
-# Initialize app
-app = FastAPI(title="RequestWave API", description="Live music request platform")
+# Custom JSON encoder for datetime objects
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
+
+class CustomJSONResponse(JSONResponse):
+    def render(self, content) -> bytes:
+        return json.dumps(
+            content,
+            ensure_ascii=False,
+            allow_nan=False,
+            indent=None,
+            separators=(",", ":"),
+            default=str,  # Convert datetime and other non-serializable objects to string
+        ).encode("utf-8")
+
+# Initialize app with custom JSON response
+app = FastAPI(
+    title="RequestWave API", 
+    description="Live music request platform",
+    default_response_class=CustomJSONResponse
+)
 freemium_router = APIRouter(prefix="/api", route_class=CustomAPIRoute)
 api_router = APIRouter(prefix="/api")
 
