@@ -1,7 +1,7 @@
 # RequestWave Current Build Inventory
 # Canonical source of truth: /app/memory/current_build_inventory.yaml
 # Generated: 2026-01-16
-# Last Updated: 2026-01-21 (Moment 0 header, Moment 1A song cards, Orientation updates)
+# Last Updated: 2026-01-22 (Helper line split layout, song card single-line format)
 
 # =============================================================================
 # SECTION 1: PHASE 2 - AUDIENCE INTERACTION CAPTURE
@@ -416,7 +416,7 @@ audience_experience_current_state:
     flow_type: "Single page with modal overlays for interactions"
     
     # ─────────────────────────────────────────────────────────────────────────
-    # Moment 0: Header (as-built 2026-01-21)
+    # Moment 0: Header (as-built 2026-01-22)
     # ─────────────────────────────────────────────────────────────────────────
     moment_0_header:
       description: >
@@ -428,19 +428,21 @@ audience_experience_current_state:
           selector: '[data-testid="artist-header-orientation-trigger"]'
         - element: "Dropdown chevron"
           behavior: "Visual affordance indicating tappable header"
-        - element: "Helper line (conditional)"
+        - element: "Helper line (split layout)"
           behavior: >
-            Single line below artist name. Content is conditional:
-            - If musician.current_show_name exists: "Live Now: {show_name}"
-            - Else: "About · Tip · Follow"
+            Single line below artist name with split layout (justify-between):
+            - LEFT: "About · Tip · Follow" (always visible, gray-500)
+            - RIGHT: "Live Now: {show_name}" (only when current_show_name exists)
+          live_now_styling: >
+            Green text (text-green-400) with subtle animated glow effect
+            (animate-live-glow CSS animation: text-shadow pulse 2.5s).
           truncation: >
-            CSS-based using Tailwind 'truncate' class (overflow-hidden,
-            text-overflow: ellipsis, white-space: nowrap). Responsive to
-            viewport width. No manual character limit.
-          styling: "text-xs text-gray-500"
+            CSS-based using Tailwind 'truncate' class on Live Now span.
+            Responsive to viewport width. No manual character limit.
+          styling: "text-xs, gap-2 between left/right sections"
         - element: "RequestWave logo"
-          behavior: "Subtle branding, non-interactive"
-          styling: "opacity-50"
+          behavior: "Subtle branding with ambient glow animation, non-interactive"
+          styling: "opacity-50, animate-logo-glow (4s breathing effect)"
       removed_elements:
         - element: "Header Tip button"
           removed_date: "2026-01-21"
@@ -467,12 +469,18 @@ audience_experience_current_state:
         name: "Song Selection (Moment 1A)"
         description: >
           Audience browses/filters/searches songs. Song cards display title
-          and artist only (no genre/mood/year tags). Clicks on a song card
+          and artist on a single line for improved density. Clicks on a song card
           to open commit modal (Moment 1B).
         song_card_display:
+          format: "Single-line: 'Song Title · Artist Name'"
+          title_styling: "font-bold text-base text-white"
+          separator: "· (gray-500)"
+          artist_styling: "text-gray-400 text-sm"
+          truncation: "CSS truncate on container paragraph"
+          padding: "py-3 px-4 (reduced from p-4 md:p-5 for density)"
           shown:
-            - "Song title"
-            - "Artist name"
+            - "Song title (visually dominant)"
+            - "Artist name (secondary)"
           hidden:
             - "Genre tags"
             - "Mood tags"
