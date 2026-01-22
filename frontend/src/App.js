@@ -10805,15 +10805,33 @@ const AudienceInterface = () => {
                   </h1>
                 </div>
                 
-                {/* Bio - truncated to ~300 chars */}
+                {/* Bio - expandable with smooth transition */}
                 {designSettings.bio && (
                   <div className="bg-gray-700/50 rounded-lg p-4">
-                    <p className="text-gray-300 text-sm leading-relaxed">
-                      {designSettings.bio.length > 300 
-                        ? `${designSettings.bio.substring(0, 300).trim()}...`
-                        : designSettings.bio
-                      }
-                    </p>
+                    <div 
+                      className="overflow-hidden transition-all duration-300 ease-in-out"
+                      style={{ 
+                        maxHeight: bioExpanded ? '1000px' : '120px'
+                      }}
+                    >
+                      <p className="text-gray-300 text-sm leading-relaxed">
+                        {bioExpanded 
+                          ? designSettings.bio
+                          : designSettings.bio.length > 300 
+                            ? `${designSettings.bio.substring(0, 300).trim()}...`
+                            : designSettings.bio
+                        }
+                      </p>
+                    </div>
+                    {designSettings.bio.length > 300 && (
+                      <button
+                        onClick={() => setBioExpanded(!bioExpanded)}
+                        className="text-green-400 hover:text-green-300 text-xs mt-2 transition duration-200"
+                        data-testid="bio-toggle-btn"
+                      >
+                        {bioExpanded ? 'Show less' : 'Read more'}
+                      </button>
+                    )}
                   </div>
                 )}
                 
