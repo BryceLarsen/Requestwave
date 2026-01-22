@@ -9290,44 +9290,38 @@ const AudienceInterface = () => {
       }
     }
     
-    // Go to success confirmation step
-    setRequestStep('success');
+    // Initialize tip state for combined success+tip screen
+    setTipAmount('');
+    setTipMessage('');
+    // Set default platform based on what's available and enabled
+    if (musician?.venmo_enabled && musician.venmo_username) {
+      setTipPlatform('venmo');
+    } else if (musician?.paypal_enabled && musician.paypal_username) {
+      setTipPlatform('paypal');
+    } else if (musician?.cash_app_enabled && musician.cash_app_username) {
+      setTipPlatform('cashapp');
+    } else if (musician?.zelle_enabled && (musician.zelle_email || musician.zelle_phone)) {
+      setTipPlatform('zelle');
+    }
+    
+    // Go to combined success + tip step
+    setRequestStep('success_tip');
   };
   
-  // Handle success step completion - proceed to tip flow
-  const handleSuccessComplete = () => {
+  // Handle completion from combined success+tip screen
+  const handleSuccessTipComplete = async (sendTip = false) => {
+    if (sendTip && tipAmount && parseFloat(tipAmount) > 0) {
+      // Handle tip submission (same logic as handleAudienceInterfaceTipSubmit)
+      await handleAudienceInterfaceTipSubmit();
+    }
+    
     // Close the modal and reset state
     setSelectedSong(null);
     setRequestStep('identity');
     setSubmittedRequestId(null);
     setFollowUpEmail('');
-    
-    // Store the song for potential tip integration
-    if (submittedRequestId) {
-      setTipSongId(submittedRequestId);
-    }
-    
-    // Check if tips are enabled - proceed to tip flow after success
-    if (musician.tips_enabled === false) {
-      // Go straight to social follow modal
-      setShowSocialFollowModal(true);
-    } else {
-      // Show tip modal
-      setTipAmount('');
-      setTipMessage('');
-      // Set default platform based on what's available and enabled
-      if (musician?.venmo_enabled && musician.venmo_username) {
-        setTipPlatform('venmo');
-      } else if (musician?.paypal_enabled && musician.paypal_username) {
-        setTipPlatform('paypal');
-      } else if (musician?.cash_app_enabled && musician.cash_app_username) {
-        setTipPlatform('cashapp');
-      } else if (musician?.zelle_enabled && (musician.zelle_email || musician.zelle_phone)) {
-        setTipPlatform('zelle');
-      }
-      
-      setShowTipModal(true);
-    }
+    setTipAmount('');
+    setTipMessage('');
   };
   
   // NEW: Actually submit the request with tip information
