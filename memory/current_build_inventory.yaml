@@ -985,28 +985,68 @@ audience_moment_model:
         Defines when and where tip/follow actions are allowed across surfaces.
 
   orientation_implementation:
-    status: "IMPLEMENTED (Minimal - Phases A+B+C)"
+    status: "IMPLEMENTED (Full - default, post_request, support modes)"
     implementation_date: "2026-01-21"
-    last_updated: "2026-01-21"
+    last_updated: "2026-01-22"
     
     ui_component:
       type: "Bottom sheet"
       trigger_state: "showOrientation"
+      mode_state: "orientationMode ('default' | 'post_request' | 'support')"
       file: "/app/frontend/src/App.js"
       css_animation: "/app/frontend/src/App.css (slideUp keyframes)"
+    
+    modes:
+      default:
+        trigger: "Artist header tap in Moment 0 (browse)"
+        header: "About the Artist"
+        content: "Full artist info (photo, name, bio, support links, social links, streaming)"
+        use_case: "User wants to learn about the artist before requesting"
+        
+      post_request:
+        trigger: "'About / Follow' button in success_tip screen"
+        header: "About the Artist"
+        thanks_line: "Thanks, your request was sent. (green text)"
+        content: "Full artist info (same as default mode)"
+        use_case: "User clicked About/Follow after making a request"
+        
+      support:
+        trigger: "'Send tip' button in success_tip screen (non-Zelle payments)"
+        header: "Support the Artist"
+        content: >
+          Compact tip-focused UI matching success_tip tip section style:
+          - Amount input with $ prefix
+          - Quick amount buttons ($3, $5, $10)
+          - Payment method dropdown
+          - "Open {payment app}" primary CTA
+          - "Back to songs" secondary link
+        fallback: >
+          If no payment methods configured:
+          - "Tipping isn't set up for this artist yet."
+          - "Back to songs" button only
+        use_case: "User sent a tip via external payment link and may want to tip again"
+        note: "No artist photo/bio shown in support mode (focused on tipping)"
     
     entry_points:
       - name: "Artist header tap"
         selector: '[data-testid="artist-header-orientation-trigger"]'
-        behavior: "Opens Orientation bottom sheet"
-      # NOTE: Header Tip button REMOVED (2026-01-21)
-      # Tip access now exclusively via Orientation content
+        behavior: "Opens Orientation in 'default' mode"
+      - name: "About / Follow button (success_tip)"
+        selector: '[data-testid="success-tip-orientation-btn"]'
+        behavior: "Opens Orientation in 'post_request' mode"
+      - name: "Send tip button (success_tip, non-Zelle)"
+        selector: '[data-testid="success-tip-send-btn"]'
+        behavior: "Opens external payment link, then Orientation in 'support' mode"
     
     exit_points:
       - name: "Close button (X)"
         selector: '[data-testid="orientation-close-btn"]'
+        behavior: "Closes Orientation, returns to song list (never to success_tip)"
       - name: "Tap outside overlay"
         behavior: "Closes on background tap"
+      - name: "Back to songs button (support mode)"
+        selector: '[data-testid="support-back-to-songs-btn"]'
+        behavior: "Closes Orientation, returns to song list"
     
     live_context_display:
       location: "Top of Orientation, above 'About the Artist' heading"
