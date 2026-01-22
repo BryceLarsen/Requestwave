@@ -9343,8 +9343,7 @@ const AudienceInterface = () => {
     setRequestStep('success_tip');
   };
   
-  // Handle "Send Tip" from success_tip - now just opens Orientation in post_request mode
-  // Actual tip payment happens from within Orientation support mode
+  // Handle "Leave a tip" from success_tip - opens Orientation and scrolls to tip section
   const handleSendTip = () => {
     // Close the success_tip modal
     setSelectedSong(null);
@@ -9352,12 +9351,14 @@ const AudienceInterface = () => {
     setSubmittedRequestId(null);
     setFollowUpEmail('');
     
-    // Open Orientation in post_request mode (user will click "Leave a tip" there)
+    // Open Orientation in post_request mode with scroll target
     setOrientationMode('post_request');
+    setOrientationScrollTarget('tip');
+    setTipSectionExpanded(true); // Auto-expand tip section
     setShowOrientation(true);
   };
   
-  // Handle "Skip / I'm all set" from success_tip - same behavior as Send Tip
+  // Handle "Skip / I'm all set" from success_tip - opens Orientation without scroll target
   const handleSkipTip = () => {
     // Close the success_tip modal
     setSelectedSong(null);
@@ -9367,22 +9368,29 @@ const AudienceInterface = () => {
     setTipAmount('');
     setTipMessage('');
     
-    // Open Orientation in post_request mode
+    // Open Orientation in post_request mode (no scroll target)
     setOrientationMode('post_request');
+    setOrientationScrollTarget(null);
+    setTipSectionExpanded(false);
     setShowOrientation(true);
   };
   
-  // Switch to Support mode within Orientation (from "Leave a tip" button)
-  const handleOpenSupportMode = () => {
-    setOrientationMode('support');
+  // Toggle tip section expansion inline
+  const handleToggleTipSection = () => {
+    setTipSectionExpanded(!tipSectionExpanded);
   };
   
-  // Go back from Support mode to post_request mode
-  const handleBackFromSupport = () => {
-    setOrientationMode('post_request');
-  };
+  // Effect to scroll to tip section when orientationScrollTarget is set
+  React.useEffect(() => {
+    if (showOrientation && orientationScrollTarget === 'tip' && tipSectionRef.current) {
+      setTimeout(() => {
+        tipSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setOrientationScrollTarget(null); // Clear after scrolling
+      }, 300); // Small delay to let the sheet animate in
+    }
+  }, [showOrientation, orientationScrollTarget]);
   
-  // Trigger external payment link - called from Support view's "Open payment app" button
+  // Trigger external payment link - uses window.location.href to avoid popup blockers
   const triggerPaymentLink = async (amount, platform) => {
     try {
       const response = await axios.get(`${API}/musicians/${musician.slug}/tip-links`, {
@@ -9416,7 +9424,6 @@ const AudienceInterface = () => {
         
         if (platform === 'zelle') {
           // Zelle: show Zelle modal (Orientation stays open underneath)
-          // When Zelle modal closes, it will return to support mode
           setZelleInfo({
             contact: musician.zelle_email || musician.zelle_phone,
             contactType: musician.zelle_email ? 'email' : 'phone',
@@ -9425,12 +9432,8 @@ const AudienceInterface = () => {
           });
           setShowZelleModal(true);
         } else if (paymentUrl) {
-          // PayPal/Venmo/CashApp: open external link
-          if (platform === 'venmo' && paymentUrl.startsWith('venmo://')) {
-            window.location.href = paymentUrl;
-          } else {
-            window.open(paymentUrl, '_blank');
-          }
+          // PayPal/Venmo/CashApp: use window.location.href to avoid popup blockers
+          window.location.href = paymentUrl;
         }
       }
     } catch (error) {
