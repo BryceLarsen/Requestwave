@@ -11103,6 +11103,24 @@ const AudienceInterface = () => {
                   </div>
                 )}
                 
+                {/* "Not you? Clear" - only show if there's saved identity */}
+                {(localStorage.getItem('requestwave_requester_name') || localStorage.getItem('requestwave_requester_email')) && (
+                  <div className="text-center pt-2">
+                    <button
+                      onClick={() => {
+                        localStorage.removeItem('requestwave_requester_name');
+                        localStorage.removeItem('requestwave_requester_email');
+                        setRequestForm(prev => ({ ...prev, requester_name: '' }));
+                        setShowOrientation(false);
+                      }}
+                      className="text-gray-500 hover:text-gray-400 text-xs underline transition"
+                      data-testid="clear-identity-btn"
+                    >
+                      Not you? Clear saved info
+                    </button>
+                  </div>
+                )}
+                
                 {/* Bottom padding for safe area */}
                 <div className="h-4"></div>
               </div>
