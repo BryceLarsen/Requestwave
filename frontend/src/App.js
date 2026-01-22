@@ -923,7 +923,7 @@ const MusicianDashboard = () => {
     setShowTipModal(true);
   };
 
-  const getTipPresetAmounts = () => [1, 5, 10, 20];
+  const getTipPresetAmounts = () => [3, 5, 10];
 
   // NEW: Show management functions
   const fetchCurrentShow = async () => {
@@ -9370,7 +9370,7 @@ const AudienceInterface = () => {
   };
 
   // NEW: Tip functionality functions
-  const getTipPresetAmounts = () => [1, 5, 10, 20];
+  const getTipPresetAmounts = () => [3, 5, 10];
 
   const handleTipSubmit = async (musicianSlug, requesterName = '') => {
     if (!tipAmount || parseFloat(tipAmount) <= 0) {
