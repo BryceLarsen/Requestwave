@@ -522,15 +522,16 @@ audience_experience_current_state:
         name: "Song Selection (Moment 1A)"
         description: >
           Audience browses/filters/searches songs. Song cards display title
-          and artist on a single line for improved density. Clicks on a song card
-          to open commit modal (Moment 1B).
+          and artist on a single line for improved density. Tapping a song card
+          opens Moment 2 (Identity) directly - no intermediate confirmation.
         song_card_display:
           format: "Single-line: 'Song Title · Artist Name'"
-          title_styling: "font-bold text-base text-white"
-          separator: "· (gray-500)"
-          artist_styling: "text-gray-400 text-sm"
+          title_styling: "font-semibold text-white"
+          separator: "· (gray-600)"
+          artist_styling: "text-gray-400"
           truncation: "CSS truncate on container paragraph"
-          padding: "py-3 px-4 (reduced from p-4 md:p-5 for density)"
+          padding: "py-2.5 px-3.5 rounded-lg"
+          background: "linear-gradient top-to-bottom for subtle depth"
           shown:
             - "Song title (visually dominant)"
             - "Artist name (secondary)"
@@ -546,39 +547,76 @@ audience_experience_current_state:
           - "Search by title/artist"
           - "Filter by genre/playlist/mood/decade"
           - "Sort songs"
-          - "Tap song card → Moment 1B (commit)"
-          - "Click 'Surprise Me' button"
+          - "Tap song card → Moment 2 (identity) directly"
+          - "Click 'Surprise Me' button → Moment 2 directly"
           - "Click 'Suggest a Song' for unlisted songs"
           
       - step: 3
-        name: "Request Form Modal"
+        name: "Moment 2: Identity (Name + Dedication)"
         description: >
-          Modal appears with selected song details. Audience fills in name, email,
-          optional dedication. Submits request.
+          Modal opens with selected song header. Audience enters name and
+          optional dedication. Email captured in separate step.
+        ui_elements:
+          - "Song header: 'Request: {song_title}' + artist"
+          - "Name input (required)"
+          - "Dedication textarea (optional)"
+          - "Request Song button (primary)"
+          - "Back button (returns to song list)"
         user_actions:
           - "Enter requester name (required)"
-          - "Enter requester email (required)"
           - "Enter dedication/note (optional)"
-          - "Submit request"
+          - "Submit → proceeds to email step"
+          - "Back → returns to song list"
           
       - step: 4
-        name: "Post-Request Tip Modal"
+        name: "Email Step (Post-Submit)"
         description: >
-          After successful request submission, if musician has tips_enabled=true,
-          tip modal appears prompting for optional tip.
-        conditional: "Only shown if musician.tips_enabled is true"
-        user_actions:
-          - "Select preset amount ($1, $5, $10, $20) or enter custom"
-          - "Enter optional tip message"
-          - "Select payment platform (Venmo/PayPal/CashApp/Zelle)"
-          - "Submit tip (opens external payment link)"
-          - "Skip (closes modal, proceeds to social follow)"
+          After request submission, email capture screen appears.
+          Reframed as identity moment, not a skip-able afterthought.
+        ui_elements:
+          headline: "You're on the list 🎶"
+          subtext: "Add your email so the artist can call this out by name or follow up later."
+          input_label: "Your Email (to personalize your request)"
+          primary_button: "Continue"
+          secondary_button: "Continue anonymously"
+        behavior:
+          - "Email remains optional - no validation blocking"
+          - "Continue → attaches email if provided, proceeds to success_tip"
+          - "Continue anonymously → skips email, proceeds to success_tip"
           
       - step: 5
-        name: "Social Follow Modal"
+        name: "success_tip: Combined Success + Tip Screen"
         description: >
-          After tip flow (or if tips disabled), social follow modal appears
+          Single modal combining request confirmation and tip prompt.
+          Eliminates standalone success screen for faster flow.
+        state_key: "requestStep === 'success_tip'"
+        ui_elements:
+          success_header:
+            icon: "Green check in circle"
+            headline: "Request sent 🎶"
+            subtext: "Your song is in the queue"
+          tip_section:
+            conditional: "Only shown if musician.tips_enabled !== false"
+            preset_amounts: ["$1", "$5", "$10", "$20"]
+            preset_styling: "Neutral gray, ring highlight on selection (no green)"
+            custom_amount_input: true
+            payment_selector: "Dropdown with Venmo/PayPal/CashApp/Zelle"
+          buttons:
+            primary: "Send Tip (green, disabled without amount)"
+            secondary: "No tip, I'm good (text-style link, de-emphasized)"
+        exit_paths:
+          send_tip: "Submits tip, dismisses modal, returns to song list"
+          no_tip: "Dismisses modal immediately, returns to song list"
+        note: >
+          No standalone success confirmation screen exists anymore.
+          Tip UI is integrated directly below success message.
+          
+      - step: 6
+        name: "Social Follow Modal (if shown)"
+        description: >
+          After tip flow completes, social follow modal may appear
           with links to musician's social profiles.
+        conditional: "Shown after tip modal closes if musician has social links"
         user_actions:
           - "Click social links (Instagram, Facebook, TikTok, Spotify, Apple Music)"
           - "Close modal to return to song list"
