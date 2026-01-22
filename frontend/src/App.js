@@ -10144,31 +10144,45 @@ const AudienceInterface = () => {
               {/* Combined Success + Tip Screen */}
               {requestStep === 'success_tip' && (
                 <>
-                  {/* Success confirmation header */}
-                  <div className="text-center mb-5">
-                    <div className="w-14 h-14 bg-green-600/20 rounded-full mx-auto mb-3 flex items-center justify-center">
-                      <span className="text-green-400 text-2xl">✓</span>
+                  {/* SUCCESS CONFIRMATION - Primary visual element */}
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-green-600/20 rounded-full mx-auto mb-4 flex items-center justify-center">
+                      <span className="text-green-400 text-3xl">✓</span>
                     </div>
-                    <h2 className="text-xl font-bold mb-1 text-white">Request sent 🎶</h2>
-                    <p className="text-gray-400 text-sm">Your song is in the queue</p>
+                    <h2 className="text-2xl font-bold mb-1 text-white">Request sent 🎶</h2>
+                    <p className="text-gray-400">Your song is in the queue</p>
                   </div>
                   
-                  {/* Tip UI integrated below */}
+                  {/* TIP SECTION - Secondary, clearly separated */}
                   {musician.tips_enabled !== false && (
-                    <div className="border-t border-gray-700 pt-4 mt-2">
-                      {/* Preset amounts */}
+                    <div className="border-t border-gray-700/50 pt-5 mt-4">
+                      {/* Inline amount input with small preset chips */}
                       <div className="mb-4">
-                        <label className="block text-gray-300 text-sm font-medium mb-2">Quick thank-yous</label>
-                        <div className="grid grid-cols-4 gap-2">
+                        <div className="flex items-center gap-3 mb-3">
+                          <span className="text-gray-500 text-sm">$</span>
+                          <input
+                            type="number"
+                            placeholder="Amount"
+                            value={tipAmount}
+                            onChange={(e) => setTipAmount(e.target.value)}
+                            min="0.01"
+                            max="500"
+                            step="0.01"
+                            className="flex-1 bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white text-center"
+                            data-testid="tip-amount-input"
+                          />
+                        </div>
+                        {/* Suggested amounts - small, neutral, secondary */}
+                        <div className="flex justify-center gap-2">
                           {getTipPresetAmounts().map(amount => (
                             <button
                               key={amount}
                               type="button"
                               onClick={() => setTipAmount(amount.toString())}
-                              className={`py-2 px-2 text-sm rounded-lg font-medium transition duration-300 ${
+                              className={`px-3 py-1 text-xs rounded-full transition duration-200 ${
                                 tipAmount === amount.toString()
-                                  ? 'bg-gray-600 text-white ring-2 ring-gray-500'
-                                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                  ? 'bg-gray-600 text-gray-200'
+                                  : 'bg-gray-700/50 text-gray-500 hover:text-gray-400'
                               }`}
                             >
                               ${amount}
@@ -10177,66 +10191,48 @@ const AudienceInterface = () => {
                         </div>
                       </div>
                       
-                      {/* Custom amount */}
-                      <div className="mb-4">
-                        <label className="block text-gray-300 text-sm font-medium mb-2">Custom amount</label>
-                        <input
-                          type="number"
-                          placeholder="0.00"
-                          value={tipAmount}
-                          onChange={(e) => setTipAmount(e.target.value)}
-                          min="0.01"
-                          max="500"
-                          step="0.01"
-                          className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white"
-                        />
-                      </div>
-                      
-                      {/* Payment platform dropdown */}
-                      <div className="mb-4">
-                        <label className="block text-gray-300 text-sm font-medium mb-2">Payment app</label>
+                      {/* Payment platform - compact */}
+                      <div className="mb-5">
                         <select
                           value={tipPlatform}
                           onChange={(e) => setTipPlatform(e.target.value)}
-                          className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white"
+                          className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-gray-300 text-sm"
                         >
                           {musician?.paypal_enabled && musician.paypal_username && (
-                            <option value="paypal">💳 PayPal</option>
+                            <option value="paypal">PayPal</option>
                           )}
                           {musician?.venmo_enabled && musician.venmo_username && (
-                            <option value="venmo">📱 Venmo</option>
+                            <option value="venmo">Venmo</option>
                           )}
                           {musician?.cash_app_enabled && musician.cash_app_username && (
-                            <option value="cashapp">💰 Cash App</option>
+                            <option value="cashapp">Cash App</option>
                           )}
                           {musician?.zelle_enabled && (musician.zelle_email || musician.zelle_phone) && (
-                            <option value="zelle">🏦 Zelle</option>
+                            <option value="zelle">Zelle</option>
                           )}
                         </select>
                       </div>
-                    </div>
-                  )}
-                  
-                  {/* Action buttons */}
-                  <div className="mt-5 space-y-3">
-                    {musician.tips_enabled !== false && (
+                      
+                      {/* Primary CTA */}
                       <button
                         onClick={() => handleSuccessTipComplete(true)}
                         disabled={!tipAmount || parseFloat(tipAmount) <= 0}
-                        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 py-3 rounded-lg font-bold transition duration-300 disabled:cursor-not-allowed"
+                        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:text-gray-500 py-3 rounded-lg font-medium transition duration-300 disabled:cursor-not-allowed"
                         data-testid="success-tip-send-btn"
                       >
-                        Send Tip
+                        Send tip
                       </button>
-                    )}
-                    <button
-                      onClick={() => handleSuccessTipComplete(false)}
-                      className="w-full text-gray-400 hover:text-gray-300 py-2 text-sm transition duration-300"
-                      data-testid="success-tip-skip-btn"
-                    >
-                      {musician.tips_enabled !== false ? "No tip, I'm good" : "Done"}
-                    </button>
-                  </div>
+                    </div>
+                  )}
+                  
+                  {/* Secondary action - text-style, fully acceptable skip */}
+                  <button
+                    onClick={() => handleSuccessTipComplete(false)}
+                    className="w-full text-gray-500 hover:text-gray-400 py-3 text-sm transition duration-200 mt-2"
+                    data-testid="success-tip-skip-btn"
+                  >
+                    {musician.tips_enabled !== false ? "I'm all set" : "Done"}
+                  </button>
                 </>
               )}
             </div>
