@@ -9466,22 +9466,6 @@ const AudienceInterface = () => {
     setTipAmount('');
     setTipMessage('');
   };
-            message: tipMessage || 'Thanks for the music!'
-          });
-          setShowZelleModal(true);
-        } else if (paymentUrl) {
-          // PayPal/Venmo/CashApp: use window.location.href to avoid popup blockers
-          window.location.href = paymentUrl;
-        }
-      }
-    } catch (error) {
-      console.error('Error getting payment link:', error);
-    }
-    
-    // Clear tip values after payment link action
-    setTipAmount('');
-    setTipMessage('');
-  };
   
   // Handle "About / Follow" from success_tip - opens Orientation (same as skip now)
   const handlePostRequestOrientation = () => {
