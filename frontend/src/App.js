@@ -10094,33 +10094,33 @@ const AudienceInterface = () => {
                 </>
               )}
               
-              {/* Moment 3: Optional Email Follow-Up */}
+              {/* Email Step: Identity moment (optional) */}
               {requestStep === 'followup' && (
                 <>
                   <div className="text-center mb-6">
-                    <div className="w-12 h-12 bg-green-600/20 rounded-full mx-auto mb-4 flex items-center justify-center">
-                      <span className="text-green-400 text-2xl">✓</span>
-                    </div>
-                    <h2 className="text-xl font-bold mb-2 text-white">Request Sent!</h2>
+                    <h2 className="text-xl font-bold mb-2 text-white">You're on the list 🎶</h2>
                     <p className="text-gray-400 text-sm">
-                      Optional: Requests with an email are easier for the artist to follow up on.
+                      Add your email so the artist can call this out by name or follow up later.
                     </p>
                   </div>
                   
                   <div className="space-y-4">
-                    <input
-                      type="email"
-                      placeholder="Your Email (optional)"
-                      value={followUpEmail}
-                      onChange={(e) => {
-                        setFollowUpEmail(e.target.value);
-                        setFollowUpError(''); // Clear error on input change
-                      }}
-                      className={`w-full bg-gray-700 border rounded-lg px-4 py-3 text-white placeholder-gray-400 ${
-                        followUpError ? 'border-red-500' : 'border-gray-600'
-                      }`}
-                      data-testid="followup-email-input"
-                    />
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1.5">Your Email (to personalize your request)</label>
+                      <input
+                        type="email"
+                        placeholder="email@example.com"
+                        value={followUpEmail}
+                        onChange={(e) => {
+                          setFollowUpEmail(e.target.value);
+                          setFollowUpError(''); // Clear error on input change
+                        }}
+                        className={`w-full bg-gray-700 border rounded-lg px-4 py-3 text-white placeholder-gray-400 ${
+                          followUpError ? 'border-red-500' : 'border-gray-600'
+                        }`}
+                        data-testid="followup-email-input"
+                      />
+                    </div>
                     {followUpError && (
                       <p className="text-red-400 text-sm" data-testid="followup-error">
                         {followUpError}
@@ -10131,24 +10131,42 @@ const AudienceInterface = () => {
                   <div className="flex flex-col space-y-3 mt-6">
                     <button
                       onClick={() => handleFollowUpComplete(true)}
-                      disabled={!followUpEmail}
-                      className={`w-full py-3 rounded-lg font-bold transition duration-300 ${
-                        followUpEmail 
-                          ? colors.button 
-                          : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                      }`}
-                      data-testid="followup-add-email-btn"
+                      className={`w-full py-3 rounded-lg font-bold transition duration-300 ${colors.button}`}
+                      data-testid="followup-continue-btn"
                     >
-                      Add Email
+                      Continue
                     </button>
                     <button
                       onClick={() => handleFollowUpComplete(false)}
                       className="w-full bg-gray-700 hover:bg-gray-600 py-3 rounded-lg text-gray-300 transition duration-300"
-                      data-testid="followup-skip-btn"
+                      data-testid="followup-anonymous-btn"
                     >
-                      Skip
+                      Continue anonymously
                     </button>
                   </div>
+                </>
+              )}
+              
+              {/* Success Confirmation (shown AFTER email step) */}
+              {requestStep === 'success' && (
+                <>
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-green-600/20 rounded-full mx-auto mb-4 flex items-center justify-center">
+                      <span className="text-green-400 text-3xl">✓</span>
+                    </div>
+                    <h2 className="text-2xl font-bold mb-2 text-white">Request Sent!</h2>
+                    <p className="text-gray-400">
+                      Your request has been submitted to the artist.
+                    </p>
+                  </div>
+                  
+                  <button
+                    onClick={handleSuccessComplete}
+                    className={`w-full py-3 rounded-lg font-bold transition duration-300 ${colors.button}`}
+                    data-testid="success-continue-btn"
+                  >
+                    Continue
+                  </button>
                 </>
               )}
             </div>
