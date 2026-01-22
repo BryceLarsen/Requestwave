@@ -8856,7 +8856,10 @@ const AudienceInterface = () => {
   // Orientation Side Path state (bottom sheet)
   // Entry points: header artist name tap, post-request flow
   const [showOrientation, setShowOrientation] = useState(false);
-  const [orientationMode, setOrientationMode] = useState('default'); // 'default' | 'post_request' | 'support'
+  const [orientationMode, setOrientationMode] = useState('default'); // 'default' | 'post_request'
+  const [orientationScrollTarget, setOrientationScrollTarget] = useState(null); // 'tip' | null - auto-scroll to tip section
+  const [tipSectionExpanded, setTipSectionExpanded] = useState(false); // Inline tip section expansion
+  const tipSectionRef = React.useRef(null);
   
   // NEW: Access control state
   const [accessDenied, setAccessDenied] = useState(false);
