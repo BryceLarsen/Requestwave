@@ -9345,8 +9345,26 @@ const AudienceInterface = () => {
     if (sendTip && tipAmount && parseFloat(tipAmount) > 0) {
       // Handle tip submission (same logic as handleAudienceInterfaceTipSubmit)
       await handleAudienceInterfaceTipSubmit();
+      // After tip, show tip_confirmation step
+      setRequestStep('tip_confirmation');
+      return;
     }
     
+    // "I'm all set" path - close modal and open Orientation
+    setSelectedSong(null);
+    setRequestStep('identity');
+    setSubmittedRequestId(null);
+    setFollowUpEmail('');
+    setTipAmount('');
+    setTipMessage('');
+    
+    // Open Orientation in post_request mode
+    setOrientationMode('post_request');
+    setShowOrientation(true);
+  };
+  
+  // Handle exit from tip confirmation screen
+  const handleTipConfirmationComplete = (openOrientation = true) => {
     // Close the modal and reset state
     setSelectedSong(null);
     setRequestStep('identity');
@@ -9354,6 +9372,12 @@ const AudienceInterface = () => {
     setFollowUpEmail('');
     setTipAmount('');
     setTipMessage('');
+    
+    if (openOrientation) {
+      // Open Orientation in post_request mode
+      setOrientationMode('post_request');
+      setShowOrientation(true);
+    }
   };
   
   // NEW: Actually submit the request with tip information
