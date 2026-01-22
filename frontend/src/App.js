@@ -10666,13 +10666,15 @@ const AudienceInterface = () => {
                       </div>
                     )}
                     <h2 className="text-lg font-bold text-white">
-                      {orientationMode === 'support' ? 'Support the Artist' : 'About the Artist'}
+                      {orientationMode === 'support' 
+                        ? `Support ${designSettings.musician_name || 'the Artist'}` 
+                        : 'About the Artist'}
                     </h2>
                   </div>
                   <button
                     onClick={() => {
                       setShowOrientation(false);
-                      // In support mode, closing returns to song list (no stacked modals)
+                      setOrientationMode('default');
                     }}
                     className="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700 transition"
                     data-testid="orientation-close-btn"
@@ -10687,7 +10689,7 @@ const AudienceInterface = () => {
               {/* Orientation Content */}
               <div className="px-4 pb-6 space-y-5">
                 
-                {/* SUPPORT MODE: Compact tip-focused layout matching success_tip style */}
+                {/* SUPPORT MODE: Compact tip-focused layout */}
                 {orientationMode === 'support' && (
                   <>
                     {/* Check if any payment methods are configured */}
