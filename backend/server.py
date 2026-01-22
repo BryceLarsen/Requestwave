@@ -2200,7 +2200,10 @@ async def get_profile(musician_id: str = Depends(get_current_musician)):
         facebook_username=musician.get("facebook_username", ""),
         tiktok_username=musician.get("tiktok_username", ""),
         spotify_artist_url=musician.get("spotify_artist_url", ""),
-        apple_music_artist_url=musician.get("apple_music_artist_url", "")
+        apple_music_artist_url=musician.get("apple_music_artist_url", ""),
+        # Active show fields (source of truth for frontend)
+        current_show_id=musician.get("current_show_id"),
+        current_show_name=musician.get("current_show_name")
     )
 
 @api_router.put("/profile", response_model=MusicianProfile)
