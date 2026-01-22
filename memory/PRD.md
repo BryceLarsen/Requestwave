@@ -16,17 +16,15 @@ Live music request platform enabling musicians to receive song requests from aud
 ### Completed Features
 
 #### Post-Request Tip Flow (January 22, 2026)
-Eliminated standalone "Support the Artist" modal - tipping is now inline within Orientation:
+Restored full tipping UI inside success_tip. No "Support the Artist" sheet in post-request flow:
 
-- ✅ **success_tip shows "Leave a tip" + "Skip"**: Clear options for user
-- ✅ **Both buttons → Orientation post_request**: No standalone support modal
-- ✅ **"Leave a tip" auto-scrolls to tip section**: And auto-expands it
-- ✅ **"Skip" opens Orientation with tip section collapsed**: User can tap to expand later
-- ✅ **Inline expandable tip section**: Amount input, $3/$5/$10 quick amounts, payment selector
-- ✅ **Payment links use `<a href>`**: Venmo/PayPal/CashApp use direct navigation (no popup blockers)
-- ✅ **Zelle modal preserved**: Opens instructions modal from inline tip section
-- ✅ **Header tap unchanged**: Opens Orientation default mode with individual tip links
+- ✅ **success_tip has full tipping UI**: Amount input, $3/$5/$10, payment selector, Send tip button
+- ✅ **Send tip triggers payment immediately**: Uses window.location.href (no popup blocker)
+- ✅ **Both Send tip and Skip → Orientation post_request**: No separate Support sheet
 - ✅ **No stacked modals**: success_tip closes before Orientation opens
+- ✅ **Orientation post_request has subtle "Leave a tip"**: For users who skipped but want to tip later
+- ✅ **Header tap unchanged**: Opens Orientation default mode with individual tip links
+- ✅ **PayPal uses direct navigation**: window.location.href instead of window.open
 
 #### Moment 0/1A UI Polish (January 22, 2026)
 The audience landing page has been polished for improved clarity and information density:
