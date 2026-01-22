@@ -11020,65 +11020,6 @@ const AudienceInterface = () => {
                       </div>
                     )}
                   </>
-                )}                            >
-                              TikTok
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Streaming Links */}
-                    {musician && ((musician.spotify_artist_url && musician.spotify_artist_url.trim() !== '') || 
-                      (musician.apple_music_artist_url && musician.apple_music_artist_url.trim() !== '')) && (
-                      <div>
-                        <h3 className="text-base font-semibold text-white mb-3 flex items-center">
-                          <span className="mr-2">🎧</span>
-                          Listen
-                        </h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          {musician.spotify_artist_url && musician.spotify_artist_url.trim() !== '' && (
-                            <a
-                              href={musician.spotify_artist_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg font-medium transition duration-300 flex items-center justify-center text-sm text-white"
-                              data-testid="orientation-spotify-link"
-                            >
-                              Spotify
-                            </a>
-                          )}
-                          {musician.apple_music_artist_url && musician.apple_music_artist_url.trim() !== '' && (
-                            <a
-                              href={musician.apple_music_artist_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded-lg font-medium transition duration-300 flex items-center justify-center text-sm text-white"
-                              data-testid="orientation-apple-music-link"
-                            >
-                              Apple Music
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Website */}
-                    {musician?.website && musician.website.trim() !== '' && (
-                      <div>
-                        <a
-                          href={musician.website.startsWith('http') ? musician.website : `https://${musician.website}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full bg-gray-700 hover:bg-gray-600 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white"
-                          data-testid="orientation-website-link"
-                        >
-                          <span>🌐</span>
-                          <span>Visit Website</span>
-                        </a>
-                      </div>
-                    )}
-                  </>
                 )}
                 
                 {/* Bottom padding for safe area */}
