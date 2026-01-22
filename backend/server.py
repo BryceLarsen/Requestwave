@@ -5819,6 +5819,16 @@ async def stop_show(
         previous_show_id = musician.get("current_show_id") if musician else None
         previous_show_name = musician.get("current_show_name") if musician else None
         
+        # Mark the show as ended with timestamp and status
+        if previous_show_id:
+            await db.shows.update_one(
+                {"id": previous_show_id},
+                {"$set": {
+                    "ended_at": datetime.now(timezone.utc),
+                    "status": "ended"
+                }}
+            )
+        
         # Clear musician's current active show
         await db.musicians.update_one(
             {"id": musician_id},
@@ -5827,6 +5837,9 @@ async def stop_show(
                 "current_show_name": None
             }}
         )
+        
+        # Fetch updated musician to return
+        updated_musician = await db.musicians.find_one({"id": musician_id})
         
         # Emit analytics event only if there was an active show
         if previous_show_id:
@@ -5845,7 +5858,11 @@ async def stop_show(
         logger.info(f"Stopped active show for musician {musician_id}")
         return {
             "success": True,
-            "message": "Show stopped. New requests will go to main requests list."
+            "message": "Show stopped. New requests will go to main requests list.",
+            "musician": {
+                "current_show_id": updated_musician.get("current_show_id"),
+                "current_show_name": updated_musician.get("current_show_name")
+            }
         }
         
     except Exception as e:
