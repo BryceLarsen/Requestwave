@@ -9445,24 +9445,40 @@ const AudienceInterface = () => {
       });
       setShowZelleModal(true);
     } else {
-      // Venmo/PayPal/CashApp: navigate directly
+      // Venmo/PayPal/CashApp: navigate directly using window.location.assign
       let paymentUrl = null;
+      // Sanitize amount: remove $ and commas, keep clean number
+      const cleanAmount = String(amount).replace(/[$,]/g, '').trim();
+      
       if (platform === 'venmo') {
-        paymentUrl = `venmo://paycharge?txn=pay&recipients=${musician.venmo_username}&amount=${amount}&note=${encodeURIComponent(tipMessage || 'Thanks for the music!')}`;
+        paymentUrl = `venmo://paycharge?txn=pay&recipients=${musician.venmo_username}&amount=${cleanAmount}&note=${encodeURIComponent(tipMessage || 'Thanks for the music!')}`;
       } else if (platform === 'paypal') {
-        paymentUrl = `https://paypal.me/${musician.paypal_username}/${amount}`;
+        // Sanitize PayPal username: trim whitespace, remove leading @
+        const sanitizedPaypalUsername = (musician.paypal_username || '').trim().replace(/^@/, '');
+        if (sanitizedPaypalUsername) {
+          paymentUrl = cleanAmount ? `https://paypal.me/${sanitizedPaypalUsername}/${cleanAmount}` : `https://paypal.me/${sanitizedPaypalUsername}`;
+        }
       } else if (platform === 'cashapp') {
-        paymentUrl = `https://cash.app/$${musician.cash_app_username}/${amount}`;
+        paymentUrl = `https://cash.app/$${musician.cash_app_username}/${cleanAmount}`;
       }
       
       if (paymentUrl) {
-        window.location.href = paymentUrl;
+        console.log(`Opening payment URL: ${paymentUrl}`);
+        window.location.assign(paymentUrl);
       }
     }
     
     // Clear tip values
     setTipAmount('');
     setTipMessage('');
+  };
+  
+  // Helper: Get sanitized PayPal URL for display/fallback
+  const getPayPalUrl = (amount) => {
+    const sanitizedUsername = (musician?.paypal_username || '').trim().replace(/^@/, '');
+    if (!sanitizedUsername) return null;
+    const cleanAmount = amount ? String(amount).replace(/[$,]/g, '').trim() : '';
+    return cleanAmount ? `https://paypal.me/${sanitizedUsername}/${cleanAmount}` : `https://paypal.me/${sanitizedUsername}`;
   };
   
   // Handle "About / Follow" from success_tip - opens Orientation (same as skip now)
