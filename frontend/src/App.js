@@ -1345,6 +1345,9 @@ const MusicianDashboard = () => {
   const [showPlaylistImport, setShowPlaylistImport] = useState(false); // NEW: Control visibility
 
   useEffect(() => {
+    // Refresh musician profile from backend to ensure state integrity (prevents stale localStorage)
+    refreshMusicianProfile();
+    
     fetchSongs();
     fetchRequests();
     fetchSubscriptionStatus();
