@@ -9385,18 +9385,26 @@ const AudienceInterface = () => {
       });
       setShowZelleModal(true);
     } else {
-      // Venmo/PayPal/CashApp: navigate directly
+      // Venmo/PayPal/CashApp: navigate directly using window.location.assign
       let paymentUrl = null;
+      // Sanitize amount: remove $ and commas
+      const cleanAmount = String(currentAmount).replace(/[$,]/g, '').trim();
+      
       if (currentPlatform === 'venmo') {
-        paymentUrl = `venmo://paycharge?txn=pay&recipients=${musician.venmo_username}&amount=${currentAmount}&note=${encodeURIComponent(tipMessage || 'Thanks for the music!')}`;
+        paymentUrl = `venmo://paycharge?txn=pay&recipients=${musician.venmo_username}&amount=${cleanAmount}&note=${encodeURIComponent(tipMessage || 'Thanks for the music!')}`;
       } else if (currentPlatform === 'paypal') {
-        paymentUrl = `https://paypal.me/${musician.paypal_username}/${currentAmount}`;
+        // Sanitize PayPal username: trim whitespace, remove leading @
+        const sanitizedPaypalUsername = (musician.paypal_username || '').trim().replace(/^@/, '');
+        if (sanitizedPaypalUsername) {
+          paymentUrl = cleanAmount ? `https://paypal.me/${sanitizedPaypalUsername}/${cleanAmount}` : `https://paypal.me/${sanitizedPaypalUsername}`;
+        }
       } else if (currentPlatform === 'cashapp') {
-        paymentUrl = `https://cash.app/$${musician.cash_app_username}/${currentAmount}`;
+        paymentUrl = `https://cash.app/$${musician.cash_app_username}/${cleanAmount}`;
       }
       
       if (paymentUrl) {
-        window.location.href = paymentUrl;
+        console.log(`Opening payment URL: ${paymentUrl}`);
+        window.location.assign(paymentUrl);
       }
     }
   };
