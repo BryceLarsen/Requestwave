@@ -9791,7 +9791,7 @@ const AudienceInterface = () => {
                 onClick={() => setShowFilters(!showFilters)}
                 className="text-gray-400 hover:text-white px-2 py-1.5 rounded-lg text-xs transition duration-300"
               >
-                {showFilters ? 'Hide Filters' : 'Filters'}
+                {showFilters ? 'Hide Filters' : 'Browse / Filter'}
               </button>
             </div>
             {searchQuery && (
@@ -9806,7 +9806,7 @@ const AudienceInterface = () => {
         {showFilters && (
           <div className="bg-gray-800/30 rounded-lg p-3 md:p-4 mb-3 md:mb-4 border border-gray-700/50">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-gray-400">Filters</span>
+              <span className="text-sm text-gray-400">Browse / Filter</span>
               <button
                 onClick={clearFilters}
                 className="text-gray-500 hover:text-gray-300 text-xs transition duration-300"
