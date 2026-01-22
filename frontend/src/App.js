@@ -5380,6 +5380,7 @@ const MusicianDashboard = () => {
                                   />
                                   <div className="flex-1">
                                     <div className="flex items-center space-x-2 mb-1">
+                                      {request.requester_email && <span className="text-gray-400 text-sm" title="Email provided">✉️</span>}
                                       <span className="font-medium text-blue-400 text-sm">{request.song_title}</span>
                                       <span className="text-gray-400 text-sm">by {request.song_artist}</span>
                                       {request.tip_clicked && <span className="text-green-400 text-xs">💰</span>}
@@ -5589,6 +5590,7 @@ const MusicianDashboard = () => {
                       />
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
+                          {request.requester_email && <span className="text-gray-400 text-sm" title="Email provided">✉️</span>}
                           <span className="font-medium text-blue-400">{request.song_title}</span>
                           <span className="text-gray-400">by {request.song_artist}</span>
                           {request.tip_clicked && <span className="text-green-400 text-sm">💰</span>}
