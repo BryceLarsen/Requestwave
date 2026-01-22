@@ -3,15 +3,26 @@
 ## Original Problem Statement
 Live music request platform enabling musicians to receive song requests from audiences during performances, with features for managing requests, suggestions, tips, and analytics.
 
-## Current State (as of January 21, 2026)
+## Current State (as of January 22, 2026)
 
 ### Phase Status
 - **Phase 1: Foundation and Correctness** - COMPLETE (Signed off 2026-01-16)
 - **Phase 2: Audience Interaction Capture** - COMPLETE (Signed off 2026-01-16)
 - **Audience Moment Model Refactor** - COMPLETE (Signed off 2026-01-21)
+- **Moment 0/1A UI Polish** - COMPLETE (2026-01-22)
 - **Phase 3: Post-Show Reflection** - NOT STARTED (Deferred)
 
 ### Completed Features
+
+#### Moment 0/1A UI Polish (January 22, 2026)
+The audience landing page has been polished for improved clarity and information density:
+
+- ✅ **Header Helper Line (Split Layout)**: "About · Tip · Follow" on left, glowing "Live Now: {show_name}" on right
+- ✅ **Live Now Glow Effect**: Subtle animated text-shadow pulse on green Live Now indicator (2.5s cycle)
+- ✅ **Song Card Single-Line Format**: "Song Title · Artist Name" on one line for better density
+- ✅ **Reduced Card Padding**: py-3 px-4 (down from p-4 md:p-5) for more songs per viewport
+- ✅ **CSS Animations**: Added `animate-live-glow` keyframes to App.css
+- ✅ **Documentation**: `current_build_inventory.yaml` updated with as-built behavior
 
 #### Audience Moment Model Refactor (January 21, 2026)
 The frontend has been refactored to align with the "Audience Moment Model" - an intent-based framework governing the audience user experience:
