@@ -10734,7 +10734,10 @@ const AudienceInterface = () => {
           <div 
             className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center"
             onClick={(e) => {
-              if (e.target === e.currentTarget) setShowOrientation(false);
+              if (e.target === e.currentTarget) {
+                setShowOrientation(false);
+                setBioExpanded(false); // Reset bio state on close
+              }
             }}
             data-testid="orientation-overlay"
           >
