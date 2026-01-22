@@ -9968,6 +9968,11 @@ const AudienceInterface = () => {
             <p className="text-lg md:text-xl text-gray-200 font-medium tracking-wide">
               Tap a song to request it.
             </p>
+            {localStorage.getItem('requestwave_requester_name') && (
+              <p className="text-sm text-gray-400 mt-1">
+                Welcome back, {localStorage.getItem('requestwave_requester_name')}
+              </p>
+            )}
           </div>
         )}
 
