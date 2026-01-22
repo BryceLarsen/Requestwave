@@ -9340,95 +9340,43 @@ const AudienceInterface = () => {
     setRequestStep('success_tip');
   };
   
-  // Handle "Send Tip" from success_tip - triggers payment and transitions to Support view
-  const handleSendTip = async () => {
-    if (tipAmount && parseFloat(tipAmount) > 0) {
-      const currentTipAmount = parseFloat(tipAmount);
-      const currentTipPlatform = tipPlatform;
-      
-      // Close the success_tip modal FIRST
-      setSelectedSong(null);
-      setRequestStep('identity');
-      setSubmittedRequestId(null);
-      setFollowUpEmail('');
-      
-      // For Zelle: show instructions modal directly (no Support view since we can't open external app)
-      if (currentTipPlatform === 'zelle') {
-        setZelleInfo({
-          contact: musician.zelle_email || musician.zelle_phone,
-          contactType: musician.zelle_email ? 'email' : 'phone',
-          amount: currentTipAmount,
-          message: tipMessage || 'Thanks for the music!'
-        });
-        setShowZelleModal(true);
-        // Record tip attempt
-        try {
-          await axios.post(`${API}/musicians/${musician.slug}/tips`, {
-            amount: currentTipAmount,
-            platform: 'zelle',
-            tipper_name: requestForm.requester_name || 'Anonymous',
-            message: tipMessage
-          });
-        } catch (error) {
-          console.log('Tip tracking failed:', error);
-        }
-        setTipAmount('');
-        setTipMessage('');
-        return;
-      }
-      
-      // For Venmo/PayPal/CashApp: open external link, then show Support view
-      try {
-        const response = await axios.get(`${API}/musicians/${musician.slug}/tip-links`, {
-          params: {
-            amount: currentTipAmount,
-            message: tipMessage || 'Thanks for the music!'
-          }
-        });
-        
-        if (response.data) {
-          let paymentUrl = null;
-          if (currentTipPlatform === 'paypal' && response.data.paypal_link) {
-            paymentUrl = response.data.paypal_link;
-          } else if (currentTipPlatform === 'venmo' && response.data.venmo_link) {
-            paymentUrl = response.data.venmo_link;
-          } else if (currentTipPlatform === 'cashapp' && response.data.cash_app_link) {
-            paymentUrl = response.data.cash_app_link;
-          }
-          
-          // Record tip attempt
-          try {
-            await axios.post(`${API}/musicians/${musician.slug}/tips`, {
-              amount: currentTipAmount,
-              platform: currentTipPlatform,
-              tipper_name: requestForm.requester_name || 'Anonymous',
-              message: tipMessage
-            });
-          } catch (error) {
-            console.log('Tip tracking failed:', error);
-          }
-          
-          if (paymentUrl) {
-            // Open external payment link
-            if (currentTipPlatform === 'venmo' && paymentUrl.startsWith('venmo://')) {
-              window.location.href = paymentUrl;
-            } else {
-              window.open(paymentUrl, '_blank');
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error getting payment link:', error);
-      }
-      
-      // Open Orientation in support mode (user will return here after payment app)
-      setOrientationMode('support');
-      setShowOrientation(true);
-      
-      // Clear tip values
-      setTipAmount('');
-      setTipMessage('');
-    }
+  // Handle "Send Tip" from success_tip - now just opens Orientation in post_request mode
+  // Actual tip payment happens from within Orientation support mode
+  const handleSendTip = () => {
+    // Close the success_tip modal
+    setSelectedSong(null);
+    setRequestStep('identity');
+    setSubmittedRequestId(null);
+    setFollowUpEmail('');
+    
+    // Open Orientation in post_request mode (user will click "Leave a tip" there)
+    setOrientationMode('post_request');
+    setShowOrientation(true);
+  };
+  
+  // Handle "Skip / I'm all set" from success_tip - same behavior as Send Tip
+  const handleSkipTip = () => {
+    // Close the success_tip modal
+    setSelectedSong(null);
+    setRequestStep('identity');
+    setSubmittedRequestId(null);
+    setFollowUpEmail('');
+    setTipAmount('');
+    setTipMessage('');
+    
+    // Open Orientation in post_request mode
+    setOrientationMode('post_request');
+    setShowOrientation(true);
+  };
+  
+  // Switch to Support mode within Orientation (from "Leave a tip" button)
+  const handleOpenSupportMode = () => {
+    setOrientationMode('support');
+  };
+  
+  // Go back from Support mode to post_request mode
+  const handleBackFromSupport = () => {
+    setOrientationMode('post_request');
   };
   
   // Trigger external payment link - called from Support view's "Open payment app" button
@@ -9464,8 +9412,8 @@ const AudienceInterface = () => {
         }
         
         if (platform === 'zelle') {
-          // Zelle: close Orientation and show Zelle modal
-          setShowOrientation(false);
+          // Zelle: show Zelle modal (Orientation stays open underneath)
+          // When Zelle modal closes, it will return to support mode
           setZelleInfo({
             contact: musician.zelle_email || musician.zelle_phone,
             contactType: musician.zelle_email ? 'email' : 'phone',
@@ -9491,7 +9439,7 @@ const AudienceInterface = () => {
     setTipMessage('');
   };
   
-  // Handle "About / Follow" from success_tip - opens Orientation
+  // Handle "About / Follow" from success_tip - opens Orientation (same as skip now)
   const handlePostRequestOrientation = () => {
     // Close the modal and reset state
     setSelectedSong(null);
