@@ -15,16 +15,14 @@ Live music request platform enabling musicians to receive song requests from aud
 
 ### Completed Features
 
-#### Post-Request Tip Flow (January 22, 2026)
-Restored full tipping UI inside success_tip. No "Support the Artist" sheet in post-request flow:
+#### Bio Expandable & PayPal Fix (January 22, 2026)
+Made Orientation bio expandable and fixed PayPal popup blocker issue:
 
-- ✅ **success_tip has full tipping UI**: Amount input, $3/$5/$10, payment selector, Send tip button
-- ✅ **Send tip triggers payment immediately**: Uses window.location.href (no popup blocker)
-- ✅ **Both Send tip and Skip → Orientation post_request**: No separate Support sheet
-- ✅ **No stacked modals**: success_tip closes before Orientation opens
-- ✅ **Orientation post_request has subtle "Leave a tip"**: For users who skipped but want to tip later
-- ✅ **Header tap unchanged**: Opens Orientation default mode with individual tip links
-- ✅ **PayPal uses direct navigation**: window.location.href instead of window.open
+- ✅ **Expandable bio**: Shows first ~300 chars with "Read more" / "Show less" toggle
+- ✅ **Smooth height transition**: CSS transition on max-height for smooth expand/collapse
+- ✅ **Bio state resets on close**: Collapses when Orientation closes
+- ✅ **PayPal uses window.location.href**: Avoids popup blocked on iOS Safari
+- ✅ **PayPal.Me format with amount**: Uses `https://paypal.me/{username}/{amount}` when amount is provided
 
 #### Moment 0/1A UI Polish (January 22, 2026)
 The audience landing page has been polished for improved clarity and information density:
