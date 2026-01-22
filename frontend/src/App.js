@@ -9340,12 +9340,34 @@ const AudienceInterface = () => {
     setRequestStep('success_tip');
   };
   
-  // Handle "Send Tip" - opens external payment link, stays on success_tip
+  // Handle "Send Tip" - opens external payment link, closes modal, opens Orientation Support view
   const handleSendTip = async () => {
     if (tipAmount && parseFloat(tipAmount) > 0) {
-      // Open external payment link (does NOT advance UI state)
+      // Store tip info for the external payment link
+      const currentTipAmount = tipAmount;
+      const currentTipPlatform = tipPlatform;
+      
+      // Close the success_tip modal first
+      setSelectedSong(null);
+      setRequestStep('identity');
+      setSubmittedRequestId(null);
+      setFollowUpEmail('');
+      setTipAmount('');
+      setTipMessage('');
+      
+      // Open Orientation in support mode (focused on tip buttons)
+      setOrientationMode('support');
+      setShowOrientation(true);
+      
+      // Now open the external payment link (will open in new tab/app)
+      // Restore tip values briefly for the payment handler
+      setTipAmount(currentTipAmount);
+      setTipPlatform(currentTipPlatform);
       await handleAudienceInterfaceTipSubmit();
-      // User stays on success_tip screen - external app opens in new tab/app
+      
+      // Clear tip values after external link is opened
+      setTipAmount('');
+      setTipMessage('');
     }
   };
   
@@ -9364,7 +9386,7 @@ const AudienceInterface = () => {
     setShowOrientation(true);
   };
   
-  // Handle "Back to songs" from success_tip - closes everything
+  // Handle "Back to songs" from success_tip or Orientation - closes everything
   const handleBackToSongs = () => {
     // Close the modal and reset state
     setSelectedSong(null);
@@ -9373,6 +9395,8 @@ const AudienceInterface = () => {
     setFollowUpEmail('');
     setTipAmount('');
     setTipMessage('');
+    // Also close Orientation if open
+    setShowOrientation(false);
   };
   
   // NEW: Actually submit the request with tip information
