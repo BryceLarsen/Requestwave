@@ -15,18 +15,24 @@ Live music request platform enabling musicians to receive song requests from aud
 
 ### Completed Features
 
-#### Orientation Tip Card & PayPal Fix (January 22, 2026)
-Replaced big "Support" section with subtle collapsible tip card and fixed PayPal behavior:
+#### Orientation Tip CTA Button (January 22, 2026)
+Replaced subtle collapsible tip card with prominent full-width CTA button:
 
-- ✅ **Subtle "Leave a tip" card**: Collapsed by default, shows in both default and post_request modes
-- ✅ **Collapsed state**: "Leave a tip" + "Totally optional." helper text
+- ✅ **Full-width CTA button**: Light teal background (`bg-teal-500/90`), distinct from Spotify green
+- ✅ **Big text**: "Leave a tip" (text-lg, font-bold)
+- ✅ **Small text**: "(totally optional)" in lighter teal below
+- ✅ **Toggle behavior**: Tap expands/collapses inline tip form in place
+- ✅ **Works in both modes**: default (via "About") and post_request (after song request)
+- ✅ **Empty payment guard**: CTA hidden when no payment methods configured (P2)
 - ✅ **Expanded state**: Amount input, $3/$5/$10, payment selector, dynamic CTA button
 - ✅ **Dynamic CTA labels**: "Open Venmo", "Open PayPal", "Show Zelle info"
 - ✅ **PayPal fallback link**: "Having trouble? Open in browser" when PayPal selected
 - ✅ **PayPal URL sanitization**: Removes leading @ from username, uses window.location.assign
-- ✅ **Clean amount handling**: Strips $ and commas from amount
-- ✅ **No standalone Support sheet**: Removed big Venmo/PayPal buttons from default mode
 - ✅ **Bio expandable**: Read more/Show less toggle with smooth transition
+
+#### Runtime Error Fix (January 22, 2026)
+- ✅ Fixed JSX syntax error caused by orphaned duplicate code block
+- ✅ Removed orphaned lines 11073-11125 (duplicate select/button elements)
 
 #### Moment 0/1A UI Polish (January 22, 2026)
 The audience landing page has been polished for improved clarity and information density:
