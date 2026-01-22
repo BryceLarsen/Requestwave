@@ -10156,6 +10156,10 @@ const AudienceInterface = () => {
                   {/* TIP SECTION - Secondary, clearly separated */}
                   {musician.tips_enabled !== false && (
                     <div className="border-t border-gray-700/50 pt-5 mt-4">
+                      {/* Tip prompt copy */}
+                      <p className="text-gray-300 text-sm text-center mb-1">Want to leave a tip?</p>
+                      <p className="text-gray-500 text-xs text-center mb-4">Totally optional.</p>
+                      
                       {/* Inline amount input with small preset chips */}
                       <div className="mb-4">
                         <div className="flex items-center gap-3 mb-3">
