@@ -10146,18 +10146,18 @@ const AudienceInterface = () => {
                 <>
                   {/* SUCCESS CONFIRMATION - Primary visual element */}
                   <div className="text-center mb-6">
-                    <div className="w-16 h-16 bg-green-600/20 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <div className="w-16 h-16 bg-green-500/25 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg shadow-green-500/10">
                       <span className="text-green-400 text-3xl">✓</span>
                     </div>
                     <h2 className="text-2xl font-bold mb-1 text-white">Request sent 🎶</h2>
-                    <p className="text-gray-400">Your song is in the queue</p>
+                    <p className="text-gray-300">Your song is in the queue</p>
                   </div>
                   
                   {/* TIP SECTION - Secondary, clearly separated */}
                   {musician.tips_enabled !== false && (
-                    <div className="border-t border-gray-700/50 pt-5 mt-4">
+                    <div className="border-t border-gray-600/50 pt-5 mt-4">
                       {/* Tip prompt copy */}
-                      <p className="text-gray-300 text-sm text-center mb-1">Want to leave a tip?</p>
+                      <p className="text-gray-200 text-sm text-center mb-1">Want to leave a tip?</p>
                       <p className="text-gray-500 text-xs text-center mb-4">Totally optional.</p>
                       
                       {/* Inline amount input with small preset chips */}
