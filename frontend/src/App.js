@@ -10658,8 +10658,8 @@ const AudienceInterface = () => {
               <div className="sticky top-0 bg-gray-800 pt-3 pb-2 rounded-t-2xl">
                 <div className="w-12 h-1 bg-gray-600 rounded-full mx-auto mb-2"></div>
                 
-                {/* Post-request thanks line (only in post_request mode) */}
-                {orientationMode === 'post_request' && (
+                {/* Post-request thanks line (in post_request or support mode) */}
+                {(orientationMode === 'post_request' || orientationMode === 'support') && (
                   <p className="text-center text-green-400 text-sm mb-2 px-4" data-testid="orientation-thanks-line">
                     Thanks, your request was sent.
                   </p>
@@ -10667,16 +10667,21 @@ const AudienceInterface = () => {
                 
                 <div className="flex items-center justify-between px-4">
                   <div>
-                    {musician?.current_show_name && (
+                    {musician?.current_show_name && orientationMode !== 'support' && (
                       <div className="flex items-center space-x-2 mb-0.5">
                         <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                         <span className="text-xs text-green-400 font-medium">Live Now: {musician.current_show_name}</span>
                       </div>
                     )}
-                    <h2 className="text-lg font-bold text-white">About the Artist</h2>
+                    <h2 className="text-lg font-bold text-white">
+                      {orientationMode === 'support' ? 'Support the Artist' : 'About the Artist'}
+                    </h2>
                   </div>
                   <button
-                    onClick={() => setShowOrientation(false)}
+                    onClick={() => {
+                      setShowOrientation(false);
+                      // In support mode, closing returns to song list (no stacked modals)
+                    }}
                     className="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700 transition"
                     data-testid="orientation-close-btn"
                   >
@@ -10689,26 +10694,111 @@ const AudienceInterface = () => {
               
               {/* Orientation Content */}
               <div className="px-4 pb-6 space-y-5">
-                {/* Artist Photo + Name */}
-                <div className="text-center pt-2">
-                  {designSettings.artist_photo ? (
-                    <img
-                      src={designSettings.artist_photo}
-                      alt={designSettings.musician_name}
-                      className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover mx-auto mb-3 border-2 border-gray-600"
-                    />
-                  ) : (
-                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 mx-auto mb-3 flex items-center justify-center text-3xl border-2 border-gray-600">
-                      {designSettings.musician_name?.charAt(0) || '🎵'}
-                    </div>
-                  )}
-                  <h1 className="text-xl md:text-2xl font-bold text-white">
-                    {designSettings.musician_name}
-                  </h1>
-                </div>
                 
-                {/* Bio - truncated to ~300 chars */}
-                {designSettings.bio && (
+                {/* SUPPORT MODE: Show tip buttons first, or fallback message */}
+                {orientationMode === 'support' && (
+                  <>
+                    {/* Check if any payment methods are configured */}
+                    {(musician.venmo_username || musician.paypal_username || musician.cash_app_username || (musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone))) ? (
+                      <div className="pt-2">
+                        <p className="text-gray-400 text-sm text-center mb-4">Tip link opened. You can also tip directly below:</p>
+                        <div className="space-y-2">
+                          {musician.venmo_username && musician.venmo_enabled !== false && (
+                            <a
+                              href={`https://venmo.com/${musician.venmo_username}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full bg-blue-500 hover:bg-blue-600 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white"
+                              data-testid="support-venmo-link"
+                            >
+                              <span>Venmo</span>
+                            </a>
+                          )}
+                          {musician.paypal_username && musician.paypal_enabled !== false && (
+                            <a
+                              href={`https://paypal.me/${musician.paypal_username}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full bg-blue-700 hover:bg-blue-800 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white"
+                              data-testid="support-paypal-link"
+                            >
+                              <span>PayPal</span>
+                            </a>
+                          )}
+                          {musician.cash_app_username && musician.cash_app_enabled !== false && (
+                            <a
+                              href={`https://cash.app/${musician.cash_app_username}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full bg-green-600 hover:bg-green-700 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white"
+                              data-testid="support-cashapp-link"
+                            >
+                              <span>Cash App</span>
+                            </a>
+                          )}
+                          {musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone) && (
+                            <button
+                              onClick={() => {
+                                setShowOrientation(false);
+                                setZelleInfo({
+                                  contact: musician.zelle_email || musician.zelle_phone,
+                                  contactType: musician.zelle_email ? 'email' : 'phone',
+                                  amount: '',
+                                  message: ''
+                                });
+                                setShowZelleModal(true);
+                              }}
+                              className="w-full bg-purple-600 hover:bg-purple-700 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white"
+                              data-testid="support-zelle-link"
+                            >
+                              <span>Zelle</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      /* No payment methods configured - show fallback */
+                      <div className="text-center pt-4 pb-2">
+                        <p className="text-gray-400 text-sm mb-4">Tipping isn't set up for this artist yet.</p>
+                        <button
+                          onClick={() => setShowOrientation(false)}
+                          className="bg-gray-700 hover:bg-gray-600 px-6 py-2 rounded-lg text-gray-300 transition duration-300"
+                          data-testid="support-back-to-songs-btn"
+                        >
+                          Back to songs
+                        </button>
+                      </div>
+                    )}
+                    
+                    {/* Divider before Follow section */}
+                    <div className="border-t border-gray-700/50 pt-4 mt-4">
+                      <p className="text-gray-500 text-xs text-center mb-3">Follow & Listen</p>
+                    </div>
+                  </>
+                )}
+                
+                {/* Artist Photo + Name (shown in default and post_request modes, compact in support) */}
+                {orientationMode !== 'support' && (
+                  <div className="text-center pt-2">
+                    {designSettings.artist_photo ? (
+                      <img
+                        src={designSettings.artist_photo}
+                        alt={designSettings.musician_name}
+                        className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover mx-auto mb-3 border-2 border-gray-600"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 mx-auto mb-3 flex items-center justify-center text-3xl border-2 border-gray-600">
+                        {designSettings.musician_name?.charAt(0) || '🎵'}
+                      </div>
+                    )}
+                    <h1 className="text-xl md:text-2xl font-bold text-white">
+                      {designSettings.musician_name}
+                    </h1>
+                  </div>
+                )}
+                
+                {/* Bio - truncated to ~300 chars (not shown in support mode) */}
+                {designSettings.bio && orientationMode !== 'support' && (
                   <div className="bg-gray-700/50 rounded-lg p-4">
                     <p className="text-gray-300 text-sm leading-relaxed">
                       {designSettings.bio.length > 300 
