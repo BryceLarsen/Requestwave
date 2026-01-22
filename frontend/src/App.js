@@ -5849,7 +5849,10 @@ const MusicianDashboard = () => {
                           .map((request) => (
                           <div key={request.id} className="bg-gray-600 p-3 rounded flex items-center justify-between opacity-75">
                             <div>
-                              <h4 className="font-medium text-white">{request.song_title}</h4>
+                              <h4 className="font-medium text-white">
+                                {request.requester_email && <span className="text-gray-400 mr-2" title="Email provided">✉️</span>}
+                                {request.song_title}
+                              </h4>
                               <p className="text-gray-300 text-sm">{request.song_artist}</p>
                               <p className="text-gray-400 text-xs">
                                 From: {request.requester_name} • {formatTimestamp(request.created_at)}
@@ -5924,6 +5927,7 @@ const MusicianDashboard = () => {
                       .map((request) => (
                         <div key={request.id} className="bg-blue-800/50 rounded-lg p-4">
                           <h4 className="font-bold text-lg text-white">
+                            {request.requester_email && <span className="text-gray-400 mr-2" title="Email provided">✉️</span>}
                             {request.song_title}
                           </h4>
                           <p className="text-blue-200">{request.song_artist}</p>
