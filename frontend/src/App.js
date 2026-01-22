@@ -1430,8 +1430,17 @@ const MusicianDashboard = () => {
         // Payment fields
         paypal_username: musician.paypal_username || '',
         venmo_username: musician.venmo_username || '',
-        zelle_email: musician.zelle_email || '', // FIX: Add missing Zelle fields
-        zelle_phone: musician.zelle_phone || '', // FIX: Add missing Zelle fields
+        cash_app_username: musician.cash_app_username || '',
+        zelle_email: musician.zelle_email || '',
+        zelle_phone: musician.zelle_phone || '',
+        // Payment toggles
+        paypal_enabled: musician.paypal_enabled !== false,
+        venmo_enabled: musician.venmo_enabled !== false,
+        cash_app_enabled: musician.cash_app_enabled !== false,
+        zelle_enabled: musician.zelle_enabled !== false,
+        // Feature toggles
+        tips_enabled: musician.tips_enabled !== false,
+        requests_enabled: musician.requests_enabled !== false,
         // Social media fields
         instagram_username: musician.instagram_username || '',
         facebook_username: musician.facebook_username || '',
