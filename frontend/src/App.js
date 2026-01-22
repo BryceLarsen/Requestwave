@@ -8854,8 +8854,9 @@ const AudienceInterface = () => {
   const [bioExpanded, setBioExpanded] = useState(false);
   
   // Orientation Side Path state (bottom sheet)
-  // Entry points: header artist name tap, header Tip button
+  // Entry points: header artist name tap, post-request flow
   const [showOrientation, setShowOrientation] = useState(false);
+  const [orientationMode, setOrientationMode] = useState('default'); // 'default' | 'post_request'
   
   // NEW: Access control state
   const [accessDenied, setAccessDenied] = useState(false);
