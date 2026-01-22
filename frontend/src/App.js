@@ -8856,7 +8856,7 @@ const AudienceInterface = () => {
   // Orientation Side Path state (bottom sheet)
   // Entry points: header artist name tap, post-request flow
   const [showOrientation, setShowOrientation] = useState(false);
-  const [orientationMode, setOrientationMode] = useState('default'); // 'default' | 'post_request'
+  const [orientationMode, setOrientationMode] = useState('default'); // 'default' | 'post_request' | 'support'
   
   // NEW: Access control state
   const [accessDenied, setAccessDenied] = useState(false);
