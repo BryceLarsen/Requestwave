@@ -10776,6 +10776,7 @@ const AudienceInterface = () => {
                       setShowOrientation(false);
                       setOrientationMode('default');
                       setTipSectionExpanded(false);
+                      setBioExpanded(false);
                     }}
                     className="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700 transition"
                     data-testid="orientation-close-btn"
