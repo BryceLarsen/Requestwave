@@ -11038,8 +11038,10 @@ const AudienceInterface = () => {
                 <button
                   onClick={() => {
                     setShowZelleModal(false);
-                    // After closing Zelle modal, show social media if in request flow
-                    if (tipSongId) {
+                    // Return to support mode if Orientation is open, otherwise return to song list
+                    if (showOrientation && orientationMode === 'support') {
+                      // Stay in support mode (Orientation is already open underneath)
+                    } else if (tipSongId) {
                       setShowSocialMediaModal(true);
                     }
                   }}
@@ -11090,8 +11092,10 @@ const AudienceInterface = () => {
                 <button
                   onClick={() => {
                     setShowZelleModal(false);
-                    // After closing Zelle modal, show social media if in request flow
-                    if (tipSongId) {
+                    // Return to support mode if Orientation is open, otherwise go to song list
+                    if (showOrientation && orientationMode === 'support') {
+                      // Stay in support mode (Orientation is already open underneath)
+                    } else if (tipSongId) {
                       setShowSocialMediaModal(true);
                     }
                   }}
