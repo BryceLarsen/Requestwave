@@ -1690,8 +1690,21 @@ const MusicianDashboard = () => {
         name: response.data.name,
         bio: response.data.bio,
         website: response.data.website,
+        // Payment usernames
         paypal_username: response.data.paypal_username,
         venmo_username: response.data.venmo_username,
+        cash_app_username: response.data.cash_app_username,
+        zelle_email: response.data.zelle_email,
+        zelle_phone: response.data.zelle_phone,
+        // Payment toggles
+        paypal_enabled: response.data.paypal_enabled,
+        venmo_enabled: response.data.venmo_enabled,
+        cash_app_enabled: response.data.cash_app_enabled,
+        zelle_enabled: response.data.zelle_enabled,
+        // Feature toggles
+        tips_enabled: response.data.tips_enabled,
+        requests_enabled: response.data.requests_enabled,
+        // Social media
         instagram_username: response.data.instagram_username,
         facebook_username: response.data.facebook_username,
         tiktok_username: response.data.tiktok_username,
