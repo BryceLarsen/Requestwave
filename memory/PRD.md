@@ -16,15 +16,15 @@ Live music request platform enabling musicians to receive song requests from aud
 ### Completed Features
 
 #### Send Tip → Orientation Support Mode (January 22, 2026)
-Fixed the stacked modals UX issue when user clicks "Send tip" on success_tip screen:
+Refactored post-request flow to make Support a nested Orientation mode:
 
-- ✅ **Eliminated Stacked Modals**: success_tip now closes immediately when "Send tip" is clicked
-- ✅ **Orientation Support Mode**: New `orientationMode: 'support'` displays a focused tip UI
-- ✅ **Support View UI**: Compact layout with amount input, $3/$5/$10 quick amounts, payment selector, "Open {payment app}" CTA
-- ✅ **Zelle Special Handling**: Zelle tips show instructions modal directly (no Support view since can't open external app)
-- ✅ **Fallback Message**: "Tipping isn't set up for this artist yet." when no payment methods configured
-- ✅ **Clean Exits**: X button and "Back to songs" both return to song list (never back to success_tip)
-- ✅ **Documentation**: `current_build_inventory.yaml` updated with all three Orientation modes
+- ✅ **Simplified success_tip**: Removed tip UI from success_tip; now shows "Continue" and "Skip" buttons only
+- ✅ **Post-request Orientation**: Both buttons lead to Orientation in post_request mode with artist info + "Leave a tip" CTA
+- ✅ **Nested Support Mode**: "Leave a tip" switches to Support mode within same bottom sheet (no new modal)
+- ✅ **Support UI**: Amount input, $3/$5/$10 quick amounts, payment selector, "Open {app}" button, "Back" to return
+- ✅ **Zelle Handling**: Opens Zelle modal from Support; closing returns to Support mode (not songs)
+- ✅ **Clean Closes**: X button on Orientation (any mode) returns to song list; no stacked modals
+- ✅ **Default Mode Preserved**: Artist header tap still opens Orientation in default mode with full tip links
 
 #### Moment 0/1A UI Polish (January 22, 2026)
 The audience landing page has been polished for improved clarity and information density:
