@@ -9665,20 +9665,21 @@ const AudienceInterface = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {/* Header: Stable frame with increased prominence */}
+      {/* Header: Stable frame with artist identity */}
       <header className="bg-gray-800/95 sticky top-0 z-40 border-b border-gray-700/50">
         <div className="max-w-4xl mx-auto px-4 py-3">
-          {/* Artist identity - tappable to open Orientation */}
+          {/* Artist identity - image + name + chevron as ONE tappable target → Orientation */}
           <button
             onClick={() => setShowOrientation(true)}
             className="flex items-center w-full hover:bg-gray-700/30 rounded-lg px-1.5 py-1.5 transition duration-200"
             data-testid="artist-header-orientation-trigger"
           >
+            {/* Artist avatar - sized to match text height */}
             {designSettings.artist_photo && (
               <img
                 src={designSettings.artist_photo}
                 alt={designSettings.musician_name}
-                className="w-10 h-10 rounded-full object-cover flex-shrink-0 mr-3"
+                className="w-6 h-6 rounded-full object-cover flex-shrink-0 mr-2 ring-1 ring-gray-600/50"
               />
             )}
             <div className="flex-1 min-w-0 text-left">
