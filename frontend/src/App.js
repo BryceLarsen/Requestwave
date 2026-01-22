@@ -10944,33 +10944,32 @@ const AudienceInterface = () => {
                   </div>
                 )}
                 
-                {/* Subtle "Leave a tip" card - shown in both default and post_request modes */}
+                {/* "Leave a tip" CTA button - shown in both default and post_request modes */}
                 {musician?.tips_enabled !== false && (musician.venmo_username || musician.paypal_username || musician.cash_app_username || (musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone))) && (
-                  <div ref={tipSectionRef} className="pt-2" data-testid="tip-section">
+                  <div ref={tipSectionRef} className="pt-3" data-testid="tip-section">
                     {!tipSectionExpanded ? (
-                      /* Collapsed: Compact card */
+                      /* Collapsed: Clear CTA button */
                       <button
                         onClick={handleToggleTipSection}
-                        className="w-full bg-gray-700/30 hover:bg-gray-700/50 border border-gray-600/30 p-3 rounded-lg transition duration-300 text-left"
+                        className="w-full bg-emerald-600/80 hover:bg-emerald-600 py-4 rounded-xl transition duration-300 text-center"
                         data-testid="orientation-leave-tip-btn"
                       >
-                        <span className="text-gray-200 font-medium text-sm">Leave a tip</span>
-                        <span className="text-gray-500 text-xs block mt-0.5">Totally optional.</span>
+                        <span className="text-white font-semibold text-base block">Leave a tip</span>
+                        <span className="text-emerald-200/70 text-xs block mt-0.5">(totally optional)</span>
                       </button>
                     ) : (
                       /* Expanded: Inline tip form */
-                      <div className="bg-gray-700/30 rounded-lg p-4 border border-gray-600/30">
-                        <div className="flex justify-between items-start mb-3">
-                          <div>
-                            <h3 className="text-sm font-medium text-gray-200">Leave a tip</h3>
-                            <p className="text-gray-500 text-xs">Totally optional.</p>
-                          </div>
+                      <div className="bg-gray-700/40 rounded-xl p-4 border border-gray-600/30">
+                        {/* Header */}
+                        <div className="text-center mb-4">
+                          <h3 className="text-base font-medium text-white">Leave a tip</h3>
+                          <p className="text-gray-400 text-xs">(totally optional)</p>
                         </div>
                         
                         {/* Amount input */}
-                        <div className="mb-3">
-                          <div className="flex items-center gap-3 mb-2">
-                            <span className="text-gray-500 text-sm">$</span>
+                        <div className="mb-4">
+                          <div className="flex items-center gap-3 mb-3">
+                            <span className="text-gray-400 text-sm">$</span>
                             <input
                               type="number"
                               placeholder="Amount"
@@ -10979,7 +10978,7 @@ const AudienceInterface = () => {
                               min="0.01"
                               max="500"
                               step="0.01"
-                              className="flex-1 bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white text-center text-sm"
+                              className="flex-1 bg-gray-700/50 border border-gray-600/50 rounded-lg px-4 py-3 text-white text-center"
                               data-testid="orientation-tip-amount-input"
                             />
                           </div>
@@ -10989,10 +10988,10 @@ const AudienceInterface = () => {
                                 key={amount}
                                 type="button"
                                 onClick={() => setTipAmount(amount.toString())}
-                                className={`px-3 py-1 text-xs rounded-full transition duration-200 ${
+                                className={`px-4 py-1.5 text-sm rounded-full transition duration-200 ${
                                   tipAmount === amount.toString()
-                                    ? 'bg-gray-600 text-gray-200'
-                                    : 'bg-gray-700/50 text-gray-500 hover:text-gray-400'
+                                    ? 'bg-emerald-600/50 text-emerald-200 border border-emerald-500/50'
+                                    : 'bg-gray-700/50 text-gray-400 hover:text-gray-300 border border-gray-600/30'
                                 }`}
                               >
                                 ${amount}
@@ -11002,11 +11001,11 @@ const AudienceInterface = () => {
                         </div>
                         
                         {/* Payment selector */}
-                        <div className="mb-3">
+                        <div className="mb-4">
                           <select
                             value={tipPlatform}
                             onChange={(e) => setTipPlatform(e.target.value)}
-                            className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-gray-300 text-sm"
+                            className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg px-4 py-3 text-gray-300"
                             data-testid="orientation-tip-payment-selector"
                           >
                             {musician?.venmo_enabled !== false && musician.venmo_username && (
@@ -11018,6 +11017,59 @@ const AudienceInterface = () => {
                             {musician?.cash_app_enabled !== false && musician.cash_app_username && (
                               <option value="cashapp">Cash App</option>
                             )}
+                            {musician?.zelle_enabled && (musician.zelle_email || musician.zelle_phone) && (
+                              <option value="zelle">Zelle</option>
+                            )}
+                          </select>
+                        </div>
+                        
+                        {/* Dynamic CTA button */}
+                        <button
+                          onClick={() => {
+                            if (tipAmount && parseFloat(tipAmount) > 0) {
+                              triggerPaymentLink(parseFloat(tipAmount), tipPlatform);
+                            }
+                          }}
+                          disabled={!tipAmount || parseFloat(tipAmount) <= 0}
+                          className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-700 disabled:text-gray-500 py-3 rounded-xl font-medium transition duration-300 disabled:cursor-not-allowed"
+                          data-testid="orientation-tip-send-btn"
+                        >
+                          {tipPlatform === 'venmo' ? 'Open Venmo' :
+                           tipPlatform === 'paypal' ? 'Open PayPal' :
+                           tipPlatform === 'cashapp' ? 'Open Cash App' :
+                           tipPlatform === 'zelle' ? 'Show Zelle info' :
+                           'Send tip'}
+                        </button>
+                        
+                        {/* PayPal fallback link */}
+                        {tipPlatform === 'paypal' && tipAmount && parseFloat(tipAmount) > 0 && (
+                          <button
+                            onClick={() => {
+                              const url = getPayPalUrl(tipAmount);
+                              if (url) {
+                                console.log(`PayPal fallback URL: ${url}`);
+                                window.location.assign(url);
+                              }
+                            }}
+                            className="w-full text-gray-500 hover:text-gray-400 text-xs mt-2 underline"
+                            data-testid="paypal-fallback-link"
+                          >
+                            Having trouble? Open in browser
+                          </button>
+                        )}
+                        
+                        {/* Collapse link */}
+                        <button
+                          onClick={handleToggleTipSection}
+                          className="w-full text-gray-500 hover:text-gray-400 py-2 text-sm transition duration-200 mt-2"
+                          data-testid="tip-collapse-btn"
+                        >
+                          Collapse
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
                             {musician?.zelle_enabled && (musician.zelle_email || musician.zelle_phone) && (
                               <option value="zelle">Zelle</option>
                             )}
