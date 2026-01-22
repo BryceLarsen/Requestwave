@@ -10956,14 +10956,14 @@ const AudienceInterface = () => {
                   </div>
                 )}
                 
-                {/* POST_REQUEST MODE: Inline expandable tip section */}
+                {/* POST_REQUEST MODE: Subtle "Leave a tip" button at bottom */}
                 {orientationMode === 'post_request' && musician?.tips_enabled !== false && (musician.venmo_username || musician.paypal_username || musician.cash_app_username || (musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone))) && (
                   <div ref={tipSectionRef} className="pt-2" data-testid="tip-section">
                     {!tipSectionExpanded ? (
-                      /* Collapsed: Single "Leave a tip" button */
+                      /* Collapsed: Subtle "Leave a tip" button */
                       <button
                         onClick={handleToggleTipSection}
-                        className="w-full bg-green-600 hover:bg-green-700 py-3 rounded-lg font-medium transition duration-300"
+                        className="w-full bg-gray-700/50 hover:bg-gray-700 border border-gray-600/30 py-3 rounded-lg font-medium transition duration-300 text-gray-300"
                         data-testid="orientation-leave-tip-btn"
                       >
                         Leave a tip
@@ -10971,7 +10971,15 @@ const AudienceInterface = () => {
                     ) : (
                       /* Expanded: Inline tip form */
                       <div className="bg-gray-700/30 rounded-lg p-4 border border-gray-600/30">
-                        <h3 className="text-sm font-medium text-gray-300 mb-3 text-center">Leave a tip</h3>
+                        <div className="flex justify-between items-center mb-3">
+                          <h3 className="text-sm font-medium text-gray-300">Leave a tip</h3>
+                          <button
+                            onClick={handleToggleTipSection}
+                            className="text-gray-500 hover:text-gray-400 text-xs"
+                          >
+                            ✕
+                          </button>
+                        </div>
                         
                         {/* Amount input */}
                         <div className="mb-3">
@@ -10986,10 +10994,9 @@ const AudienceInterface = () => {
                               max="500"
                               step="0.01"
                               className="flex-1 bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white text-center text-sm"
-                              data-testid="tip-amount-input"
+                              data-testid="orientation-tip-amount-input"
                             />
                           </div>
-                          {/* Quick amounts: $3 / $5 / $10 */}
                           <div className="flex justify-center gap-2">
                             {[3, 5, 10].map(amount => (
                               <button
@@ -11001,7 +11008,6 @@ const AudienceInterface = () => {
                                     ? 'bg-gray-600 text-gray-200'
                                     : 'bg-gray-700/50 text-gray-500 hover:text-gray-400'
                                 }`}
-                                data-testid={`quick-amount-${amount}`}
                               >
                                 ${amount}
                               </button>
@@ -11009,15 +11015,46 @@ const AudienceInterface = () => {
                           </div>
                         </div>
                         
-                        {/* Payment method selector */}
+                        {/* Payment selector */}
                         <div className="mb-3">
                           <select
                             value={tipPlatform}
                             onChange={(e) => setTipPlatform(e.target.value)}
                             className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-gray-300 text-sm"
-                            data-testid="tip-payment-selector"
+                            data-testid="orientation-tip-payment-selector"
                           >
                             {musician?.venmo_enabled !== false && musician.venmo_username && (
+                              <option value="venmo">Venmo</option>
+                            )}
+                            {musician?.paypal_enabled !== false && musician.paypal_username && (
+                              <option value="paypal">PayPal</option>
+                            )}
+                            {musician?.cash_app_enabled !== false && musician.cash_app_username && (
+                              <option value="cashapp">Cash App</option>
+                            )}
+                            {musician?.zelle_enabled && (musician.zelle_email || musician.zelle_phone) && (
+                              <option value="zelle">Zelle</option>
+                            )}
+                          </select>
+                        </div>
+                        
+                        {/* Send tip button */}
+                        <button
+                          onClick={() => {
+                            if (tipAmount && parseFloat(tipAmount) > 0) {
+                              triggerPaymentLink(parseFloat(tipAmount), tipPlatform);
+                            }
+                          }}
+                          disabled={!tipAmount || parseFloat(tipAmount) <= 0}
+                          className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:text-gray-500 py-2 rounded-lg font-medium text-sm transition duration-300 disabled:cursor-not-allowed"
+                          data-testid="orientation-tip-send-btn"
+                        >
+                          Send tip
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
                               <option value="venmo">Venmo</option>
                             )}
                             {musician?.paypal_enabled !== false && musician.paypal_username && (
