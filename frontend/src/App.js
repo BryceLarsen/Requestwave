@@ -8798,7 +8798,7 @@ const AudienceInterface = () => {
     decade: ''  // NEW: Add decade filter
   });
   const [requestForm, setRequestForm] = useState({
-    requester_name: '',
+    requester_name: localStorage.getItem('requestwave_requester_name') || '',
     dedication: ''
   });
   const [selectedSong, setSelectedSong] = useState(null);
