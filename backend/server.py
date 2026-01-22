@@ -3943,11 +3943,16 @@ async def create_request(request_data: RequestCreate):
     # Check if musician can receive more requests based on subscription
     if not await check_request_allowed(musician_id):
         subscription_status = await get_subscription_status(musician_id)
+        # Convert datetime fields to strings for JSON serialization
+        status_dict = subscription_status.dict()
+        for key, value in status_dict.items():
+            if isinstance(value, datetime):
+                status_dict[key] = value.isoformat()
         raise HTTPException(
             status_code=402, 
             detail={
                 "message": "Request limit reached. Musician needs to upgrade to Pro plan.",
-                "subscription_status": subscription_status.dict()
+                "subscription_status": status_dict
             }
         )
     
