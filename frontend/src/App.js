@@ -9967,7 +9967,7 @@ const AudienceInterface = () => {
                   setSelectedSong(song);
                 }}
                 data-testid={`song-card-${song.id}`}
-                className={`w-full text-left bg-gray-800 rounded-xl p-4 md:p-5 
+                className={`w-full text-left bg-gray-800 rounded-xl py-3 px-4
                   hover:bg-gray-700 hover:shadow-lg hover:shadow-black/20
                   active:bg-gray-750 active:scale-[0.98] active:shadow-inner
                   transition-all duration-150 ease-out cursor-pointer
