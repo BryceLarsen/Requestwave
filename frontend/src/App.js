@@ -10271,9 +10271,9 @@ const AudienceInterface = () => {
                         </select>
                       </div>
                       
-                      {/* Primary CTA */}
+                      {/* Send Tip - opens external payment link, stays on this screen */}
                       <button
-                        onClick={() => handleSuccessTipComplete(true)}
+                        onClick={handleSendTip}
                         disabled={!tipAmount || parseFloat(tipAmount) <= 0}
                         className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:text-gray-500 py-3 rounded-lg font-medium transition duration-300 disabled:cursor-not-allowed"
                         data-testid="success-tip-send-btn"
@@ -10283,14 +10283,23 @@ const AudienceInterface = () => {
                     </div>
                   )}
                   
-                  {/* Secondary action - text-style, fully acceptable skip */}
-                  <button
-                    onClick={() => handleSuccessTipComplete(false)}
-                    className="w-full text-gray-500 hover:text-gray-400 py-3 text-sm transition duration-200 mt-2"
-                    data-testid="success-tip-skip-btn"
-                  >
-                    {musician.tips_enabled !== false ? "I'm all set" : "Done"}
-                  </button>
+                  {/* Secondary navigation options - text-style links */}
+                  <div className="mt-6 pt-4 border-t border-gray-700/30 space-y-2">
+                    <button
+                      onClick={handlePostRequestOrientation}
+                      className="w-full text-gray-400 hover:text-gray-300 py-2 text-sm transition duration-200"
+                      data-testid="success-tip-orientation-btn"
+                    >
+                      About / Follow
+                    </button>
+                    <button
+                      onClick={handleBackToSongs}
+                      className="w-full text-gray-500 hover:text-gray-400 py-2 text-sm transition duration-200"
+                      data-testid="success-tip-back-btn"
+                    >
+                      Back to songs
+                    </button>
+                  </div>
                 </>
               )}
               
