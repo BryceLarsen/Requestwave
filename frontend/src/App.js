@@ -10377,20 +10377,23 @@ const AudienceInterface = () => {
         {showTipModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-white">💰 Send a Tip</h3>
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h3 className="text-xl font-bold text-white">Enjoying the music?</h3>
+                  <p className="text-gray-400 text-sm mt-1">Tips go directly to the artist.</p>
+                </div>
                 <button
                   onClick={() => setShowTipModal(false)}
-                  className="text-gray-400 hover:text-white text-xl"
+                  className="text-gray-400 hover:text-white text-xl leading-none"
                 >
                   ×
                 </button>
               </div>
               
-              <div className="space-y-4">
+              <div className="space-y-4 mt-4">
                 {/* Preset amounts */}
                 <div>
-                  <label className="block text-gray-300 text-sm font-bold mb-2">Quick amounts</label>
+                  <label className="block text-gray-300 text-sm font-bold mb-2">Quick thank-yous</label>
                   <div className="grid grid-cols-4 gap-2">
                     {getTipPresetAmounts().map(amount => (
                       <button
@@ -10399,7 +10402,7 @@ const AudienceInterface = () => {
                         onClick={() => setTipAmount(amount.toString())}
                         className={`py-1.5 px-2 text-sm rounded-lg font-medium transition duration-300 ${
                           tipAmount === amount.toString()
-                            ? 'bg-green-600 text-white'
+                            ? 'bg-gray-600 text-white ring-2 ring-gray-500'
                             : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                         }`}
                       >
@@ -10452,7 +10455,7 @@ const AudienceInterface = () => {
                   <label className="block text-gray-300 text-sm font-bold mb-2">Message (optional)</label>
                   <input
                     type="text"
-                    placeholder="Thanks for the great music!"
+                    placeholder="Want to add a note for the artist?"
                     value={tipMessage}
                     onChange={(e) => setTipMessage(e.target.value)}
                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
@@ -10460,19 +10463,19 @@ const AudienceInterface = () => {
                 </div>
                 
                 {/* Action buttons */}
-                <div className="flex space-x-3 mt-6">
-                  <button
-                    onClick={() => handleAudienceNoTip()}
-                    className="flex-1 bg-gray-600 hover:bg-gray-700 py-2 rounded-lg font-medium transition duration-300"
-                  >
-                    No Tip
-                  </button>
+                <div className="flex flex-col space-y-3 mt-6">
                   <button
                     onClick={() => handleAudienceInterfaceTipSubmit()}
                     disabled={!tipAmount || parseFloat(tipAmount) <= 0}
-                    className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 py-2 rounded-lg font-medium transition duration-300 disabled:cursor-not-allowed"
+                    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 py-3 rounded-lg font-bold transition duration-300 disabled:cursor-not-allowed"
                   >
                     Send Tip
+                  </button>
+                  <button
+                    onClick={() => handleAudienceNoTip()}
+                    className="w-full bg-gray-700 hover:bg-gray-600 py-3 rounded-lg text-gray-300 transition duration-300"
+                  >
+                    No tip this time
                   </button>
                 </div>
               </div>
