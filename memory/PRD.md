@@ -15,14 +15,18 @@ Live music request platform enabling musicians to receive song requests from aud
 
 ### Completed Features
 
-#### Bio Expandable & PayPal Fix (January 22, 2026)
-Made Orientation bio expandable and fixed PayPal popup blocker issue:
+#### Orientation Tip Card & PayPal Fix (January 22, 2026)
+Replaced big "Support" section with subtle collapsible tip card and fixed PayPal behavior:
 
-- ✅ **Expandable bio**: Shows first ~300 chars with "Read more" / "Show less" toggle
-- ✅ **Smooth height transition**: CSS transition on max-height for smooth expand/collapse
-- ✅ **Bio state resets on close**: Collapses when Orientation closes
-- ✅ **PayPal uses window.location.href**: Avoids popup blocked on iOS Safari
-- ✅ **PayPal.Me format with amount**: Uses `https://paypal.me/{username}/{amount}` when amount is provided
+- ✅ **Subtle "Leave a tip" card**: Collapsed by default, shows in both default and post_request modes
+- ✅ **Collapsed state**: "Leave a tip" + "Totally optional." helper text
+- ✅ **Expanded state**: Amount input, $3/$5/$10, payment selector, dynamic CTA button
+- ✅ **Dynamic CTA labels**: "Open Venmo", "Open PayPal", "Show Zelle info"
+- ✅ **PayPal fallback link**: "Having trouble? Open in browser" when PayPal selected
+- ✅ **PayPal URL sanitization**: Removes leading @ from username, uses window.location.assign
+- ✅ **Clean amount handling**: Strips $ and commas from amount
+- ✅ **No standalone Support sheet**: Removed big Venmo/PayPal buttons from default mode
+- ✅ **Bio expandable**: Read more/Show less toggle with smooth transition
 
 #### Moment 0/1A UI Polish (January 22, 2026)
 The audience landing page has been polished for improved clarity and information density:
