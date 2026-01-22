@@ -9684,6 +9684,10 @@ const AudienceInterface = () => {
             )}
             <div className="flex-1 min-w-0 text-left">
               <div className="flex items-center">
+                {/* Live indicator dot - only visible when current_show_name exists */}
+                {musician?.current_show_name && (
+                  <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0 mr-1.5 animate-live-dot" />
+                )}
                 <h1 className={`text-lg font-semibold ${colors.accent} truncate`}>
                   {designSettings.musician_name}
                 </h1>
