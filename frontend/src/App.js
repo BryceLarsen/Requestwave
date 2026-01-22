@@ -10319,23 +10319,93 @@ const AudienceInterface = () => {
               {requestStep === 'success_tip' && (
                 <>
                   {/* SUCCESS CONFIRMATION - Primary visual element */}
-                  <div className="text-center mb-6">
-                    <div className="w-16 h-16 bg-green-500/25 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg shadow-green-500/10">
-                      <span className="text-green-400 text-3xl">✓</span>
+                  <div className="text-center mb-4">
+                    <div className="w-14 h-14 bg-green-500/25 rounded-full mx-auto mb-3 flex items-center justify-center shadow-lg shadow-green-500/10">
+                      <span className="text-green-400 text-2xl">✓</span>
                     </div>
-                    <h2 className="text-2xl font-bold mb-1 text-white">Request sent 🎶</h2>
-                    <p className="text-gray-300">Your song is in the queue</p>
+                    <h2 className="text-xl font-bold mb-1 text-white">Request sent 🎶</h2>
+                    <p className="text-gray-300 text-sm">Your song is in the queue</p>
                   </div>
                   
-                  {/* Action buttons */}
-                  <div className="space-y-3 mt-6">
-                    <button
-                      onClick={handleSendTip}
-                      className="w-full bg-green-600 hover:bg-green-700 py-3 rounded-lg font-medium transition duration-300"
-                      data-testid="success-tip-leave-tip-btn"
-                    >
-                      Leave a tip
-                    </button>
+                  {/* TIP SECTION - Full tipping UI */}
+                  {musician.tips_enabled !== false && (musician.venmo_username || musician.paypal_username || musician.cash_app_username || (musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone))) && (
+                    <div className="border-t border-gray-600/50 pt-4 mt-3">
+                      <p className="text-gray-200 text-sm text-center mb-1">Want to leave a tip?</p>
+                      <p className="text-gray-500 text-xs text-center mb-3">Totally optional.</p>
+                      
+                      {/* Amount input */}
+                      <div className="mb-3">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-gray-500 text-sm">$</span>
+                          <input
+                            type="number"
+                            placeholder="Amount"
+                            value={tipAmount}
+                            onChange={(e) => setTipAmount(e.target.value)}
+                            min="0.01"
+                            max="500"
+                            step="0.01"
+                            className="flex-1 bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white text-center text-sm"
+                            data-testid="tip-amount-input"
+                          />
+                        </div>
+                        {/* Quick amounts: $3, $5, $10 */}
+                        <div className="flex justify-center gap-2">
+                          {[3, 5, 10].map(amount => (
+                            <button
+                              key={amount}
+                              type="button"
+                              onClick={() => setTipAmount(amount.toString())}
+                              className={`px-3 py-1 text-xs rounded-full transition duration-200 ${
+                                tipAmount === amount.toString()
+                                  ? 'bg-gray-600 text-gray-200'
+                                  : 'bg-gray-700/50 text-gray-500 hover:text-gray-400'
+                              }`}
+                              data-testid={`quick-amount-${amount}`}
+                            >
+                              ${amount}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Payment selector */}
+                      <div className="mb-3">
+                        <select
+                          value={tipPlatform}
+                          onChange={(e) => setTipPlatform(e.target.value)}
+                          className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-gray-300 text-sm"
+                          data-testid="tip-payment-selector"
+                        >
+                          {musician?.venmo_enabled !== false && musician.venmo_username && (
+                            <option value="venmo">Venmo</option>
+                          )}
+                          {musician?.paypal_enabled !== false && musician.paypal_username && (
+                            <option value="paypal">PayPal</option>
+                          )}
+                          {musician?.cash_app_enabled !== false && musician.cash_app_username && (
+                            <option value="cashapp">Cash App</option>
+                          )}
+                          {musician?.zelle_enabled && (musician.zelle_email || musician.zelle_phone) && (
+                            <option value="zelle">Zelle</option>
+                          )}
+                        </select>
+                      </div>
+                      
+                      {/* Send tip button */}
+                      <button
+                        onClick={handleSendTip}
+                        disabled={!tipAmount || parseFloat(tipAmount) <= 0}
+                        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:text-gray-500 py-3 rounded-lg font-medium transition duration-300 disabled:cursor-not-allowed"
+                        data-testid="success-tip-send-btn"
+                      >
+                        Send tip
+                      </button>
+                    </div>
+                  )}
+                  
+                  {/* Skip button - always visible */}
+                  <div className="mt-4 pt-3 border-t border-gray-700/30">
                     <button
                       onClick={handleSkipTip}
                       className="w-full text-gray-400 hover:text-gray-300 py-2 text-sm transition duration-200"
