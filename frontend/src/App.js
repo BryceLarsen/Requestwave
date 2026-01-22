@@ -10299,97 +10299,21 @@ const AudienceInterface = () => {
                     <p className="text-gray-300">Your song is in the queue</p>
                   </div>
                   
-                  {/* TIP SECTION - Secondary, clearly separated */}
-                  {musician.tips_enabled !== false && (
-                    <div className="border-t border-gray-600/50 pt-5 mt-4">
-                      {/* Tip prompt copy */}
-                      <p className="text-gray-200 text-sm text-center mb-1">Want to leave a tip?</p>
-                      <p className="text-gray-500 text-xs text-center mb-4">Totally optional.</p>
-                      
-                      {/* Inline amount input with small preset chips */}
-                      <div className="mb-4">
-                        <div className="flex items-center gap-3 mb-3">
-                          <span className="text-gray-500 text-sm">$</span>
-                          <input
-                            type="number"
-                            placeholder="Amount"
-                            value={tipAmount}
-                            onChange={(e) => setTipAmount(e.target.value)}
-                            min="0.01"
-                            max="500"
-                            step="0.01"
-                            className="flex-1 bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white text-center"
-                            data-testid="tip-amount-input"
-                          />
-                        </div>
-                        {/* Suggested amounts - small, neutral, secondary */}
-                        <div className="flex justify-center gap-2">
-                          {getTipPresetAmounts().map(amount => (
-                            <button
-                              key={amount}
-                              type="button"
-                              onClick={() => setTipAmount(amount.toString())}
-                              className={`px-3 py-1 text-xs rounded-full transition duration-200 ${
-                                tipAmount === amount.toString()
-                                  ? 'bg-gray-600 text-gray-200'
-                                  : 'bg-gray-700/50 text-gray-500 hover:text-gray-400'
-                              }`}
-                            >
-                              ${amount}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      {/* Payment platform - compact */}
-                      <div className="mb-5">
-                        <select
-                          value={tipPlatform}
-                          onChange={(e) => setTipPlatform(e.target.value)}
-                          className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-gray-300 text-sm"
-                        >
-                          {musician?.paypal_enabled && musician.paypal_username && (
-                            <option value="paypal">PayPal</option>
-                          )}
-                          {musician?.venmo_enabled && musician.venmo_username && (
-                            <option value="venmo">Venmo</option>
-                          )}
-                          {musician?.cash_app_enabled && musician.cash_app_username && (
-                            <option value="cashapp">Cash App</option>
-                          )}
-                          {musician?.zelle_enabled && (musician.zelle_email || musician.zelle_phone) && (
-                            <option value="zelle">Zelle</option>
-                          )}
-                        </select>
-                      </div>
-                      
-                      {/* Send Tip - opens external payment link, stays on this screen */}
-                      <button
-                        onClick={handleSendTip}
-                        disabled={!tipAmount || parseFloat(tipAmount) <= 0}
-                        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:text-gray-500 py-3 rounded-lg font-medium transition duration-300 disabled:cursor-not-allowed"
-                        data-testid="success-tip-send-btn"
-                      >
-                        Send tip
-                      </button>
-                    </div>
-                  )}
-                  
-                  {/* Secondary navigation options - text-style links */}
-                  <div className="mt-6 pt-4 border-t border-gray-700/30 space-y-2">
+                  {/* Action buttons - both lead to Orientation */}
+                  <div className="space-y-3 mt-6">
                     <button
-                      onClick={handlePostRequestOrientation}
-                      className="w-full text-gray-400 hover:text-gray-300 py-2 text-sm transition duration-200"
-                      data-testid="success-tip-orientation-btn"
+                      onClick={handleSendTip}
+                      className="w-full bg-green-600 hover:bg-green-700 py-3 rounded-lg font-medium transition duration-300"
+                      data-testid="success-tip-continue-btn"
                     >
-                      About / Follow
+                      Continue
                     </button>
                     <button
-                      onClick={handleBackToSongs}
-                      className="w-full text-gray-500 hover:text-gray-400 py-2 text-sm transition duration-200"
-                      data-testid="success-tip-back-btn"
+                      onClick={handleSkipTip}
+                      className="w-full text-gray-400 hover:text-gray-300 py-2 text-sm transition duration-200"
+                      data-testid="success-tip-skip-btn"
                     >
-                      Back to songs
+                      Skip / I'm all set
                     </button>
                   </div>
                 </>
