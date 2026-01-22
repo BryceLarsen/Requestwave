@@ -10,9 +10,21 @@ Live music request platform enabling musicians to receive song requests from aud
 - **Phase 2: Audience Interaction Capture** - COMPLETE (Signed off 2026-01-16)
 - **Audience Moment Model Refactor** - COMPLETE (Signed off 2026-01-21)
 - **Moment 0/1A UI Polish** - COMPLETE (2026-01-22)
+- **Send Tip → Orientation Support Mode** - COMPLETE (2026-01-22)
 - **Phase 3: Post-Show Reflection** - NOT STARTED (Deferred)
 
 ### Completed Features
+
+#### Send Tip → Orientation Support Mode (January 22, 2026)
+Fixed the stacked modals UX issue when user clicks "Send tip" on success_tip screen:
+
+- ✅ **Eliminated Stacked Modals**: success_tip now closes immediately when "Send tip" is clicked
+- ✅ **Orientation Support Mode**: New `orientationMode: 'support'` displays a focused tip UI
+- ✅ **Support View UI**: Compact layout with amount input, $3/$5/$10 quick amounts, payment selector, "Open {payment app}" CTA
+- ✅ **Zelle Special Handling**: Zelle tips show instructions modal directly (no Support view since can't open external app)
+- ✅ **Fallback Message**: "Tipping isn't set up for this artist yet." when no payment methods configured
+- ✅ **Clean Exits**: X button and "Back to songs" both return to song list (never back to success_tip)
+- ✅ **Documentation**: `current_build_inventory.yaml` updated with all three Orientation modes
 
 #### Moment 0/1A UI Polish (January 22, 2026)
 The audience landing page has been polished for improved clarity and information density:
