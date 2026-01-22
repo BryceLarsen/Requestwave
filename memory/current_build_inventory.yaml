@@ -585,59 +585,58 @@ audience_experience_current_state:
           - "Continue anonymously → skips email, proceeds to success_tip"
           
       - step: 5
-        name: "success_tip: Request Success Screen"
+        name: "success_tip: Request Success with Tipping UI"
         description: >
-          Simplified modal showing request confirmation with tip option.
-          No tip UI embedded - tipping happens inside Orientation.
+          Full tipping UI embedded in the success modal. User can tip immediately
+          or skip. Both paths lead to Orientation post_request mode.
         state_key: "requestStep === 'success_tip'"
         ui_elements:
           success_header:
             icon: "Green check in circle"
             headline: "Request sent 🎶"
             subtext: "Your song is in the queue"
-          buttons:
-            primary: "Leave a tip (green → opens Orientation post_request, auto-scrolls to tip section)"
-            secondary: "Skip / I'm all set (text link → opens Orientation post_request, no auto-scroll)"
+          tip_section:
+            conditional: "Only shown if musician has payment methods configured"
+            prompt: "Want to leave a tip? Totally optional."
+            amount_input: "Number input with $ prefix"
+            quick_amounts: ["$3", "$5", "$10"]
+            payment_selector: "Dropdown with Venmo/PayPal/CashApp/Zelle (based on profile)"
+            send_tip_btn: "Green button, disabled until amount entered"
+          skip_btn: "Skip / I'm all set (text link)"
         exit_paths:
-          leave_tip: "Closes success_tip, opens Orientation post_request mode with tip section expanded"
-          skip: "Closes success_tip, opens Orientation post_request mode with tip section collapsed"
+          send_tip:
+            behavior: >
+              1) Triggers external payment in same gesture (window.location.href for PayPal/Venmo/CashApp, Zelle modal for Zelle)
+              2) Closes success_tip immediately
+              3) Opens Orientation in post_request mode
+          skip:
+            behavior: >
+              1) Closes success_tip
+              2) Opens Orientation in post_request mode
         note: >
-          Both buttons lead to Orientation post_request mode. No standalone "Support the Artist" modal.
+          Full tipping happens IN this modal, not in a separate "Support" sheet.
+          PayPal uses window.location.href to avoid popup blockers.
           
       - step: 6
         name: "Orientation Post-Request Mode"
         description: >
-          Full artist info view with inline tip section at bottom.
-          Entry point from success_tip (both Leave a tip and Skip buttons).
+          Artist info view shown after success_tip (both Send tip and Skip paths).
+          Has subtle "Leave a tip" button for users who skipped but want to tip later.
         trigger: "handleSendTip() or handleSkipTip() from success_tip"
         state_key: "showOrientation && orientationMode === 'post_request'"
         ui_elements:
           thanks_line: "Thanks, your request was sent. (green text at top)"
           header: "About the Artist"
           artist_info: "Photo, name, bio (truncated ~300 chars)"
-          follow_section: "Instagram/Facebook/TikTok links"
-          listen_section: "Spotify/Apple Music links"
-          tip_section:
-            description: "Inline expandable tip section at bottom"
-            collapsed_state: "Single 'Leave a tip' button"
-            expanded_state:
-              header: "Leave a tip"
-              amount_input: "Number input with $ prefix"
-              quick_amounts: ["$3", "$5", "$10"]
-              payment_selector: "Dropdown with Venmo/PayPal/CashApp/Zelle (based on profile)"
-              primary_cta: "Open {Selected App} - uses <a href> for direct navigation (no popup blockers)"
-              collapse_btn: "Collapse - returns to single button"
-        auto_scroll:
-          condition: "When entering via 'Leave a tip' button from success_tip"
-          behavior: "Auto-scrolls to tip section and auto-expands it"
-        payment_links:
-          venmo: "Uses venmo:// deep link"
-          paypal: "Uses <a href> to https://paypal.me/{username}/{amount}"
-          cashapp: "Uses <a href> to https://cash.app/${username}/{amount}"
-          zelle: "Opens Zelle instructions modal with contact info"
+          follow_section: "Instagram/Facebook/TikTok links (if configured)"
+          listen_section: "Spotify/Apple Music links (if configured)"
+          tip_button: "Subtle 'Leave a tip' button at bottom (expandable inline form)"
+        tip_inline_form:
+          collapsed: "Single gray button 'Leave a tip'"
+          expanded: "Amount input, $3/$5/$10, payment selector, Send tip"
         note: >
-          No standalone "Support the Artist" modal. Tipping is inline within Orientation.
-          PayPal/Venmo/CashApp use <a href> for direct navigation to avoid popup blockers.
+          NO standalone "Support the Artist" sheet appears in this flow.
+          The tip button is subtle/secondary since primary tipping happened in success_tip.
 
   # ─────────────────────────────────────────────────────────────────────────────
   # 3. Inputs and Requirements
