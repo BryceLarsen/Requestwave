@@ -9289,6 +9289,9 @@ const AudienceInterface = () => {
         // Store the request ID for potential email attachment in Moment 3
         setSubmittedRequestId(submittedRequest.id);
         
+        // Clear dedication for next request, but preserve requester name
+        setRequestForm(prev => ({ ...prev, dedication: '' }));
+        
         // Transition to Moment 3: Optional Email Follow-Up
         setRequestStep('followup');
         setFollowUpEmail('');
