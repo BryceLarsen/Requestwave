@@ -11070,59 +11070,6 @@ const AudienceInterface = () => {
                     )}
                   </div>
                 )}
-                            {musician?.zelle_enabled && (musician.zelle_email || musician.zelle_phone) && (
-                              <option value="zelle">Zelle</option>
-                            )}
-                          </select>
-                        </div>
-                        
-                        {/* Dynamic CTA button */}
-                        <button
-                          onClick={() => {
-                            if (tipAmount && parseFloat(tipAmount) > 0) {
-                              triggerPaymentLink(parseFloat(tipAmount), tipPlatform);
-                            }
-                          }}
-                          disabled={!tipAmount || parseFloat(tipAmount) <= 0}
-                          className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:text-gray-500 py-2 rounded-lg font-medium text-sm transition duration-300 disabled:cursor-not-allowed"
-                          data-testid="orientation-tip-send-btn"
-                        >
-                          {tipPlatform === 'venmo' ? 'Open Venmo' :
-                           tipPlatform === 'paypal' ? 'Open PayPal' :
-                           tipPlatform === 'cashapp' ? 'Open Cash App' :
-                           tipPlatform === 'zelle' ? 'Show Zelle info' :
-                           'Send tip'}
-                        </button>
-                        
-                        {/* PayPal fallback link */}
-                        {tipPlatform === 'paypal' && tipAmount && parseFloat(tipAmount) > 0 && (
-                          <button
-                            onClick={() => {
-                              const url = getPayPalUrl(tipAmount);
-                              if (url) {
-                                console.log(`PayPal fallback URL: ${url}`);
-                                window.location.assign(url);
-                              }
-                            }}
-                            className="w-full text-gray-500 hover:text-gray-400 text-xs mt-2 underline"
-                            data-testid="paypal-fallback-link"
-                          >
-                            Having trouble? Open in browser
-                          </button>
-                        )}
-                        
-                        {/* Collapse link */}
-                        <button
-                          onClick={handleToggleTipSection}
-                          className="w-full text-gray-500 hover:text-gray-400 py-2 text-xs transition duration-200 mt-2"
-                          data-testid="tip-collapse-btn"
-                        >
-                          Collapse
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
                 
                 {/* Website (default mode only) */}
                 {orientationMode === 'default' && musician?.website && musician.website.trim() !== '' && (
