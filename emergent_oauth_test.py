@@ -23,7 +23,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://audience-flow.preview.emergentagent.com/api"
+BASE_URL = "https://livemusicapp-1.preview.emergentagent.com/api"
 
 # Pro account for testing backwards compatibility
 PRO_MUSICIAN = {
