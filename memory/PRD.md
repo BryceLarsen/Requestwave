@@ -15,16 +15,18 @@ Live music request platform enabling musicians to receive song requests from aud
 
 ### Completed Features
 
-#### Send Tip → Orientation Support Mode (January 22, 2026)
-Refactored post-request flow to make Support a nested Orientation mode:
+#### Post-Request Tip Flow (January 22, 2026)
+Eliminated standalone "Support the Artist" modal - tipping is now inline within Orientation:
 
-- ✅ **Simplified success_tip**: Removed tip UI from success_tip; now shows "Continue" and "Skip" buttons only
-- ✅ **Post-request Orientation**: Both buttons lead to Orientation in post_request mode with artist info + "Leave a tip" CTA
-- ✅ **Nested Support Mode**: "Leave a tip" switches to Support mode within same bottom sheet (no new modal)
-- ✅ **Support UI**: Amount input, $3/$5/$10 quick amounts, payment selector, "Open {app}" button, "Back" to return
-- ✅ **Zelle Handling**: Opens Zelle modal from Support; closing returns to Support mode (not songs)
-- ✅ **Clean Closes**: X button on Orientation (any mode) returns to song list; no stacked modals
-- ✅ **Default Mode Preserved**: Artist header tap still opens Orientation in default mode with full tip links
+- ✅ **success_tip shows "Leave a tip" + "Skip"**: Clear options for user
+- ✅ **Both buttons → Orientation post_request**: No standalone support modal
+- ✅ **"Leave a tip" auto-scrolls to tip section**: And auto-expands it
+- ✅ **"Skip" opens Orientation with tip section collapsed**: User can tap to expand later
+- ✅ **Inline expandable tip section**: Amount input, $3/$5/$10 quick amounts, payment selector
+- ✅ **Payment links use `<a href>`**: Venmo/PayPal/CashApp use direct navigation (no popup blockers)
+- ✅ **Zelle modal preserved**: Opens instructions modal from inline tip section
+- ✅ **Header tap unchanged**: Opens Orientation default mode with individual tip links
+- ✅ **No stacked modals**: success_tip closes before Orientation opens
 
 #### Moment 0/1A UI Polish (January 22, 2026)
 The audience landing page has been polished for improved clarity and information density:
