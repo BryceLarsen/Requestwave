@@ -1,7 +1,7 @@
 # RequestWave Current Build Inventory
 # Canonical source of truth: /app/memory/current_build_inventory.yaml
 # Generated: 2026-01-16
-# Last Updated: 2026-01-22 (Eliminated standalone Support modal, inline tip in Orientation)
+# Last Updated: 2026-01-22 (Tipping UI inside success_tip, no Support sheet in post-request flow)
 
 # =============================================================================
 # SECTION 0: BILLING GATE CONFIGURATION
