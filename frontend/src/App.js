@@ -10944,62 +10944,6 @@ const AudienceInterface = () => {
                   </div>
                 )}
                 
-                {/* DEFAULT MODE: Show individual tip links */}
-                {orientationMode === 'default' && musician?.tips_enabled !== false && (musician.venmo_username || musician.paypal_username || musician.cash_app_username || (musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone))) && (
-                  <div>
-                    <h3 className="text-base font-semibold text-white mb-3 flex items-center">
-                      <span className="mr-2">💰</span>
-                      Support {designSettings.musician_name || 'the Artist'}
-                    </h3>
-                    <div className="space-y-2">
-                      {musician.venmo_username && musician.venmo_enabled !== false && (
-                        <a
-                          href={`https://venmo.com/${musician.venmo_username}`}
-                          className="w-full bg-blue-500 hover:bg-blue-600 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white block"
-                          data-testid="orientation-venmo-link"
-                        >
-                          <span>Venmo</span>
-                        </a>
-                      )}
-                      {musician.paypal_username && musician.paypal_enabled !== false && (
-                        <a
-                          href={`https://paypal.me/${musician.paypal_username}`}
-                          className="w-full bg-blue-700 hover:bg-blue-800 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white block"
-                          data-testid="orientation-paypal-link"
-                        >
-                          <span>PayPal</span>
-                        </a>
-                      )}
-                      {musician.cash_app_username && musician.cash_app_enabled !== false && (
-                        <a
-                          href={`https://cash.app/${musician.cash_app_username}`}
-                          className="w-full bg-green-600 hover:bg-green-700 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white block"
-                          data-testid="orientation-cashapp-link"
-                        >
-                          <span>Cash App</span>
-                        </a>
-                      )}
-                      {musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone) && (
-                        <button
-                          onClick={() => {
-                            setZelleInfo({
-                              contact: musician.zelle_email || musician.zelle_phone,
-                              contactType: musician.zelle_email ? 'email' : 'phone',
-                              amount: '',
-                              message: ''
-                            });
-                            setShowZelleModal(true);
-                          }}
-                          className="w-full bg-purple-600 hover:bg-purple-700 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white"
-                          data-testid="orientation-zelle-link"
-                        >
-                          <span>Zelle</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-                
                 {/* Subtle "Leave a tip" card - shown in both default and post_request modes */}
                 {musician?.tips_enabled !== false && (musician.venmo_username || musician.paypal_username || musician.cash_app_username || (musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone))) && (
                   <div ref={tipSectionRef} className="pt-2" data-testid="tip-section">
