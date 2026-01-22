@@ -9665,33 +9665,33 @@ const AudienceInterface = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {/* Compact Header with Helper Line Visible on Mobile */}
+      {/* Header: Stable frame with increased prominence */}
       <header className="bg-gray-800/95 sticky top-0 z-40 border-b border-gray-700/50">
-        <div className="max-w-4xl mx-auto px-4 py-2">
+        <div className="max-w-4xl mx-auto px-4 py-3">
           {/* Artist identity - tappable to open Orientation */}
           <button
             onClick={() => setShowOrientation(true)}
-            className="flex items-center w-full hover:bg-gray-700/30 rounded-lg px-1 py-1 transition duration-200"
+            className="flex items-center w-full hover:bg-gray-700/30 rounded-lg px-1.5 py-1.5 transition duration-200"
             data-testid="artist-header-orientation-trigger"
           >
             {designSettings.artist_photo && (
               <img
                 src={designSettings.artist_photo}
                 alt={designSettings.musician_name}
-                className="w-9 h-9 rounded-full object-cover flex-shrink-0 mr-2.5"
+                className="w-10 h-10 rounded-full object-cover flex-shrink-0 mr-3"
               />
             )}
             <div className="flex-1 min-w-0 text-left">
               <div className="flex items-center">
-                <h1 className={`text-base font-semibold ${colors.accent} truncate`}>
+                <h1 className={`text-lg font-semibold ${colors.accent} truncate`}>
                   {designSettings.musician_name}
                 </h1>
-                <svg className="w-3.5 h-3.5 text-gray-500 flex-shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-gray-500 flex-shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
               {/* Helper line: Left (About·Tip·Follow) + Right (Live Now with glow) */}
-              <div className="flex items-center justify-between text-xs -mt-0.5 gap-2">
+              <div className="flex items-center justify-between text-xs gap-2">
                 <span className="text-gray-500 flex-shrink-0">About · Tip · Follow</span>
                 {musician?.current_show_name && (
                   <span className="text-green-400 animate-live-glow truncate min-w-0">
@@ -9700,18 +9700,18 @@ const AudienceInterface = () => {
                 )}
               </div>
             </div>
-            {/* RequestWave logo - subtle ambient glow */}
-            <div className="relative flex-shrink-0 ml-2">
+            {/* RequestWave logo - visible brand presence with ambient glow */}
+            <div className="relative flex-shrink-0 ml-3">
               <img
                 src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png"
                 alt="RequestWave"
-                className="w-5 h-5 object-contain opacity-50 relative z-10"
+                className="w-7 h-7 object-contain opacity-70 relative z-10"
               />
               <div 
-                className="absolute inset-0 w-5 h-5 rounded-full animate-logo-glow"
+                className="absolute -inset-1 rounded-full animate-logo-glow"
                 style={{
-                  background: 'radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%)',
-                  filter: 'blur(3px)',
+                  background: 'radial-gradient(circle, rgba(139, 92, 246, 0.4) 0%, rgba(139, 92, 246, 0.15) 50%, transparent 70%)',
+                  filter: 'blur(4px)',
                 }}
               />
             </div>
@@ -9967,7 +9967,7 @@ const AudienceInterface = () => {
                   setSelectedSong(song);
                 }}
                 data-testid={`song-card-${song.id}`}
-                className={`w-full text-left bg-gray-800 rounded-xl py-3 px-4
+                className={`w-full text-left bg-gray-800 rounded-lg py-2.5 px-3.5
                   hover:bg-gray-700 hover:shadow-lg hover:shadow-black/20
                   active:bg-gray-750 active:scale-[0.98] active:shadow-inner
                   transition-all duration-150 ease-out cursor-pointer
@@ -9976,10 +9976,10 @@ const AudienceInterface = () => {
               >
                 <div className="flex-1 min-w-0">
                   {/* Single-line format: Title · Artist for better density */}
-                  <p className="truncate">
-                    <span className="font-bold text-base text-white">{song.title}</span>
-                    <span className="text-gray-500 mx-1.5">·</span>
-                    <span className="text-gray-400 text-sm">{song.artist}</span>
+                  <p className="truncate text-sm">
+                    <span className="font-semibold text-white">{song.title}</span>
+                    <span className="text-gray-600 mx-1.5">·</span>
+                    <span className="text-gray-400">{song.artist}</span>
                   </p>
                 </div>
               </button>
