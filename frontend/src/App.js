@@ -8849,9 +8849,6 @@ const AudienceInterface = () => {
     message: ''
   });
   const [suggestionError, setSuggestionError] = useState('');
-
-  // NEW: Bio expansion state
-  const [bioExpanded, setBioExpanded] = useState(false);
   
   // Orientation Side Path state (bottom sheet)
   // Entry points: header artist name tap, post-request flow
