@@ -10809,7 +10809,7 @@ const AudienceInterface = () => {
                   </>
                 )}
                 
-                {/* Artist Photo + Name (shown in default and post_request modes, compact in support) */}
+                {/* Artist Photo + Name (shown in default and post_request modes) */}
                 {orientationMode !== 'support' && (
                   <div className="text-center pt-2">
                     {designSettings.artist_photo ? (
@@ -10841,11 +10841,95 @@ const AudienceInterface = () => {
                   </div>
                 )}
                 
-                {/* The following sections are hidden in support mode (which has its own focused tip UI) */}
+                {/* Content sections for default and post_request modes (not support mode) */}
                 {orientationMode !== 'support' && (
                   <>
-                    {/* Support Section - Tip Links (Primary in Orientation) */}
-                    {musician?.tips_enabled !== false && (musician.venmo_username || musician.paypal_username || musician.cash_app_username || (musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone))) && (
+                    {/* Social Links (Follow) */}
+                    {musician && ((musician.instagram_username && musician.instagram_username.trim() !== '') || 
+                      (musician.facebook_username && musician.facebook_username.trim() !== '') || 
+                      (musician.tiktok_username && musician.tiktok_username.trim() !== '')) && (
+                      <div>
+                        <h3 className="text-base font-semibold text-white mb-3 flex items-center">
+                          <span className="mr-2">📱</span>
+                          Follow
+                        </h3>
+                        <div className="grid grid-cols-3 gap-2">
+                          {musician.instagram_username && musician.instagram_username.trim() !== '' && (
+                            <a
+                              href={`https://instagram.com/${musician.instagram_username}`}
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 px-3 py-2 rounded-lg font-medium transition duration-300 flex items-center justify-center text-sm text-white"
+                              data-testid="orientation-instagram-link"
+                            >
+                              Instagram
+                            </a>
+                          )}
+                          {musician.facebook_username && musician.facebook_username.trim() !== '' && (
+                            <a
+                              href={musician.facebook_username.includes('facebook.com') ? 
+                                (musician.facebook_username.startsWith('http') ? musician.facebook_username : `https://${musician.facebook_username}`) :
+                                `https://facebook.com/${musician.facebook_username}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg font-medium transition duration-300 flex items-center justify-center text-sm text-white"
+                              data-testid="orientation-facebook-link"
+                            >
+                              Facebook
+                            </a>
+                          )}
+                          {musician.tiktok_username && musician.tiktok_username.trim() !== '' && (
+                            <a
+                              href={`https://tiktok.com/@${musician.tiktok_username}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-black hover:bg-gray-800 px-3 py-2 rounded-lg font-medium transition duration-300 flex items-center justify-center text-sm text-white border border-gray-600"
+                              data-testid="orientation-tiktok-link"
+                            >
+                              TikTok
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Streaming Links (Listen) */}
+                    {musician && ((musician.spotify_artist_url && musician.spotify_artist_url.trim() !== '') || 
+                      (musician.apple_music_artist_url && musician.apple_music_artist_url.trim() !== '')) && (
+                      <div>
+                        <h3 className="text-base font-semibold text-white mb-3 flex items-center">
+                          <span className="mr-2">🎧</span>
+                          Listen
+                        </h3>
+                        <div className="grid grid-cols-2 gap-2">
+                          {musician.spotify_artist_url && musician.spotify_artist_url.trim() !== '' && (
+                            <a
+                              href={musician.spotify_artist_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg font-medium transition duration-300 flex items-center justify-center text-sm text-white"
+                              data-testid="orientation-spotify-link"
+                            >
+                              Spotify
+                            </a>
+                          )}
+                          {musician.apple_music_artist_url && musician.apple_music_artist_url.trim() !== '' && (
+                            <a
+                              href={musician.apple_music_artist_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded-lg font-medium transition duration-300 flex items-center justify-center text-sm text-white"
+                              data-testid="orientation-apple-music-link"
+                            >
+                              Apple Music
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* DEFAULT MODE ONLY: Show individual tip links */}
+                    {orientationMode === 'default' && musician?.tips_enabled !== false && (musician.venmo_username || musician.paypal_username || musician.cash_app_username || (musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone))) && (
                       <div>
                         <h3 className="text-base font-semibold text-white mb-3 flex items-center">
                           <span className="mr-2">💰</span>
@@ -10907,48 +10991,36 @@ const AudienceInterface = () => {
                       </div>
                     )}
                     
-                    {/* Social Links */}
-                    {musician && ((musician.instagram_username && musician.instagram_username.trim() !== '') || 
-                      (musician.facebook_username && musician.facebook_username.trim() !== '') || 
-                      (musician.tiktok_username && musician.tiktok_username.trim() !== '')) && (
+                    {/* POST_REQUEST MODE ONLY: Single "Leave a tip" button */}
+                    {orientationMode === 'post_request' && musician?.tips_enabled !== false && (musician.venmo_username || musician.paypal_username || musician.cash_app_username || (musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone))) && (
+                      <div className="pt-2">
+                        <button
+                          onClick={handleOpenSupportMode}
+                          className="w-full bg-green-600 hover:bg-green-700 py-4 rounded-lg font-semibold text-lg transition duration-300"
+                          data-testid="orientation-leave-tip-btn"
+                        >
+                          Leave a tip
+                        </button>
+                      </div>
+                    )}
+                    
+                    {/* Website (default mode only) */}
+                    {orientationMode === 'default' && musician?.website && musician.website.trim() !== '' && (
                       <div>
-                        <h3 className="text-base font-semibold text-white mb-3 flex items-center">
-                          <span className="mr-2">📱</span>
-                          Follow
-                        </h3>
-                        <div className="grid grid-cols-3 gap-2">
-                          {musician.instagram_username && musician.instagram_username.trim() !== '' && (
-                            <a
-                              href={`https://instagram.com/${musician.instagram_username}`}
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 px-3 py-2 rounded-lg font-medium transition duration-300 flex items-center justify-center text-sm text-white"
-                              data-testid="orientation-instagram-link"
-                            >
-                              Instagram
-                            </a>
-                          )}
-                          {musician.facebook_username && musician.facebook_username.trim() !== '' && (
-                            <a
-                              href={musician.facebook_username.includes('facebook.com') ? 
-                                (musician.facebook_username.startsWith('http') ? musician.facebook_username : `https://${musician.facebook_username}`) :
-                                `https://facebook.com/${musician.facebook_username}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg font-medium transition duration-300 flex items-center justify-center text-sm text-white"
-                              data-testid="orientation-facebook-link"
-                            >
-                              Facebook
-                            </a>
-                          )}
-                          {musician.tiktok_username && musician.tiktok_username.trim() !== '' && (
-                            <a
-                              href={`https://tiktok.com/@${musician.tiktok_username}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-black hover:bg-gray-800 px-3 py-2 rounded-lg font-medium transition duration-300 flex items-center justify-center text-sm text-white border border-gray-600"
-                              data-testid="orientation-tiktok-link"
-                            >
+                        <a
+                          href={musician.website.startsWith('http') ? musician.website : `https://${musician.website}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full bg-gray-700 hover:bg-gray-600 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white"
+                          data-testid="orientation-website-link"
+                        >
+                          <span>🌐</span>
+                          <span>Visit Website</span>
+                        </a>
+                      </div>
+                    )}
+                  </>
+                )}                            >
                               TikTok
                             </a>
                           )}
