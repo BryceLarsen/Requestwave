@@ -9340,17 +9340,18 @@ const AudienceInterface = () => {
     setRequestStep('success_tip');
   };
   
-  // Handle completion from combined success+tip screen
-  const handleSuccessTipComplete = async (sendTip = false) => {
-    if (sendTip && tipAmount && parseFloat(tipAmount) > 0) {
-      // Handle tip submission (same logic as handleAudienceInterfaceTipSubmit)
+  // Handle "Send Tip" - opens external payment link, stays on success_tip
+  const handleSendTip = async () => {
+    if (tipAmount && parseFloat(tipAmount) > 0) {
+      // Open external payment link (does NOT advance UI state)
       await handleAudienceInterfaceTipSubmit();
-      // After tip, show tip_confirmation step
-      setRequestStep('tip_confirmation');
-      return;
+      // User stays on success_tip screen - external app opens in new tab/app
     }
-    
-    // "I'm all set" path - close modal and open Orientation
+  };
+  
+  // Handle "About / Follow" from success_tip - opens Orientation
+  const handlePostRequestOrientation = () => {
+    // Close the modal and reset state
     setSelectedSong(null);
     setRequestStep('identity');
     setSubmittedRequestId(null);
@@ -9363,8 +9364,8 @@ const AudienceInterface = () => {
     setShowOrientation(true);
   };
   
-  // Handle exit from tip confirmation screen
-  const handleTipConfirmationComplete = (openOrientation = true) => {
+  // Handle "Back to songs" from success_tip - closes everything
+  const handleBackToSongs = () => {
     // Close the modal and reset state
     setSelectedSong(null);
     setRequestStep('identity');
@@ -9372,12 +9373,6 @@ const AudienceInterface = () => {
     setFollowUpEmail('');
     setTipAmount('');
     setTipMessage('');
-    
-    if (openOrientation) {
-      // Open Orientation in post_request mode
-      setOrientationMode('post_request');
-      setShowOrientation(true);
-    }
   };
   
   // NEW: Actually submit the request with tip information
