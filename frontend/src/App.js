@@ -9702,7 +9702,10 @@ const AudienceInterface = () => {
         <div className="max-w-4xl mx-auto px-4 py-3">
           {/* Artist identity - image + name + chevron as ONE tappable target → Orientation */}
           <button
-            onClick={() => setShowOrientation(true)}
+            onClick={() => {
+              setOrientationMode('default');
+              setShowOrientation(true);
+            }}
             className="flex items-center w-full hover:bg-gray-700/30 rounded-lg px-1.5 py-1.5 transition duration-200"
             data-testid="artist-header-orientation-trigger"
           >
