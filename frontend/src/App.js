@@ -10305,14 +10305,14 @@ const AudienceInterface = () => {
                     <p className="text-gray-300">Your song is in the queue</p>
                   </div>
                   
-                  {/* Action buttons - both lead to Orientation */}
+                  {/* Action buttons */}
                   <div className="space-y-3 mt-6">
                     <button
                       onClick={handleSendTip}
                       className="w-full bg-green-600 hover:bg-green-700 py-3 rounded-lg font-medium transition duration-300"
-                      data-testid="success-tip-continue-btn"
+                      data-testid="success-tip-leave-tip-btn"
                     >
-                      Continue
+                      Leave a tip
                     </button>
                     <button
                       onClick={handleSkipTip}
