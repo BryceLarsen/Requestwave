@@ -10706,11 +10706,11 @@ const AudienceInterface = () => {
                           <div className="text-center pt-4 pb-2">
                             <p className="text-gray-400 text-sm mb-6">Tipping isn't set up for this artist yet.</p>
                             <button
-                              onClick={() => setShowOrientation(false)}
+                              onClick={handleBackFromSupport}
                               className="w-full bg-gray-700 hover:bg-gray-600 py-3 rounded-lg text-gray-300 font-medium transition duration-300"
-                              data-testid="support-back-to-songs-btn"
+                              data-testid="support-back-btn"
                             >
-                              Back to songs
+                              Back
                             </button>
                           </div>
                         );
@@ -10718,7 +10718,7 @@ const AudienceInterface = () => {
                       
                       return (
                         <div className="pt-2">
-                          {/* Amount input with quick amounts - matching success_tip style */}
+                          {/* Amount input with quick amounts */}
                           <div className="mb-4">
                             <div className="flex items-center gap-3 mb-3">
                               <span className="text-gray-500 text-sm">$</span>
@@ -10734,7 +10734,7 @@ const AudienceInterface = () => {
                                 data-testid="support-tip-amount-input"
                               />
                             </div>
-                            {/* Quick amounts - small, neutral, secondary */}
+                            {/* Quick amounts - $3 / $5 / $10 */}
                             <div className="flex justify-center gap-2">
                               {[3, 5, 10].map(amount => (
                                 <button
@@ -10754,7 +10754,7 @@ const AudienceInterface = () => {
                             </div>
                           </div>
                           
-                          {/* Payment method selector - compact */}
+                          {/* Payment method selector */}
                           <div className="mb-4">
                             <select
                               value={tipPlatform}
@@ -10777,7 +10777,7 @@ const AudienceInterface = () => {
                             </select>
                           </div>
                           
-                          {/* Primary CTA: Open payment app */}
+                          {/* Primary CTA: Open {Selected Payment App} */}
                           <button
                             onClick={async () => {
                               if (tipAmount && parseFloat(tipAmount) > 0) {
@@ -10795,13 +10795,13 @@ const AudienceInterface = () => {
                              'Open payment app'}
                           </button>
                           
-                          {/* Secondary: Back to songs */}
+                          {/* Secondary: Back (returns to post_request content) */}
                           <button
-                            onClick={() => setShowOrientation(false)}
+                            onClick={handleBackFromSupport}
                             className="w-full text-gray-500 hover:text-gray-400 py-2 text-sm transition duration-200"
-                            data-testid="support-back-to-songs-btn"
+                            data-testid="support-back-btn"
                           >
-                            Back to songs
+                            Back
                           </button>
                         </div>
                       );
