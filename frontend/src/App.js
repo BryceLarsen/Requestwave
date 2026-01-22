@@ -9302,9 +9302,28 @@ const AudienceInterface = () => {
         // Clear dedication for next request, but preserve requester name
         setRequestForm(prev => ({ ...prev, dedication: '' }));
         
-        // Transition to Moment 3: Optional Email Follow-Up
-        setRequestStep('followup');
-        setFollowUpEmail(localStorage.getItem('requestwave_requester_email') || '');
+        // Check if email already exists in localStorage - skip Moment 3 if so
+        const savedEmail = localStorage.getItem('requestwave_requester_email');
+        if (savedEmail) {
+          // Skip Moment 3, go directly to success/tip screen
+          // Initialize tip state
+          setTipAmount('');
+          setTipMessage('');
+          if (musician?.venmo_enabled && musician.venmo_username) {
+            setTipPlatform('venmo');
+          } else if (musician?.paypal_enabled && musician.paypal_username) {
+            setTipPlatform('paypal');
+          } else if (musician?.cash_app_enabled && musician.cash_app_username) {
+            setTipPlatform('cashapp');
+          } else if (musician?.zelle_enabled && (musician.zelle_email || musician.zelle_phone)) {
+            setTipPlatform('zelle');
+          }
+          setRequestStep('success_tip');
+        } else {
+          // No saved email - show Moment 3: Optional Email Follow-Up
+          setRequestStep('followup');
+          setFollowUpEmail('');
+        }
       }
     } catch (error) {
       console.error('Error submitting request:', error);
