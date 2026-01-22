@@ -9972,12 +9972,15 @@ const AudienceInterface = () => {
                   setSelectedSong(song);
                 }}
                 data-testid={`song-card-${song.id}`}
-                className={`w-full text-left bg-gray-800 rounded-lg py-2.5 px-3.5
-                  hover:bg-gray-700 hover:shadow-lg hover:shadow-black/20
-                  active:bg-gray-750 active:scale-[0.98] active:shadow-inner
+                className={`w-full text-left rounded-lg py-2.5 px-3.5
+                  hover:brightness-110
+                  active:scale-[0.98] active:brightness-95
                   transition-all duration-150 ease-out cursor-pointer
-                  border border-transparent hover:border-gray-600/50
+                  border border-gray-700/30
                   ${designSettings.layout_mode === 'list' ? 'flex items-center space-x-4' : ''}`}
+                style={{
+                  background: 'linear-gradient(to bottom, rgb(42, 48, 60) 0%, rgb(31, 41, 55) 100%)'
+                }}
               >
                 <div className="flex-1 min-w-0">
                   {/* Single-line format: Title · Artist for better density */}
