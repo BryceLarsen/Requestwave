@@ -5380,7 +5380,7 @@ const MusicianDashboard = () => {
                                   />
                                   <div className="flex-1">
                                     <div className="flex items-center space-x-2 mb-1">
-                                      {request.requester_email && <span className="text-yellow-400 text-sm" title="Email provided">📧</span>}
+                                      {request.requester_email && <span className="text-gray-400 text-sm" title="Email provided">📧</span>}
                                       <span className="font-medium text-blue-400 text-sm">{request.song_title}</span>
                                       <span className="text-gray-400 text-sm">by {request.song_artist}</span>
                                       {request.tip_clicked && <span className="text-green-400 text-xs">💰</span>}
@@ -5590,7 +5590,7 @@ const MusicianDashboard = () => {
                       />
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
-                          {request.requester_email && <span className="text-yellow-400 text-sm" title="Email provided">📧</span>}
+                          {request.requester_email && <span className="text-gray-400 text-sm" title="Email provided">📧</span>}
                           <span className="font-medium text-blue-400">{request.song_title}</span>
                           <span className="text-gray-400">by {request.song_artist}</span>
                           {request.tip_clicked && <span className="text-green-400 text-sm">💰</span>}
@@ -5850,7 +5850,7 @@ const MusicianDashboard = () => {
                           <div key={request.id} className="bg-gray-600 p-3 rounded flex items-center justify-between opacity-75">
                             <div>
                               <h4 className="font-medium text-white">
-                                {request.requester_email && <span className="text-yellow-400 mr-2" title="Email provided">📧</span>}
+                                {request.requester_email && <span className="text-gray-400 mr-2" title="Email provided">📧</span>}
                                 {request.song_title}
                               </h4>
                               <p className="text-gray-300 text-sm">{request.song_artist}</p>
@@ -5927,7 +5927,7 @@ const MusicianDashboard = () => {
                       .map((request) => (
                         <div key={request.id} className="bg-blue-800/50 rounded-lg p-4">
                           <h4 className="font-bold text-lg text-white">
-                            {request.requester_email && <span className="text-yellow-400 mr-2" title="Email provided">📧</span>}
+                            {request.requester_email && <span className="text-gray-400 mr-2" title="Email provided">📧</span>}
                             {request.song_title}
                           </h4>
                           <p className="text-blue-200">{request.song_artist}</p>
@@ -6075,7 +6075,7 @@ const MusicianDashboard = () => {
                         // Render normal request
                         <div key={item.id} className="bg-purple-800/50 rounded-lg p-4">
                           <h4 className="font-bold text-lg text-white">
-                            {item.requester_email && <span className="text-yellow-400 mr-2" title="Email provided">📧</span>}
+                            {item.requester_email && <span className="text-gray-400 mr-2" title="Email provided">📧</span>}
                             {item.song_title}
                           </h4>
                           <p className="text-purple-200">{item.song_artist}</p>
