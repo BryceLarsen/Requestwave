@@ -6075,6 +6075,7 @@ const MusicianDashboard = () => {
                         // Render normal request
                         <div key={item.id} className="bg-purple-800/50 rounded-lg p-4">
                           <h4 className="font-bold text-lg text-white">
+                            {item.requester_email && <span className="text-gray-400 mr-2" title="Email provided">✉️</span>}
                             {item.song_title}
                           </h4>
                           <p className="text-purple-200">{item.song_artist}</p>
