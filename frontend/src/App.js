@@ -1226,9 +1226,18 @@ const MusicianDashboard = () => {
     // Payment fields
     paypal_username: '',
     venmo_username: '',
-    zelle_email: '', // FIX: Add missing Zelle fields
-    zelle_phone: '', // FIX: Add missing Zelle fields
-    // NEW: Social media fields
+    cash_app_username: '',
+    zelle_email: '',
+    zelle_phone: '',
+    // Payment toggles
+    paypal_enabled: true,
+    venmo_enabled: true,
+    cash_app_enabled: true,
+    zelle_enabled: true,
+    // Feature toggles
+    tips_enabled: true,
+    requests_enabled: true,
+    // Social media fields
     instagram_username: '',
     facebook_username: '',
     tiktok_username: '',
