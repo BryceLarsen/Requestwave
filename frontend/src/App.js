@@ -10659,6 +10659,14 @@ const AudienceInterface = () => {
               {/* Drag Handle */}
               <div className="sticky top-0 bg-gray-800 pt-3 pb-2 rounded-t-2xl">
                 <div className="w-12 h-1 bg-gray-600 rounded-full mx-auto mb-2"></div>
+                
+                {/* Post-request thanks line (only in post_request mode) */}
+                {orientationMode === 'post_request' && (
+                  <p className="text-center text-green-400 text-sm mb-2 px-4" data-testid="orientation-thanks-line">
+                    Thanks, your request was sent.
+                  </p>
+                )}
+                
                 <div className="flex items-center justify-between px-4">
                   <div>
                     {musician?.current_show_name && (
@@ -10701,11 +10709,14 @@ const AudienceInterface = () => {
                   </h1>
                 </div>
                 
-                {/* Bio */}
+                {/* Bio - truncated to ~300 chars */}
                 {designSettings.bio && (
                   <div className="bg-gray-700/50 rounded-lg p-4">
                     <p className="text-gray-300 text-sm leading-relaxed">
-                      {designSettings.bio}
+                      {designSettings.bio.length > 300 
+                        ? `${designSettings.bio.substring(0, 300).trim()}...`
+                        : designSettings.bio
+                      }
                     </p>
                   </div>
                 )}
