@@ -402,6 +402,9 @@ class MusicianProfile(BaseModel):
     tiktok_username: Optional[str] = ""
     spotify_artist_url: Optional[str] = ""
     apple_music_artist_url: Optional[str] = ""
+    # Active show fields (source of truth for frontend)
+    current_show_id: Optional[str] = None
+    current_show_name: Optional[str] = None
 
 class ProfileUpdate(BaseModel):
     name: Optional[str] = None
