@@ -9326,6 +9326,9 @@ const AudienceInterface = () => {
           audience_id: audienceId
         });
         
+        // Persist email to localStorage for future requests
+        localStorage.setItem('requestwave_requester_email', followUpEmail);
+        
         // Clear the email input on success
         setFollowUpEmail('');
       } catch (error) {
