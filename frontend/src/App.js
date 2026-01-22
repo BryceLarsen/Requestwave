@@ -9296,12 +9296,15 @@ const AudienceInterface = () => {
         // Store the request ID for potential email attachment in Moment 3
         setSubmittedRequestId(submittedRequest.id);
         
+        // Persist requester name to localStorage for future requests
+        localStorage.setItem('requestwave_requester_name', requestForm.requester_name);
+        
         // Clear dedication for next request, but preserve requester name
         setRequestForm(prev => ({ ...prev, dedication: '' }));
         
         // Transition to Moment 3: Optional Email Follow-Up
         setRequestStep('followup');
-        setFollowUpEmail('');
+        setFollowUpEmail(localStorage.getItem('requestwave_requester_email') || '');
       }
     } catch (error) {
       console.error('Error submitting request:', error);
