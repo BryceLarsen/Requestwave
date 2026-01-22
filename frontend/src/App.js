@@ -1379,33 +1379,21 @@ const MusicianDashboard = () => {
     };
   }, [musician.id]);
 
-  // Set default show based on musician's current_show_id or most recent active show
+  // Set default show based on musician's current_show_id - backend is source of truth
   useEffect(() => {
     if ((activeTab === 'requests' || activeTab === 'onstage') && shows.length > 0 && musician) {
-      // Use backend's current_show_id if available
+      // Backend is the single source of truth for active show
+      // If current_show_id is null, there is NO active show - do not infer from shows list
       if (musician.current_show_id) {
-        const backendCurrentShow = shows.find(show => show.id === musician.current_show_id && show.status === 'active');
+        const backendCurrentShow = shows.find(show => show.id === musician.current_show_id);
         if (backendCurrentShow) {
           setCurrentShow(backendCurrentShow);
-          return;
+        } else {
+          // Show exists in backend but not in local shows list yet - fetch will update
+          setCurrentShow(null);
         }
-      }
-      
-      // Otherwise, select most recently created active show
-      const activeShows = shows.filter(show => show.status === 'active');
-      if (activeShows.length > 0) {
-        // Sort by created_at descending (most recent first)
-        const sortedShows = [...activeShows].sort((a, b) => 
-          new Date(b.created_at) - new Date(a.created_at)
-        );
-        
-        if (process.env.NODE_ENV === 'development' && activeShows.length > 1) {
-          console.warn('[Default Show] Multiple active shows exist. Selected most recent:', sortedShows[0].name);
-        }
-        
-        setCurrentShow(sortedShows[0]);
       } else {
-        // No active show exists
+        // No active show according to backend - clear it
         setCurrentShow(null);
       }
     }
