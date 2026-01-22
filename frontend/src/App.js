@@ -925,6 +925,24 @@ const MusicianDashboard = () => {
 
   const getTipPresetAmounts = () => [3, 5, 10];
 
+  // Refresh musician profile from backend to ensure state integrity
+  const refreshMusicianProfile = async () => {
+    try {
+      const response = await axios.get(`${API}/profile`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      const updatedMusician = response.data;
+      setMusician(updatedMusician);
+      localStorage.setItem('musician', JSON.stringify(updatedMusician));
+      console.log('Musician profile refreshed from backend', {
+        current_show_id: updatedMusician.current_show_id,
+        current_show_name: updatedMusician.current_show_name
+      });
+    } catch (error) {
+      console.error('Error refreshing musician profile:', error);
+    }
+  };
+
   // NEW: Show management functions
   const fetchCurrentShow = async () => {
     try {
