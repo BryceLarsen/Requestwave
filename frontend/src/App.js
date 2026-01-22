@@ -9232,8 +9232,8 @@ const AudienceInterface = () => {
       song_artist: randomSong.artist
     });
 
-    // Show the request modal at commit step (Moment 1B)
-    setRequestStep('commit');
+    // Show the request modal at identity step (Moment 2) - skip confirmation
+    setRequestStep('identity');
     setSelectedSong(randomSong);
   };
 
@@ -9968,7 +9968,7 @@ const AudienceInterface = () => {
               <button
                 key={song.id}
                 onClick={() => {
-                  setRequestStep('commit');
+                  setRequestStep('identity');
                   setSelectedSong(song);
                 }}
                 data-testid={`song-card-${song.id}`}
@@ -10023,37 +10023,10 @@ const AudienceInterface = () => {
           </div>
         )}
 
-        {/* Request Modal - Two-Step Flow (Moment 1B → Moment 2) */}
+        {/* Request Modal - Direct to Moment 2 (Identity) */}
         {selectedSong && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center p-4 z-50">
             <div className="bg-gray-800 rounded-t-xl md:rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              
-              {/* Moment 1B: Commit to Song */}
-              {requestStep === 'commit' && (
-                <>
-                  <div className="text-center mb-6">
-                    <h2 className="text-2xl font-bold mb-2 text-white">{selectedSong.title}</h2>
-                    <p className="text-gray-400 text-lg">{selectedSong.artist}</p>
-                  </div>
-                  
-                  <div className="flex flex-col space-y-3">
-                    <button
-                      onClick={() => setRequestStep('identity')}
-                      data-testid="commit-continue-btn"
-                      className={`w-full ${colors.button} py-4 rounded-lg font-bold text-lg transition duration-300`}
-                    >
-                      Continue
-                    </button>
-                    <button
-                      onClick={() => setSelectedSong(null)}
-                      data-testid="commit-back-btn"
-                      className="w-full bg-gray-700 hover:bg-gray-600 py-3 rounded-lg text-gray-300 transition duration-300"
-                    >
-                      Back
-                    </button>
-                  </div>
-                </>
-              )}
               
               {/* Moment 2: Identity + Dedication */}
               {requestStep === 'identity' && (
@@ -10098,7 +10071,7 @@ const AudienceInterface = () => {
                   
                   <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 mt-6">
                     <button
-                      onClick={() => setRequestStep('commit')}
+                      onClick={() => setSelectedSong(null)}
                       className="flex-1 bg-gray-600 hover:bg-gray-700 py-3 rounded-lg transition duration-300 order-2 md:order-1"
                       data-testid="identity-back-btn"
                     >
