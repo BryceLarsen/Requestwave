@@ -978,12 +978,28 @@ const MusicianDashboard = () => {
       // Capture browser timezone to send with show creation
       const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       
-      await axios.post(`${API}/shows/start`, { 
+      const response = await axios.post(`${API}/shows/start`, { 
         name: newShowName,
         timezone: browserTimezone  // Send IANA timezone string for display/analytics
       }, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
+
+      // Update musician state with new show info from backend response
+      if (response.data.musician) {
+        setMusician(prev => ({
+          ...prev,
+          current_show_id: response.data.musician.current_show_id,
+          current_show_name: response.data.musician.current_show_name
+        }));
+        // Update localStorage with new musician state
+        const storedMusician = JSON.parse(localStorage.getItem('musician') || '{}');
+        localStorage.setItem('musician', JSON.stringify({
+          ...storedMusician,
+          current_show_id: response.data.musician.current_show_id,
+          current_show_name: response.data.musician.current_show_name
+        }));
+      }
 
       setShowStartModal(false);
       setNewShowName('');
@@ -1000,7 +1016,23 @@ const MusicianDashboard = () => {
 
     if (confirm(`Stop this show "${currentShow.name}"?`)) {
       try {
-        await axios.post(`${API}/shows/stop`); // Removed manual headers - axios already has auth token set
+        const response = await axios.post(`${API}/shows/stop`); // Removed manual headers - axios already has auth token set
+
+        // Update musician state to clear show info from backend response
+        if (response.data.musician) {
+          setMusician(prev => ({
+            ...prev,
+            current_show_id: response.data.musician.current_show_id,
+            current_show_name: response.data.musician.current_show_name
+          }));
+          // Update localStorage with cleared musician state
+          const storedMusician = JSON.parse(localStorage.getItem('musician') || '{}');
+          localStorage.setItem('musician', JSON.stringify({
+            ...storedMusician,
+            current_show_id: null,
+            current_show_name: null
+          }));
+        }
 
         setCurrentShow(null);
         fetchGroupedRequests();
