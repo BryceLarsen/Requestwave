@@ -9691,17 +9691,12 @@ const AudienceInterface = () => {
                 </svg>
               </div>
               {/* Helper line: Left (About·Tip·Follow) + Right (Live Now with glow) */}
-              <div className="flex items-center text-xs -mt-0.5 truncate">
-                <span className="text-gray-500">About · Tip · Follow</span>
+              <div className="flex items-center justify-between text-xs -mt-0.5 gap-2">
+                <span className="text-gray-500 flex-shrink-0">About · Tip · Follow</span>
                 {musician?.current_show_name && (
-                  <>
-                    <span className="text-gray-600 mx-1.5">·</span>
-                    <span className="relative inline-flex items-center">
-                      <span className="text-green-400 animate-live-pulse truncate">
-                        Live Now: {musician.current_show_name}
-                      </span>
-                    </span>
-                  </>
+                  <span className="text-green-400 animate-live-glow truncate min-w-0">
+                    Live Now: {musician.current_show_name}
+                  </span>
                 )}
               </div>
             </div>
@@ -9980,10 +9975,12 @@ const AudienceInterface = () => {
                   ${designSettings.layout_mode === 'list' ? 'flex items-center space-x-4' : ''}`}
               >
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-base md:text-lg mb-1 truncate text-white">{song.title}</h3>
-                  <p className="text-gray-400 text-sm truncate">{song.artist}</p>
-                  
-                  {/* Genre/mood tags removed for cleaner scan - data preserved for filtering */}
+                  {/* Single-line format: Title · Artist for better density */}
+                  <p className="truncate">
+                    <span className="font-bold text-base text-white">{song.title}</span>
+                    <span className="text-gray-500 mx-1.5">·</span>
+                    <span className="text-gray-400 text-sm">{song.artist}</span>
+                  </p>
                 </div>
               </button>
             ))}

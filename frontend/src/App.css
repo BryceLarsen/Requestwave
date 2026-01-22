@@ -273,3 +273,17 @@ button:active {
 .animate-logo-glow {
   animation: logoGlow 4s ease-in-out infinite;
 }
+
+/* Live Now indicator - subtle pulse glow */
+@keyframes liveGlow {
+  0%, 100% {
+    text-shadow: 0 0 4px rgba(74, 222, 128, 0.4);
+  }
+  50% {
+    text-shadow: 0 0 8px rgba(74, 222, 128, 0.6), 0 0 12px rgba(74, 222, 128, 0.3);
+  }
+}
+
+.animate-live-glow {
+  animation: liveGlow 2.5s ease-in-out infinite;
+}
