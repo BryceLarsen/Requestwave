@@ -31,7 +31,7 @@ import pymongo
 from pymongo import MongoClient
 
 # Configuration
-BASE_URL = "https://livejamtips.preview.emergentagent.com/api"
+BASE_URL = "https://tipper-interface.preview.emergentagent.com/api"
 
 # Existing Pro account credentials
 EXISTING_PRO_ACCOUNT = {

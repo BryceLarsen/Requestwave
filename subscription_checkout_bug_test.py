@@ -35,7 +35,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration - Use the exact URL from frontend/.env
-BASE_URL = "https://livejamtips.preview.emergentagent.com/api"
+BASE_URL = "https://tipper-interface.preview.emergentagent.com/api"
 
 # Test credentials from review request
 TEST_CREDENTIALS = {

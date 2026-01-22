@@ -11,8 +11,8 @@ import sys
 import time
 
 # Configuration
-PREVIEW_FRONTEND_URL = "https://livejamtips.preview.emergentagent.com"
-PREVIEW_BACKEND_URL = "https://livejamtips.preview.emergentagent.com/api"
+PREVIEW_FRONTEND_URL = "https://tipper-interface.preview.emergentagent.com"
+PREVIEW_BACKEND_URL = "https://tipper-interface.preview.emergentagent.com/api"
 TEST_MUSICIAN_SLUG = "bryce-larsen"
 
 def simulate_browser_request_flow():

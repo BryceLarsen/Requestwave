@@ -19,7 +19,7 @@ import time
 from typing import Dict, Any
 
 # Configuration
-BASE_URL = "https://livejamtips.preview.emergentagent.com/api"
+BASE_URL = "https://tipper-interface.preview.emergentagent.com/api"
 
 # Target user credentials
 USER_CREDENTIALS = {

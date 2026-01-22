@@ -14,7 +14,7 @@ import concurrent.futures
 from typing import Dict, Any, List, Optional
 
 # Configuration
-BASE_URL = "https://livejamtips.preview.emergentagent.com/api"
+BASE_URL = "https://tipper-interface.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
     "name": "Song Deletion Tester",
     "email": "deletion.tester@requestwave.com",

@@ -9,7 +9,7 @@ import json
 import os
 
 # Configuration
-BASE_URL = "https://livejamtips.preview.emergentagent.com/api"
+BASE_URL = "https://tipper-interface.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
     "name": "Test Musician Categories",
     "email": "test.categories@requestwave.com",

@@ -185,7 +185,7 @@ The frontend has been refactored to align with the "Audience Moment Model" - an 
 - Refactoring into modular components required before scaling
 
 ## Environment
-- Preview URL: https://livejamtips.preview.emergentagent.com
+- Preview URL: https://tipper-interface.preview.emergentagent.com
 - Backend: FastAPI (Python)
 - Frontend: React
 - Database: MongoDB
