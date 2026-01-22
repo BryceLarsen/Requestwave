@@ -10746,85 +10746,123 @@ const AudienceInterface = () => {
               {/* Orientation Content */}
               <div className="px-4 pb-6 space-y-5">
                 
-                {/* SUPPORT MODE: Show tip buttons first, or fallback message */}
+                {/* SUPPORT MODE: Compact tip-focused layout matching success_tip style */}
                 {orientationMode === 'support' && (
                   <>
                     {/* Check if any payment methods are configured */}
-                    {(musician.venmo_username || musician.paypal_username || musician.cash_app_username || (musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone))) ? (
-                      <div className="pt-2">
-                        <p className="text-gray-400 text-sm text-center mb-4">Tip link opened. You can also tip directly below:</p>
-                        <div className="space-y-2">
-                          {musician.venmo_username && musician.venmo_enabled !== false && (
-                            <a
-                              href={`https://venmo.com/${musician.venmo_username}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="w-full bg-blue-500 hover:bg-blue-600 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white"
-                              data-testid="support-venmo-link"
-                            >
-                              <span>Venmo</span>
-                            </a>
-                          )}
-                          {musician.paypal_username && musician.paypal_enabled !== false && (
-                            <a
-                              href={`https://paypal.me/${musician.paypal_username}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="w-full bg-blue-700 hover:bg-blue-800 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white"
-                              data-testid="support-paypal-link"
-                            >
-                              <span>PayPal</span>
-                            </a>
-                          )}
-                          {musician.cash_app_username && musician.cash_app_enabled !== false && (
-                            <a
-                              href={`https://cash.app/${musician.cash_app_username}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="w-full bg-green-600 hover:bg-green-700 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white"
-                              data-testid="support-cashapp-link"
-                            >
-                              <span>Cash App</span>
-                            </a>
-                          )}
-                          {musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone) && (
+                    {(() => {
+                      const hasPaymentMethods = (
+                        (musician.venmo_username && musician.venmo_enabled !== false) ||
+                        (musician.paypal_username && musician.paypal_enabled !== false) ||
+                        (musician.cash_app_username && musician.cash_app_enabled !== false) ||
+                        (musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone))
+                      );
+                      
+                      if (!hasPaymentMethods) {
+                        return (
+                          <div className="text-center pt-4 pb-2">
+                            <p className="text-gray-400 text-sm mb-6">Tipping isn't set up for this artist yet.</p>
                             <button
-                              onClick={() => {
-                                setShowOrientation(false);
-                                setZelleInfo({
-                                  contact: musician.zelle_email || musician.zelle_phone,
-                                  contactType: musician.zelle_email ? 'email' : 'phone',
-                                  amount: '',
-                                  message: ''
-                                });
-                                setShowZelleModal(true);
-                              }}
-                              className="w-full bg-purple-600 hover:bg-purple-700 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 text-white"
-                              data-testid="support-zelle-link"
+                              onClick={() => setShowOrientation(false)}
+                              className="w-full bg-gray-700 hover:bg-gray-600 py-3 rounded-lg text-gray-300 font-medium transition duration-300"
+                              data-testid="support-back-to-songs-btn"
                             >
-                              <span>Zelle</span>
+                              Back to songs
                             </button>
-                          )}
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <div className="pt-2">
+                          {/* Amount input with quick amounts - matching success_tip style */}
+                          <div className="mb-4">
+                            <div className="flex items-center gap-3 mb-3">
+                              <span className="text-gray-500 text-sm">$</span>
+                              <input
+                                type="number"
+                                placeholder="Amount"
+                                value={tipAmount}
+                                onChange={(e) => setTipAmount(e.target.value)}
+                                min="0.01"
+                                max="500"
+                                step="0.01"
+                                className="flex-1 bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white text-center"
+                                data-testid="support-tip-amount-input"
+                              />
+                            </div>
+                            {/* Quick amounts - small, neutral, secondary */}
+                            <div className="flex justify-center gap-2">
+                              {[3, 5, 10].map(amount => (
+                                <button
+                                  key={amount}
+                                  type="button"
+                                  onClick={() => setTipAmount(amount.toString())}
+                                  className={`px-3 py-1 text-xs rounded-full transition duration-200 ${
+                                    tipAmount === amount.toString()
+                                      ? 'bg-gray-600 text-gray-200'
+                                      : 'bg-gray-700/50 text-gray-500 hover:text-gray-400'
+                                  }`}
+                                  data-testid={`support-quick-amount-${amount}`}
+                                >
+                                  ${amount}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          {/* Payment method selector - compact */}
+                          <div className="mb-4">
+                            <select
+                              value={tipPlatform}
+                              onChange={(e) => setTipPlatform(e.target.value)}
+                              className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-gray-300 text-sm"
+                              data-testid="support-payment-selector"
+                            >
+                              {musician?.venmo_enabled !== false && musician.venmo_username && (
+                                <option value="venmo">Venmo</option>
+                              )}
+                              {musician?.paypal_enabled !== false && musician.paypal_username && (
+                                <option value="paypal">PayPal</option>
+                              )}
+                              {musician?.cash_app_enabled !== false && musician.cash_app_username && (
+                                <option value="cashapp">Cash App</option>
+                              )}
+                              {musician?.zelle_enabled && (musician.zelle_email || musician.zelle_phone) && (
+                                <option value="zelle">Zelle</option>
+                              )}
+                            </select>
+                          </div>
+                          
+                          {/* Primary CTA: Open payment app */}
+                          <button
+                            onClick={async () => {
+                              if (tipAmount && parseFloat(tipAmount) > 0) {
+                                await triggerPaymentLink(parseFloat(tipAmount), tipPlatform);
+                              }
+                            }}
+                            disabled={!tipAmount || parseFloat(tipAmount) <= 0}
+                            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:text-gray-500 py-3 rounded-lg font-medium transition duration-300 disabled:cursor-not-allowed mb-3"
+                            data-testid="support-open-payment-btn"
+                          >
+                            {tipPlatform === 'venmo' ? 'Open Venmo' :
+                             tipPlatform === 'paypal' ? 'Open PayPal' :
+                             tipPlatform === 'cashapp' ? 'Open Cash App' :
+                             tipPlatform === 'zelle' ? 'Open Zelle' :
+                             'Open payment app'}
+                          </button>
+                          
+                          {/* Secondary: Back to songs */}
+                          <button
+                            onClick={() => setShowOrientation(false)}
+                            className="w-full text-gray-500 hover:text-gray-400 py-2 text-sm transition duration-200"
+                            data-testid="support-back-to-songs-btn"
+                          >
+                            Back to songs
+                          </button>
                         </div>
-                      </div>
-                    ) : (
-                      /* No payment methods configured - show fallback */
-                      <div className="text-center pt-4 pb-2">
-                        <p className="text-gray-400 text-sm mb-4">Tipping isn't set up for this artist yet.</p>
-                        <button
-                          onClick={() => setShowOrientation(false)}
-                          className="bg-gray-700 hover:bg-gray-600 px-6 py-2 rounded-lg text-gray-300 transition duration-300"
-                          data-testid="support-back-to-songs-btn"
-                        >
-                          Back to songs
-                        </button>
-                      </div>
-                    )}
-                    
-                    {/* Divider before Follow section */}
-                    <div className="border-t border-gray-700/50 pt-4 mt-4">
-                      <p className="text-gray-500 text-xs text-center mb-3">Follow & Listen</p>
-                    </div>
+                      );
+                    })()}
                   </>
                 )}
                 
