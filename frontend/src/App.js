@@ -10948,14 +10948,14 @@ const AudienceInterface = () => {
                 {musician?.tips_enabled !== false && (musician.venmo_username || musician.paypal_username || musician.cash_app_username || (musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone))) && (
                   <div ref={tipSectionRef} className="pt-3" data-testid="tip-section">
                     {!tipSectionExpanded ? (
-                      /* Collapsed: Clear CTA button */
+                      /* Collapsed: Clear CTA button - Light green, distinct from Spotify green */
                       <button
                         onClick={handleToggleTipSection}
-                        className="w-full bg-emerald-600/80 hover:bg-emerald-600 py-4 rounded-xl transition duration-300 text-center"
+                        className="w-full bg-teal-500/90 hover:bg-teal-500 py-4 rounded-xl transition duration-300 text-center"
                         data-testid="orientation-leave-tip-btn"
                       >
-                        <span className="text-white font-semibold text-base block">Leave a tip</span>
-                        <span className="text-emerald-200/70 text-xs block mt-0.5">(totally optional)</span>
+                        <span className="text-white font-bold text-lg block">Leave a tip</span>
+                        <span className="text-teal-100/80 text-sm block mt-0.5">(totally optional)</span>
                       </button>
                     ) : (
                       /* Expanded: Inline tip form */
