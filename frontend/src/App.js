@@ -8764,9 +8764,9 @@ const AudienceInterface = () => {
     dedication: ''
   });
   const [selectedSong, setSelectedSong] = useState(null);
-  const [requestStep, setRequestStep] = useState('commit'); // 'commit' (Moment 1B), 'identity' (Moment 2), or 'followup' (Moment 3)
-  const [submittedRequestId, setSubmittedRequestId] = useState(null); // Track request ID for Moment 3 email attachment
-  const [followUpEmail, setFollowUpEmail] = useState(''); // Email captured in Moment 3
+  const [requestStep, setRequestStep] = useState('identity'); // 'identity' (Moment 2), 'followup' (email), or 'success' (confirmation)
+  const [submittedRequestId, setSubmittedRequestId] = useState(null); // Track request ID for email attachment
+  const [followUpEmail, setFollowUpEmail] = useState(''); // Email captured in follow-up step
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState('');
   const [showFilters, setShowFilters] = useState(false);
