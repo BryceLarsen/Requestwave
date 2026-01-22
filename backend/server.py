@@ -5731,6 +5731,20 @@ async def start_show(
         # Extract timezone from request (sent from frontend browser)
         show_timezone = show_data.get("timezone")  # IANA timezone string, e.g., "America/New_York"
         
+        # Defensively end any previously active show first
+        musician = await db.musicians.find_one({"id": musician_id})
+        previous_show_id = musician.get("current_show_id") if musician else None
+        if previous_show_id:
+            # Mark the previous show as ended
+            await db.shows.update_one(
+                {"id": previous_show_id},
+                {"$set": {
+                    "ended_at": datetime.now(timezone.utc),
+                    "status": "ended"
+                }}
+            )
+            logger.info(f"Defensively ended previous show {previous_show_id} before starting new show")
+        
         # Create show record
         show_dict = {
             "id": str(uuid.uuid4()),
@@ -5740,6 +5754,7 @@ async def start_show(
             "venue": show_data.get("venue", ""),
             "notes": show_data.get("notes", ""),
             "timezone": show_timezone,  # Store show timezone for display/analytics
+            "status": "active",  # Explicit status field
             "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
         }
         
@@ -5752,7 +5767,6 @@ async def start_show(
         }
         
         # If musician doesn't have a timezone set yet, set it from this show
-        musician = await db.musicians.find_one({"id": musician_id})
         if musician and not musician.get("timezone") and show_timezone:
             update_data["timezone"] = show_timezone
         
@@ -5760,6 +5774,9 @@ async def start_show(
             {"id": musician_id},
             {"$set": update_data}
         )
+        
+        # Fetch updated musician to return
+        updated_musician = await db.musicians.find_one({"id": musician_id})
         
         # Emit analytics event
         await emit_analytics_event(
@@ -5778,7 +5795,11 @@ async def start_show(
         return {
             "success": True,
             "message": f"Started show: {show_name}",
-            "show": Show(**show_dict)
+            "show": Show(**show_dict),
+            "musician": {
+                "current_show_id": updated_musician.get("current_show_id"),
+                "current_show_name": updated_musician.get("current_show_name")
+            }
         }
         
     except HTTPException:
