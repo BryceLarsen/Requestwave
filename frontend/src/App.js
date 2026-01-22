@@ -8859,6 +8859,7 @@ const AudienceInterface = () => {
   const [orientationMode, setOrientationMode] = useState('default'); // 'default' | 'post_request'
   const [orientationScrollTarget, setOrientationScrollTarget] = useState(null); // 'tip' | null - auto-scroll to tip section
   const [tipSectionExpanded, setTipSectionExpanded] = useState(false); // Inline tip section expansion
+  const [bioExpanded, setBioExpanded] = useState(false); // Bio read more/less toggle
   const tipSectionRef = React.useRef(null);
   
   // NEW: Access control state
