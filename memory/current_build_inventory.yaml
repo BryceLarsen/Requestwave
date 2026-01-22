@@ -585,83 +585,72 @@ audience_experience_current_state:
           - "Continue anonymously → skips email, proceeds to success_tip"
           
       - step: 5
-        name: "success_tip: Combined Success + Tip Screen"
+        name: "success_tip: Simplified Success Screen"
         description: >
-          Single modal combining request confirmation and tip prompt.
-          Eliminates standalone success screen for faster flow.
+          Simplified modal showing request confirmation with two options.
+          Tip UI moved to Orientation Support mode for cleaner UX.
         state_key: "requestStep === 'success_tip'"
         ui_elements:
           success_header:
             icon: "Green check in circle"
             headline: "Request sent 🎶"
             subtext: "Your song is in the queue"
-          tip_section:
-            conditional: "Only shown if musician.tips_enabled !== false"
-            preset_amounts: ["$3", "$5", "$10"]
-            preset_styling: "Neutral gray, ring highlight on selection (no green)"
-            custom_amount_input: true
-            payment_selector: "Dropdown with Venmo/PayPal/CashApp/Zelle"
           buttons:
-            primary: "Send tip (green, disabled without amount)"
-            secondary: "About / Follow (text-style link → opens Orientation in post_request mode)"
-            tertiary: "Back to songs (text-style link → closes modal, returns to song list)"
+            primary: "Continue (green → opens Orientation post_request)"
+            secondary: "Skip / I'm all set (text link → opens Orientation post_request)"
         exit_paths:
-          send_tip:
-            behavior: >
-              For Venmo/PayPal/CashApp: Opens external payment link, closes success_tip,
-              opens Orientation in 'support' mode (focused tip UI for re-tipping).
-              For Zelle: Closes success_tip, shows Zelle instructions modal directly
-              (no Orientation Support view since Zelle cannot open external app).
-          about_follow: "Closes success_tip, opens Orientation in 'post_request' mode"
-          back_to_songs: "Closes success_tip immediately, returns to song list"
+          continue: "Closes success_tip, opens Orientation in 'post_request' mode"
+          skip: "Closes success_tip, opens Orientation in 'post_request' mode (same behavior)"
         note: >
-          No standalone success confirmation screen exists anymore.
-          Tip UI is integrated directly below success message.
-          "Send tip" now transitions to Orientation Support mode for non-Zelle payments.
-          
-      - step: 5b
-        name: "Orientation Support Mode (post Send tip)"
-        description: >
-          Focused tip UI within Orientation bottom sheet. Shown after user clicks
-          "Send tip" with Venmo/PayPal/CashApp selected. Allows user to send
-          additional tips without stacked modals.
-        trigger: "handleSendTip() when tipPlatform is not 'zelle'"
-        state_key: "showOrientation && orientationMode === 'support'"
-        ui_elements:
-          header: "Support the Artist"
-          amount_input: "Number input with $ prefix"
-          quick_amounts: ["$3", "$5", "$10"]
-          payment_selector: "Dropdown with available payment methods"
-          primary_cta: "Open {Venmo|PayPal|Cash App|Zelle} - triggers deep link"
-          secondary_cta: "Back to songs - closes Orientation"
-          close_button: "X button - closes Orientation, returns to song list"
-        fallback:
-          condition: "No payment methods configured for musician"
-          message: "Tipping isn't set up for this artist yet."
-          button: "Back to songs"
-        note: >
-          Support mode is a focused, compact view without artist photo/bio.
-          Closing Support mode (X or Back to songs) returns user to Moment 0 (song list),
-          never back to success_tip (no stacked modals).
+          Both buttons lead to Orientation post_request mode.
+          Tip UI is no longer shown here; user will find "Leave a tip" in Orientation.
           
       - step: 6
         name: "Orientation Post-Request Mode"
         description: >
-          Full artist info view within Orientation bottom sheet. Shown after user
-          clicks "About / Follow" from success_tip.
-        trigger: "handlePostRequestOrientation()"
+          Full artist info view within Orientation bottom sheet. Entry point from success_tip.
+          Shows artist profile with "Leave a tip" CTA at bottom.
+        trigger: "handleSendTip() or handleSkipTip() from success_tip"
         state_key: "showOrientation && orientationMode === 'post_request'"
         ui_elements:
           thanks_line: "Thanks, your request was sent. (green text at top)"
           header: "About the Artist"
           artist_info: "Photo, name, bio (truncated ~300 chars)"
-          support_section: "Tip links (Venmo/PayPal/CashApp/Zelle buttons)"
-          social_section: "Instagram/Facebook/TikTok links"
-          streaming_section: "Spotify/Apple Music links"
-          website_link: "If configured"
+          follow_section: "Instagram/Facebook/TikTok links"
+          listen_section: "Spotify/Apple Music links"
+          primary_cta: "Leave a tip (green button → switches to Support mode)"
         note: >
-          Post-request mode differs from default mode by showing the "Thanks" line.
-          Closing returns to song list (Moment 0).
+          post_request mode shows single "Leave a tip" button instead of individual payment links.
+          Clicking "Leave a tip" switches Orientation to Support mode (same bottom sheet).
+          X close returns to song list.
+          
+      - step: 6b
+        name: "Orientation Support Mode (nested)"
+        description: >
+          Focused tip UI within the same Orientation bottom sheet.
+          Accessed by tapping "Leave a tip" from post_request mode.
+        trigger: "handleOpenSupportMode() from 'Leave a tip' button"
+        state_key: "showOrientation && orientationMode === 'support'"
+        ui_elements:
+          header: "Support {Artist Name}"
+          amount_input: "Number input with $ prefix"
+          quick_amounts: ["$3", "$5", "$10"]
+          payment_selector: "Dropdown with Venmo/PayPal/CashApp/Zelle (based on profile)"
+          primary_cta: "Open {Selected Payment App} - triggers deep link"
+          secondary_cta: "Back - returns to post_request content"
+          close_button: "X button - closes Orientation, returns to song list"
+        fallback:
+          condition: "No payment methods configured for musician"
+          message: "Tipping isn't set up for this artist yet."
+          button: "Back"
+        zelle_behavior: >
+          If Zelle is selected, opens Zelle instructions modal.
+          After closing Zelle modal, returns to Support mode (not songs, not success_tip).
+        note: >
+          Support mode is a focused, compact view without artist photo/bio.
+          "Back" button returns to post_request content (artist info + "Leave a tip").
+          X button closes Orientation entirely and returns to song list.
+          No stacked modals at any point.
 
   # ─────────────────────────────────────────────────────────────────────────────
   # 3. Inputs and Requirements
