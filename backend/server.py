@@ -1075,6 +1075,9 @@ async def get_subscription_status(musician_id: str) -> SubscriptionStatus:
 
 async def check_request_allowed(musician_id: str) -> bool:
     """Check if musician can make a request based on their subscription"""
+    # When billing is disabled, all requests are allowed
+    if not BILLING_ENABLED:
+        return True
     status = await get_subscription_status(musician_id)
     return status.can_make_request
 
