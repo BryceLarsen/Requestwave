@@ -9290,9 +9290,15 @@ const AudienceInterface = () => {
       }
     }
     
+    // Go to success confirmation step
+    setRequestStep('success');
+  };
+  
+  // Handle success step completion - proceed to tip flow
+  const handleSuccessComplete = () => {
     // Close the modal and reset state
     setSelectedSong(null);
-    setRequestStep('commit');
+    setRequestStep('identity');
     setSubmittedRequestId(null);
     setFollowUpEmail('');
     
@@ -9301,7 +9307,7 @@ const AudienceInterface = () => {
       setTipSongId(submittedRequestId);
     }
     
-    // Check if tips are enabled - proceed to tip flow after Moment 3
+    // Check if tips are enabled - proceed to tip flow after success
     if (musician.tips_enabled === false) {
       // Go straight to social follow modal
       setShowSocialFollowModal(true);
