@@ -1,7 +1,60 @@
 # RequestWave Current Build Inventory
 # Canonical source of truth: /app/memory/current_build_inventory.yaml
 # Generated: 2026-01-16
-# Last Updated: 2026-01-22 (Helper line split layout, song card single-line format)
+# Last Updated: 2026-01-22 (BILLING_ENABLED bypass, success_tip combined flow)
+
+# =============================================================================
+# SECTION 0: BILLING GATE CONFIGURATION
+# =============================================================================
+# Controls request limit enforcement based on subscription status.
+
+billing_gate:
+  description: >
+    When billing is enabled, musicians on free tier are limited to 20 requests
+    per month. When billing is disabled, all request limits are bypassed.
+    
+  environment_variable:
+    name: BILLING_ENABLED
+    location: /app/backend/.env
+    type: string (parsed as boolean)
+    default: "false"
+    parsing_logic: >
+      BILLING_ENABLED = os.getenv("BILLING_ENABLED", "false").lower() == "true"
+      Only the string "true" (case-insensitive) results in True.
+      Any other value ("false", "yes", "1", missing) results in False.
+      
+  check_request_allowed_function:
+    file: /app/backend/server.py
+    line: 1076-1082
+    behavior:
+      billing_disabled: >
+        Returns True immediately. No subscription check performed.
+        All musicians can receive unlimited requests.
+      billing_enabled: >
+        Calls get_subscription_status(musician_id) and returns
+        status.can_make_request. Free tier limited to 20/month.
+        
+  limits_when_billing_disabled:
+    request_limits: none
+    tip_limits: none
+    song_limits: none
+    show_limits: none
+    note: >
+      When BILLING_ENABLED=false, the app operates in "free mode" with
+      no subscription-based restrictions. All features are available
+      to all musicians without payment.
+      
+  test_coverage:
+    file: /app/backend/tests/test_billing_enabled_bypass.py
+    tests:
+      - test_billing_disabled_allows_all_requests
+      - test_billing_enabled_respects_subscription_deny
+      - test_billing_enabled_respects_subscription_allow
+      - test_billing_enabled_false_string
+      - test_billing_enabled_true_string
+      - test_billing_enabled_TRUE_uppercase
+      - test_billing_enabled_missing_defaults_false
+      - test_billing_enabled_random_value_is_false
 
 # =============================================================================
 # SECTION 1: PHASE 2 - AUDIENCE INTERACTION CAPTURE
