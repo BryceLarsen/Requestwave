@@ -10302,36 +10302,6 @@ const AudienceInterface = () => {
                   </div>
                 </>
               )}
-              
-              {/* Tip Confirmation Screen (after Send Tip) */}
-              {requestStep === 'tip_confirmation' && (
-                <>
-                  <div className="text-center mb-6">
-                    <div className="w-16 h-16 bg-green-500/25 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg shadow-green-500/10">
-                      <span className="text-green-400 text-3xl">✓</span>
-                    </div>
-                    <h2 className="text-xl font-bold mb-1 text-white">Thanks for the tip!</h2>
-                    <p className="text-gray-400 text-sm">Your support means a lot.</p>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => handleTipConfirmationComplete(true)}
-                      className="w-full bg-purple-600 hover:bg-purple-700 py-3 rounded-lg font-medium transition duration-300"
-                      data-testid="tip-confirm-orientation-btn"
-                    >
-                      About / Follow
-                    </button>
-                    <button
-                      onClick={() => handleTipConfirmationComplete(false)}
-                      className="w-full text-gray-500 hover:text-gray-400 py-2 text-sm transition duration-200"
-                      data-testid="tip-confirm-back-btn"
-                    >
-                      Back to songs
-                    </button>
-                  </div>
-                </>
-              )}
             </div>
           </div>
         )}
