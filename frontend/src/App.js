@@ -9340,33 +9340,24 @@ const AudienceInterface = () => {
     setRequestStep('success_tip');
   };
   
-  // Handle "Send Tip" - triggers external payment link, closes success_tip, opens Orientation Support view
-  const handleSendTip = async () => {
+  // Handle "Send Tip" from success_tip - closes success_tip and opens Orientation Support view
+  // Payment link is triggered from within Support view when user clicks "Open {payment app}"
+  const handleSendTip = () => {
     if (tipAmount && parseFloat(tipAmount) > 0) {
-      // Store tip info for the Orientation Support view
-      const currentTipAmount = tipAmount;
-      const currentTipPlatform = tipPlatform;
-      
-      // Close the success_tip modal FIRST (before external link opens)
+      // Keep tip values for the Support view
+      // Close the success_tip modal
       setSelectedSong(null);
       setRequestStep('identity');
       setSubmittedRequestId(null);
       setFollowUpEmail('');
       
-      // Open Orientation in support mode immediately
+      // Open Orientation in support mode - user will click "Open payment app" there
       setOrientationMode('support');
       setShowOrientation(true);
-      
-      // Trigger the external payment link (opens in new tab/app)
-      await triggerPaymentLink(currentTipAmount, currentTipPlatform);
-      
-      // Clear tip values after external link is opened
-      setTipAmount('');
-      setTipMessage('');
     }
   };
   
-  // Trigger external payment link without modal management
+  // Trigger external payment link - called from Support view's "Open payment app" button
   const triggerPaymentLink = async (amount, platform) => {
     try {
       const response = await axios.get(`${API}/musicians/${musician.slug}/tip-links`, {
@@ -9420,6 +9411,10 @@ const AudienceInterface = () => {
     } catch (error) {
       console.error('Error getting payment link:', error);
     }
+    
+    // Clear tip values after payment link action
+    setTipAmount('');
+    setTipMessage('');
   };
   
   // Handle "About / Follow" from success_tip - opens Orientation
