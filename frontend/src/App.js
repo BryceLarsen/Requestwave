@@ -993,6 +993,12 @@ const MusicianDashboard = () => {
       showErrorToast('Please enter a show name');
       return;
     }
+    
+    // Validate: if "selected" mode, must have at least one playlist
+    if (showPlaylistFilterMode === 'selected' && showEnabledPlaylistIds.length === 0) {
+      showErrorToast('Please select at least one playlist or choose "All songs"');
+      return;
+    }
 
     try {
       // Capture browser timezone to send with show creation
@@ -1000,7 +1006,9 @@ const MusicianDashboard = () => {
       
       const response = await axios.post(`${API}/shows/start`, { 
         name: newShowName,
-        timezone: browserTimezone  // Send IANA timezone string for display/analytics
+        timezone: browserTimezone,  // Send IANA timezone string for display/analytics
+        playlist_filter_mode: showPlaylistFilterMode,
+        enabled_playlist_ids: showPlaylistFilterMode === 'selected' ? showEnabledPlaylistIds : []
       }, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
@@ -1023,6 +1031,8 @@ const MusicianDashboard = () => {
 
       setShowStartModal(false);
       setNewShowName('');
+      setShowPlaylistFilterMode('all');
+      setShowEnabledPlaylistIds([]);
       fetchCurrentShow();
       fetchShows();
     } catch (error) {
