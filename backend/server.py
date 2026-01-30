@@ -5832,7 +5832,10 @@ async def start_show(
             "notes": show_data.get("notes", ""),
             "timezone": show_timezone,  # Store show timezone for display/analytics
             "status": "active",  # Explicit status field
-            "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
+            "created_at": datetime.now(timezone.utc),  # Store as UTC Date, not string
+            # Show-scoped playlist filtering
+            "playlist_filter_mode": show_data.get("playlist_filter_mode", "all"),
+            "enabled_playlist_ids": show_data.get("enabled_playlist_ids", [])
         }
         
         await db.shows.insert_one(show_dict)
