@@ -3,7 +3,7 @@
 ## Original Problem Statement
 Live music request platform enabling musicians to receive song requests from audiences during performances, with features for managing requests, suggestions, tips, and analytics.
 
-## Current State (as of January 22, 2026)
+## Current State (as of January 30, 2026)
 
 ### Phase Status
 - **Phase 1: Foundation and Correctness** - COMPLETE (Signed off 2026-01-16)
@@ -11,9 +11,32 @@ Live music request platform enabling musicians to receive song requests from aud
 - **Audience Moment Model Refactor** - COMPLETE (Signed off 2026-01-21)
 - **Moment 0/1A UI Polish** - COMPLETE (2026-01-22)
 - **Send Tip → Orientation Support Mode** - COMPLETE (2026-01-22)
+- **Playlist CSV Export/Import** - COMPLETE (2026-01-30)
 - **Phase 3: Post-Show Reflection** - NOT STARTED (Deferred)
 
 ### Completed Features
+
+#### CSV Playlist Export/Import Enhancement (January 30, 2026)
+Extended the CSV import/export system to support playlist membership:
+
+- ✅ **Export with Playlists**: Songs export now includes `Playlists` column with pipe-delimited (`|`) playlist names
+- ✅ **Import Playlists**: CSV import parses `Playlists` column and assigns songs to specified playlists
+- ✅ **Auto-create Playlists**: Missing playlists are created automatically during import
+- ✅ **Backward Compatible**: CSVs without `Playlists` column still import correctly
+- ✅ **Column Aliases**: Import accepts both `Genre`/`Genres` and `Mood`/`Moods` column names
+- ✅ **Null Safety**: Fixed edge case where empty CSV cells caused parsing errors
+
+**CSV Column Spec:**
+```
+Title,Artist,Genres,Moods,Year,Playlists,Notes
+Song Name,Artist Name,"Rock, Pop","Upbeat, Happy",2024,Playlist1|Playlist2,Optional notes
+```
+
+**Files Modified:**
+- `/app/frontend/src/App.js`: `exportSongsToCSV()` - changed playlist delimiter from `,` to `|`
+- `/app/backend/server.py`: 
+  - `parse_csv_content()` - added `playlists` to expected columns, parses pipe-delimited values
+  - `upload_csv_songs()` - processes playlist assignments after song insertion, creates missing playlists
 
 #### Orientation Tip CTA Button (January 22, 2026)
 Replaced subtle collapsible tip card with prominent full-width CTA button:
