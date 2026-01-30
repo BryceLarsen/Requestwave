@@ -5795,7 +5795,7 @@ const MusicianDashboard = () => {
         {/* Start Show Modal */}
         {showStartModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
               <h3 className="text-xl font-bold text-white mb-4">🎭 Start a New Show</h3>
               <div className="space-y-4">
                 <div>
@@ -5807,16 +5807,90 @@ const MusicianDashboard = () => {
                     onChange={(e) => setNewShowName(e.target.value)}
                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
                     onKeyPress={(e) => e.key === 'Enter' && handleStartShow()}
+                    data-testid="show-name-input"
                   />
                 </div>
+                
+                {/* Playlist Filter Mode */}
+                <div>
+                  <label className="block text-gray-300 text-sm font-bold mb-2">Song Selection</label>
+                  <div className="space-y-2">
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="playlistFilterMode"
+                        value="all"
+                        checked={showPlaylistFilterMode === 'all'}
+                        onChange={() => setShowPlaylistFilterMode('all')}
+                        className="w-4 h-4 text-blue-600"
+                        data-testid="playlist-mode-all"
+                      />
+                      <span className="text-white">All songs</span>
+                    </label>
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="playlistFilterMode"
+                        value="selected"
+                        checked={showPlaylistFilterMode === 'selected'}
+                        onChange={() => setShowPlaylistFilterMode('selected')}
+                        className="w-4 h-4 text-blue-600"
+                        data-testid="playlist-mode-selected"
+                      />
+                      <span className="text-white">Selected playlists only</span>
+                    </label>
+                  </div>
+                </div>
+                
+                {/* Playlist Checklist (only shown when "selected" mode) */}
+                {showPlaylistFilterMode === 'selected' && (
+                  <div className="bg-gray-700/50 rounded-lg p-3 max-h-48 overflow-y-auto">
+                    <label className="block text-gray-400 text-xs font-medium mb-2">
+                      Select playlists to enable for this show:
+                    </label>
+                    {playlists.filter(p => !p.is_deleted).length === 0 ? (
+                      <p className="text-gray-500 text-sm italic">No playlists available. Create playlists in the Songs tab first.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {playlists.filter(p => !p.is_deleted).map(playlist => (
+                          <label key={playlist.id} className="flex items-center space-x-3 cursor-pointer hover:bg-gray-600/50 p-2 rounded">
+                            <input
+                              type="checkbox"
+                              checked={showEnabledPlaylistIds.includes(playlist.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setShowEnabledPlaylistIds([...showEnabledPlaylistIds, playlist.id]);
+                                } else {
+                                  setShowEnabledPlaylistIds(showEnabledPlaylistIds.filter(id => id !== playlist.id));
+                                }
+                              }}
+                              className="w-4 h-4 text-blue-600 rounded"
+                              data-testid={`playlist-checkbox-${playlist.id}`}
+                            />
+                            <span className="text-white text-sm">{playlist.name}</span>
+                            <span className="text-gray-400 text-xs">({playlist.song_ids?.length || 0} songs)</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    {showPlaylistFilterMode === 'selected' && showEnabledPlaylistIds.length === 0 && (
+                      <p className="text-yellow-400 text-xs mt-2">⚠️ Select at least one playlist</p>
+                    )}
+                  </div>
+                )}
+                
                 <p className="text-gray-400 text-sm">
-                  All new song requests will be organized under this show until you stop it.
+                  {showPlaylistFilterMode === 'all' 
+                    ? 'Audience will see all non-hidden songs.'
+                    : `Audience will only see songs from selected playlist${showEnabledPlaylistIds.length !== 1 ? 's' : ''}.`}
                 </p>
                 <div className="flex space-x-3 mt-6">
                   <button
                     onClick={() => {
                       setShowStartModal(false);
                       setNewShowName('');
+                      setShowPlaylistFilterMode('all');
+                      setShowEnabledPlaylistIds([]);
                     }}
                     className="flex-1 bg-gray-600 hover:bg-gray-700 py-2 rounded-lg font-medium transition duration-300"
                   >
@@ -5824,8 +5898,9 @@ const MusicianDashboard = () => {
                   </button>
                   <button
                     onClick={handleStartShow}
-                    disabled={!newShowName.trim()}
+                    disabled={!newShowName.trim() || (showPlaylistFilterMode === 'selected' && showEnabledPlaylistIds.length === 0)}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 py-2 rounded-lg font-medium transition duration-300 disabled:cursor-not-allowed"
+                    data-testid="start-show-btn"
                   >
                     Start Show
                   </button>
