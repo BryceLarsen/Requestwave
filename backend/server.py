@@ -4923,6 +4923,7 @@ async def preview_csv_upload(
                 'moods': song['moods'],
                 'year': song['year'],
                 'notes': song['notes'],
+                'playlists': song.get('playlists', []),
                 'row_number': song['row_number']
             })
         
