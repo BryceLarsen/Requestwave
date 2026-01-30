@@ -630,6 +630,8 @@ const MusicianDashboard = () => {
   const [currentShow, setCurrentShow] = useState(null);
   const [showStartModal, setShowStartModal] = useState(false);
   const [newShowName, setNewShowName] = useState('');
+  const [showPlaylistFilterMode, setShowPlaylistFilterMode] = useState('all'); // 'all' | 'selected'
+  const [showEnabledPlaylistIds, setShowEnabledPlaylistIds] = useState([]);
   const [shows, setShows] = useState([]);
   const [groupedRequests, setGroupedRequests] = useState({ unassigned: [], shows: {} });
 
