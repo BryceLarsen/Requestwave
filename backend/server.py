@@ -884,8 +884,8 @@ def parse_csv_content(content: bytes) -> List[Dict[str, Any]]:
                 # Clean and map the row data
                 song_data = {}
                 for original_col, mapped_col in col_mapping.items():
-                    value = row.get(original_col, '').strip()
-                    song_data[mapped_col] = value
+                    value = row.get(original_col) or ''
+                    song_data[mapped_col] = value.strip()
                 
                 # Process required fields
                 if not song_data.get('title'):
