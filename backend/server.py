@@ -3940,17 +3940,52 @@ async def get_musician_songs(
         "hidden": {"$ne": True}  # NEW: Filter out hidden songs for audience
     }
     
-    # NEW: Filter by playlist (explicit filter takes precedence over active playlist)
-    playlist_to_filter = playlist or musician.get("active_playlist_id")
-    if playlist_to_filter:
-        # Get the specified playlist
-        playlist_doc = await db.playlists.find_one({"id": playlist_to_filter, "musician_id": musician["id"]})
-        if playlist_doc and playlist_doc.get("song_ids"):
-            # Only show songs that are in the playlist
-            query["id"] = {"$in": playlist_doc["song_ids"]}
+    # Show-scoped playlist filtering (takes precedence over global active_playlist_id)
+    # Check for active show with playlist filtering
+    active_show = await db.shows.find_one({
+        "musician_id": musician["id"],
+        "status": "active",
+        "ended_at": None
+    })
+    
+    if active_show and active_show.get("playlist_filter_mode") == "selected":
+        # Show-scoped filtering: union of enabled playlists
+        enabled_ids = active_show.get("enabled_playlist_ids", [])
+        if enabled_ids:
+            # Fetch all enabled playlists (exclude deleted)
+            playlists_cursor = db.playlists.find({
+                "id": {"$in": enabled_ids},
+                "musician_id": musician["id"],
+                "is_deleted": {"$ne": True}
+            })
+            
+            # Union and dedupe all song_ids from enabled playlists
+            union_song_ids = set()
+            async for pl in playlists_cursor:
+                for song_id in pl.get("song_ids", []):
+                    union_song_ids.add(song_id)
+            
+            if union_song_ids:
+                query["id"] = {"$in": list(union_song_ids)}
+            else:
+                # No songs in enabled playlists - return empty
+                return []
         else:
-            # If playlist not found or empty, show no songs
+            # "selected" mode but no playlists enabled - return empty
             return []
+    elif not active_show:
+        # No active show: use existing behavior (query param playlist OR global active_playlist_id)
+        playlist_to_filter = playlist or musician.get("active_playlist_id")
+        if playlist_to_filter:
+            # Get the specified playlist
+            playlist_doc = await db.playlists.find_one({"id": playlist_to_filter, "musician_id": musician["id"]})
+            if playlist_doc and playlist_doc.get("song_ids"):
+                # Only show songs that are in the playlist
+                query["id"] = {"$in": playlist_doc["song_ids"]}
+            else:
+                # If playlist not found or empty, show no songs
+                return []
+    # else: active show with mode="all" - no playlist restriction (show all non-hidden songs)
     
     # Apply search across all fields (title, artist, genres, moods, year)
     if search:
