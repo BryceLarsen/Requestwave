@@ -4955,6 +4955,9 @@ async def upload_csv_songs(
         enriched_count = 0
         enrichment_errors = []
         
+        # Track song-to-playlist mappings for processing after all songs are inserted
+        song_playlist_mappings = []  # List of (song_id, [playlist_names])
+        
         # Insert valid songs into database
         for song_data in result['songs']:
             song_dict = {
@@ -5035,8 +5038,59 @@ async def upload_csv_songs(
             if not existing:
                 await db.songs.insert_one(song_dict)
                 songs_added += 1
+                # Track playlist assignments for newly added songs
+                if song_data.get('playlists'):
+                    song_playlist_mappings.append((song_dict['id'], song_data['playlists']))
             else:
                 result['errors'].append(f"Row {song_data['row_number']}: Duplicate song '{song_data['title']}' by '{song_data['artist']}' already exists")
+        
+        # Process playlist assignments after all songs are inserted
+        playlists_created = 0
+        playlist_assignments = 0
+        if song_playlist_mappings:
+            # Get existing playlists for this musician
+            existing_playlists = {}
+            playlists_cursor = db.playlists.find({"musician_id": musician_id, "is_deleted": {"$ne": True}})
+            async for pl in playlists_cursor:
+                existing_playlists[pl['name'].lower()] = pl
+            
+            # Process each song's playlist assignments
+            for song_id, playlist_names in song_playlist_mappings:
+                for playlist_name in playlist_names:
+                    playlist_name_lower = playlist_name.lower()
+                    
+                    # Create playlist if it doesn't exist
+                    if playlist_name_lower not in existing_playlists:
+                        new_playlist = {
+                            "id": str(uuid.uuid4()),
+                            "musician_id": musician_id,
+                            "name": playlist_name,  # Use original case from CSV
+                            "song_ids": [],
+                            "created_at": datetime.now(timezone.utc),
+                            "updated_at": datetime.now(timezone.utc),
+                            "is_public": False,
+                            "is_deleted": False
+                        }
+                        await db.playlists.insert_one(new_playlist)
+                        existing_playlists[playlist_name_lower] = new_playlist
+                        playlists_created += 1
+                        logger.info(f"Created new playlist '{playlist_name}' from CSV import")
+                    
+                    # Add song to playlist if not already present
+                    playlist = existing_playlists[playlist_name_lower]
+                    if song_id not in playlist.get('song_ids', []):
+                        await db.playlists.update_one(
+                            {"id": playlist['id']},
+                            {
+                                "$addToSet": {"song_ids": song_id},
+                                "$set": {"updated_at": datetime.now(timezone.utc)}
+                            }
+                        )
+                        # Update local cache too
+                        if 'song_ids' not in playlist:
+                            playlist['song_ids'] = []
+                        playlist['song_ids'].append(song_id)
+                        playlist_assignments += 1
         
         # Combine all errors
         all_errors = result['errors'] + enrichment_errors
@@ -5048,7 +5102,17 @@ async def upload_csv_songs(
             if enrichment_errors:
                 enrichment_message += f" ({len(enrichment_errors)} enrichment warnings)"
         
-        success_message = f"Successfully imported {songs_added} songs{enrichment_message}"
+        # Add playlist summary to message
+        playlist_message = ""
+        if playlists_created > 0 or playlist_assignments > 0:
+            parts = []
+            if playlists_created > 0:
+                parts.append(f"{playlists_created} playlist{'s' if playlists_created != 1 else ''} created")
+            if playlist_assignments > 0:
+                parts.append(f"{playlist_assignments} playlist assignment{'s' if playlist_assignments != 1 else ''}")
+            playlist_message = f", {', '.join(parts)}"
+        
+        success_message = f"Successfully imported {songs_added} songs{enrichment_message}{playlist_message}"
         
         return CSVUploadResponse(
             success=True,
