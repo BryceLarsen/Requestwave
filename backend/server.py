@@ -298,11 +298,15 @@ class Show(BaseModel):
     date: Optional[str] = None
     venue: Optional[str] = None
     notes: Optional[str] = None
-    status: str = "active"  # active, archived
+    status: str = "active"  # active, archived, ended
     timezone: Optional[str] = None  # IANA timezone string, e.g., "America/New_York"
     archived_at: Optional[datetime] = None
     restored_at: Optional[datetime] = None
+    ended_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    # Show-scoped playlist filtering
+    playlist_filter_mode: str = "all"  # "all" | "selected"
+    enabled_playlist_ids: List[str] = []  # Only used when mode="selected"
 
 # NEW: Tip tracking model
 class TipCreate(BaseModel):
