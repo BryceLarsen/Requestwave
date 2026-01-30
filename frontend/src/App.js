@@ -2178,12 +2178,12 @@ const MusicianDashboard = () => {
   const exportSongsToCSV = (songsToExport = null) => {
     const exportSongs = songsToExport || filteredSongs;
     
-    // Helper function to get playlists for a song
+    // Helper function to get playlists for a song (pipe-delimited for CSV import compatibility)
     const getSongPlaylists = (songId) => {
       return playlists
         .filter(playlist => playlist.song_ids && playlist.song_ids.includes(songId))
         .map(playlist => playlist.name)
-        .join(', ');
+        .join('|');
     };
     
     // Helper function to properly escape CSV fields
