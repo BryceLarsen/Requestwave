@@ -857,8 +857,10 @@ def parse_csv_content(content: bytes) -> List[Dict[str, Any]]:
         songs = []
         errors = []
         
-        # Expected columns (case insensitive)
-        expected_cols = {'title', 'artist', 'genre', 'mood', 'year', 'notes'}
+        # Expected columns (case insensitive) - includes playlists for import
+        expected_cols = {'title', 'artist', 'genre', 'mood', 'year', 'notes', 'playlists'}
+        # Handle both singular (genre/mood) and plural (genres/moods) column names
+        col_aliases = {'genres': 'genre', 'moods': 'mood'}
         
         # Get actual column names (case insensitive mapping)
         if not reader.fieldnames:
@@ -867,7 +869,10 @@ def parse_csv_content(content: bytes) -> List[Dict[str, Any]]:
         col_mapping = {}
         for field in reader.fieldnames:
             field_lower = field.lower().strip()
-            if field_lower in expected_cols:
+            # Check for aliases first
+            if field_lower in col_aliases:
+                col_mapping[field] = col_aliases[field_lower]
+            elif field_lower in expected_cols:
                 col_mapping[field] = field_lower
         
         # Check if we have required columns
@@ -912,6 +917,11 @@ def parse_csv_content(content: bytes) -> List[Dict[str, Any]]:
                         errors.append(f"Row {row_num}: Year must be a valid number")
                         continue
                 
+                # Process playlists (pipe-delimited for import)
+                playlist_names = []
+                if song_data.get('playlists'):
+                    playlist_names = [p.strip() for p in song_data['playlists'].split('|') if p.strip()]
+                
                 # Create song object
                 song = {
                     'title': song_data['title'],
@@ -920,6 +930,7 @@ def parse_csv_content(content: bytes) -> List[Dict[str, Any]]:
                     'moods': moods,
                     'year': year,
                     'notes': song_data.get('notes', ''),
+                    'playlists': playlist_names,
                     'row_number': row_num
                 }
                 
