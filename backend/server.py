@@ -3941,12 +3941,11 @@ async def get_musician_songs(
     }
     
     # Show-scoped playlist filtering (takes precedence over global active_playlist_id)
-    # Check for active show with playlist filtering
-    active_show = await db.shows.find_one({
-        "musician_id": musician["id"],
-        "status": "active",
-        "ended_at": None
-    })
+    # Use musician.current_show_id as the source of truth for active show
+    current_show_id = musician.get("current_show_id")
+    active_show = None
+    if current_show_id:
+        active_show = await db.shows.find_one({"id": current_show_id})
     
     if active_show and active_show.get("playlist_filter_mode") == "selected":
         # Show-scoped filtering: union of enabled playlists
