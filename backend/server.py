@@ -2830,11 +2830,50 @@ async def reset_password(request_data: dict):
 # QR Code endpoints
 @api_router.get("/debug/env")
 async def debug_env_vars():
-    """Debug endpoint to check environment variables"""
+    """Debug endpoint to check environment configuration - READ ONLY, NO AUTH REQUIRED"""
+    import hashlib
+    import subprocess
+    
+    mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+    db_name = os.environ.get('DB_NAME', 'requestwave_production')
+    frontend_url = os.environ.get('FRONTEND_URL', '')
+    
+    # Determine environment label
+    is_preview = 'preview.emergentagent.com' in frontend_url or 'localhost' in frontend_url
+    env_label = 'preview' if is_preview else 'production'
+    
+    # Get git commit hash if available
+    try:
+        commit_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'], 
+                                               cwd='/app', stderr=subprocess.DEVNULL).decode().strip()
+    except:
+        commit_hash = 'unknown'
+    
+    # Get musician count for verification
+    musician_count = await db.musicians.count_documents({})
+    
+    # Check for test user presence (indicator of staging vs production)
+    has_test_user = await db.musicians.find_one({"email": "test@test.com"}) is not None
+    
     return {
-        "frontend_url": os.environ.get('FRONTEND_URL'),
-        "backend_env_status": "active",
-        "timestamp": datetime.utcnow().isoformat().isoformat()
+        "environment": env_label,
+        "database": {
+            "name": db_name,
+            "uri_fingerprint": hashlib.sha256(mongo_url.encode()).hexdigest()[:16],
+            "musician_count": musician_count,
+            "has_test_user": has_test_user
+        },
+        "app": {
+            "version": "1.0.0",
+            "commit": commit_hash,
+            "billing_enabled": BILLING_ENABLED,
+            "analytics_enabled": ANALYTICS_EVENTS_ENABLED
+        },
+        "urls": {
+            "frontend": frontend_url,
+            "audience_base": os.environ.get('AUDIENCE_BASE_URL', '')
+        },
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 @api_router.get("/qr-code")
