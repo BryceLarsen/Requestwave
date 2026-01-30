@@ -2876,6 +2876,34 @@ async def debug_env_vars():
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
+@api_router.get("/debug/export-profile")
+async def export_profile_readonly(musician_id: str = Depends(get_current_musician)):
+    """
+    Export current musician's profile as JSON - READ ONLY
+    Safe for backing up production profile without modifications
+    """
+    musician = await db.musicians.find_one({"id": musician_id}, {"_id": 0, "password_hash": 0})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    # Get related data counts (not the actual data for safety)
+    songs_count = await db.songs.count_documents({"musician_id": musician_id})
+    requests_count = await db.requests.count_documents({"musician_id": musician_id})
+    shows_count = await db.shows.count_documents({"musician_id": musician_id})
+    
+    return {
+        "export_type": "profile_backup",
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "environment": "preview" if 'preview.emergentagent.com' in os.environ.get('FRONTEND_URL', '') else "production",
+        "profile": musician,
+        "data_summary": {
+            "songs": songs_count,
+            "requests": requests_count,
+            "shows": shows_count
+        },
+        "note": "This is a read-only export. No data was modified."
+    }
+
 @api_router.get("/qr-code")
 async def generate_musician_qr(musician_id: str = Depends(get_current_musician)):
     """Generate QR code for musician's audience link"""
