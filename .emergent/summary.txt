@@ -1,147 +1,162 @@
 <analysis>**original_problem_statement**:
-The user's high-level goal is to stabilize and enhance the RequestWave application through a structured, phased approach. The current focus is on iteratively refining the audience-facing UI to improve clarity, visual hierarchy, and user experience, based on a series of specific, prompt-driven requirements. The core Audience Moment Model (request flow) is considered complete and frozen, and all work is now centered on polishing the Moment 0 (browse) and post-request experiences. The user provides very detailed, iterative feedback, frequently changing requirements to fine-tune the UX.
+The user's high-level goal is to stabilize and enhance the RequestWave application through a structured, phased approach. The current focus is on iteratively refining both the audience-facing UI and the musician dashboard's state management. The user provides very detailed, iterative feedback, frequently changing requirements to fine-tune the UX and fix state integrity issues.
 
 **PRODUCT REQUIREMENTS**
-- The primary goal is to create a seamless and non-confusing post-request flow, eliminating stacked modals.
-- The  screen should contain the full tipping UI (amount input, quick amounts, payment selector, Send tip CTA).
-- Clicking Send tip or Skip on the  screen must close it and open the  bottom sheet in  mode. No other Support modal should appear automatically.
-- The  sheet should feature an expandable artist bio and a clear call-to-action for tipping.
-- PayPal links must be implemented to avoid browser popup blockers.
-- The latest requirement is to replace the subtle, collapsible tip card in the Orientation view with a prominent, full-width CTA button fixed at the bottom of the sheet.
+- **P0: Fix Runtime Error**: Address any application crashes before implementing new features.
+- **P1: Orientation “Leave a tip” CTA button**: Improve the tipping call-to-action in the post-request flow.
+- **P2: Hide Empty Payment Methods**: Prevent UI from showing non-functional tipping elements.
+- **Audience UX Adjustment**: Persist user's name but clear the dedication field between requests.
+- **Add Email Indicator**: Provide a visual cue in the musician's request list if a requester provided an email.
+- **Persist Requester Identity**: Use  to remember the user's name and email across sessions.
+- **Skip Email Step**: If a user's email is known via , skip the email capture step.
+- **Returning User Greeting**: Show a Welcome back message to known users.
+- **Fix Show State Integrity**: Solve a critical bug where stopping a show was not being persisted, causing it to resurrect on tab switches or refresh. The backend must be the single source of truth.
+- **Debug DB Separation**: Prove that the preview environment uses a separate database from production and explain why credentials differ.
+- **Song Model Inventory**: Audit all fields related to a song in the database and frontend.
+- **Show-Scoped Playlist Selection**: Implement a feature allowing the musician to select which playlists are active for a specific show, filtering the audience's song view.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application has a stable backend () and a monolithic React frontend (). The post-request user flow has been significantly refactored multiple times in this session to meet evolving UX requirements.
-
-The current, stable flow is:
-1.  User completes a song request and sees the  screen.
-2.  The  screen contains a full tipping UI (amount input, payment selector, etc.) and options to Send tip or Skip.
-3.  If Send tip is clicked, the payment link is triggered,  closes, and the  bottom sheet opens in  mode.
-4.  If Skip is clicked,  closes, and the  sheet opens in  mode.
-5.  The  sheet includes an expandable artist bio (Read more/Show less) and a collapsible card at the bottom to Leave a tip.
-6.  PayPal links are implemented using  to prevent popup blockers.
+The application consists of a monolithic FastAPI backend () and a monolithic React frontend (). The session addressed and completed several key tasks: a critical runtime error was fixed, the post-request UI was enhanced, state integrity for active shows was completely overhauled to make the backend the single source of truth, and several audience-facing UX improvements using  were implemented. The backend logic for show-scoped playlist filtering has been implemented, but the frontend part is incomplete and blocked.
 
 **Last working item**:
-- **Last item agent was working**: Implementing a user request to change the subtle, collapsible Leave a tip card in the  view into a more prominent, full-width CTA button fixed at the bottom of the sheet.
-- **Status**: IN PROGRESS
+- **Last item agent was working**: The agent was attempting to test the newly implemented frontend UI for the Start Show modal, which now includes options for show-scoped playlist filtering. The agent was stuck in a loop, unable to programmatically click the Start Show button to open the modal and verify the changes.
+- **Status**: BLOCKED
 - **Agent Testing Done**: N
-- **Which testing method agent to use?**: screenshot tool to verify the new button's appearance and its expand/collapse functionality.
+- **Which testing method agent to use?**: screenshot tool. The agent needs to correctly identify a reliable selector for the Start Show button, click it, and then take screenshots of the modal in its different states (All songs vs. Selected playlists).
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: UI Regression - Tip section shows with empty dropdown (P2)**
-  - On the  screen, if  is true but no payment methods are configured, the tip section still renders with an empty payment dropdown. This is a minor UI bug that was deferred to focus on higher-priority tasks.
-  - **Status**: NOT STARTED
+- **Issue 1: Agent is unable to interact with the 'Start Show' UI (P0)**
+  - The agent has been stuck in a loop for over 10 attempts, trying different selectors to click the Start Show button and open its modal for verification. This is a critical blocker for the current task.
+  - **Status**: IN PROGRESS
+
+- **Issue 2: UI Regression - Tip section shows with empty dropdown (from previous fork) (P2)**
+  - On the  screen, if  is true but no payment methods are configured, the tip section still renders with an empty payment dropdown.
+  - **Status**: RESOLVED (This was fixed as part of the P2 task from the user to hide the entire tip UI when no payment methods are configured).
 
 **In progress Task List**:
-- **Task 1: Replace Orientation Tip Card with a Prominent CTA Button (P0)**
-    - **Where to resume**: The agent has viewed the relevant code in  and is ready to modify the JSX for the collapsed tip section to transform it into a full-width, fixed button at the bottom of the Orientation sheet, as per the user's detailed specifications.
-    - **What will be achieved with this?**: A clearer, more visible call-to-action for tipping within the Orientation sheet, aligning with the user's latest design direction.
+- **Task 1: Complete and Verify Show-Scoped Playlist Filtering (P0)**
+    - **Where to resume**: The agent must debug its interaction with the frontend. The immediate next step is to analyze a fresh screenshot of the musician dashboard's Requests or On Stage tab to identify a unique and stable selector for the button that opens the Start Show modal. The agent should abandon its previous failed attempts and find a new strategy.
+    - **What will be achieved with this?**: Musicians will be able to filter the songs available to the audience on a per-show basis by selecting one or more playlists.
     - **Status**: IN PROGRESS
     - **Should Test frontend/backend/both after fix?**: frontend
-    - **Blocked on something**: No.
+    - **Blocked on something**: Resolving Issue 1 above.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks**:
-    - **Documentation (P1)**: Update  and  after the current task is complete.
+    - **Documentation (P1)**: Update  with the new show-scoped playlist behavior.
     - **Analytics (P2)**: Implement analytics for tip conversion.
     - **Mailing List (P2)**: Implement the mailing list capture feature.
 - **Future Tasks**:
-    - **Refactor**: Break down the monolithic  into smaller components.
+    - **Refactor**: Decompose the monolithic  into smaller components.
     - **Phase 3**: Implement Post-Show Reflection features for musicians.
-    - **Phase 4**: Polish the musician experience UX.
     - **Integration**: Integrate with Spotify Web API for song data enrichment.
     - **Analytics UI**: Build a new UI to display analytics from the  collection.
 
 **Completed work in this session**
-- **Post-Request Flow Refactor (Multiple Iterations)**:
-  - Iteratively refactored the post-request flow to eliminate stacked modals, finally settling on the current flow:  (with full tip UI) ->  (in  mode).
-  - Removed all logic that automatically opened a separate Support the Artist modal.
-- **Orientation Sheet Enhancements**:
-  - Implemented an expandable artist bio section with Read more / Show less functionality.
-  - Implemented a subtle, collapsible inline tip card at the bottom of the Orientation sheet (now being replaced).
-- **Payment Link Fixes**:
-  - Updated PayPal links to use  to avoid popup blockers.
-  - Ensured PayPal links are correctly formatted ().
-  - Implemented sanitization for PayPal usernames (trimming whitespace, removing '@').
-- **Documentation**: Consistently updated  and  after major changes.
+- **P0: Runtime Error Fixed**: Corrected a JSX syntax error in  that was crashing the app.
+- **P1: Orientation Leave a tip CTA Button**: Replaced the previous tip card with a prominent, full-width, fixed CTA button in the Orientation sheet.
+- **P2: Empty Payment Methods Fix**: Ensured the tip UI (on both the  and  screens) is completely hidden if the musician has no payment methods configured.
+- **State Integrity Overhaul**: Fixed a critical bug where stopping a show would not persist, causing it to resurrect. The backend is now the single source of truth for the active show, and the frontend state is updated accordingly on mount and after actions. Created  to verify.
+- **Requester Identity Persistence**:
+    - Implemented  to save requester  and  after submission.
+    - The Name field is now pre-filled on subsequent requests.
+    - The Email step (Moment 3) is now skipped if the email is already known.
+    - Added a Welcome back, {name} greeting for returning users.
+    - Added a Not you? Clear button in the Orientation sheet to clear the saved identity.
+- **Dedication Field Reset**: The Dedication field is now cleared after a successful request, while the name is preserved for the session.
+- **Email Indicator UI**: Added a 📧 icon next to song titles in the musician's request list for requests that have an associated email.
+- **Environment & DB Debugging**:
+    - Added a  endpoint to prove DB separation.
+    - Added a safe, read-only  endpoint.
+- **Song Model Audit**: Completed a full inventory of all song-related fields in the backend and frontend.
+- **Show-Scoped Playlists (Backend)**: Updated the  model,  endpoint, and  endpoint to support filtering by multiple playlists for an active show.
 
 **Earlier issues found/mentioned but not fixed**
-- **Issue 1: Tip section shows with empty dropdown**
-    - **Debug checklist**: In , check the conditional rendering logic for the tip section within the  JSX. It currently checks , but should also check if at least one payment method (Venmo, PayPal, etc.) has a configured username.
-    - **Why to solve this issue and what will be achieved with this?**: To prevent a confusing user experience where a user sees a tipping interface that is not actually functional.
-    - **Should Test frontend/backend/both after fix**: frontend
-    - **Is recurring issue?** N
+- None. The issue mentioned in the previous handoff was resolved.
 
 **Known issue recurrence from previous fork**
-- None in this session.
+- None.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Monolithic Frontend/Backend**: All application logic is centralized in  and .
-- **State-Driven Conditional UI**: The entire audience experience is a single page that conditionally renders different views (steps or modals) based on React state (, , , , ).
+- **State-Driven Conditional UI**: The entire application flow is managed through React state in a single component.
+- **Backend as Single Source of Truth**: Critical state like the active show is now managed authoritatively by the backend, with the frontend responsible for fetching and syncing, not inferring.
+- ** Persistence**: Used to improve UX for returning users by remembering their name and email.
+- **Monolithic Architecture**: All application logic is centralized in  and .
 
 **key DB schema**
-- : The agent interacted with this collection via the API to update fields like , , , and Zelle settings for testing purposes.
+- :  and  were added to the  response and are central to the state integrity fix.
+- : Now includes  and . The  and  fields are now reliably managed.
+- : The  array within this collection remains the source of truth for playlist membership.
 
 **changes in tech stack**
 - None.
 
 **All files of reference**
 - **Updated this session**:
-    - : Heavily modified through multiple refactors of the post-request UI/UX.
-    - : Updated multiple times to document the evolving flow.
-    - : Updated to reflect the latest state of the application.
+    - : Heavily modified for all bug fixes, UI changes, and new features.
+    - : Modified for state integrity, debug endpoints, and the show-scoped playlist filtering logic.
+    - : Updated with completed tasks.
+- **Created this session**:
+    - : New Pytest file to ensure the show resurrection bug does not return.
 
 **Areas that need refactoring**:
--  is extremely large and complex. It is a known future task to decompose it into smaller, manageable components.
+-  is now even larger and more complex. It is a critical candidate for being decomposed into smaller, manageable components to improve maintainability.
 
 **key api endpoints**
-- : Used with an auth token to update the test musician's payment settings.
-- : Used to get a musician auth token for API calls.
+- : Logic updated to filter songs based on the active show's playlist settings.
+- : Now accepts  and .
+- : Logic hardened to reliably end a show.
+- : Now returns  and .
+- : New endpoint providing environment and database information.
+- : New read-only endpoint to export a musician's profile.
 
 **Critical Info for New Agent**
-- The user provides very specific, iterative requirements. The design and flow have changed multiple times in this session. Always prioritize the user's **latest** message as the source of truth for the current task.
-- You are in the middle of an implementation. Your immediate task is to replace the existing collapsible tip card in the  sheet with a new, full-width, fixed CTA button as per the user's detailed specs.
-- The work is confined to . Be mindful of the large, stateful nature of this component.
+- **Your immediate task is to unblock the agent.** It is stuck in a UI testing loop. You must devise a new, reliable strategy to locate and click the Start Show button in the musician dashboard to proceed with testing the show-scoped playlist feature. Do not repeat the previous agent's failed attempts.
+- The backend for show-scoped playlists is implemented and tested via API calls. The blocker is purely on the frontend testing and verification side.
+- The concept of the backend as the single source of truth for the active show is a critical architectural principle that was established in this session. Do not write frontend logic that infers the active show; always rely on the data fetched from the backend ().
 
 **documents and test reports created in this job**
 -  (updated)
--  (updated)
+-  (new)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1. **User**: Restore the full tip UI inside  and make sure no separate Support sheet appears. **(Completed)**
-2. **User**: Tapping Send tip or Skip should both lead to the  view. **(Completed)**
-3. **User**: Make the bio in the  sheet expandable (Read more/Show less). **(In Progress)**
-4. **User**: Fix PayPal links to use  and the correct  format to avoid popup blockers. **(In Progress with bio task)**
-5. **User**: Agent completed bio expansion and PayPal link fix. **(Completed)**
-6. **User**: Fix another  UI regression. The tip section should be a subtle, collapsible card at the bottom. **(In Progress)**
-7. **User**: Sanitize PayPal username (remove '@') and use . Add a Having trouble? fallback link for PayPal. **(In Progress with tip card task)**
-8. **User**: Agent completed the subtle tip card and PayPal sanitization fixes. **(Completed)**
-9. **User**: Update the tip affordance again. Replace the subtle card with a clear, full-width CTA button fixed at the bottom of the  sheet. **(In Progress - Last working item)**
-10. **User**: Provided detailed specs for the new CTA button's design and behavior. **(In Progress - Last working item)**
+1.  **User**: Implement a  cache for requester name and email to pre-fill forms and add a Clear button. **(Completed)**
+2.  **User**: Skip the email capture step (Moment 3) if the user's email is already cached in . **(Completed)**
+3.  **User**: Add a Welcome back, {name} greeting for returning users. **(Completed)**
+4.  **User**: Fix a critical bug where stopping a show causes it to reappear after a refresh or tab switch. The backend must be the source of truth. **(Completed)**
+5.  **User**: Debug and prove that the preview and production databases are separate. Explain why auth credentials differ. **(Completed)**
+6.  **User**: Perform an audit of all Song model fields across the application without changing any code. **(Completed)**
+7.  **User**: Provide a design and data model audit for a new Show-Scoped Playlist Selection feature. **(Completed)**
+8.  **User**: Implement the backend and minimal UI for show-scoped playlist filtering based on the approved design. **(In Progress)**
+9.  **User**: (Implicit in agent's actions) Agent is trying to test the new UI but is stuck. **(Blocked)**
+10. **User**: (Implicit in agent's actions) The agent has been stuck for a very long time trying to click a button. This is the last state of the job. **(Blocked)**
 
 **Project Health Check:**
-- **Broken**: The UI for the tipping call-to-action in the Orientation sheet does not match the user's latest requirement. This is the P0 task being worked on.
+- **Broken**: The show-scoped playlist feature is incomplete. The agent is blocked on testing the frontend UI, unable to interact with a key button.
 - **Mocked**: None.
 
 **3rd Party Integrations**
-- **Venmo**: Deep links () are generated.
-- **PayPal**: Links to  are generated.
-- **Cash App**: Deep links () are generated.
+- **Venmo**: Deep links ().
+- **PayPal**: Links to .
+- **Cash App**: Deep links ().
 
 **Testing status**
 - **Testing agent used after significant changes**: NO
 - **Troubleshoot agent used after agent stuck in loop**: NO
-- **Test files created**: None in this session.
-- **Known regressions**: None currently, but the UI has been in constant flux.
+- **Test files created**:
+    - 
+- **Known regressions**: None identified, but the last implemented feature is not fully tested.
 
 **Credentials to test flow:**
 - **Musician Slug**: 
 - **Musician Login**:  / 
 
 **What agent forgot to execute**
-- The agent correctly identified a minor UI bug (tip section showing with an empty dropdown) but deferred it to focus on the user's P0 task, which is the correct prioritization. Nothing critical has been forgotten.</analysis>
+- The agent failed to complete the final task of implementing and verifying the show-scoped playlist feature because it got stuck in a testing loop.
+- The agent did not update  as requested in the final prompt's deliverables.</analysis>

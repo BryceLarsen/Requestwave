@@ -8,7 +8,7 @@ import json
 import uuid
 
 # Configuration
-BASE_URL = "https://tipper-interface.preview.emergentagent.com/api"
+BASE_URL = "https://songrequest-ui.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {
