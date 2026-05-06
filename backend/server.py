@@ -243,6 +243,7 @@ class RequestCreate(BaseModel):
     dedication: str = ""
     tip_amount: float = 0.0
     audience_id: Optional[str] = None  # Phase 2: Stable anonymous audience identifier
+    profile_slug: Optional[str] = None  # Multi-Profile: optional profile context
 
 class RequestEmailAttach(BaseModel):
     """Moment 3: Attach email to an existing request after submission"""
@@ -260,6 +261,7 @@ class Request(BaseModel):
     dedication: str = ""
     tip_amount: float = 0.0
     audience_id: Optional[str] = None  # Phase 2: Stable anonymous audience identifier
+    profile_id: Optional[str] = None  # Multi-Profile: profile context for this request
     # Artist-controlled show grouping (not provided by audience)
     show_id: Optional[str] = None  # Artist can assign later
     show_name: Optional[str] = None  # Display only, not for filtering
@@ -574,6 +576,31 @@ class PlaylistResponse(BaseModel):
 
 class PlaylistUpdate(BaseModel):
     song_ids: List[str]
+
+# Profile models for Multi-Profile System
+class ProfileCreate(BaseModel):
+    name: str
+    slug: str
+    active_playlist_ids: List[str] = []
+    show_tips_in_success_screen: bool = True
+    show_tips_in_orientation: bool = True
+
+class ProfileUpdateModel(BaseModel):
+    name: Optional[str] = None
+    slug: Optional[str] = None
+    active_playlist_ids: Optional[List[str]] = None
+    show_tips_in_success_screen: Optional[bool] = None
+    show_tips_in_orientation: Optional[bool] = None
+
+class ProfileResponse(BaseModel):
+    id: str
+    musician_id: str
+    name: str
+    slug: str
+    active_playlist_ids: List[str] = []
+    show_tips_in_success_screen: bool = True
+    show_tips_in_orientation: bool = True
+    created_at: str
 
 # Utility functions
 def create_slug(name: str) -> str:
@@ -4159,6 +4186,12 @@ async def create_request(request_data: RequestCreate):
         "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
     })
     
+    # Multi-Profile: Resolve profile_slug to profile_id if provided
+    if request_data.profile_slug:
+        profile = await db.profiles.find_one({"musician_id": musician_id, "slug": request_data.profile_slug})
+        if profile:
+            request_dict["profile_id"] = profile["id"]
+    
     await db.requests.insert_one(request_dict)
     
     # Emit analytics event: audience.request_submitted
@@ -4322,6 +4355,12 @@ async def create_musician_request(
         "social_clicks": [],
         "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
     })
+    
+    # Multi-Profile: Resolve profile_slug to profile_id if provided
+    if request_data.profile_slug:
+        profile = await db.profiles.find_one({"musician_id": musician_id, "slug": request_data.profile_slug})
+        if profile:
+            request_dict["profile_id"] = profile["id"]
     
     # Update song request count
     await db.songs.update_one(
@@ -7368,6 +7407,198 @@ async def route_audit():
         "offending_items": offending_items
     }
 
+# ==========================================
+# MULTI-PROFILE SYSTEM ROUTES
+# ==========================================
+
+@api_router.post("/profiles", response_model=ProfileResponse)
+async def create_profile(profile_data: ProfileCreate, musician_id: str = Depends(get_current_musician)):
+    """Create a new performance profile for the current musician"""
+    # Validate slug format: lowercase letters, numbers, hyphens only
+    if not re.match(r'^[a-z0-9-]+$', profile_data.slug):
+        raise HTTPException(status_code=400, detail="Slug must contain only lowercase letters, numbers, and hyphens")
+    
+    if len(profile_data.slug) < 2:
+        raise HTTPException(status_code=400, detail="Slug must be at least 2 characters")
+    
+    # Check slug uniqueness within this musician's profiles
+    existing = await db.profiles.find_one({"musician_id": musician_id, "slug": profile_data.slug})
+    if existing:
+        raise HTTPException(status_code=409, detail="A profile with this slug already exists")
+    
+    profile_dict = {
+        "id": str(uuid.uuid4()),
+        "musician_id": musician_id,
+        "name": profile_data.name,
+        "slug": profile_data.slug,
+        "active_playlist_ids": profile_data.active_playlist_ids,
+        "show_tips_in_success_screen": profile_data.show_tips_in_success_screen,
+        "show_tips_in_orientation": profile_data.show_tips_in_orientation,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.profiles.insert_one(profile_dict)
+    
+    return ProfileResponse(
+        id=profile_dict["id"],
+        musician_id=profile_dict["musician_id"],
+        name=profile_dict["name"],
+        slug=profile_dict["slug"],
+        active_playlist_ids=profile_dict["active_playlist_ids"],
+        show_tips_in_success_screen=profile_dict["show_tips_in_success_screen"],
+        show_tips_in_orientation=profile_dict["show_tips_in_orientation"],
+        created_at=profile_dict["created_at"]
+    )
+
+@api_router.get("/profiles", response_model=List[ProfileResponse])
+async def get_profiles(musician_id: str = Depends(get_current_musician)):
+    """Return all profiles for the current musician"""
+    profiles = await db.profiles.find({"musician_id": musician_id}, {"_id": 0}).to_list(100)
+    return [ProfileResponse(
+        id=p["id"],
+        musician_id=p["musician_id"],
+        name=p["name"],
+        slug=p["slug"],
+        active_playlist_ids=p.get("active_playlist_ids", []),
+        show_tips_in_success_screen=p.get("show_tips_in_success_screen", True),
+        show_tips_in_orientation=p.get("show_tips_in_orientation", True),
+        created_at=p.get("created_at", "")
+    ) for p in profiles]
+
+@api_router.put("/profiles/{profile_id}", response_model=ProfileResponse)
+async def update_profile_by_id(profile_id: str, update_data: ProfileUpdateModel, musician_id: str = Depends(get_current_musician)):
+    """Update a profile's fields"""
+    profile = await db.profiles.find_one({"id": profile_id, "musician_id": musician_id})
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    
+    update_fields = {}
+    if update_data.name is not None:
+        update_fields["name"] = update_data.name
+    if update_data.slug is not None:
+        # Validate slug format
+        if not re.match(r'^[a-z0-9-]+$', update_data.slug):
+            raise HTTPException(status_code=400, detail="Slug must contain only lowercase letters, numbers, and hyphens")
+        if len(update_data.slug) < 2:
+            raise HTTPException(status_code=400, detail="Slug must be at least 2 characters")
+        # Check uniqueness (excluding current profile)
+        existing = await db.profiles.find_one({"musician_id": musician_id, "slug": update_data.slug, "id": {"$ne": profile_id}})
+        if existing:
+            raise HTTPException(status_code=409, detail="A profile with this slug already exists")
+        update_fields["slug"] = update_data.slug
+    if update_data.active_playlist_ids is not None:
+        update_fields["active_playlist_ids"] = update_data.active_playlist_ids
+    if update_data.show_tips_in_success_screen is not None:
+        update_fields["show_tips_in_success_screen"] = update_data.show_tips_in_success_screen
+    if update_data.show_tips_in_orientation is not None:
+        update_fields["show_tips_in_orientation"] = update_data.show_tips_in_orientation
+    
+    if update_fields:
+        await db.profiles.update_one({"id": profile_id}, {"$set": update_fields})
+    
+    updated = await db.profiles.find_one({"id": profile_id}, {"_id": 0})
+    return ProfileResponse(
+        id=updated["id"],
+        musician_id=updated["musician_id"],
+        name=updated["name"],
+        slug=updated["slug"],
+        active_playlist_ids=updated.get("active_playlist_ids", []),
+        show_tips_in_success_screen=updated.get("show_tips_in_success_screen", True),
+        show_tips_in_orientation=updated.get("show_tips_in_orientation", True),
+        created_at=updated.get("created_at", "")
+    )
+
+@api_router.delete("/profiles/{profile_id}")
+async def delete_profile(profile_id: str, musician_id: str = Depends(get_current_musician)):
+    """Delete a profile. Refuse if it's the musician's only profile."""
+    profile = await db.profiles.find_one({"id": profile_id, "musician_id": musician_id})
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    
+    # Count profiles for this musician
+    count = await db.profiles.count_documents({"musician_id": musician_id})
+    if count <= 1:
+        raise HTTPException(status_code=400, detail="Cannot delete your only profile")
+    
+    await db.profiles.delete_one({"id": profile_id})
+    return {"ok": True, "message": "Profile deleted"}
+
+@api_router.get("/musicians/{master_slug}/{profile_slug}")
+async def get_musician_by_profile(master_slug: str, profile_slug: str):
+    """Public endpoint: Resolve a profile by master slug + profile slug.
+    Returns musician public data merged with profile settings, plus songs from active playlists."""
+    # Find the musician by master slug
+    musician = await db.musicians.find_one({"slug": master_slug})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    # Find the profile
+    profile = await db.profiles.find_one({"musician_id": musician["id"], "slug": profile_slug})
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    
+    # Get songs from active playlists
+    songs_list = []
+    if profile.get("active_playlist_ids") and len(profile["active_playlist_ids"]) > 0:
+        # Get all song IDs from active playlists
+        all_song_ids = set()
+        playlists = await db.playlists.find(
+            {"id": {"$in": profile["active_playlist_ids"]}, "musician_id": musician["id"]},
+            {"_id": 0}
+        ).to_list(100)
+        
+        for playlist in playlists:
+            for sid in playlist.get("song_ids", []):
+                all_song_ids.add(sid)
+        
+        if all_song_ids:
+            songs = await db.songs.find(
+                {"id": {"$in": list(all_song_ids)}, "musician_id": musician["id"], "hidden": {"$ne": True}},
+                {"_id": 0}
+            ).to_list(1000)
+            songs_list = songs
+    
+    return {
+        "id": musician["id"],
+        "name": musician["name"],
+        "slug": musician["slug"],
+        "profile_id": profile["id"],
+        "profile_name": profile["name"],
+        "profile_slug": profile["slug"],
+        "show_tips_in_success_screen": profile.get("show_tips_in_success_screen", True),
+        "show_tips_in_orientation": profile.get("show_tips_in_orientation", True),
+        # Payment info
+        "paypal_username": musician.get("paypal_username"),
+        "venmo_username": musician.get("venmo_username"),
+        "cash_app_username": musician.get("cash_app_username"),
+        "zelle_email": musician.get("zelle_email"),
+        "zelle_phone": musician.get("zelle_phone"),
+        "paypal_enabled": musician.get("paypal_enabled", True),
+        "venmo_enabled": musician.get("venmo_enabled", True),
+        "cash_app_enabled": musician.get("cash_app_enabled", True),
+        "zelle_enabled": musician.get("zelle_enabled", True),
+        # Social media
+        "instagram_username": musician.get("instagram_username"),
+        "facebook_username": musician.get("facebook_username"),
+        "tiktok_username": musician.get("tiktok_username"),
+        "spotify_artist_url": musician.get("spotify_artist_url"),
+        "apple_music_artist_url": musician.get("apple_music_artist_url"),
+        # Control settings
+        "tips_enabled": musician.get("tips_enabled", True),
+        "requests_enabled": musician.get("requests_enabled", True),
+        "current_show_name": musician.get("current_show_name"),
+        # Songs for this profile
+        "songs": songs_list
+    }
+
+@api_router.get("/resolve/{slug}")
+async def resolve_slug(slug: str):
+    """Check if a slug matches a known musician. Used for short URL redirects."""
+    musician = await db.musicians.find_one({"slug": slug}, {"_id": 0, "id": 1, "slug": 1})
+    if musician:
+        return {"found": True, "type": "musician", "slug": musician["slug"]}
+    raise HTTPException(status_code=404, detail="Not found")
+
 # Simple test endpoint before router inclusion
 @api_router.get("/test-endpoint-before-inclusion")
 async def test_endpoint_before_inclusion():
@@ -7522,7 +7753,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_origins=[
         "https://requestwave.app", 
-        "https://songrequest-ui.preview.emergentagent.com", 
+        "https://musician-dashboard-1.preview.emergentagent.com", 
         os.environ.get('FRONTEND_URL', '').replace('http://', 'https://'),  # Dynamic production URL
         "https://requestwave.emergent.host",  # Emergent production pattern
         "https://requestwave-app.emergent.host",  # Alternative production pattern

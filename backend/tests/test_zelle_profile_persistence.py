@@ -15,7 +15,7 @@ import os
 class TestZelleProfilePersistence:
     """Test Zelle field save and load on musician profile"""
     
-    API_URL = os.getenv("API_URL", "https://songrequest-ui.preview.emergentagent.com/api")
+    API_URL = os.getenv("API_URL", "https://musician-dashboard-1.preview.emergentagent.com/api")
     TEST_EMAIL = "test@test.com"
     TEST_PASSWORD = "test"
     

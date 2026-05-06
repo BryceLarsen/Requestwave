@@ -732,6 +732,14 @@ const MusicianDashboard = () => {
   const [openDropdownId, setOpenDropdownId] = useState(null); // NEW: Track which dropdown is open
   const [playlistsExpanded, setPlaylistsExpanded] = useState(false); // NEW: Track if playlists section is expanded
   
+  // Multi-Profile System state
+  const [profiles, setProfiles] = useState([]);
+  const [showProfileEditor, setShowProfileEditor] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(null);
+  const [profileForm, setProfileForm] = useState({ name: '', slug: '', active_playlist_ids: [], show_tips_in_success_screen: true, show_tips_in_orientation: true });
+  const [accountSettingsExpanded, setAccountSettingsExpanded] = useState(false);
+  const [profileFilterId, setProfileFilterId] = useState(''); // For requests tab filter
+  
   // Error toast state for request operations
   const [errorToast, setErrorToast] = useState({ show: false, message: '' });
   
@@ -1434,6 +1442,7 @@ const MusicianDashboard = () => {
   useEffect(() => {
     if (activeTab === 'profile') {
       fetchProfile();
+      fetchProfiles();
     }
   }, [activeTab]);
 
@@ -1773,6 +1782,71 @@ const MusicianDashboard = () => {
     } catch (error) {
       setProfileError(error.response?.data?.detail || 'Error updating profile');
     }
+  };
+
+  // Multi-Profile CRUD functions
+  const fetchProfiles = async () => {
+    try {
+      const response = await axios.get(`${API}/profiles`);
+      setProfiles(response.data);
+    } catch (error) {
+      console.error('Error fetching profiles:', error);
+    }
+  };
+
+  const handleCreateProfile = async () => {
+    try {
+      const response = await axios.post(`${API}/profiles`, profileForm);
+      setProfiles([...profiles, response.data]);
+      setShowProfileEditor(false);
+      setProfileForm({ name: '', slug: '', active_playlist_ids: [], show_tips_in_success_screen: true, show_tips_in_orientation: true });
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Error creating profile');
+    }
+  };
+
+  const handleUpdateProfileById = async () => {
+    if (!editingProfile) return;
+    try {
+      const response = await axios.put(`${API}/profiles/${editingProfile.id}`, profileForm);
+      setProfiles(profiles.map(p => p.id === editingProfile.id ? response.data : p));
+      setShowProfileEditor(false);
+      setEditingProfile(null);
+      setProfileForm({ name: '', slug: '', active_playlist_ids: [], show_tips_in_success_screen: true, show_tips_in_orientation: true });
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Error updating profile');
+    }
+  };
+
+  const handleDeleteProfile = async (profileId) => {
+    if (!window.confirm('Delete this profile? This cannot be undone.')) return;
+    try {
+      await axios.delete(`${API}/profiles/${profileId}`);
+      setProfiles(profiles.filter(p => p.id !== profileId));
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Error deleting profile');
+    }
+  };
+
+  const openProfileEditor = (profileToEdit = null) => {
+    if (profileToEdit) {
+      setEditingProfile(profileToEdit);
+      setProfileForm({
+        name: profileToEdit.name,
+        slug: profileToEdit.slug,
+        active_playlist_ids: profileToEdit.active_playlist_ids || [],
+        show_tips_in_success_screen: profileToEdit.show_tips_in_success_screen !== false,
+        show_tips_in_orientation: profileToEdit.show_tips_in_orientation !== false
+      });
+    } else {
+      setEditingProfile(null);
+      setProfileForm({ name: '', slug: '', active_playlist_ids: [], show_tips_in_success_screen: true, show_tips_in_orientation: true });
+    }
+    setShowProfileEditor(true);
+  };
+
+  const generateSlugFromName = (name) => {
+    return name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
   };
 
   const fetchSubscriptionStatus = async () => {
@@ -3797,6 +3871,7 @@ const MusicianDashboard = () => {
               {tab === 'analytics' ? 'Analytics' : 
                tab === 'design' ? 'Design' : 
                tab === 'onstage' ? 'On Stage' : 
+               tab === 'profile' ? 'Profiles' :
                tab.charAt(0).toUpperCase() + tab.slice(1)}
               {tab === 'requests' && requests.filter(r => r.status === 'pending').length > 0 && (
                 <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-xs">
@@ -3828,6 +3903,7 @@ const MusicianDashboard = () => {
                   {activeTab === 'analytics' ? 'Analytics' : 
                    activeTab === 'design' ? 'Design' : 
                    activeTab === 'onstage' ? 'On Stage' : 
+                   activeTab === 'profile' ? 'Profiles' :
                    activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
                 </span>
                 {activeTab === 'requests' && requests.filter(r => r.status === 'pending').length > 0 && (
@@ -3860,6 +3936,7 @@ const MusicianDashboard = () => {
                         {tab === 'analytics' ? 'Analytics' : 
                          tab === 'design' ? 'Design' : 
                          tab === 'onstage' ? 'On Stage' : 
+                         tab === 'profile' ? 'Profiles' :
                          tab.charAt(0).toUpperCase() + tab.slice(1)}
                       </span>
                       {tab === 'requests' && requests.filter(r => r.status === 'pending').length > 0 && (
@@ -5314,6 +5391,25 @@ const MusicianDashboard = () => {
               </div>
             )}
             
+            {/* Profile Filter */}
+            {profiles.length > 0 && (
+              <div className="mb-4 flex items-center gap-3">
+                <span className="text-gray-400 text-sm">Filter by profile:</span>
+                <select
+                  data-testid="request-profile-filter"
+                  value={profileFilterId}
+                  onChange={(e) => setProfileFilterId(e.target.value)}
+                  className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm"
+                >
+                  <option value="">All Profiles</option>
+                  <option value="main">Main (no profile)</option>
+                  {profiles.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* Empty State: No Active Show */}
             {!currentShow && (
               <div>
@@ -5632,6 +5728,7 @@ const MusicianDashboard = () => {
                   <div className="px-4 pb-4 space-y-3">
                     {requests
                       .filter(r => r.show_id === currentShow.id)
+                      .filter(r => !profileFilterId || (profileFilterId === 'main' ? !r.profile_id : r.profile_id === profileFilterId))
                       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Most recent first
                       .slice(0, 50).map((request) => (
                     <div key={request.id} className="p-4 rounded-lg flex items-center space-x-3 bg-gray-600 border-l-4 border-green-500">
@@ -5659,6 +5756,13 @@ const MusicianDashboard = () => {
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
                           {formatTimestamp(request.created_at)}
+                          {request.profile_id ? (
+                            <span className="ml-2 bg-purple-600/20 text-purple-300 px-1.5 py-0.5 rounded text-xs">
+                              {profiles.find(p => p.id === request.profile_id)?.name || 'Profile'}
+                            </span>
+                          ) : (
+                            <span className="ml-2 bg-gray-700/50 text-gray-500 px-1.5 py-0.5 rounded text-xs">Main</span>
+                          )}
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -6415,438 +6519,311 @@ const MusicianDashboard = () => {
 
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <div>
-            {/* Audience Link */}
-            <div className="bg-purple-800/50 rounded-xl p-6 mb-8">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h2 className="text-xl font-bold mb-2">Your Audience Link</h2>
-                  <p className="text-purple-200 mb-4">Share this link with your audience for song requests:</p>
-                </div>
-              </div>
-              
-              <div className="flex flex-col space-y-4 lg:space-y-0 lg:flex-row lg:items-center lg:space-x-4">
-                <div className="flex items-center space-x-2 sm:space-x-4 flex-1">
-                  <input
-                    type="text"
-                    value={audienceUrl}
-                    readOnly
-                    className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 sm:px-4 py-2 text-white text-sm sm:text-base"
-                  />
-                  <button
-                    onClick={async (event) => {
-                      try {
-                        await navigator.clipboard.writeText(audienceUrl);
-                        // Provide visual feedback
-                        const button = event.target;
-                        const originalText = button.textContent;
-                        button.textContent = 'Copied!';
-                        button.style.backgroundColor = '#059669'; // green-600
-                        setTimeout(() => {
-                          button.textContent = originalText;
-                          button.style.backgroundColor = ''; // reset to original
-                        }, 2000);
-                      } catch (err) {
-                        console.error('Failed to copy text: ', err);
-                        // Fallback for browsers that don't support clipboard API
-                        const textArea = document.createElement('textarea');
-                        textArea.value = audienceUrl;
-                        document.body.appendChild(textArea);
-                        textArea.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(textArea);
-                        
-                        // Provide visual feedback for fallback
-                        const button = event.target;
-                        const originalText = button.textContent;
-                        button.textContent = 'Copied!';
-                        button.style.backgroundColor = '#059669';
-                        setTimeout(() => {
-                          button.textContent = originalText;
-                          button.style.backgroundColor = '';
-                        }, 2000);
-                      }
-                    }}
-                    className="bg-purple-600 hover:bg-purple-700 px-3 sm:px-4 py-2 rounded-lg transition duration-300 text-sm sm:text-base flex-shrink-0"
-                  >
-                    Copy
-                  </button>
-                </div>
-                
-                {/* NEW: Active Playlist Selector (Pro Feature) */}
-                {subscriptionStatus && ['trial', 'pro', 'canceled'].includes(subscriptionStatus.plan) && (
-                  <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                    <span className="text-purple-200 text-sm font-medium">Active Playlist:</span>
-                    {playlists.length > 0 ? (
-                      <select
-                        value={activePlaylistId || 'all_songs'}
-                        onChange={(e) => {
-                          if (e.target.value === 'manage_playlists') {
-                            setShowManagePlaylistsModal(true);
-                          } else {
-                            activatePlaylist(e.target.value);
-                          }
-                        }}
-                        className="bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-purple-500 focus:border-purple-500"
-                      >
-                        {playlists.map(playlist => (
-                          <option key={playlist.id} value={playlist.id}>
-                            {playlist.name} ({playlist.song_count} songs)
-                          </option>
-                        ))}
-                        <option value="manage_playlists" className="font-bold text-yellow-300">
-                          ⚙️ Manage Playlists
-                        </option>
-                      </select>
-                    ) : (
-                      <span className="text-gray-400 text-sm">
-                        No playlists yet. Go to Songs tab → select songs → "Add to Playlist"
-                      </span>
-                    )}
-                  </div>
-                )}
-                
-                <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                  {/* NEW: View button to open audience page */}
-                  <button
-                    onClick={() => window.open(audienceUrl, '_blank')}
-                    className="bg-green-600 hover:bg-green-700 px-3 sm:px-4 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0"
-                  >
-                    View
-                  </button>
-                  <button
-                    onClick={generateQRCode}
-                    className="bg-blue-600 hover:bg-blue-700 px-3 sm:px-4 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0"
-                  >
-                    QR Code
-                  </button>
-                  <button
-                    onClick={generateAndDownloadFlyer}
-                    className="bg-green-600 hover:bg-green-700 px-3 sm:px-4 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0"
-                  >
-                    Print Flyer
-                  </button>
-                  {subscriptionStatus && subscriptionStatus.plan === 'free' && !subscriptionStatus.can_make_request && (
-                    <button
-                      onClick={() => setShowUpgrade(true)}
-                      className="bg-orange-600 hover:bg-orange-700 px-3 sm:px-4 py-2 rounded-lg font-bold transition duration-300 text-sm sm:text-base flex-shrink-0"
-                    >
-                      Upgrade
-                    </button>
-                  )}
-                  {/* NEW: Upgrade button for trial users */}
-                  {subscriptionStatus && subscriptionStatus.plan === 'trial' && (
-                    <button
-                      onClick={() => setShowUpgrade(true)}
-                      className="bg-blue-600 hover:bg-blue-700 px-3 sm:px-4 py-2 rounded-lg font-bold transition duration-300 flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base flex-shrink-0"
-                    >
-                      <span>⚡</span>
-                      <span>Upgrade Now</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-              
-              {/* NEW: Trial Upgrade Notice */}
-              {subscriptionStatus && subscriptionStatus.plan === 'trial' && (
-                <div className="mt-4 bg-blue-900/50 border border-blue-500/50 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-blue-200 font-bold text-sm">🚀 Enjoying your trial?</h3>
-                      <p className="text-blue-300 text-xs mt-1">
-                        Lock in unlimited requests - $10/month or save 50% with annual billing ($5/month)
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setShowUpgrade(true)}
-                      className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg text-sm font-bold transition duration-300"
-                    >
-                      Upgrade Now
-                    </button>
-                  </div>
-                </div>
-              )}
+          <div data-testid="profiles-tab">
+            {/* Create New Profile Button */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold">Performance Profiles</h2>
+              <button
+                data-testid="create-profile-btn"
+                onClick={() => openProfileEditor()}
+                className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-medium transition duration-300"
+              >
+                + Create New Profile
+              </button>
             </div>
 
-            <div className="bg-gray-800 rounded-xl p-6">
-              <h2 className="text-xl font-bold mb-4">Profile Settings</h2>
-            
-            {profileError && (
-              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200">
-                {profileError}
+            {/* Profile List */}
+            {profiles.length === 0 ? (
+              <div className="bg-gray-800 rounded-xl p-8 text-center mb-8">
+                <div className="text-4xl mb-4">🎭</div>
+                <h3 className="text-lg font-semibold mb-2">No Profiles Yet</h3>
+                <p className="text-gray-400 mb-4">Create performance profiles to give each gig its own audience URL, playlist selection, and tip settings.</p>
+                <button
+                  onClick={() => openProfileEditor()}
+                  className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg font-medium transition duration-300"
+                >
+                  Create Your First Profile
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4 mb-8">
+                {profiles.map(p => {
+                  const profileUrl = `${AUDIENCE_BASE_URL}/musician/${musician.slug}/${p.slug}`;
+                  return (
+                    <div key={p.id} data-testid={`profile-card-${p.slug}`} className="bg-gray-800 rounded-xl p-5">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-semibold text-white">{p.name}</h3>
+                          <p className="text-gray-400 text-sm truncate">{profileUrl}</p>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {p.active_playlist_ids.length > 0 && (
+                              <span className="text-xs bg-purple-600/30 text-purple-300 px-2 py-1 rounded">
+                                {p.active_playlist_ids.length} playlist{p.active_playlist_ids.length !== 1 ? 's' : ''}
+                              </span>
+                            )}
+                            {!p.show_tips_in_success_screen && (
+                              <span className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded">Tips hidden (success)</span>
+                            )}
+                            {!p.show_tips_in_orientation && (
+                              <span className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded">Tips hidden (info)</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            data-testid={`copy-url-${p.slug}`}
+                            onClick={async (e) => {
+                              try {
+                                await navigator.clipboard.writeText(profileUrl);
+                                e.target.textContent = 'Copied!';
+                                setTimeout(() => { e.target.textContent = 'Copy URL'; }, 2000);
+                              } catch { /* fallback */ }
+                            }}
+                            className="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded-lg text-sm transition duration-300"
+                          >
+                            Copy URL
+                          </button>
+                          <button
+                            data-testid={`qr-btn-${p.slug}`}
+                            onClick={async () => {
+                              try {
+                                const response = await axios.get(`${API}/qr-code?url=${encodeURIComponent(profileUrl)}`);
+                                const qrWindow = window.open('', '_blank');
+                                qrWindow.document.write(`<html><body style="display:flex;justify-content:center;align-items:center;min-height:100vh;background:#1a1a2e;margin:0"><img src="${response.data.qr_code}" style="max-width:400px" /></body></html>`);
+                              } catch (err) { alert('Error generating QR code'); }
+                            }}
+                            className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg text-sm transition duration-300"
+                          >
+                            QR
+                          </button>
+                          <button
+                            data-testid={`edit-profile-${p.slug}`}
+                            onClick={() => openProfileEditor(p)}
+                            className="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded-lg text-sm transition duration-300"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            data-testid={`delete-profile-${p.slug}`}
+                            onClick={() => handleDeleteProfile(p.id)}
+                            className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-3 py-2 rounded-lg text-sm transition duration-300"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
-            
-            <form onSubmit={handleUpdateProfile} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gray-300 text-sm font-bold mb-2">Stage Name</label>
-                  <input
-                    type="text"
-                    value={profile.name}
-                    onChange={(e) => setProfile({...profile, name: e.target.value})}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-300 text-sm font-bold mb-2">Email</label>
-                  <input
-                    type="email"
-                    value={profile.email}
-                    disabled
-                    className="w-full bg-gray-600 border border-gray-600 rounded-lg px-4 py-2 text-gray-400"
-                    title="Email cannot be changed"
-                  />
-                </div>
+
+            {/* Master Audience Link (always shown) */}
+            <div className="bg-purple-800/30 border border-purple-600/30 rounded-xl p-5 mb-8">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-purple-200">Master Audience Link</h3>
               </div>
-              
-              {/* NEW: Enhanced Tip Payment Settings */}
-              <div className="border-t border-gray-600 pt-6">
-                <h3 className="text-lg font-semibold text-white mb-4">💰 Tip Payment Settings</h3>
-                <p className="text-gray-300 text-sm mb-4">Set up payment methods so your audience can tip you directly</p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  <div>
-                    <label className="block text-gray-300 text-sm font-bold mb-2">
-                      Venmo Username
-                      <span className="text-blue-400 ml-1">📱</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="venmousername (without @)"
-                      value={profile.venmo_username || ''}
-                      onChange={(e) => setProfile({...profile, venmo_username: e.target.value})}
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
-                    />
-                    <p className="text-gray-400 text-xs mt-1">Used for Venmo.com/yourusername tip links</p>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-gray-300 text-sm font-bold mb-2">
-                      PayPal Username
-                      <span className="text-green-400 ml-1">💳</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="paypalusername (without @)"
-                      value={profile.paypal_username || ''}
-                      onChange={(e) => setProfile({...profile, paypal_username: e.target.value})}
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
-                    />
-                    <p className="text-gray-400 text-xs mt-1">Used for PayPal.me/yourusername tip links</p>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-gray-300 text-sm font-bold mb-2">
-                      Cash App Username
-                      <span className="text-yellow-400 ml-1">💰</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="cashappusername (without $)"
-                      value={profile.cash_app_username || ''}
-                      onChange={(e) => setProfile({...profile, cash_app_username: e.target.value})}
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
-                    />
-                    <p className="text-gray-400 text-xs mt-1">Used for Cash.app/$yourusername tip links</p>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-gray-300 text-sm font-bold mb-2">
-                      Zelle Email
-                      <span className="text-green-400 ml-1">🏦</span>
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="your.email@bank.com"
-                      value={profile.zelle_email || ''}
-                      onChange={(e) => setProfile({...profile, zelle_email: e.target.value})}
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
-                    />
-                    <p className="text-gray-400 text-xs mt-1">Email address linked to your Zelle account</p>
-                  </div>
-                  
-                  <div className="md:col-span-2">
-                    <label className="block text-gray-300 text-sm font-bold mb-2">
-                      Zelle Phone (Alternative)
-                      <span className="text-green-400 ml-1">📞</span>
-                    </label>
-                    <input
-                      type="tel"
-                      placeholder="(555) 123-4567"
-                      value={profile.zelle_phone || ''}
-                      onChange={(e) => setProfile({...profile, zelle_phone: e.target.value})}
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
-                    />
-                    <p className="text-gray-400 text-xs mt-1">Phone number linked to your Zelle account (if no email provided)</p>
-                  </div>
-                </div>
-                
-                {/* Payment App Toggles */}
-                <div className="bg-gray-700/50 rounded-lg p-4">
-                  <h4 className="text-white font-semibold mb-3">🎛️ Payment App Visibility</h4>
-                  <p className="text-gray-300 text-sm mb-4">Choose which payment apps appear in the tip flow for your audience</p>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <label className="flex items-center space-x-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={profile.venmo_enabled !== false}
-                        onChange={(e) => setProfile({...profile, venmo_enabled: e.target.checked})}
-                        className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
-                      />
-                      <span className="text-white text-sm">📱 Venmo</span>
-                    </label>
-                    
-                    <label className="flex items-center space-x-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={profile.paypal_enabled !== false}
-                        onChange={(e) => setProfile({...profile, paypal_enabled: e.target.checked})}
-                        className="w-4 h-4 text-green-600 bg-gray-800 border-gray-600 rounded focus:ring-green-500"
-                      />
-                      <span className="text-white text-sm">💳 PayPal</span>
-                    </label>
-                    
-                    <label className="flex items-center space-x-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={profile.cash_app_enabled !== false}
-                        onChange={(e) => setProfile({...profile, cash_app_enabled: e.target.checked})}
-                        className="w-4 h-4 text-yellow-600 bg-gray-800 border-gray-600 rounded focus:ring-yellow-500"
-                      />
-                      <span className="text-white text-sm">💰 Cash App</span>
-                    </label>
-                    
-                    <label className="flex items-center space-x-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={profile.zelle_enabled !== false}
-                        onChange={(e) => setProfile({...profile, zelle_enabled: e.target.checked})}
-                        className="w-4 h-4 text-green-600 bg-gray-800 border-gray-600 rounded focus:ring-green-500"
-                      />
-                      <span className="text-white text-sm">🏦 Zelle</span>
-                    </label>
-                  </div>
-                  
-                  <div className="mt-3 text-xs text-gray-400">
-                    <p>💡 Tip: Only apps with usernames/contact info and that are enabled will appear in the tip flow</p>
-                  </div>
-                </div>
+              <div className="flex items-center gap-3">
+                <input type="text" value={audienceUrl} readOnly className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm" />
+                <button
+                  data-testid="copy-master-url"
+                  onClick={async (e) => {
+                    try {
+                      await navigator.clipboard.writeText(audienceUrl);
+                      e.target.textContent = 'Copied!';
+                      setTimeout(() => { e.target.textContent = 'Copy'; }, 2000);
+                    } catch { /* fallback */ }
+                  }}
+                  className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg text-sm transition duration-300"
+                >
+                  Copy
+                </button>
+                <button onClick={generateQRCode} className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg text-sm transition duration-300">QR</button>
               </div>
-              
-              <div>
-                <label className="block text-gray-300 text-sm font-bold mb-2">Website</label>
-                <input
-                  type="url"
-                  placeholder="https://your-website.com"
-                  value={profile.website}
-                  onChange={(e) => setProfile({...profile, website: e.target.value})}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-gray-300 text-sm font-bold mb-2">Bio</label>
-                <textarea
-                  placeholder="Tell your audience about yourself..."
-                  value={profile.bio}
-                  onChange={(e) => setProfile({...profile, bio: e.target.value})}
-                  rows="4"
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
-                />
-              </div>
-              
-              {/* NEW: Social Media Links for "Follow Me" Section */}
-              <div className="border-t border-gray-600 pt-6">
-                <h3 className="text-lg font-semibold text-white mb-4">📱 Social Media Links</h3>
-                <p className="text-gray-300 text-sm mb-4">Add your social media accounts so fans can follow you</p>
-                
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            </div>
+
+            {/* Profile Editor Modal */}
+            {showProfileEditor && (
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={(e) => { if (e.target === e.currentTarget) setShowProfileEditor(false); }}>
+                <div data-testid="profile-editor-modal" className="bg-gray-800 rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                  <h2 className="text-xl font-bold mb-4">{editingProfile ? 'Edit Profile' : 'Create New Profile'}</h2>
+                  <div className="space-y-4">
                     <div>
-                      <label className="block text-gray-300 text-sm font-bold mb-2">
-                        Instagram Username
-                        <span className="text-pink-400 ml-1">📷</span>
-                      </label>
+                      <label className="block text-gray-300 text-sm font-bold mb-1">Profile Name</label>
                       <input
+                        data-testid="profile-name-input"
                         type="text"
-                        placeholder="yourusername (without @)"
-                        value={profile.instagram_username || ''}
-                        onChange={(e) => setProfile({...profile, instagram_username: e.target.value})}
-                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                        value={profileForm.name}
+                        onChange={(e) => {
+                          const name = e.target.value;
+                          setProfileForm(prev => ({
+                            ...prev,
+                            name,
+                            slug: editingProfile ? prev.slug : generateSlugFromName(name)
+                          }));
+                        }}
+                        placeholder="e.g. Smith Wedding, Friday Night Jazz"
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
                       />
                     </div>
-                    
                     <div>
-                      <label className="block text-gray-300 text-sm font-bold mb-2">
-                        TikTok Username
-                        <span className="text-purple-400 ml-1">🎵</span>
-                      </label>
+                      <label className="block text-gray-300 text-sm font-bold mb-1">URL Slug</label>
                       <input
+                        data-testid="profile-slug-input"
                         type="text"
-                        placeholder="yourusername (without @)"
-                        value={profile.tiktok_username || ''}
-                        onChange={(e) => setProfile({...profile, tiktok_username: e.target.value})}
-                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                        value={profileForm.slug}
+                        onChange={(e) => setProfileForm({...profileForm, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')})}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
                       />
+                      <p className="text-gray-400 text-xs mt-1">
+                        Full URL: {AUDIENCE_BASE_URL}/musician/{musician.slug}/{profileForm.slug || '...'}
+                      </p>
                     </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-gray-300 text-sm font-bold mb-2">
-                      Facebook Page/Username
-                      <span className="text-blue-400 ml-1">👥</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="yourpage or facebook.com/yourpage"
-                      value={profile.facebook_username || ''}
-                      onChange={(e) => setProfile({...profile, facebook_username: e.target.value})}
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 gap-4">
                     <div>
-                      <label className="block text-gray-300 text-sm font-bold mb-2">
-                        Spotify Artist URL
-                        <span className="text-green-400 ml-1">🎧</span>
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="https://open.spotify.com/artist/..."
-                        value={profile.spotify_artist_url || ''}
-                        onChange={(e) => setProfile({...profile, spotify_artist_url: e.target.value})}
-                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
-                      />
+                      <label className="block text-gray-300 text-sm font-bold mb-1">Active Playlists</label>
+                      <p className="text-gray-400 text-xs mb-2">Select which playlists are available when audience visits this profile</p>
+                      {playlists.length > 0 ? (
+                        <div className="space-y-2 max-h-40 overflow-y-auto bg-gray-700/50 rounded-lg p-3">
+                          {playlists.map(pl => (
+                            <label key={pl.id} className="flex items-center space-x-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={profileForm.active_playlist_ids.includes(pl.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setProfileForm({...profileForm, active_playlist_ids: [...profileForm.active_playlist_ids, pl.id]});
+                                  } else {
+                                    setProfileForm({...profileForm, active_playlist_ids: profileForm.active_playlist_ids.filter(id => id !== pl.id)});
+                                  }
+                                }}
+                                className="w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded"
+                              />
+                              <span className="text-white text-sm">{pl.name} ({pl.song_count} songs)</span>
+                            </label>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-sm">No playlists yet. Create playlists in the Songs tab first.</p>
+                      )}
                     </div>
-                    
-                    <div>
-                      <label className="block text-gray-300 text-sm font-bold mb-2">
-                        Apple Music Artist URL
-                        <span className="text-red-400 ml-1">🍎</span>
+                    <div className="space-y-3">
+                      <label className="flex items-center justify-between cursor-pointer">
+                        <span className="text-gray-300 text-sm">Show tip prompt after request</span>
+                        <input
+                          type="checkbox"
+                          checked={profileForm.show_tips_in_success_screen}
+                          onChange={(e) => setProfileForm({...profileForm, show_tips_in_success_screen: e.target.checked})}
+                          className="w-5 h-5 text-purple-600 bg-gray-800 border-gray-600 rounded"
+                        />
                       </label>
-                      <input
-                        type="text"
-                        placeholder="https://music.apple.com/us/artist/..."
-                        value={profile.apple_music_artist_url || ''}
-                        onChange={(e) => setProfile({...profile, apple_music_artist_url: e.target.value})}
-                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
-                      />
+                      <label className="flex items-center justify-between cursor-pointer">
+                        <span className="text-gray-300 text-sm">Show tip option in artist info</span>
+                        <input
+                          type="checkbox"
+                          checked={profileForm.show_tips_in_orientation}
+                          onChange={(e) => setProfileForm({...profileForm, show_tips_in_orientation: e.target.checked})}
+                          className="w-5 h-5 text-purple-600 bg-gray-800 border-gray-600 rounded"
+                        />
+                      </label>
+                    </div>
+                    <div className="flex gap-3 pt-2">
+                      <button
+                        data-testid="profile-save-btn"
+                        onClick={editingProfile ? handleUpdateProfileById : handleCreateProfile}
+                        className="flex-1 bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300"
+                      >
+                        {editingProfile ? 'Save Changes' : 'Create Profile'}
+                      </button>
+                      <button
+                        onClick={() => setShowProfileEditor(false)}
+                        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-300"
+                      >
+                        Cancel
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
-              
+            )}
+
+            {/* Collapsible Account Settings */}
+            <div className="bg-gray-800 rounded-xl overflow-hidden">
               <button
-                type="submit"
-                className="w-full bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300"
+                data-testid="account-settings-toggle"
+                onClick={() => setAccountSettingsExpanded(!accountSettingsExpanded)}
+                className="w-full p-5 flex justify-between items-center text-left hover:bg-gray-750"
               >
-                Update Profile
+                <h2 className="text-lg font-bold">Account Settings</h2>
+                <svg className={`w-5 h-5 transition-transform ${accountSettingsExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </button>
-            </form>
+              {accountSettingsExpanded && (
+                <div className="p-6 pt-0">
+                  {profileError && (
+                    <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200">
+                      {profileError}
+                    </div>
+                  )}
+                  <form onSubmit={handleUpdateProfile} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-gray-300 text-sm font-bold mb-2">Stage Name</label>
+                        <input type="text" value={profile.name} onChange={(e) => setProfile({...profile, name: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white" required />
+                      </div>
+                      <div>
+                        <label className="block text-gray-300 text-sm font-bold mb-2">Email</label>
+                        <input type="email" value={profile.email} disabled className="w-full bg-gray-600 border border-gray-600 rounded-lg px-4 py-2 text-gray-400" />
+                      </div>
+                    </div>
+                    <div className="border-t border-gray-600 pt-4">
+                      <h3 className="text-lg font-semibold text-white mb-4">Tip Payment Settings</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-gray-300 text-sm font-bold mb-2">Venmo Username</label>
+                          <input type="text" placeholder="venmousername" value={profile.venmo_username || ''} onChange={(e) => setProfile({...profile, venmo_username: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400" />
+                        </div>
+                        <div>
+                          <label className="block text-gray-300 text-sm font-bold mb-2">PayPal Username</label>
+                          <input type="text" placeholder="paypalusername" value={profile.paypal_username || ''} onChange={(e) => setProfile({...profile, paypal_username: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400" />
+                        </div>
+                        <div>
+                          <label className="block text-gray-300 text-sm font-bold mb-2">Cash App Username</label>
+                          <input type="text" placeholder="cashappusername" value={profile.cash_app_username || ''} onChange={(e) => setProfile({...profile, cash_app_username: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400" />
+                        </div>
+                        <div>
+                          <label className="block text-gray-300 text-sm font-bold mb-2">Zelle Email</label>
+                          <input type="email" placeholder="your.email@bank.com" value={profile.zelle_email || ''} onChange={(e) => setProfile({...profile, zelle_email: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="border-t border-gray-600 pt-4">
+                      <h3 className="text-lg font-semibold text-white mb-4">Social Media Links</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-gray-300 text-sm font-bold mb-2">Instagram</label>
+                          <input type="text" placeholder="yourusername" value={profile.instagram_username || ''} onChange={(e) => setProfile({...profile, instagram_username: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400" />
+                        </div>
+                        <div>
+                          <label className="block text-gray-300 text-sm font-bold mb-2">TikTok</label>
+                          <input type="text" placeholder="yourusername" value={profile.tiktok_username || ''} onChange={(e) => setProfile({...profile, tiktok_username: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400" />
+                        </div>
+                        <div>
+                          <label className="block text-gray-300 text-sm font-bold mb-2">Facebook</label>
+                          <input type="text" placeholder="yourpage" value={profile.facebook_username || ''} onChange={(e) => setProfile({...profile, facebook_username: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400" />
+                        </div>
+                        <div>
+                          <label className="block text-gray-300 text-sm font-bold mb-2">Spotify Artist URL</label>
+                          <input type="text" placeholder="https://open.spotify.com/artist/..." value={profile.spotify_artist_url || ''} onChange={(e) => setProfile({...profile, spotify_artist_url: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400" />
+                        </div>
+                      </div>
+                    </div>
+                    <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300">
+                      Update Account Settings
+                    </button>
+                  </form>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -8903,8 +8880,10 @@ const MusicianDashboard = () => {
 
 
 const AudienceInterface = () => {
-  const { slug } = useParams();
+  const { slug, masterSlug, profileSlug } = useParams();
+  const effectiveSlug = slug || masterSlug; // Use whichever is available
   const [musician, setMusician] = useState(null);
+  const [profileData, setProfileData] = useState(null); // Multi-Profile context
   const [songs, setSongs] = useState([]);
   const [filteredSongs, setFilteredSongs] = useState([]);
   const [filters, setFilters] = useState({});
@@ -9163,11 +9142,17 @@ const AudienceInterface = () => {
   const colors = colorSchemes[designSettings.color_scheme] || colorSchemes.purple;
 
   useEffect(() => {
-    fetchMusician();
-    fetchSongs();
-    fetchFilters();
-    fetchDesignSettings();
-    fetchPlaylists(); // NEW: Fetch playlists for audience filtering
+    if (profileSlug && masterSlug) {
+      // Profile mode: fetch from profile endpoint
+      fetchProfileData();
+      fetchDesignSettings();
+    } else {
+      fetchMusician();
+      fetchSongs();
+      fetchFilters();
+      fetchDesignSettings();
+      fetchPlaylists(); // NEW: Fetch playlists for audience filtering
+    }
     
     // NEW: Handle URL parameters for sort option
     const urlParams = new URLSearchParams(window.location.search);
@@ -9178,7 +9163,23 @@ const AudienceInterface = () => {
         setRandomSeed(Date.now());
       }
     }
-  }, [slug]);
+  }, [slug, masterSlug, profileSlug]);
+
+  // Profile-mode data fetcher
+  const fetchProfileData = async () => {
+    try {
+      const response = await axios.get(`${API}/musicians/${masterSlug}/${profileSlug}`);
+      const data = response.data;
+      setMusician(data);
+      setProfileData(data);
+      setSongs(data.songs || []);
+      setFilteredSongs(data.songs || []);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching profile data:', error);
+      setLoading(false);
+    }
+  };
 
   // NEW: Update URL when sort option changes
   useEffect(() => {
@@ -9211,7 +9212,7 @@ const AudienceInterface = () => {
 
   const fetchMusician = async () => {
     try {
-      const response = await axios.get(`${API}/musicians/${slug}`);
+      const response = await axios.get(`${API}/musicians/${effectiveSlug}`);
       setMusician(response.data);
     } catch (error) {
       console.error('Error fetching musician:', error);
@@ -9220,7 +9221,7 @@ const AudienceInterface = () => {
 
   const fetchDesignSettings = async () => {
     try {
-      const response = await axios.get(`${API}/musicians/${slug}/design`);
+      const response = await axios.get(`${API}/musicians/${effectiveSlug}/design`);
       setDesignSettings(response.data);
     } catch (error) {
       console.error('Error fetching design settings:', error);
@@ -9229,7 +9230,7 @@ const AudienceInterface = () => {
 
   const fetchPlaylists = async () => {
     try {
-      const response = await axios.get(`${API}/musicians/${slug}/playlists`);
+      const response = await axios.get(`${API}/musicians/${effectiveSlug}/playlists`);
       setPlaylists(response.data);
     } catch (error) {
       console.error('Error fetching playlists:', error);
@@ -9239,8 +9240,14 @@ const AudienceInterface = () => {
 
   const fetchSongs = async () => {
     try {
+      // In profile mode, songs come from the profile endpoint
+      if (profileSlug && profileData) {
+        setLoading(false);
+        return;
+      }
+      
       // First check if access is granted
-      const accessResponse = await axios.get(`${API}/musicians/${slug}/access-check`);
+      const accessResponse = await axios.get(`${API}/musicians/${effectiveSlug}/access-check`);
       
       if (!accessResponse.data.access_granted) {
         setAccessDenied(true);
@@ -9276,7 +9283,7 @@ const AudienceInterface = () => {
       }
       
       const queryString = params.toString();
-      const url = `${API}/musicians/${slug}/songs${queryString ? `?${queryString}` : ''}`;
+      const url = `${API}/musicians/${effectiveSlug}/songs${queryString ? `?${queryString}` : ''}`;
       
       const response = await axios.get(url);
       setSongs(response.data);
@@ -9290,7 +9297,7 @@ const AudienceInterface = () => {
 
   const fetchFilters = async () => {
     try {
-      const response = await axios.get(`${API}/musicians/${slug}/filters`);
+      const response = await axios.get(`${API}/musicians/${effectiveSlug}/filters`);
       setFilters(response.data);
     } catch (error) {
       console.error('Error fetching filters:', error);
@@ -9689,7 +9696,8 @@ const AudienceInterface = () => {
         requester_email: '', // Email now captured in Moment 3, not at submission
         dedication: requestForm.dedication || '',
         tip_amount: parseFloat(tipAmount) || 0.0,
-        audience_id: audienceId  // Phase 2: Include stable audience identifier
+        audience_id: audienceId,  // Phase 2: Include stable audience identifier
+        profile_slug: profileSlug || null  // Multi-Profile: pass profile context
       });
       
       // Store request ID for analytics
@@ -10518,7 +10526,7 @@ const AudienceInterface = () => {
                   </div>
                   
                   {/* TIP SECTION - Full tipping UI */}
-                  {musician.tips_enabled !== false && (musician.venmo_username || musician.paypal_username || musician.cash_app_username || (musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone))) && (
+                  {musician.tips_enabled !== false && (profileData ? profileData.show_tips_in_success_screen !== false : true) && (musician.venmo_username || musician.paypal_username || musician.cash_app_username || (musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone))) && (
                     <div className="border-t border-gray-600/50 pt-4 mt-3">
                       <p className="text-gray-200 text-sm text-center mb-1">Want to leave a tip?</p>
                       <p className="text-gray-500 text-xs text-center mb-3">Totally optional.</p>
@@ -11113,7 +11121,7 @@ const AudienceInterface = () => {
                 )}
                 
                 {/* "Leave a tip" CTA button - shown in both default and post_request modes */}
-                {musician?.tips_enabled !== false && (musician.venmo_username || musician.paypal_username || musician.cash_app_username || (musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone))) && (
+                {musician?.tips_enabled !== false && (profileData ? profileData.show_tips_in_orientation !== false : true) && (musician.venmo_username || musician.paypal_username || musician.cash_app_username || (musician.zelle_enabled && (musician.zelle_email || musician.zelle_phone))) && (
                   <div ref={tipSectionRef} className="pt-3" data-testid="tip-section">
                     {!tipSectionExpanded ? (
                       /* Collapsed: Clear CTA button - Light green, distinct from Spotify green */
@@ -12660,6 +12668,48 @@ const LandingPage = () => {
   );
 };
 
+// Short URL Redirect component - handles catch-all routes for vanity URLs
+const ShortUrlRedirect = () => {
+  const { seg1, seg2 } = useParams();
+  const navigate = useNavigate();
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    const resolveSlug = async () => {
+      try {
+        await axios.get(`${API}/resolve/${seg1}`);
+        // Slug found - redirect to the proper musician URL
+        if (seg2) {
+          navigate(`/musician/${seg1}/${seg2}`, { replace: true });
+        } else {
+          navigate(`/musician/${seg1}`, { replace: true });
+        }
+      } catch {
+        setNotFound(true);
+      }
+    };
+    resolveSlug();
+  }, [seg1, seg2, navigate]);
+
+  if (notFound) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-4">404</h1>
+          <p className="text-gray-400 mb-4">Page not found</p>
+          <a href="/" className="text-purple-400 hover:text-purple-300 underline">Go Home</a>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
+      <p className="text-gray-400">Loading...</p>
+    </div>
+  );
+};
+
 const App = () => {
   const { musician, login } = useAuth();
 
@@ -12737,8 +12787,11 @@ const App = () => {
       <Routes>
         <Route path="/" element={musician ? <Navigate to="/dashboard" /> : <LandingPage />} />
         <Route path="/dashboard" element={musician ? <MusicianDashboard /> : <Navigate to="/" />} />
+        <Route path="/musician/:masterSlug/:profileSlug" element={<AudienceInterface />} />
         <Route path="/musician/:slug" element={<AudienceInterface />} />
         <Route path="/on-stage/:slug" element={<OnStageInterface />} />
+        <Route path="/:seg1/:seg2" element={<ShortUrlRedirect />} />
+        <Route path="/:seg1" element={<ShortUrlRedirect />} />
       </Routes>
     </Router>
   );

@@ -24,7 +24,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://songrequest-ui.preview.emergentagent.com/api"
+BASE_URL = "https://musician-dashboard-1.preview.emergentagent.com/api"
 
 # User credentials from review request
 USER_CREDENTIALS = {

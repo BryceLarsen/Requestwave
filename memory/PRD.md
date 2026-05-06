@@ -214,7 +214,7 @@ The frontend has been refactored to align with the "Audience Moment Model" - an 
 - Refactoring into modular components required before scaling
 
 ## Environment
-- Preview URL: https://songrequest-ui.preview.emergentagent.com
+- Preview URL: https://musician-dashboard-1.preview.emergentagent.com
 - Backend: FastAPI (Python)
 - Frontend: React
 - Database: MongoDB
