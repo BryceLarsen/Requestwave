@@ -1742,3 +1742,101 @@ musician_experience_current_state:
     - limitation: "Monolithic frontend"
       observed: "App.js contains all components (~12,000+ lines)"
       impact: "Maintenance complexity, slow hot reloads"
+
+# =============================================================================
+# SECTION: MULTI-PROFILE SYSTEM
+# =============================================================================
+# Added: 2026-05-06 (Sprint 1)
+# Description: One musician account can have multiple named performance profiles.
+# Each profile has its own public audience URL, active playlists, and tip visibility.
+
+multi_profile_system:
+  description: >
+    Musicians can create multiple performance profiles (e.g., "Smith Wedding",
+    "Friday Night Jazz"). Each profile is a named context with its own audience
+    URL, playlist selection, and tip visibility settings. The master song library,
+    shows, analytics, and all other systems are untouched.
+
+  collection:
+    name: profiles
+    schema:
+      id: str (uuid)
+      musician_id: str
+      name: str
+      slug: str (lowercase letters, numbers, hyphens only)
+      active_playlist_ids: List[str]
+      show_tips_in_success_screen: bool (default True)
+      show_tips_in_orientation: bool (default True)
+      created_at: datetime (ISO string)
+    constraints:
+      - slug must be unique within a musician's profiles
+      - slug must be at least 2 characters
+      - slug format: ^[a-z0-9-]+$
+      - Cannot delete the only remaining profile
+
+  api_endpoints:
+    authenticated:
+      - method: POST
+        path: /api/profiles
+        description: Create a new profile with slug validation
+      - method: GET
+        path: /api/profiles
+        description: List all profiles for the current musician
+      - method: PUT
+        path: /api/profiles/{profile_id}
+        description: Update profile fields (name, slug, playlists, tip settings)
+      - method: DELETE
+        path: /api/profiles/{profile_id}
+        description: Delete profile (refuses if only profile)
+    public:
+      - method: GET
+        path: /api/musicians/{master_slug}/{profile_slug}
+        description: >
+          Resolve profile by master + profile slug. Returns musician public data
+          merged with profile settings and union of songs from active playlists.
+          If no active playlists, returns empty song list.
+      - method: GET
+        path: /api/resolve/{slug}
+        description: Check if a slug matches a known musician (for short URL redirects)
+
+  frontend_routes:
+    - path: /musician/:masterSlug/:profileSlug
+      component: AudienceInterface
+      description: Profile-specific audience page
+    - path: /:seg1
+      component: ShortUrlRedirect
+      description: Resolves short URLs like requestwave.app/brycelarsen
+    - path: /:seg1/:seg2
+      component: ShortUrlRedirect
+      description: Resolves short URLs like requestwave.app/brycelarsen/smith-wedding
+
+  frontend_tab:
+    tab_id: profile
+    display_name: Profiles
+    sections:
+      - Profile list with cards (name, URL, Copy URL, QR, Edit, Delete)
+      - Master Audience Link (always shown)
+      - Profile editor modal (name, slug, playlist multi-select, tip toggles)
+      - Collapsible Account Settings (existing profile settings moved here)
+
+  request_integration:
+    description: >
+      Requests optionally carry a profile_id. When submitting from a profile
+      audience page, profile_slug is passed in the request body and resolved
+      to a profile_id stored on the request. Requests tab shows a profile badge
+      and supports filtering by profile.
+
+  short_url_redirect:
+    description: >
+      Catch-all frontend routes resolve vanity URLs. Single segment paths
+      (e.g., /brycelarsen) check /api/resolve/{slug} and redirect to
+      /musician/{slug} if found. Two segment paths (e.g., /brycelarsen/smith-wedding)
+      redirect to /musician/{seg1}/{seg2}. Unknown slugs show a 404 page.
+
+  zero_breaking_changes:
+    - /musician/{slug} existing public route works exactly as before
+    - OnStage tab untouched
+    - Show management untouched
+    - Song library untouched
+    - CSV import/export untouched
+    - Analytics untouched
