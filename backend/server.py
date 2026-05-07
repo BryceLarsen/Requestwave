@@ -584,6 +584,20 @@ class ProfileCreate(BaseModel):
     active_playlist_ids: List[str] = []
     show_tips_in_success_screen: bool = True
     show_tips_in_orientation: bool = True
+    is_default: bool = False
+    # Override fields (when set, override master account values)
+    paypal_username: Optional[str] = None
+    venmo_username: Optional[str] = None
+    cashapp_username: Optional[str] = None
+    zelle_info: Optional[str] = None
+    instagram_username: Optional[str] = None
+    tiktok_username: Optional[str] = None
+    facebook_url: Optional[str] = None
+    spotify_url: Optional[str] = None
+    apple_music_url: Optional[str] = None
+    website: Optional[str] = None
+    bio: Optional[str] = None
+    musician_name: Optional[str] = None
 
 class ProfileUpdateModel(BaseModel):
     name: Optional[str] = None
@@ -591,6 +605,19 @@ class ProfileUpdateModel(BaseModel):
     active_playlist_ids: Optional[List[str]] = None
     show_tips_in_success_screen: Optional[bool] = None
     show_tips_in_orientation: Optional[bool] = None
+    is_default: Optional[bool] = None
+    paypal_username: Optional[str] = None
+    venmo_username: Optional[str] = None
+    cashapp_username: Optional[str] = None
+    zelle_info: Optional[str] = None
+    instagram_username: Optional[str] = None
+    tiktok_username: Optional[str] = None
+    facebook_url: Optional[str] = None
+    spotify_url: Optional[str] = None
+    apple_music_url: Optional[str] = None
+    website: Optional[str] = None
+    bio: Optional[str] = None
+    musician_name: Optional[str] = None
 
 class ProfileResponse(BaseModel):
     id: str
@@ -600,7 +627,20 @@ class ProfileResponse(BaseModel):
     active_playlist_ids: List[str] = []
     show_tips_in_success_screen: bool = True
     show_tips_in_orientation: bool = True
+    is_default: bool = False
     created_at: str
+    paypal_username: Optional[str] = None
+    venmo_username: Optional[str] = None
+    cashapp_username: Optional[str] = None
+    zelle_info: Optional[str] = None
+    instagram_username: Optional[str] = None
+    tiktok_username: Optional[str] = None
+    facebook_url: Optional[str] = None
+    spotify_url: Optional[str] = None
+    apple_music_url: Optional[str] = None
+    website: Optional[str] = None
+    bio: Optional[str] = None
+    musician_name: Optional[str] = None
 
 # Utility functions
 def create_slug(name: str) -> str:
@@ -2155,37 +2195,42 @@ async def stripe_webhook_handler(request: FastAPIRequest):
         return {"status": "error", "message": str(e)}
 
 # Musician endpoints
-@api_router.get("/musicians/{slug}", response_model=MusicianPublic)
+@api_router.get("/musicians/{slug}", response_model=None)
 async def get_musician_by_slug(slug: str):
     musician = await db.musicians.find_one({"slug": slug})
     if not musician:
         raise HTTPException(status_code=404, detail="Musician not found")
     
+    # Check for a default profile and merge its settings
+    default_profile = await db.profiles.find_one({"musician_id": musician["id"], "is_default": True})
+    
+    if default_profile:
+        songs_list = await _get_profile_songs(default_profile, musician)
+        response = _build_profile_public_response(musician, default_profile, songs_list)
+        # For backward compat, ensure the response shape matches what MusicianPublic has
+        return response
+    
+    # No default profile — return standard musician public data (original behavior)
     return MusicianPublic(
         id=musician["id"],
         name=musician["name"],
         slug=musician["slug"],
-        # NEW: Include payment info for tip functionality  
         paypal_username=musician.get("paypal_username"),
         venmo_username=musician.get("venmo_username"),
         cash_app_username=musician.get("cash_app_username"),
         zelle_email=musician.get("zelle_email"),
         zelle_phone=musician.get("zelle_phone"),
-        # Payment app toggles
         paypal_enabled=musician.get("paypal_enabled", True),
         venmo_enabled=musician.get("venmo_enabled", True),
         cash_app_enabled=musician.get("cash_app_enabled", True),
         zelle_enabled=musician.get("zelle_enabled", True),
-        # NEW: Include social media info for post-request modal
         instagram_username=musician.get("instagram_username"),
         facebook_username=musician.get("facebook_username"),
         tiktok_username=musician.get("tiktok_username"),
         spotify_artist_url=musician.get("spotify_artist_url"),
         apple_music_artist_url=musician.get("apple_music_artist_url"),
-        # NEW: Include control settings for audience UI
         tips_enabled=musician.get("tips_enabled", True),
         requests_enabled=musician.get("requests_enabled", True),
-        # NEW: Live show context for Orientation
         current_show_name=musician.get("current_show_name")
     )
 
@@ -7411,6 +7456,109 @@ async def route_audit():
 # MULTI-PROFILE SYSTEM ROUTES
 # ==========================================
 
+def _profile_doc_to_response(p: dict) -> ProfileResponse:
+    """Convert a profile document to ProfileResponse, handling all fields."""
+    return ProfileResponse(
+        id=p["id"],
+        musician_id=p["musician_id"],
+        name=p["name"],
+        slug=p["slug"],
+        active_playlist_ids=p.get("active_playlist_ids", []),
+        show_tips_in_success_screen=p.get("show_tips_in_success_screen", True),
+        show_tips_in_orientation=p.get("show_tips_in_orientation", True),
+        is_default=p.get("is_default", False),
+        created_at=p.get("created_at", ""),
+        paypal_username=p.get("paypal_username"),
+        venmo_username=p.get("venmo_username"),
+        cashapp_username=p.get("cashapp_username"),
+        zelle_info=p.get("zelle_info"),
+        instagram_username=p.get("instagram_username"),
+        tiktok_username=p.get("tiktok_username"),
+        facebook_url=p.get("facebook_url"),
+        spotify_url=p.get("spotify_url"),
+        apple_music_url=p.get("apple_music_url"),
+        website=p.get("website"),
+        bio=p.get("bio"),
+        musician_name=p.get("musician_name"),
+    )
+
+async def _get_profile_songs(profile, musician):
+    """Get songs for a profile based on active_playlist_ids.
+    '__all__' means return full song library."""
+    active_ids = profile.get("active_playlist_ids", [])
+    
+    if "__all__" in active_ids:
+        # Return all non-hidden songs for this musician
+        songs = await db.songs.find(
+            {"musician_id": musician["id"], "hidden": {"$ne": True}},
+            {"_id": 0}
+        ).to_list(5000)
+        return songs
+    
+    if not active_ids:
+        return []
+    
+    # Get songs from specific playlists
+    all_song_ids = set()
+    playlists = await db.playlists.find(
+        {"id": {"$in": active_ids}, "musician_id": musician["id"]},
+        {"_id": 0}
+    ).to_list(100)
+    
+    for playlist in playlists:
+        for sid in playlist.get("song_ids", []):
+            all_song_ids.add(sid)
+    
+    if not all_song_ids:
+        return []
+    
+    songs = await db.songs.find(
+        {"id": {"$in": list(all_song_ids)}, "musician_id": musician["id"], "hidden": {"$ne": True}},
+        {"_id": 0}
+    ).to_list(5000)
+    return songs
+
+def _build_profile_public_response(musician, profile, songs_list):
+    """Build the merged public response for a profile audience page.
+    Profile fields override master account values when set."""
+    return {
+        "id": musician["id"],
+        "name": profile.get("musician_name") or musician["name"],
+        "slug": musician["slug"],
+        "profile_id": profile["id"],
+        "profile_name": profile["name"],
+        "profile_slug": profile["slug"],
+        "show_tips_in_success_screen": profile.get("show_tips_in_success_screen", True),
+        "show_tips_in_orientation": profile.get("show_tips_in_orientation", True),
+        "is_default": profile.get("is_default", False),
+        # Payment info - profile overrides master
+        "paypal_username": profile.get("paypal_username") or musician.get("paypal_username"),
+        "venmo_username": profile.get("venmo_username") or musician.get("venmo_username"),
+        "cash_app_username": profile.get("cashapp_username") or musician.get("cash_app_username"),
+        "zelle_info": profile.get("zelle_info"),
+        "zelle_email": musician.get("zelle_email") if not profile.get("zelle_info") else None,
+        "zelle_phone": musician.get("zelle_phone") if not profile.get("zelle_info") else None,
+        "paypal_enabled": musician.get("paypal_enabled", True),
+        "venmo_enabled": musician.get("venmo_enabled", True),
+        "cash_app_enabled": musician.get("cash_app_enabled", True),
+        "zelle_enabled": musician.get("zelle_enabled", True),
+        # Social media - profile overrides master
+        "instagram_username": profile.get("instagram_username") or musician.get("instagram_username"),
+        "facebook_username": profile.get("facebook_url") or musician.get("facebook_username"),
+        "tiktok_username": profile.get("tiktok_username") or musician.get("tiktok_username"),
+        "spotify_artist_url": profile.get("spotify_url") or musician.get("spotify_artist_url"),
+        "apple_music_artist_url": profile.get("apple_music_url") or musician.get("apple_music_artist_url"),
+        # Bio/website overrides
+        "bio": profile.get("bio") or musician.get("bio"),
+        "website": profile.get("website") or musician.get("website"),
+        # Control settings
+        "tips_enabled": musician.get("tips_enabled", True),
+        "requests_enabled": musician.get("requests_enabled", True),
+        "current_show_name": musician.get("current_show_name"),
+        # Songs for this profile
+        "songs": songs_list
+    }
+
 @api_router.post("/profiles", response_model=ProfileResponse)
 async def create_profile(profile_data: ProfileCreate, musician_id: str = Depends(get_current_musician)):
     """Create a new performance profile for the current musician"""
@@ -7426,6 +7574,10 @@ async def create_profile(profile_data: ProfileCreate, musician_id: str = Depends
     if existing:
         raise HTTPException(status_code=409, detail="A profile with this slug already exists")
     
+    # Auto-set as default if this is the first profile
+    existing_count = await db.profiles.count_documents({"musician_id": musician_id})
+    is_default = existing_count == 0
+    
     profile_dict = {
         "id": str(uuid.uuid4()),
         "musician_id": musician_id,
@@ -7434,36 +7586,32 @@ async def create_profile(profile_data: ProfileCreate, musician_id: str = Depends
         "active_playlist_ids": profile_data.active_playlist_ids,
         "show_tips_in_success_screen": profile_data.show_tips_in_success_screen,
         "show_tips_in_orientation": profile_data.show_tips_in_orientation,
-        "created_at": datetime.now(timezone.utc).isoformat()
+        "is_default": is_default,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "paypal_username": profile_data.paypal_username,
+        "venmo_username": profile_data.venmo_username,
+        "cashapp_username": profile_data.cashapp_username,
+        "zelle_info": profile_data.zelle_info,
+        "instagram_username": profile_data.instagram_username,
+        "tiktok_username": profile_data.tiktok_username,
+        "facebook_url": profile_data.facebook_url,
+        "spotify_url": profile_data.spotify_url,
+        "apple_music_url": profile_data.apple_music_url,
+        "website": profile_data.website,
+        "bio": profile_data.bio,
+        "musician_name": profile_data.musician_name,
     }
     
     await db.profiles.insert_one(profile_dict)
+    del profile_dict["_id"]
     
-    return ProfileResponse(
-        id=profile_dict["id"],
-        musician_id=profile_dict["musician_id"],
-        name=profile_dict["name"],
-        slug=profile_dict["slug"],
-        active_playlist_ids=profile_dict["active_playlist_ids"],
-        show_tips_in_success_screen=profile_dict["show_tips_in_success_screen"],
-        show_tips_in_orientation=profile_dict["show_tips_in_orientation"],
-        created_at=profile_dict["created_at"]
-    )
+    return _profile_doc_to_response(profile_dict)
 
 @api_router.get("/profiles", response_model=List[ProfileResponse])
 async def get_profiles(musician_id: str = Depends(get_current_musician)):
     """Return all profiles for the current musician"""
     profiles = await db.profiles.find({"musician_id": musician_id}, {"_id": 0}).to_list(100)
-    return [ProfileResponse(
-        id=p["id"],
-        musician_id=p["musician_id"],
-        name=p["name"],
-        slug=p["slug"],
-        active_playlist_ids=p.get("active_playlist_ids", []),
-        show_tips_in_success_screen=p.get("show_tips_in_success_screen", True),
-        show_tips_in_orientation=p.get("show_tips_in_orientation", True),
-        created_at=p.get("created_at", "")
-    ) for p in profiles]
+    return [_profile_doc_to_response(p) for p in profiles]
 
 @api_router.put("/profiles/{profile_id}", response_model=ProfileResponse)
 async def update_profile_by_id(profile_id: str, update_data: ProfileUpdateModel, musician_id: str = Depends(get_current_musician)):
@@ -7493,27 +7641,38 @@ async def update_profile_by_id(profile_id: str, update_data: ProfileUpdateModel,
     if update_data.show_tips_in_orientation is not None:
         update_fields["show_tips_in_orientation"] = update_data.show_tips_in_orientation
     
+    # Handle is_default: if setting this profile as default, unset all others
+    if update_data.is_default is True:
+        await db.profiles.update_many(
+            {"musician_id": musician_id, "id": {"$ne": profile_id}},
+            {"$set": {"is_default": False}}
+        )
+        update_fields["is_default"] = True
+    
+    # Handle override fields - use sentinel to distinguish "not sent" from "clear"
+    for field in ["paypal_username", "venmo_username", "cashapp_username", "zelle_info",
+                  "instagram_username", "tiktok_username", "facebook_url", "spotify_url",
+                  "apple_music_url", "website", "bio", "musician_name"]:
+        val = getattr(update_data, field, None)
+        if val is not None:
+            update_fields[field] = val if val != "" else None
+    
     if update_fields:
         await db.profiles.update_one({"id": profile_id}, {"$set": update_fields})
     
     updated = await db.profiles.find_one({"id": profile_id}, {"_id": 0})
-    return ProfileResponse(
-        id=updated["id"],
-        musician_id=updated["musician_id"],
-        name=updated["name"],
-        slug=updated["slug"],
-        active_playlist_ids=updated.get("active_playlist_ids", []),
-        show_tips_in_success_screen=updated.get("show_tips_in_success_screen", True),
-        show_tips_in_orientation=updated.get("show_tips_in_orientation", True),
-        created_at=updated.get("created_at", "")
-    )
+    return _profile_doc_to_response(updated)
 
 @api_router.delete("/profiles/{profile_id}")
 async def delete_profile(profile_id: str, musician_id: str = Depends(get_current_musician)):
-    """Delete a profile. Refuse if it's the musician's only profile."""
+    """Delete a profile. Refuse if it's the musician's only profile or is the default."""
     profile = await db.profiles.find_one({"id": profile_id, "musician_id": musician_id})
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
+    
+    # Cannot delete default profile
+    if profile.get("is_default"):
+        raise HTTPException(status_code=400, detail="Cannot delete the default profile. Set another profile as default first.")
     
     # Count profiles for this musician
     count = await db.profiles.count_documents({"musician_id": musician_id})
@@ -7537,59 +7696,8 @@ async def get_musician_by_profile(master_slug: str, profile_slug: str):
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     
-    # Get songs from active playlists
-    songs_list = []
-    if profile.get("active_playlist_ids") and len(profile["active_playlist_ids"]) > 0:
-        # Get all song IDs from active playlists
-        all_song_ids = set()
-        playlists = await db.playlists.find(
-            {"id": {"$in": profile["active_playlist_ids"]}, "musician_id": musician["id"]},
-            {"_id": 0}
-        ).to_list(100)
-        
-        for playlist in playlists:
-            for sid in playlist.get("song_ids", []):
-                all_song_ids.add(sid)
-        
-        if all_song_ids:
-            songs = await db.songs.find(
-                {"id": {"$in": list(all_song_ids)}, "musician_id": musician["id"], "hidden": {"$ne": True}},
-                {"_id": 0}
-            ).to_list(1000)
-            songs_list = songs
-    
-    return {
-        "id": musician["id"],
-        "name": musician["name"],
-        "slug": musician["slug"],
-        "profile_id": profile["id"],
-        "profile_name": profile["name"],
-        "profile_slug": profile["slug"],
-        "show_tips_in_success_screen": profile.get("show_tips_in_success_screen", True),
-        "show_tips_in_orientation": profile.get("show_tips_in_orientation", True),
-        # Payment info
-        "paypal_username": musician.get("paypal_username"),
-        "venmo_username": musician.get("venmo_username"),
-        "cash_app_username": musician.get("cash_app_username"),
-        "zelle_email": musician.get("zelle_email"),
-        "zelle_phone": musician.get("zelle_phone"),
-        "paypal_enabled": musician.get("paypal_enabled", True),
-        "venmo_enabled": musician.get("venmo_enabled", True),
-        "cash_app_enabled": musician.get("cash_app_enabled", True),
-        "zelle_enabled": musician.get("zelle_enabled", True),
-        # Social media
-        "instagram_username": musician.get("instagram_username"),
-        "facebook_username": musician.get("facebook_username"),
-        "tiktok_username": musician.get("tiktok_username"),
-        "spotify_artist_url": musician.get("spotify_artist_url"),
-        "apple_music_artist_url": musician.get("apple_music_artist_url"),
-        # Control settings
-        "tips_enabled": musician.get("tips_enabled", True),
-        "requests_enabled": musician.get("requests_enabled", True),
-        "current_show_name": musician.get("current_show_name"),
-        # Songs for this profile
-        "songs": songs_list
-    }
+    songs_list = await _get_profile_songs(profile, musician)
+    return _build_profile_public_response(musician, profile, songs_list)
 
 @api_router.get("/resolve/{slug}")
 async def resolve_slug(slug: str):

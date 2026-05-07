@@ -736,7 +736,7 @@ const MusicianDashboard = () => {
   const [profiles, setProfiles] = useState([]);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [editingProfile, setEditingProfile] = useState(null);
-  const [profileForm, setProfileForm] = useState({ name: '', slug: '', active_playlist_ids: [], show_tips_in_success_screen: true, show_tips_in_orientation: true });
+  const [profileForm, setProfileForm] = useState({ name: '', slug: '', active_playlist_ids: [], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '' });
   const [accountSettingsExpanded, setAccountSettingsExpanded] = useState(false);
   const [profileFilterId, setProfileFilterId] = useState(''); // For requests tab filter
   
@@ -1799,7 +1799,7 @@ const MusicianDashboard = () => {
       const response = await axios.post(`${API}/profiles`, profileForm);
       setProfiles([...profiles, response.data]);
       setShowProfileEditor(false);
-      setProfileForm({ name: '', slug: '', active_playlist_ids: [], show_tips_in_success_screen: true, show_tips_in_orientation: true });
+      setProfileForm({ name: '', slug: '', active_playlist_ids: [], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '' });
     } catch (error) {
       alert(error.response?.data?.detail || 'Error creating profile');
     }
@@ -1812,7 +1812,7 @@ const MusicianDashboard = () => {
       setProfiles(profiles.map(p => p.id === editingProfile.id ? response.data : p));
       setShowProfileEditor(false);
       setEditingProfile(null);
-      setProfileForm({ name: '', slug: '', active_playlist_ids: [], show_tips_in_success_screen: true, show_tips_in_orientation: true });
+      setProfileForm({ name: '', slug: '', active_playlist_ids: [], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '' });
     } catch (error) {
       alert(error.response?.data?.detail || 'Error updating profile');
     }
@@ -1836,11 +1836,23 @@ const MusicianDashboard = () => {
         slug: profileToEdit.slug,
         active_playlist_ids: profileToEdit.active_playlist_ids || [],
         show_tips_in_success_screen: profileToEdit.show_tips_in_success_screen !== false,
-        show_tips_in_orientation: profileToEdit.show_tips_in_orientation !== false
+        show_tips_in_orientation: profileToEdit.show_tips_in_orientation !== false,
+        paypal_username: profileToEdit.paypal_username || '',
+        venmo_username: profileToEdit.venmo_username || '',
+        cashapp_username: profileToEdit.cashapp_username || '',
+        zelle_info: profileToEdit.zelle_info || '',
+        instagram_username: profileToEdit.instagram_username || '',
+        tiktok_username: profileToEdit.tiktok_username || '',
+        facebook_url: profileToEdit.facebook_url || '',
+        spotify_url: profileToEdit.spotify_url || '',
+        apple_music_url: profileToEdit.apple_music_url || '',
+        website: profileToEdit.website || '',
+        bio: profileToEdit.bio || '',
+        musician_name: profileToEdit.musician_name || '',
       });
     } else {
       setEditingProfile(null);
-      setProfileForm({ name: '', slug: '', active_playlist_ids: [], show_tips_in_success_screen: true, show_tips_in_orientation: true });
+      setProfileForm({ name: '', slug: '', active_playlist_ids: [], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '' });
     }
     setShowProfileEditor(true);
   };
@@ -6548,15 +6560,24 @@ const MusicianDashboard = () => {
             ) : (
               <div className="space-y-4 mb-8">
                 {profiles.map(p => {
-                  const profileUrl = `${AUDIENCE_BASE_URL}/musician/${musician.slug}/${p.slug}`;
+                  const profileUrl = p.is_default
+                    ? `${AUDIENCE_BASE_URL}/musician/${musician.slug}`
+                    : `${AUDIENCE_BASE_URL}/musician/${musician.slug}/${p.slug}`;
                   return (
-                    <div key={p.id} data-testid={`profile-card-${p.slug}`} className="bg-gray-800 rounded-xl p-5">
+                    <div key={p.id} data-testid={`profile-card-${p.slug}`} className={`bg-gray-800 rounded-xl p-5 ${p.is_default ? 'ring-1 ring-purple-500/50' : ''}`}>
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-semibold text-white">{p.name}</h3>
-                          <p className="text-gray-400 text-sm truncate">{profileUrl}</p>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-semibold text-white">{p.name}</h3>
+                            {p.is_default && (
+                              <span className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded-full">Default</span>
+                            )}
+                          </div>
+                          <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 text-sm truncate block underline">{profileUrl}</a>
                           <div className="flex flex-wrap gap-2 mt-2">
-                            {p.active_playlist_ids.length > 0 && (
+                            {p.active_playlist_ids.includes('__all__') ? (
+                              <span className="text-xs bg-green-600/30 text-green-300 px-2 py-1 rounded">All Songs</span>
+                            ) : p.active_playlist_ids.length > 0 && (
                               <span className="text-xs bg-purple-600/30 text-purple-300 px-2 py-1 rounded">
                                 {p.active_playlist_ids.length} playlist{p.active_playlist_ids.length !== 1 ? 's' : ''}
                               </span>
@@ -6567,17 +6588,20 @@ const MusicianDashboard = () => {
                             {!p.show_tips_in_orientation && (
                               <span className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded">Tips hidden (info)</span>
                             )}
+                            {p.musician_name && (
+                              <span className="text-xs bg-blue-600/20 text-blue-300 px-2 py-1 rounded">Name: {p.musician_name}</span>
+                            )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
                           <button
                             data-testid={`copy-url-${p.slug}`}
-                            onClick={async (e) => {
-                              try {
-                                await navigator.clipboard.writeText(profileUrl);
-                                e.target.textContent = 'Copied!';
-                                setTimeout(() => { e.target.textContent = 'Copy URL'; }, 2000);
-                              } catch { /* fallback */ }
+                            onClick={(e) => {
+                              const btn = e.currentTarget;
+                              navigator.clipboard.writeText(profileUrl).then(() => {
+                                btn.textContent = 'Copied!';
+                                setTimeout(() => { btn.textContent = 'Copy URL'; }, 2000);
+                              }).catch(() => {});
                             }}
                             className="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded-lg text-sm transition duration-300"
                           >
@@ -6596,6 +6620,20 @@ const MusicianDashboard = () => {
                           >
                             QR
                           </button>
+                          {!p.is_default && (
+                            <button
+                              data-testid={`set-default-${p.slug}`}
+                              onClick={async () => {
+                                try {
+                                  await axios.put(`${API}/profiles/${p.id}`, { is_default: true });
+                                  fetchProfiles();
+                                } catch (err) { alert(err.response?.data?.detail || 'Error setting default'); }
+                              }}
+                              className="bg-yellow-600/20 hover:bg-yellow-600 text-yellow-400 hover:text-white px-3 py-2 rounded-lg text-sm transition duration-300"
+                            >
+                              Set Default
+                            </button>
+                          )}
                           <button
                             data-testid={`edit-profile-${p.slug}`}
                             onClick={() => openProfileEditor(p)}
@@ -6603,13 +6641,15 @@ const MusicianDashboard = () => {
                           >
                             Edit
                           </button>
-                          <button
-                            data-testid={`delete-profile-${p.slug}`}
-                            onClick={() => handleDeleteProfile(p.id)}
-                            className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-3 py-2 rounded-lg text-sm transition duration-300"
-                          >
-                            Delete
-                          </button>
+                          {!p.is_default && (
+                            <button
+                              data-testid={`delete-profile-${p.slug}`}
+                              onClick={() => handleDeleteProfile(p.id)}
+                              className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-3 py-2 rounded-lg text-sm transition duration-300"
+                            >
+                              Delete
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -6648,98 +6688,166 @@ const MusicianDashboard = () => {
                 <div data-testid="profile-editor-modal" className="bg-gray-800 rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
                   <h2 className="text-xl font-bold mb-4">{editingProfile ? 'Edit Profile' : 'Create New Profile'}</h2>
                   <div className="space-y-4">
+                    {/* Name & Slug */}
                     <div>
                       <label className="block text-gray-300 text-sm font-bold mb-1">Profile Name</label>
-                      <input
-                        data-testid="profile-name-input"
-                        type="text"
-                        value={profileForm.name}
+                      <input data-testid="profile-name-input" type="text" value={profileForm.name}
                         onChange={(e) => {
                           const name = e.target.value;
-                          setProfileForm(prev => ({
-                            ...prev,
-                            name,
-                            slug: editingProfile ? prev.slug : generateSlugFromName(name)
-                          }));
+                          setProfileForm(prev => ({ ...prev, name, slug: editingProfile ? prev.slug : generateSlugFromName(name) }));
                         }}
-                        placeholder="e.g. Smith Wedding, Friday Night Jazz"
-                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
-                      />
+                        placeholder="e.g. Smith Wedding, Friday Night Jazz" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white" />
                     </div>
                     <div>
                       <label className="block text-gray-300 text-sm font-bold mb-1">URL Slug</label>
-                      <input
-                        data-testid="profile-slug-input"
-                        type="text"
-                        value={profileForm.slug}
+                      <input data-testid="profile-slug-input" type="text" value={profileForm.slug}
                         onChange={(e) => setProfileForm({...profileForm, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')})}
-                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
-                      />
-                      <p className="text-gray-400 text-xs mt-1">
-                        Full URL: {AUDIENCE_BASE_URL}/musician/{musician.slug}/{profileForm.slug || '...'}
-                      </p>
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white" />
+                      <p className="text-gray-400 text-xs mt-1">URL: {AUDIENCE_BASE_URL}/musician/{musician.slug}/{profileForm.slug || '...'}</p>
                     </div>
+
+                    {/* Display Name Override */}
+                    <div>
+                      <label className="block text-gray-300 text-sm font-bold mb-1">Display Name (override)</label>
+                      <input type="text" value={profileForm.musician_name || ''} onChange={(e) => setProfileForm({...profileForm, musician_name: e.target.value})}
+                        placeholder={musician.name + ' (master default)'} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500" />
+                      <p className="text-gray-400 text-xs mt-1">Leave blank to use master account name</p>
+                    </div>
+
+                    {/* Bio Override */}
+                    <div>
+                      <label className="block text-gray-300 text-sm font-bold mb-1">Bio (override)</label>
+                      <textarea value={profileForm.bio || ''} onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})}
+                        placeholder="Leave blank to use master bio" rows="2" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500" />
+                    </div>
+
+                    {/* Website Override */}
+                    <div>
+                      <label className="block text-gray-300 text-sm font-bold mb-1">Website (override)</label>
+                      <input type="url" value={profileForm.website || ''} onChange={(e) => setProfileForm({...profileForm, website: e.target.value})}
+                        placeholder="Leave blank to use master website" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500" />
+                    </div>
+
+                    {/* Active Playlists */}
                     <div>
                       <label className="block text-gray-300 text-sm font-bold mb-1">Active Playlists</label>
-                      <p className="text-gray-400 text-xs mb-2">Select which playlists are available when audience visits this profile</p>
-                      {playlists.length > 0 ? (
-                        <div className="space-y-2 max-h-40 overflow-y-auto bg-gray-700/50 rounded-lg p-3">
-                          {playlists.map(pl => (
-                            <label key={pl.id} className="flex items-center space-x-2 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={profileForm.active_playlist_ids.includes(pl.id)}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setProfileForm({...profileForm, active_playlist_ids: [...profileForm.active_playlist_ids, pl.id]});
-                                  } else {
-                                    setProfileForm({...profileForm, active_playlist_ids: profileForm.active_playlist_ids.filter(id => id !== pl.id)});
-                                  }
-                                }}
-                                className="w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded"
-                              />
-                              <span className="text-white text-sm">{pl.name} ({pl.song_count} songs)</span>
-                            </label>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-gray-500 text-sm">No playlists yet. Create playlists in the Songs tab first.</p>
-                      )}
+                      <p className="text-gray-400 text-xs mb-2">Select which songs are available for this profile</p>
+                      <div className="space-y-2 max-h-40 overflow-y-auto bg-gray-700/50 rounded-lg p-3">
+                        <label className="flex items-center space-x-2 cursor-pointer border-b border-gray-600 pb-2 mb-1">
+                          <input type="checkbox" checked={profileForm.active_playlist_ids.includes('__all__')}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setProfileForm({...profileForm, active_playlist_ids: ['__all__']});
+                              } else {
+                                setProfileForm({...profileForm, active_playlist_ids: []});
+                              }
+                            }}
+                            className="w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded" />
+                          <span className="text-white text-sm font-semibold">All Songs (full library)</span>
+                        </label>
+                        {playlists.filter(pl => pl.id !== 'all_songs').map(pl => (
+                          <label key={pl.id} className="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" disabled={profileForm.active_playlist_ids.includes('__all__')}
+                              checked={profileForm.active_playlist_ids.includes('__all__') || profileForm.active_playlist_ids.includes(pl.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setProfileForm({...profileForm, active_playlist_ids: [...profileForm.active_playlist_ids, pl.id]});
+                                } else {
+                                  setProfileForm({...profileForm, active_playlist_ids: profileForm.active_playlist_ids.filter(id => id !== pl.id)});
+                                }
+                              }}
+                              className="w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded" />
+                            <span className={`text-sm ${profileForm.active_playlist_ids.includes('__all__') ? 'text-gray-500' : 'text-white'}`}>{pl.name} ({pl.song_count} songs)</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
+
+                    {/* Tip Visibility Toggles */}
                     <div className="space-y-3">
                       <label className="flex items-center justify-between cursor-pointer">
                         <span className="text-gray-300 text-sm">Show tip prompt after request</span>
-                        <input
-                          type="checkbox"
-                          checked={profileForm.show_tips_in_success_screen}
+                        <input type="checkbox" checked={profileForm.show_tips_in_success_screen}
                           onChange={(e) => setProfileForm({...profileForm, show_tips_in_success_screen: e.target.checked})}
-                          className="w-5 h-5 text-purple-600 bg-gray-800 border-gray-600 rounded"
-                        />
+                          className="w-5 h-5 text-purple-600 bg-gray-800 border-gray-600 rounded" />
                       </label>
                       <label className="flex items-center justify-between cursor-pointer">
                         <span className="text-gray-300 text-sm">Show tip option in artist info</span>
-                        <input
-                          type="checkbox"
-                          checked={profileForm.show_tips_in_orientation}
+                        <input type="checkbox" checked={profileForm.show_tips_in_orientation}
                           onChange={(e) => setProfileForm({...profileForm, show_tips_in_orientation: e.target.checked})}
-                          className="w-5 h-5 text-purple-600 bg-gray-800 border-gray-600 rounded"
-                        />
+                          className="w-5 h-5 text-purple-600 bg-gray-800 border-gray-600 rounded" />
                       </label>
                     </div>
+
+                    {/* Tip Platform Overrides */}
+                    <div className="border-t border-gray-600 pt-4">
+                      <h3 className="text-sm font-bold text-gray-300 mb-2">Tip Platform Overrides</h3>
+                      <p className="text-gray-400 text-xs mb-3">Leave blank to use master account values</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-gray-400 text-xs mb-1">Venmo Username</label>
+                          <input type="text" value={profileForm.venmo_username || ''} onChange={(e) => setProfileForm({...profileForm, venmo_username: e.target.value})}
+                            placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                        </div>
+                        <div>
+                          <label className="block text-gray-400 text-xs mb-1">PayPal Username</label>
+                          <input type="text" value={profileForm.paypal_username || ''} onChange={(e) => setProfileForm({...profileForm, paypal_username: e.target.value})}
+                            placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                        </div>
+                        <div>
+                          <label className="block text-gray-400 text-xs mb-1">Cash App Username</label>
+                          <input type="text" value={profileForm.cashapp_username || ''} onChange={(e) => setProfileForm({...profileForm, cashapp_username: e.target.value})}
+                            placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                        </div>
+                        <div>
+                          <label className="block text-gray-400 text-xs mb-1">Zelle Info (email or phone)</label>
+                          <input type="text" value={profileForm.zelle_info || ''} onChange={(e) => setProfileForm({...profileForm, zelle_info: e.target.value})}
+                            placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Social Link Overrides */}
+                    <div className="border-t border-gray-600 pt-4">
+                      <h3 className="text-sm font-bold text-gray-300 mb-2">Social Link Overrides</h3>
+                      <p className="text-gray-400 text-xs mb-3">Leave blank to use master account values</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-gray-400 text-xs mb-1">Instagram</label>
+                          <input type="text" value={profileForm.instagram_username || ''} onChange={(e) => setProfileForm({...profileForm, instagram_username: e.target.value})}
+                            placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                        </div>
+                        <div>
+                          <label className="block text-gray-400 text-xs mb-1">TikTok</label>
+                          <input type="text" value={profileForm.tiktok_username || ''} onChange={(e) => setProfileForm({...profileForm, tiktok_username: e.target.value})}
+                            placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                        </div>
+                        <div>
+                          <label className="block text-gray-400 text-xs mb-1">Facebook URL</label>
+                          <input type="text" value={profileForm.facebook_url || ''} onChange={(e) => setProfileForm({...profileForm, facebook_url: e.target.value})}
+                            placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                        </div>
+                        <div>
+                          <label className="block text-gray-400 text-xs mb-1">Spotify URL</label>
+                          <input type="text" value={profileForm.spotify_url || ''} onChange={(e) => setProfileForm({...profileForm, spotify_url: e.target.value})}
+                            placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="block text-gray-400 text-xs mb-1">Apple Music URL</label>
+                          <input type="text" value={profileForm.apple_music_url || ''} onChange={(e) => setProfileForm({...profileForm, apple_music_url: e.target.value})}
+                            placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
                     <div className="flex gap-3 pt-2">
-                      <button
-                        data-testid="profile-save-btn"
-                        onClick={editingProfile ? handleUpdateProfileById : handleCreateProfile}
-                        className="flex-1 bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300"
-                      >
+                      <button data-testid="profile-save-btn" onClick={editingProfile ? handleUpdateProfileById : handleCreateProfile}
+                        className="flex-1 bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300">
                         {editingProfile ? 'Save Changes' : 'Create Profile'}
                       </button>
-                      <button
-                        onClick={() => setShowProfileEditor(false)}
-                        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-300"
-                      >
-                        Cancel
-                      </button>
+                      <button onClick={() => setShowProfileEditor(false)}
+                        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-300">Cancel</button>
                     </div>
                   </div>
                 </div>
@@ -6776,47 +6884,10 @@ const MusicianDashboard = () => {
                         <input type="email" value={profile.email} disabled className="w-full bg-gray-600 border border-gray-600 rounded-lg px-4 py-2 text-gray-400" />
                       </div>
                     </div>
-                    <div className="border-t border-gray-600 pt-4">
-                      <h3 className="text-lg font-semibold text-white mb-4">Tip Payment Settings</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-gray-300 text-sm font-bold mb-2">Venmo Username</label>
-                          <input type="text" placeholder="venmousername" value={profile.venmo_username || ''} onChange={(e) => setProfile({...profile, venmo_username: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400" />
-                        </div>
-                        <div>
-                          <label className="block text-gray-300 text-sm font-bold mb-2">PayPal Username</label>
-                          <input type="text" placeholder="paypalusername" value={profile.paypal_username || ''} onChange={(e) => setProfile({...profile, paypal_username: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400" />
-                        </div>
-                        <div>
-                          <label className="block text-gray-300 text-sm font-bold mb-2">Cash App Username</label>
-                          <input type="text" placeholder="cashappusername" value={profile.cash_app_username || ''} onChange={(e) => setProfile({...profile, cash_app_username: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400" />
-                        </div>
-                        <div>
-                          <label className="block text-gray-300 text-sm font-bold mb-2">Zelle Email</label>
-                          <input type="email" placeholder="your.email@bank.com" value={profile.zelle_email || ''} onChange={(e) => setProfile({...profile, zelle_email: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400" />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="border-t border-gray-600 pt-4">
-                      <h3 className="text-lg font-semibold text-white mb-4">Social Media Links</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-gray-300 text-sm font-bold mb-2">Instagram</label>
-                          <input type="text" placeholder="yourusername" value={profile.instagram_username || ''} onChange={(e) => setProfile({...profile, instagram_username: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400" />
-                        </div>
-                        <div>
-                          <label className="block text-gray-300 text-sm font-bold mb-2">TikTok</label>
-                          <input type="text" placeholder="yourusername" value={profile.tiktok_username || ''} onChange={(e) => setProfile({...profile, tiktok_username: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400" />
-                        </div>
-                        <div>
-                          <label className="block text-gray-300 text-sm font-bold mb-2">Facebook</label>
-                          <input type="text" placeholder="yourpage" value={profile.facebook_username || ''} onChange={(e) => setProfile({...profile, facebook_username: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400" />
-                        </div>
-                        <div>
-                          <label className="block text-gray-300 text-sm font-bold mb-2">Spotify Artist URL</label>
-                          <input type="text" placeholder="https://open.spotify.com/artist/..." value={profile.spotify_artist_url || ''} onChange={(e) => setProfile({...profile, spotify_artist_url: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400" />
-                        </div>
-                      </div>
+                    <div>
+                      <label className="block text-gray-300 text-sm font-bold mb-2">Master Slug</label>
+                      <p className="text-gray-400 text-xs mb-1">Your unique URL identifier: {AUDIENCE_BASE_URL}/musician/{musician.slug}</p>
+                      <input type="text" value={musician.slug} disabled className="w-full bg-gray-600 border border-gray-600 rounded-lg px-4 py-2 text-gray-400" />
                     </div>
                     <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300">
                       Update Account Settings
@@ -9213,7 +9284,15 @@ const AudienceInterface = () => {
   const fetchMusician = async () => {
     try {
       const response = await axios.get(`${API}/musicians/${effectiveSlug}`);
-      setMusician(response.data);
+      const data = response.data;
+      setMusician(data);
+      // If response includes songs (default profile active), use them directly
+      if (data.songs !== undefined && data.profile_id) {
+        setProfileData(data);
+        setSongs(data.songs || []);
+        setFilteredSongs(data.songs || []);
+        setLoading(false);
+      }
     } catch (error) {
       console.error('Error fetching musician:', error);
     }
