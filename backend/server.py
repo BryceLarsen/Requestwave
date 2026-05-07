@@ -598,6 +598,12 @@ class ProfileCreate(BaseModel):
     website: Optional[str] = None
     bio: Optional[str] = None
     musician_name: Optional[str] = None
+    # Design settings per profile
+    design_color_scheme: Optional[str] = None
+    design_layout_mode: Optional[str] = None
+    design_artist_photo: Optional[str] = None
+    design_show_year: Optional[bool] = None
+    design_show_notes: Optional[bool] = None
 
 class ProfileUpdateModel(BaseModel):
     name: Optional[str] = None
@@ -618,6 +624,11 @@ class ProfileUpdateModel(BaseModel):
     website: Optional[str] = None
     bio: Optional[str] = None
     musician_name: Optional[str] = None
+    design_color_scheme: Optional[str] = None
+    design_layout_mode: Optional[str] = None
+    design_artist_photo: Optional[str] = None
+    design_show_year: Optional[bool] = None
+    design_show_notes: Optional[bool] = None
 
 class ProfileResponse(BaseModel):
     id: str
@@ -641,6 +652,11 @@ class ProfileResponse(BaseModel):
     website: Optional[str] = None
     bio: Optional[str] = None
     musician_name: Optional[str] = None
+    design_color_scheme: Optional[str] = None
+    design_layout_mode: Optional[str] = None
+    design_artist_photo: Optional[str] = None
+    design_show_year: Optional[bool] = None
+    design_show_notes: Optional[bool] = None
 
 # Utility functions
 def create_slug(name: str) -> str:
@@ -2236,18 +2252,32 @@ async def get_musician_by_slug(slug: str):
 
 @api_router.get("/musicians/{slug}/design")
 async def get_musician_design(slug: str):
-    """Get musician's public design settings"""
+    """Get musician's public design settings. Checks default profile first, falls back to global."""
     musician = await db.musicians.find_one({"slug": slug})
     if not musician:
         raise HTTPException(status_code=404, detail="Musician not found")
     
-    design_settings = musician.get("design_settings", {})
+    global_design = musician.get("design_settings", {})
+    
+    # Check for default profile design overrides
+    default_profile = await db.profiles.find_one({"musician_id": musician["id"], "is_default": True})
+    if default_profile:
+        return {
+            "color_scheme": default_profile.get("design_color_scheme") or global_design.get("color_scheme", "purple"),
+            "layout_mode": default_profile.get("design_layout_mode") or global_design.get("layout_mode", "grid"),
+            "artist_photo": default_profile.get("design_artist_photo") or global_design.get("artist_photo"),
+            "show_year": default_profile.get("design_show_year") if default_profile.get("design_show_year") is not None else global_design.get("show_year", True),
+            "show_notes": default_profile.get("design_show_notes") if default_profile.get("design_show_notes") is not None else global_design.get("show_notes", True),
+            "musician_name": default_profile.get("musician_name") or musician["name"],
+            "bio": default_profile.get("bio") or musician.get("bio", "")
+        }
+    
     return {
-        "color_scheme": design_settings.get("color_scheme", "purple"),
-        "layout_mode": design_settings.get("layout_mode", "grid"),
-        "artist_photo": design_settings.get("artist_photo"),
-        "show_year": design_settings.get("show_year", True),
-        "show_notes": design_settings.get("show_notes", True),
+        "color_scheme": global_design.get("color_scheme", "purple"),
+        "layout_mode": global_design.get("layout_mode", "grid"),
+        "artist_photo": global_design.get("artist_photo"),
+        "show_year": global_design.get("show_year", True),
+        "show_notes": global_design.get("show_notes", True),
         "musician_name": musician["name"],
         "bio": musician.get("bio", "")
     }
@@ -7480,6 +7510,11 @@ def _profile_doc_to_response(p: dict) -> ProfileResponse:
         website=p.get("website"),
         bio=p.get("bio"),
         musician_name=p.get("musician_name"),
+        design_color_scheme=p.get("design_color_scheme"),
+        design_layout_mode=p.get("design_layout_mode"),
+        design_artist_photo=p.get("design_artist_photo"),
+        design_show_year=p.get("design_show_year"),
+        design_show_notes=p.get("design_show_notes"),
     )
 
 async def _get_profile_songs(profile, musician):
@@ -7521,6 +7556,9 @@ async def _get_profile_songs(profile, musician):
 def _build_profile_public_response(musician, profile, songs_list):
     """Build the merged public response for a profile audience page.
     Profile fields override master account values when set."""
+    # Get global design settings for fallback
+    global_design = musician.get("design_settings", {})
+    
     return {
         "id": musician["id"],
         "name": profile.get("musician_name") or musician["name"],
@@ -7555,6 +7593,16 @@ def _build_profile_public_response(musician, profile, songs_list):
         "tips_enabled": musician.get("tips_enabled", True),
         "requests_enabled": musician.get("requests_enabled", True),
         "current_show_name": musician.get("current_show_name"),
+        # Design settings - profile overrides global
+        "design_settings": {
+            "color_scheme": profile.get("design_color_scheme") or global_design.get("color_scheme", "purple"),
+            "layout_mode": profile.get("design_layout_mode") or global_design.get("layout_mode", "grid"),
+            "artist_photo": profile.get("design_artist_photo") or global_design.get("artist_photo"),
+            "show_year": profile.get("design_show_year") if profile.get("design_show_year") is not None else global_design.get("show_year", True),
+            "show_notes": profile.get("design_show_notes") if profile.get("design_show_notes") is not None else global_design.get("show_notes", True),
+            "musician_name": profile.get("musician_name") or musician["name"],
+            "bio": profile.get("bio") or musician.get("bio", ""),
+        },
         # Songs for this profile
         "songs": songs_list
     }
@@ -7600,6 +7648,11 @@ async def create_profile(profile_data: ProfileCreate, musician_id: str = Depends
         "website": profile_data.website,
         "bio": profile_data.bio,
         "musician_name": profile_data.musician_name,
+        "design_color_scheme": profile_data.design_color_scheme,
+        "design_layout_mode": profile_data.design_layout_mode,
+        "design_artist_photo": profile_data.design_artist_photo,
+        "design_show_year": profile_data.design_show_year,
+        "design_show_notes": profile_data.design_show_notes,
     }
     
     await db.profiles.insert_one(profile_dict)
@@ -7652,10 +7705,17 @@ async def update_profile_by_id(profile_id: str, update_data: ProfileUpdateModel,
     # Handle override fields - use sentinel to distinguish "not sent" from "clear"
     for field in ["paypal_username", "venmo_username", "cashapp_username", "zelle_info",
                   "instagram_username", "tiktok_username", "facebook_url", "spotify_url",
-                  "apple_music_url", "website", "bio", "musician_name"]:
+                  "apple_music_url", "website", "bio", "musician_name",
+                  "design_color_scheme", "design_layout_mode", "design_artist_photo"]:
         val = getattr(update_data, field, None)
         if val is not None:
             update_fields[field] = val if val != "" else None
+    
+    # Handle boolean design fields separately (None means not sent)
+    for bool_field in ["design_show_year", "design_show_notes"]:
+        val = getattr(update_data, bool_field, None)
+        if val is not None:
+            update_fields[bool_field] = val
     
     if update_fields:
         await db.profiles.update_one({"id": profile_id}, {"$set": update_fields})

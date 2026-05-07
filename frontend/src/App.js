@@ -736,7 +736,7 @@ const MusicianDashboard = () => {
   const [profiles, setProfiles] = useState([]);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [editingProfile, setEditingProfile] = useState(null);
-  const [profileForm, setProfileForm] = useState({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '' });
+  const [profileForm, setProfileForm] = useState({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_layout_mode: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
   const [accountSettingsExpanded, setAccountSettingsExpanded] = useState(false);
   const [profileFilterId, setProfileFilterId] = useState(''); // For requests tab filter
   
@@ -1799,7 +1799,7 @@ const MusicianDashboard = () => {
       const response = await axios.post(`${API}/profiles`, profileForm);
       setProfiles([...profiles, response.data]);
       setShowProfileEditor(false);
-      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '' });
+      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_layout_mode: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
     } catch (error) {
       alert(error.response?.data?.detail || 'Error creating profile');
     }
@@ -1812,7 +1812,7 @@ const MusicianDashboard = () => {
       setProfiles(profiles.map(p => p.id === editingProfile.id ? response.data : p));
       setShowProfileEditor(false);
       setEditingProfile(null);
-      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '' });
+      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_layout_mode: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
     } catch (error) {
       alert(error.response?.data?.detail || 'Error updating profile');
     }
@@ -1849,16 +1849,36 @@ const MusicianDashboard = () => {
         website: profileToEdit.website || '',
         bio: profileToEdit.bio || '',
         musician_name: profileToEdit.musician_name || '',
+        design_color_scheme: profileToEdit.design_color_scheme || '',
+        design_layout_mode: profileToEdit.design_layout_mode || '',
+        design_artist_photo: profileToEdit.design_artist_photo || '',
+        design_show_year: profileToEdit.design_show_year !== false,
+        design_show_notes: profileToEdit.design_show_notes !== false,
       });
     } else {
       setEditingProfile(null);
-      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '' });
+      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_layout_mode: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
     }
     setShowProfileEditor(true);
   };
 
   const generateSlugFromName = (name) => {
     return name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  };
+
+  const handleProfilePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Image size must be less than 2MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setProfileForm(prev => ({ ...prev, design_artist_photo: event.target.result }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const fetchSubscriptionStatus = async () => {
@@ -3861,7 +3881,7 @@ const MusicianDashboard = () => {
 
         {/* Desktop Tabs (hidden on mobile) */}
         <div className="hidden md:flex flex-wrap gap-1 bg-gray-800 rounded-lg p-1 mb-8">
-          {['onstage', 'songs', 'requests', 'analytics', 'profile', ...(BILLING_ENABLED ? ['subscription'] : []), 'design'].map((tab) => (
+          {['onstage', 'songs', 'requests', 'analytics', 'profile', ...(BILLING_ENABLED ? ['subscription'] : [])].map((tab) => (
             <button
               key={tab}
               onClick={() => {
@@ -3933,7 +3953,7 @@ const MusicianDashboard = () => {
             {showMobileNav && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50">
                 <div className="py-2">
-                  {['onstage', 'songs', 'requests', 'analytics', 'profile', ...(BILLING_ENABLED ? ['subscription'] : []), 'design'].map((tab) => (
+                  {['onstage', 'songs', 'requests', 'analytics', 'profile', ...(BILLING_ENABLED ? ['subscription'] : [])].map((tab) => (
                     <button
                       key={tab}
                       onClick={() => {
@@ -6666,30 +6686,40 @@ const MusicianDashboard = () => {
               <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={(e) => { if (e.target === e.currentTarget) setShowProfileEditor(false); }}>
                 <div data-testid="profile-editor-modal" className="bg-gray-800 rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
                   <h2 className="text-xl font-bold mb-4">{editingProfile ? 'Edit Profile' : 'Create New Profile'}</h2>
-                  {/* Copy from Account Settings button */}
+                  {/* Copy from Default Profile button */}
                   <button
-                    data-testid="copy-from-account-btn"
+                    data-testid="copy-from-default-btn"
                     type="button"
                     onClick={() => {
+                      const defaultProfile = profiles.find(p => p.is_default);
+                      if (!defaultProfile) {
+                        alert('No default profile found');
+                        return;
+                      }
                       setProfileForm(prev => ({
                         ...prev,
-                        musician_name: profile.name || '',
-                        bio: profile.bio || '',
-                        website: profile.website || '',
-                        venmo_username: profile.venmo_username || '',
-                        paypal_username: profile.paypal_username || '',
-                        cashapp_username: profile.cash_app_username || '',
-                        zelle_info: profile.zelle_email || profile.zelle_phone || '',
-                        instagram_username: profile.instagram_username || '',
-                        tiktok_username: profile.tiktok_username || '',
-                        facebook_url: profile.facebook_username || '',
-                        spotify_url: profile.spotify_artist_url || '',
-                        apple_music_url: profile.apple_music_artist_url || '',
+                        musician_name: defaultProfile.musician_name || '',
+                        bio: defaultProfile.bio || '',
+                        website: defaultProfile.website || '',
+                        venmo_username: defaultProfile.venmo_username || '',
+                        paypal_username: defaultProfile.paypal_username || '',
+                        cashapp_username: defaultProfile.cashapp_username || '',
+                        zelle_info: defaultProfile.zelle_info || '',
+                        instagram_username: defaultProfile.instagram_username || '',
+                        tiktok_username: defaultProfile.tiktok_username || '',
+                        facebook_url: defaultProfile.facebook_url || '',
+                        spotify_url: defaultProfile.spotify_url || '',
+                        apple_music_url: defaultProfile.apple_music_url || '',
+                        design_color_scheme: defaultProfile.design_color_scheme || '',
+                        design_layout_mode: defaultProfile.design_layout_mode || '',
+                        design_artist_photo: defaultProfile.design_artist_photo || '',
+                        design_show_year: defaultProfile.design_show_year !== false,
+                        design_show_notes: defaultProfile.design_show_notes !== false,
                       }));
                     }}
                     className="w-full mb-4 bg-gray-700 hover:bg-gray-600 border border-dashed border-gray-500 px-4 py-2 rounded-lg text-sm text-gray-300 hover:text-white transition duration-300"
                   >
-                    Copy from Account Settings
+                    Copy from Default Profile
                   </button>
                   <div className="space-y-4">
                     {/* Name & Slug */}
@@ -6844,6 +6874,91 @@ const MusicianDashboard = () => {
                       </div>
                     </div>
 
+                    {/* Design Settings */}
+                    <div className="border-t border-gray-600 pt-4">
+                      <h3 className="text-sm font-bold text-gray-300 mb-3">Design Settings</h3>
+                      
+                      {/* Color Theme */}
+                      <div className="mb-4">
+                        <label className="block text-gray-400 text-xs mb-2">Color Theme</label>
+                        <div className="grid grid-cols-5 gap-2">
+                          {[
+                            { name: 'purple', color: 'bg-purple-600', label: 'Purple' },
+                            { name: 'blue', color: 'bg-blue-600', label: 'Blue' },
+                            { name: 'green', color: 'bg-green-600', label: 'Green' },
+                            { name: 'red', color: 'bg-red-600', label: 'Red' },
+                            { name: 'orange', color: 'bg-orange-600', label: 'Orange' }
+                          ].map((theme) => (
+                            <button key={theme.name} type="button"
+                              onClick={() => setProfileForm({...profileForm, design_color_scheme: theme.name})}
+                              className={`p-2 rounded-lg border-2 transition duration-300 ${
+                                profileForm.design_color_scheme === theme.name ? 'border-white shadow-lg' : 'border-gray-600 hover:border-gray-400'
+                              }`}>
+                              <div className={`w-full h-5 ${theme.color} rounded mb-1`}></div>
+                              <span className="text-xs text-gray-300">{theme.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-gray-500 text-xs mt-1">Leave unselected to use global default</p>
+                      </div>
+
+                      {/* Layout Mode */}
+                      <div className="mb-4">
+                        <label className="block text-gray-400 text-xs mb-2">Song Display Layout</label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button type="button" onClick={() => setProfileForm({...profileForm, design_layout_mode: 'grid'})}
+                            className={`p-3 rounded-lg border-2 transition duration-300 ${profileForm.design_layout_mode === 'grid' ? 'border-purple-500 bg-purple-900/20' : 'border-gray-600 hover:border-gray-400'}`}>
+                            <div className="grid grid-cols-2 gap-1 mb-1"><div className="bg-gray-600 h-2 rounded"></div><div className="bg-gray-600 h-2 rounded"></div><div className="bg-gray-600 h-2 rounded"></div><div className="bg-gray-600 h-2 rounded"></div></div>
+                            <span className="text-xs">Grid</span>
+                          </button>
+                          <button type="button" onClick={() => setProfileForm({...profileForm, design_layout_mode: 'list'})}
+                            className={`p-3 rounded-lg border-2 transition duration-300 ${profileForm.design_layout_mode === 'list' ? 'border-purple-500 bg-purple-900/20' : 'border-gray-600 hover:border-gray-400'}`}>
+                            <div className="space-y-1 mb-1"><div className="bg-gray-600 h-1.5 rounded w-full"></div><div className="bg-gray-600 h-1.5 rounded w-full"></div><div className="bg-gray-600 h-1.5 rounded w-full"></div></div>
+                            <span className="text-xs">List</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Artist Photo */}
+                      <div className="mb-4">
+                        <label className="block text-gray-400 text-xs mb-2">Artist Photo</label>
+                        <div className="flex items-center space-x-3">
+                          {profileForm.design_artist_photo ? (
+                            <div className="relative">
+                              <img src={profileForm.design_artist_photo} alt="Artist" className="w-14 h-14 rounded-full object-cover" />
+                              <button type="button" onClick={() => setProfileForm({...profileForm, design_artist_photo: ''})}
+                                className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-700">x</button>
+                            </div>
+                          ) : (
+                            <div className="w-14 h-14 rounded-full bg-gray-700 flex items-center justify-center">
+                              <span className="text-gray-400 text-xs">None</span>
+                            </div>
+                          )}
+                          <div>
+                            <input type="file" accept="image/*" onChange={handleProfilePhotoUpload} className="hidden" id="profile-photo-upload" />
+                            <label htmlFor="profile-photo-upload" className="inline-flex items-center px-3 py-1.5 rounded-lg cursor-pointer transition duration-300 bg-blue-600 hover:bg-blue-700 text-white text-sm">Upload Photo</label>
+                            <p className="text-xs text-gray-500 mt-1">Max 2MB, JPG/PNG</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Display Options */}
+                      <div className="space-y-2">
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input type="checkbox" checked={profileForm.design_show_year}
+                            onChange={(e) => setProfileForm({...profileForm, design_show_year: e.target.checked})}
+                            className="w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded" />
+                          <span className="text-gray-300 text-sm">Show song year</span>
+                        </label>
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input type="checkbox" checked={profileForm.design_show_notes}
+                            onChange={(e) => setProfileForm({...profileForm, design_show_notes: e.target.checked})}
+                            className="w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded" />
+                          <span className="text-gray-300 text-sm">Show song notes</span>
+                        </label>
+                      </div>
+                    </div>
+
                     {/* Action Buttons */}
                     <div className="flex gap-3 pt-2">
                       <button data-testid="profile-save-btn" onClick={editingProfile ? handleUpdateProfileById : handleCreateProfile}
@@ -6871,32 +6986,40 @@ const MusicianDashboard = () => {
                 </svg>
               </button>
               {accountSettingsExpanded && (
-                <div className="p-6 pt-0">
-                  {profileError && (
-                    <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200">
-                      {profileError}
+                <div className="p-6 pt-0 space-y-6">
+                  {/* Email */}
+                  <div>
+                    <label className="block text-gray-300 text-sm font-bold mb-2">Email</label>
+                    <input type="email" value={profile.email} disabled className="w-full bg-gray-600 border border-gray-600 rounded-lg px-4 py-2 text-gray-400" />
+                  </div>
+                  {/* Master Slug */}
+                  <div>
+                    <label className="block text-gray-300 text-sm font-bold mb-2">Master Slug</label>
+                    <p className="text-gray-400 text-xs mb-1">{AUDIENCE_BASE_URL}/musician/{musician.slug}</p>
+                    <input type="text" value={musician.slug} disabled className="w-full bg-gray-600 border border-gray-600 rounded-lg px-4 py-2 text-gray-400" />
+                  </div>
+                  {/* Change Password */}
+                  <div className="border-t border-gray-600 pt-4">
+                    <h3 className="text-sm font-bold text-gray-300 mb-3">Change Password</h3>
+                    {changePasswordError && (
+                      <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-3 text-red-200 text-sm">{changePasswordError}</div>
+                    )}
+                    <div className="space-y-3">
+                      <input type="password" placeholder="Current password" value={changePasswordForm.current_password}
+                        onChange={(e) => setChangePasswordForm({...changePasswordForm, current_password: e.target.value})}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 text-sm" />
+                      <input type="password" placeholder="New password" value={changePasswordForm.new_password}
+                        onChange={(e) => setChangePasswordForm({...changePasswordForm, new_password: e.target.value})}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 text-sm" />
+                      <input type="password" placeholder="Confirm new password" value={changePasswordForm.confirm_password}
+                        onChange={(e) => setChangePasswordForm({...changePasswordForm, confirm_password: e.target.value})}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 text-sm" />
+                      <button type="button" onClick={handleChangePassword} disabled={changingPassword}
+                        className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 py-2 rounded-lg font-bold transition duration-300 text-sm">
+                        {changingPassword ? 'Changing...' : 'Change Password'}
+                      </button>
                     </div>
-                  )}
-                  <form onSubmit={handleUpdateProfile} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-gray-300 text-sm font-bold mb-2">Stage Name</label>
-                        <input type="text" value={profile.name} onChange={(e) => setProfile({...profile, name: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-gray-300 text-sm font-bold mb-2">Email</label>
-                        <input type="email" value={profile.email} disabled className="w-full bg-gray-600 border border-gray-600 rounded-lg px-4 py-2 text-gray-400" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-gray-300 text-sm font-bold mb-2">Master Slug</label>
-                      <p className="text-gray-400 text-xs mb-1">Your unique URL identifier: {AUDIENCE_BASE_URL}/musician/{musician.slug}</p>
-                      <input type="text" value={musician.slug} disabled className="w-full bg-gray-600 border border-gray-600 rounded-lg px-4 py-2 text-gray-400" />
-                    </div>
-                    <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-bold transition duration-300">
-                      Update Account Settings
-                    </button>
-                  </form>
+                  </div>
                 </div>
               )}
             </div>
@@ -9250,12 +9373,20 @@ const AudienceInterface = () => {
       setProfileData(data);
       setSongs(data.songs || []);
       setFilteredSongs(data.songs || []);
-      // Override designSettings with profile-merged values so header/orientation use correct name/bio
-      setDesignSettings(prev => ({
-        ...prev,
-        musician_name: data.name || prev.musician_name,
-        bio: data.bio || prev.bio,
-      }));
+      // Override designSettings with profile design settings
+      if (data.design_settings) {
+        setDesignSettings(prev => ({
+          ...prev,
+          ...data.design_settings,
+        }));
+      } else {
+        // Fallback: override name/bio at minimum
+        setDesignSettings(prev => ({
+          ...prev,
+          musician_name: data.name || prev.musician_name,
+          bio: data.bio || prev.bio,
+        }));
+      }
       setLoading(false);
     } catch (error) {
       console.error('Error fetching profile data:', error);
@@ -9302,12 +9433,19 @@ const AudienceInterface = () => {
         setProfileData(data);
         setSongs(data.songs || []);
         setFilteredSongs(data.songs || []);
-        // Override designSettings with profile-merged values
-        setDesignSettings(prev => ({
-          ...prev,
-          musician_name: data.name || prev.musician_name,
-          bio: data.bio || prev.bio,
-        }));
+        // Override designSettings with profile design settings
+        if (data.design_settings) {
+          setDesignSettings(prev => ({
+            ...prev,
+            ...data.design_settings,
+          }));
+        } else {
+          setDesignSettings(prev => ({
+            ...prev,
+            musician_name: data.name || prev.musician_name,
+            bio: data.bio || prev.bio,
+          }));
+        }
         setLoading(false);
       }
     } catch (error) {
