@@ -736,7 +736,7 @@ const MusicianDashboard = () => {
   const [profiles, setProfiles] = useState([]);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [editingProfile, setEditingProfile] = useState(null);
-  const [profileForm, setProfileForm] = useState({ name: '', slug: '', active_playlist_ids: [], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '' });
+  const [profileForm, setProfileForm] = useState({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '' });
   const [accountSettingsExpanded, setAccountSettingsExpanded] = useState(false);
   const [profileFilterId, setProfileFilterId] = useState(''); // For requests tab filter
   
@@ -1799,7 +1799,7 @@ const MusicianDashboard = () => {
       const response = await axios.post(`${API}/profiles`, profileForm);
       setProfiles([...profiles, response.data]);
       setShowProfileEditor(false);
-      setProfileForm({ name: '', slug: '', active_playlist_ids: [], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '' });
+      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '' });
     } catch (error) {
       alert(error.response?.data?.detail || 'Error creating profile');
     }
@@ -1812,7 +1812,7 @@ const MusicianDashboard = () => {
       setProfiles(profiles.map(p => p.id === editingProfile.id ? response.data : p));
       setShowProfileEditor(false);
       setEditingProfile(null);
-      setProfileForm({ name: '', slug: '', active_playlist_ids: [], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '' });
+      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '' });
     } catch (error) {
       alert(error.response?.data?.detail || 'Error updating profile');
     }
@@ -1852,7 +1852,7 @@ const MusicianDashboard = () => {
       });
     } else {
       setEditingProfile(null);
-      setProfileForm({ name: '', slug: '', active_playlist_ids: [], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '' });
+      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '' });
     }
     setShowProfileEditor(true);
   };
@@ -6565,35 +6565,38 @@ const MusicianDashboard = () => {
                     : `${AUDIENCE_BASE_URL}/musician/${musician.slug}/${p.slug}`;
                   return (
                     <div key={p.id} data-testid={`profile-card-${p.slug}`} className={`bg-gray-800 rounded-xl p-5 ${p.is_default ? 'ring-1 ring-purple-500/50' : ''}`}>
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-lg font-semibold text-white">{p.name}</h3>
-                            {p.is_default && (
-                              <span className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded-full">Default</span>
-                            )}
-                          </div>
-                          <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 text-sm truncate block underline">{profileUrl}</a>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {p.active_playlist_ids.includes('__all__') ? (
-                              <span className="text-xs bg-green-600/30 text-green-300 px-2 py-1 rounded">All Songs</span>
-                            ) : p.active_playlist_ids.length > 0 && (
-                              <span className="text-xs bg-purple-600/30 text-purple-300 px-2 py-1 rounded">
-                                {p.active_playlist_ids.length} playlist{p.active_playlist_ids.length !== 1 ? 's' : ''}
-                              </span>
-                            )}
-                            {!p.show_tips_in_success_screen && (
-                              <span className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded">Tips hidden (success)</span>
-                            )}
-                            {!p.show_tips_in_orientation && (
-                              <span className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded">Tips hidden (info)</span>
-                            )}
-                            {p.musician_name && (
-                              <span className="text-xs bg-blue-600/20 text-blue-300 px-2 py-1 rounded">Name: {p.musician_name}</span>
-                            )}
+                      <div className="flex flex-col gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-lg font-semibold text-white">{p.name}</h3>
+                              {p.is_default && (
+                                <span className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded-full">Default</span>
+                              )}
+                            </div>
+                            <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 text-sm truncate block underline">{profileUrl}</a>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {p.active_playlist_ids.includes('__all__') ? (
+                                <span className="text-xs bg-green-600/30 text-green-300 px-2 py-1 rounded">All Songs</span>
+                              ) : p.active_playlist_ids.length > 0 && (
+                                <span className="text-xs bg-purple-600/30 text-purple-300 px-2 py-1 rounded">
+                                  {p.active_playlist_ids.length} playlist{p.active_playlist_ids.length !== 1 ? 's' : ''}
+                                </span>
+                              )}
+                              {!p.show_tips_in_success_screen && (
+                                <span className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded">Tips hidden (success)</span>
+                              )}
+                              {!p.show_tips_in_orientation && (
+                                <span className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded">Tips hidden (info)</span>
+                              )}
+                              {p.musician_name && (
+                                <span className="text-xs bg-blue-600/20 text-blue-300 px-2 py-1 rounded">Name: {p.musician_name}</span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+                        {/* Action buttons - always visible */}
+                        <div className="flex items-center gap-2 flex-wrap border-t border-gray-700 pt-3">
                           <button
                             data-testid={`copy-url-${p.slug}`}
                             onClick={(e) => {
@@ -6620,6 +6623,13 @@ const MusicianDashboard = () => {
                           >
                             QR
                           </button>
+                          <button
+                            data-testid={`edit-profile-${p.slug}`}
+                            onClick={() => openProfileEditor(p)}
+                            className="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded-lg text-sm transition duration-300"
+                          >
+                            Edit
+                          </button>
                           {!p.is_default && (
                             <button
                               data-testid={`set-default-${p.slug}`}
@@ -6634,13 +6644,6 @@ const MusicianDashboard = () => {
                               Set Default
                             </button>
                           )}
-                          <button
-                            data-testid={`edit-profile-${p.slug}`}
-                            onClick={() => openProfileEditor(p)}
-                            className="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded-lg text-sm transition duration-300"
-                          >
-                            Edit
-                          </button>
                           {!p.is_default && (
                             <button
                               data-testid={`delete-profile-${p.slug}`}
@@ -6658,35 +6661,36 @@ const MusicianDashboard = () => {
               </div>
             )}
 
-            {/* Master Audience Link (always shown) */}
-            <div className="bg-purple-800/30 border border-purple-600/30 rounded-xl p-5 mb-8">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-purple-200">Master Audience Link</h3>
-              </div>
-              <div className="flex items-center gap-3">
-                <input type="text" value={audienceUrl} readOnly className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm" />
-                <button
-                  data-testid="copy-master-url"
-                  onClick={async (e) => {
-                    try {
-                      await navigator.clipboard.writeText(audienceUrl);
-                      e.target.textContent = 'Copied!';
-                      setTimeout(() => { e.target.textContent = 'Copy'; }, 2000);
-                    } catch { /* fallback */ }
-                  }}
-                  className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg text-sm transition duration-300"
-                >
-                  Copy
-                </button>
-                <button onClick={generateQRCode} className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg text-sm transition duration-300">QR</button>
-              </div>
-            </div>
-
             {/* Profile Editor Modal */}
             {showProfileEditor && (
               <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={(e) => { if (e.target === e.currentTarget) setShowProfileEditor(false); }}>
                 <div data-testid="profile-editor-modal" className="bg-gray-800 rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
                   <h2 className="text-xl font-bold mb-4">{editingProfile ? 'Edit Profile' : 'Create New Profile'}</h2>
+                  {/* Copy from Account Settings button */}
+                  <button
+                    data-testid="copy-from-account-btn"
+                    type="button"
+                    onClick={() => {
+                      setProfileForm(prev => ({
+                        ...prev,
+                        musician_name: profile.name || '',
+                        bio: profile.bio || '',
+                        website: profile.website || '',
+                        venmo_username: profile.venmo_username || '',
+                        paypal_username: profile.paypal_username || '',
+                        cashapp_username: profile.cash_app_username || '',
+                        zelle_info: profile.zelle_email || profile.zelle_phone || '',
+                        instagram_username: profile.instagram_username || '',
+                        tiktok_username: profile.tiktok_username || '',
+                        facebook_url: profile.facebook_username || '',
+                        spotify_url: profile.spotify_artist_url || '',
+                        apple_music_url: profile.apple_music_artist_url || '',
+                      }));
+                    }}
+                    className="w-full mb-4 bg-gray-700 hover:bg-gray-600 border border-dashed border-gray-500 px-4 py-2 rounded-lg text-sm text-gray-300 hover:text-white transition duration-300"
+                  >
+                    Copy from Account Settings
+                  </button>
                   <div className="space-y-4">
                     {/* Name & Slug */}
                     <div>
@@ -9214,14 +9218,15 @@ const AudienceInterface = () => {
 
   useEffect(() => {
     if (profileSlug && masterSlug) {
-      // Profile mode: fetch from profile endpoint
-      fetchProfileData();
-      fetchDesignSettings();
+      // Profile mode: fetch design settings first, then profile data overrides name/bio
+      fetchDesignSettings().then(() => fetchProfileData());
     } else {
-      fetchMusician();
+      // Standard mode: fetchMusician may detect a default profile and override designSettings
+      fetchDesignSettings().then(() => {
+        fetchMusician();
+      });
       fetchSongs();
       fetchFilters();
-      fetchDesignSettings();
       fetchPlaylists(); // NEW: Fetch playlists for audience filtering
     }
     
@@ -9245,6 +9250,12 @@ const AudienceInterface = () => {
       setProfileData(data);
       setSongs(data.songs || []);
       setFilteredSongs(data.songs || []);
+      // Override designSettings with profile-merged values so header/orientation use correct name/bio
+      setDesignSettings(prev => ({
+        ...prev,
+        musician_name: data.name || prev.musician_name,
+        bio: data.bio || prev.bio,
+      }));
       setLoading(false);
     } catch (error) {
       console.error('Error fetching profile data:', error);
@@ -9291,6 +9302,12 @@ const AudienceInterface = () => {
         setProfileData(data);
         setSongs(data.songs || []);
         setFilteredSongs(data.songs || []);
+        // Override designSettings with profile-merged values
+        setDesignSettings(prev => ({
+          ...prev,
+          musician_name: data.name || prev.musician_name,
+          bio: data.bio || prev.bio,
+        }));
         setLoading(false);
       }
     } catch (error) {
@@ -9302,6 +9319,7 @@ const AudienceInterface = () => {
     try {
       const response = await axios.get(`${API}/musicians/${effectiveSlug}/design`);
       setDesignSettings(response.data);
+      return response.data;
     } catch (error) {
       console.error('Error fetching design settings:', error);
     }

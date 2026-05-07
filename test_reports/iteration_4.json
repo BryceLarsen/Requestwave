@@ -1,0 +1,56 @@
+{
+  "summary": "Multi-Profile System 6 fixes verified. All fixes working correctly: (1) Master Audience Link removed from Profiles tab, (2) Delete + Set Default buttons visible on non-default cards, (3) Profile overrides (musician_name, bio, venmo) display correctly on audience page, (4) New profile form fields start empty except active_playlist_ids defaults to All Songs, (5) Copy from Account Settings button exists in profile editor, (6) Created new profile with unique venmo/bio and verified overrides appear on audience URL.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_4.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "FIX 1 VERIFIED: Master Audience Link section is removed from Profiles tab - no such element found",
+    "FIX 2 VERIFIED: Non-default profile cards (Main Stage, Smith Wedding, Override Test) show Delete and Set Default buttons",
+    "FIX 2 VERIFIED: Default profile card (Default Test 2) does NOT show Delete or Set Default buttons, shows Default badge",
+    "FIX 3 VERIFIED: Profile override fields (musician_name, bio, venmo_username) appear on profile audience page via _build_profile_public_response",
+    "FIX 3 VERIFIED: Orientation sheet (About modal) shows overridden name and bio, not master values",
+    "FIX 3 VERIFIED: fetchDesignSettings().then(() => fetchProfileData()) chaining prevents race condition",
+    "FIX 4 VERIFIED: New profile form fields start empty (name='', slug=''), active_playlist_ids defaults to ['__all__']",
+    "FIX 5 VERIFIED: 'Copy from Account Settings' button exists in profile editor modal with data-testid='copy-from-account-btn'",
+    "FIX 6 VERIFIED: Created new profile with unique venmo_username='unique-venmo-fix6-test' and bio, visited audience URL, confirmed overrides appear",
+    "REGRESSION VERIFIED: /musician/test master URL resolves to default profile with 11 songs",
+    "REGRESSION VERIFIED: /musician/test/smith-wedding profile URL shows DJ Bryce name override and wedding-special venmo"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "email": "test@test.com",
+    "password": "test",
+    "musician_slug": "test"
+  },
+  "seed_data_creation": "Created test profile 'Test Verification Profile' for FIX 6 verification, then deleted after test. Updated Default Test 2 profile to have __all__ playlist for proper master URL testing.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All 6 Multi-Profile System fixes verified and working. Current profiles: Main Stage (non-default, __all__), Smith Wedding (non-default, DJ Bryce override), Default Test 2 (is_default=true, __all__), Override Test (non-default, Override Artist Name, override-venmo-123). Master URL /musician/test resolves to Default Test 2 with 11 songs. Profile URLs work with overrides.",
+  "features_tested": {
+    "fix_1": "Master Audience Link section removed from Profiles tab",
+    "fix_2": "Delete + Set Default buttons visible on non-default profile cards only",
+    "fix_3": "Profile override fields (musician_name, bio, venmo) display on audience page",
+    "fix_4": "New profile form fields start empty, active_playlist_ids defaults to __all__",
+    "fix_5": "Copy from Account Settings button in profile editor modal",
+    "fix_6": "Create profile with unique venmo/bio -> visit audience URL -> overrides appear",
+    "regression_tests": [
+      "Default profile card has no Delete/Set Default buttons, shows Default badge",
+      "/musician/test master URL works with all songs",
+      "/musician/test/smith-wedding profile URL works with overrides"
+    ]
+  }
+}
