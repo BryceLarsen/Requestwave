@@ -7,59 +7,59 @@ RequestWave is a live music request platform enabling musicians to manage song r
 - **Backend**: FastAPI (monolithic `server.py`) with MongoDB
 - **Frontend**: React (monolithic `App.js`) with Tailwind CSS
 - **Database**: MongoDB with collections: musicians, songs, requests, shows, playlists, profiles, analytics_events
-- **Deployment**: Kubernetes container environment
 
-## Core Features (Implemented)
-- Musician registration/login with JWT auth
-- Song library management (CRUD, CSV import/export with pipe-delimited playlists)
-- Playlist management (create, assign songs, filter)
-- Show management (start/stop shows, request grouping)
-- Audience interface (public URL, song browsing, request submission)
-- Tipping system (Venmo, PayPal, Cash App, Zelle deep links)
-- QR code generation for audience links
-- Analytics events tracking
-- Design customization (color schemes, layouts)
-- Subscription/billing system (disabled in free mode)
+## Sprint 1: Multi-Profile System (Complete)
 
-## Sprint 1: Multi-Profile System (Completed 2026-05-06)
-### What Was Built
-- **Profiles collection**: Musicians can create multiple named performance profiles
-- **Profile CRUD API**: POST/GET/PUT/DELETE /api/profiles with slug validation
-- **Public profile resolution**: GET /api/musicians/{master_slug}/{profile_slug}
-- **Profile-scoped songs**: Only songs from active playlists shown in profile audience page
-- **Tip visibility toggles**: Per-profile control over tip prompts (success screen + orientation)
-- **Request profile tracking**: profile_slug passed on request submission, stored as profile_id
-- **Short URL redirects**: Catch-all routes resolve vanity URLs (/:slug -> /musician/:slug)
-- **404 page**: Clean 404 for unknown slugs
-- **Profiles tab UI**: Profile list with cards, editor modal, collapsible account settings
-- **Profile filter in requests tab**: Filter requests by profile
+### Phase 1 (Initial Build)
+- Profile CRUD (POST/GET/PUT/DELETE /api/profiles) with slug validation
+- Public profile resolution (GET /api/musicians/{master_slug}/{profile_slug})
+- Slug resolver for short URLs (GET /api/resolve/{slug})
+- Profile-scoped songs (active_playlist_ids)
+- Tip visibility toggles per profile
+- Request profile tracking (profile_id on requests)
+- Short URL redirects (/:slug -> /musician/:slug)
+- 404 page for unknown slugs
+- Profiles tab with card list, editor modal, collapsible Account Settings
+
+### Phase 2 (Fixes & Additions)
+- **Bug fixes**: Copy URL button (e.currentTarget), clickable profile URLs, "__all__" sentinel for All Songs
+- **Profile override fields**: paypal_username, venmo_username, cashapp_username, zelle_info, instagram_username, tiktok_username, facebook_url, spotify_url, apple_music_url, website, bio, musician_name
+- **is_default**: First profile auto-default, cannot delete default, Set Default button
+- **Default profile resolution**: /musician/{slug} resolves to default profile (merged data + songs)
+- **Account Settings slimmed**: Only stage name, email, slug (social/tip/bio moved to profiles)
+
+### Data Model: profiles collection
+```
+id: str (uuid)
+musician_id: str
+name: str
+slug: str (lowercase letters, numbers, hyphens)
+active_playlist_ids: List[str] ("__all__" = full library)
+show_tips_in_success_screen: bool
+show_tips_in_orientation: bool
+is_default: bool
+paypal_username, venmo_username, cashapp_username, zelle_info: Optional[str]
+instagram_username, tiktok_username, facebook_url, spotify_url, apple_music_url: Optional[str]
+website, bio, musician_name: Optional[str]
+created_at: datetime
+```
+
+### Override Logic
+Profile fields override master account values when set (non-null/non-empty). Falls back to master when blank.
 
 ### Constraints Maintained
-- /musician/{slug} existing route: ZERO breaking changes
+- /musician/{slug}: ZERO breaking changes (resolves default profile when exists)
 - OnStage, shows, billing, analytics, song library, CSV: UNTOUCHED
 
+## Test Coverage
+- /app/backend/tests/test_multi_profile_system.py (20 tests)
+- /app/backend/tests/test_sprint1_profile_features.py (16 tests)
+- /app/test_reports/iteration_2.json, iteration_3.json
+
 ## Upcoming Tasks
-- Documentation: current_build_inventory.yaml updated
 - Analytics: Tip conversion analytics
 - Mailing list: Capture feature
 - Post-Show Reflection features
 
 ## Technical Debt
-- App.js is ~12800 lines (monolithic)
-- server.py is ~7800 lines (monolithic)
-- Both should eventually be decomposed into modules
-
-## Key Endpoints
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | /api/profiles | Yes | Create profile |
-| GET | /api/profiles | Yes | List musician profiles |
-| PUT | /api/profiles/{id} | Yes | Update profile |
-| DELETE | /api/profiles/{id} | Yes | Delete profile (not last) |
-| GET | /api/musicians/{master}/{profile} | No | Public profile resolution |
-| GET | /api/resolve/{slug} | No | Slug lookup for short URLs |
-| POST | /api/requests | No | Submit request (accepts profile_slug) |
-
-## Test Coverage
-- Backend: 20 tests in /app/backend/tests/test_multi_profile_system.py (all passing)
-- Test report: /app/test_reports/iteration_2.json
+- App.js ~12800 lines, server.py ~7800 lines (monolithic)

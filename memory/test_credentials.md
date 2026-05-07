@@ -5,7 +5,6 @@
 - Password: test
 - Slug: test
 
-## Test Profile (created during testing)
-- Profile name: Smith Wedding
-- Profile slug: smith-wedding
-- Full URL: /musician/test/smith-wedding
+## Test Profiles
+- Main Stage (is_default=true, active_playlist_ids=["__all__"], slug=main-stage)
+- Smith Wedding (is_default=false, slug=smith-wedding, musician_name=DJ Bryce, venmo_username=wedding-special)
