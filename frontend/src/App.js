@@ -745,6 +745,18 @@ const MusicianDashboard = () => {
   const [accountEmailMsg, setAccountEmailMsg] = useState({ type: '', text: '' });
   const [accountSlugMsg, setAccountSlugMsg] = useState({ type: '', text: '' });
   const [profileFilterId, setProfileFilterId] = useState(''); // For requests tab filter
+
+  // Events (Sprint 2 Prompt 3)
+  const EVENT_FORM_DEFAULT = { name: '', slug: '', profile_id: '', event_date: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', copy_from_source: '' };
+  const [events, setEvents] = useState([]);
+  const [showEventEditor, setShowEventEditor] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [eventForm, setEventForm] = useState(EVENT_FORM_DEFAULT);
+  const [eventFilterId, setEventFilterId] = useState('');  // For requests tab filter
+  const [showPastEvents, setShowPastEvents] = useState(false);
+  const [showMergeDialog, setShowMergeDialog] = useState(false);
+  const [mergeForEventId, setMergeForEventId] = useState(null);
+  const [mergeDestProfileId, setMergeDestProfileId] = useState('');
   
   // Error toast state for request operations
   const [errorToast, setErrorToast] = useState({ show: false, message: '' });
@@ -1449,6 +1461,11 @@ const MusicianDashboard = () => {
       fetchProfile();
       fetchProfiles();
     }
+    if (activeTab === 'requests' || activeTab === 'events') {
+      // Need events available for badge rendering and event filter dropdown
+      fetchEvents();
+      if (profiles.length === 0) fetchProfiles();
+    }
   }, [activeTab]);
 
   // NEW: Handle URL parameters for sort option
@@ -1831,6 +1848,129 @@ const MusicianDashboard = () => {
     } catch (error) {
       alert(error.response?.data?.detail || 'Error deleting profile');
     }
+  };
+
+  // ===== Events (Sprint 2 Prompt 3) =====
+  const fetchEvents = async () => {
+    try {
+      const response = await axios.get(`${API}/events`);
+      setEvents(response.data || []);
+    } catch (error) {
+      console.error('fetchEvents failed', error);
+    }
+  };
+
+  const slugifyForEvent = (s) => (s || '').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+
+  const openEventEditor = (eventToEdit = null) => {
+    if (eventToEdit) {
+      setEditingEvent(eventToEdit);
+      setEventForm({
+        name: eventToEdit.name || '',
+        slug: eventToEdit.slug || '',
+        profile_id: eventToEdit.profile_id || '',
+        event_date: eventToEdit.event_date ? String(eventToEdit.event_date).slice(0, 10) : '',
+        active_playlist_ids: eventToEdit.active_playlist_ids || ['__all__'],
+        show_tips_in_success_screen: eventToEdit.show_tips_in_success_screen !== false,
+        show_tips_in_orientation: eventToEdit.show_tips_in_orientation !== false,
+        paypal_username: eventToEdit.paypal_username || '',
+        venmo_username: eventToEdit.venmo_username || '',
+        cashapp_username: eventToEdit.cashapp_username || '',
+        zelle_info: eventToEdit.zelle_info || '',
+        instagram_username: eventToEdit.instagram_username || '',
+        tiktok_username: eventToEdit.tiktok_username || '',
+        facebook_url: eventToEdit.facebook_url || '',
+        spotify_url: eventToEdit.spotify_url || '',
+        apple_music_url: eventToEdit.apple_music_url || '',
+        website: eventToEdit.website || '',
+        bio: eventToEdit.bio || '',
+        musician_name: eventToEdit.musician_name || '',
+        copy_from_source: '',
+      });
+    } else {
+      setEditingEvent(null);
+      setEventForm({ ...EVENT_FORM_DEFAULT, profile_id: profiles.find(p => p.is_default)?.id || profiles[0]?.id || '' });
+    }
+    setShowEventEditor(true);
+  };
+
+  const handleEventFormSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const cleanedSlug = slugifyForEvent(eventForm.slug || eventForm.name);
+      if (!cleanedSlug) {
+        showErrorToast('Slug is required');
+        return;
+      }
+      if (!eventForm.profile_id) {
+        showErrorToast('Please choose a parent profile');
+        return;
+      }
+      // Profile-change confirmation when editing
+      if (editingEvent && eventForm.profile_id !== editingEvent.profile_id) {
+        const confirmed = window.confirm(
+          'This will change your audience URL. Any links or QR codes already shared will stop working. Are you sure?'
+        );
+        if (!confirmed) return;
+      }
+      const payload = {
+        ...eventForm,
+        slug: cleanedSlug,
+        event_date: eventForm.event_date ? eventForm.event_date : null,
+      };
+      // Translate copy_from_source select value to API field
+      if (payload.copy_from_source) {
+        if (payload.copy_from_source.startsWith('profile:')) {
+          payload.copy_from_profile_id = payload.copy_from_source.split(':')[1];
+        } else if (payload.copy_from_source.startsWith('event:')) {
+          payload.copy_from_event_id = payload.copy_from_source.split(':')[1];
+        }
+      }
+      delete payload.copy_from_source;
+
+      if (editingEvent) {
+        const response = await axios.put(`${API}/events/${editingEvent.id}`, payload);
+        setEvents(events.map(ev => ev.id === editingEvent.id ? response.data : ev));
+      } else {
+        const response = await axios.post(`${API}/events`, payload);
+        setEvents([response.data, ...events]);
+      }
+      setShowEventEditor(false);
+      setEditingEvent(null);
+    } catch (err) {
+      showErrorToast(err.response?.data?.detail || 'Error saving event');
+    }
+  };
+
+  const handleDeleteEvent = async (event) => {
+    if (event.status !== 'upcoming') {
+      showErrorToast('Only upcoming events can be deleted');
+      return;
+    }
+    if (!window.confirm(`Delete event "${event.name}"? This cannot be undone.`)) return;
+    try {
+      await axios.delete(`${API}/events/${event.id}`);
+      setEvents(events.filter(ev => ev.id !== event.id));
+    } catch (err) {
+      showErrorToast(err.response?.data?.detail || 'Error deleting event');
+    }
+  };
+
+  const handleEventStatusChange = async (event, newStatus, mergeIntoProfileId = null) => {
+    try {
+      const payload = { status: newStatus };
+      if (mergeIntoProfileId) payload.merge_into_profile_id = mergeIntoProfileId;
+      const response = await axios.put(`${API}/events/${event.id}/status`, payload);
+      setEvents(events.map(ev => ev.id === event.id ? { ...ev, ...response.data } : ev));
+    } catch (err) {
+      showErrorToast(err.response?.data?.detail || 'Error updating event status');
+    }
+  };
+
+  const buildEventUrl = (event) => {
+    const profile = profiles.find(p => p.id === event.profile_id);
+    if (!profile || !musician) return '';
+    return `${AUDIENCE_BASE_URL}/musician/${musician.slug}/${profile.slug}/${event.slug}`;
   };
 
   const openProfileEditor = (profileToEdit = null) => {
@@ -3950,7 +4090,7 @@ const MusicianDashboard = () => {
 
         {/* Desktop Tabs (hidden on mobile) */}
         <div className="hidden md:flex flex-wrap gap-1 bg-gray-800 rounded-lg p-1 mb-8">
-          {['onstage', 'songs', 'requests', 'analytics', 'profile', ...(BILLING_ENABLED ? ['subscription'] : [])].map((tab) => (
+          {['onstage', 'songs', 'requests', 'analytics', 'profile', 'events', ...(BILLING_ENABLED ? ['subscription'] : [])].map((tab) => (
             <button
               key={tab}
               onClick={() => {
@@ -3961,6 +4101,9 @@ const MusicianDashboard = () => {
                   console.log('Analytics tab clicked - fetching data immediately');
                   fetchAnalytics();
                   fetchRequesters();
+                }
+                if (tab === 'events') {
+                  fetchEvents();
                 }
               }}
               className={`px-3 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0 ${
@@ -3973,6 +4116,7 @@ const MusicianDashboard = () => {
                tab === 'design' ? 'Design' : 
                tab === 'onstage' ? 'On Stage' : 
                tab === 'profile' ? 'Profiles' :
+               tab === 'events' ? 'Events' :
                tab.charAt(0).toUpperCase() + tab.slice(1)}
               {tab === 'requests' && requests.filter(r => r.status === 'pending').length > 0 && (
                 <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-xs">
@@ -4005,6 +4149,7 @@ const MusicianDashboard = () => {
                    activeTab === 'design' ? 'Design' : 
                    activeTab === 'onstage' ? 'On Stage' : 
                    activeTab === 'profile' ? 'Profiles' :
+                   activeTab === 'events' ? 'Events' :
                    activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
                 </span>
                 {activeTab === 'requests' && requests.filter(r => r.status === 'pending').length > 0 && (
@@ -4022,12 +4167,13 @@ const MusicianDashboard = () => {
             {showMobileNav && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50">
                 <div className="py-2">
-                  {['onstage', 'songs', 'requests', 'analytics', 'profile', ...(BILLING_ENABLED ? ['subscription'] : [])].map((tab) => (
+                  {['onstage', 'songs', 'requests', 'analytics', 'profile', 'events', ...(BILLING_ENABLED ? ['subscription'] : [])].map((tab) => (
                     <button
                       key={tab}
                       onClick={() => {
                         setActiveTab(tab);
                         setShowMobileNav(false);
+                        if (tab === 'events') fetchEvents();
                       }}
                       className={`w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center justify-between ${
                         activeTab === tab ? 'bg-purple-600 text-white' : 'text-gray-300'
@@ -4038,6 +4184,7 @@ const MusicianDashboard = () => {
                          tab === 'design' ? 'Design' : 
                          tab === 'onstage' ? 'On Stage' : 
                          tab === 'profile' ? 'Profiles' :
+                         tab === 'events' ? 'Events' :
                          tab.charAt(0).toUpperCase() + tab.slice(1)}
                       </span>
                       {tab === 'requests' && requests.filter(r => r.status === 'pending').length > 0 && (
@@ -5492,10 +5639,10 @@ const MusicianDashboard = () => {
               </div>
             )}
             
-            {/* Profile Filter */}
+            {/* Profile + Event Filters */}
             {profiles.length > 0 && (
-              <div className="mb-4 flex items-center gap-3">
-                <span className="text-gray-400 text-sm">Filter by profile:</span>
+              <div className="mb-4 flex flex-wrap items-center gap-3">
+                <span className="text-gray-400 text-sm">Filter:</span>
                 <select
                   data-testid="request-profile-filter"
                   value={profileFilterId}
@@ -5508,6 +5655,20 @@ const MusicianDashboard = () => {
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
+                {events.length > 0 && (
+                  <select
+                    data-testid="request-event-filter"
+                    value={eventFilterId}
+                    onChange={(e) => setEventFilterId(e.target.value)}
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm"
+                  >
+                    <option value="">All Events</option>
+                    <option value="__none__">No event</option>
+                    {events.map(ev => (
+                      <option key={ev.id} value={ev.id}>{ev.name}</option>
+                    ))}
+                  </select>
+                )}
               </div>
             )}
 
@@ -5830,6 +5991,7 @@ const MusicianDashboard = () => {
                     {requests
                       .filter(r => r.show_id === currentShow.id)
                       .filter(r => !profileFilterId || (profileFilterId === 'main' ? !r.profile_id : r.profile_id === profileFilterId))
+                      .filter(r => !eventFilterId || (eventFilterId === '__none__' ? !r.event_id : r.event_id === eventFilterId))
                       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Most recent first
                       .slice(0, 50).map((request) => (
                     <div key={request.id} className="p-4 rounded-lg flex items-center space-x-3 bg-gray-600 border-l-4 border-green-500">
@@ -5863,6 +6025,11 @@ const MusicianDashboard = () => {
                             </span>
                           ) : (
                             <span className="ml-2 bg-gray-700/50 text-gray-500 px-1.5 py-0.5 rounded text-xs">Main</span>
+                          )}
+                          {request.event_id && (
+                            <span data-testid={`request-event-badge-${request.id}`} className="ml-2 bg-yellow-600/20 text-yellow-300 px-1.5 py-0.5 rounded text-xs">
+                              {events.find(ev => ev.id === request.event_id)?.name || 'Event'}
+                            </span>
                           )}
                         </p>
                       </div>
@@ -7129,6 +7296,258 @@ const MusicianDashboard = () => {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Events Tab (Sprint 2 Prompt 3) */}
+        {activeTab === 'events' && (
+          <div data-testid="events-tab" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold">Events</h2>
+                <p className="text-gray-400 text-sm">Time-bounded engagements nested under a profile. Each event has its own audience URL, playlists, and overrides.</p>
+              </div>
+              <button
+                data-testid="create-event-btn"
+                onClick={() => openEventEditor(null)}
+                className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-bold transition duration-300"
+              >
+                + New Event
+              </button>
+            </div>
+
+            {/* Live + Upcoming events */}
+            {events.filter(ev => ev.status !== 'completed').length === 0 ? (
+              <div className="bg-gray-800 rounded-xl p-8 text-center text-gray-400">
+                No active events yet. Create one to share a wedding pre-show link, a private gig URL, or any time-bounded request inbox.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {events.filter(ev => ev.status !== 'completed').map(ev => {
+                  const parent = profiles.find(p => p.id === ev.profile_id);
+                  const url = buildEventUrl(ev);
+                  return (
+                    <div key={ev.id} data-testid={`event-card-${ev.id}`} className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <h3 className="text-lg font-bold">{ev.name}</h3>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${ev.status === 'live' ? 'bg-red-600' : 'bg-blue-700'}`}>
+                              {ev.status === 'live' ? 'LIVE' : 'Upcoming'}
+                            </span>
+                          </div>
+                          <p className="text-gray-400 text-sm">Profile: {parent?.name || '—'}</p>
+                          {ev.event_date && (
+                            <p className="text-gray-400 text-xs">Date: {String(ev.event_date).slice(0, 10)}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="bg-gray-900 rounded px-3 py-2 text-xs text-purple-300 break-all mb-3 font-mono">{url}</div>
+                      <div className="flex flex-wrap gap-2">
+                        <button data-testid={`event-copy-url-${ev.id}`} onClick={() => { navigator.clipboard?.writeText(url); }} className="text-xs px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded">Copy URL</button>
+                        <button data-testid={`event-edit-${ev.id}`} onClick={() => openEventEditor(ev)} className="text-xs px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded">Edit</button>
+                        {ev.status === 'upcoming' && (
+                          <>
+                            <button data-testid={`event-go-live-${ev.id}`} onClick={() => handleEventStatusChange(ev, 'live')} className="text-xs px-3 py-1 bg-green-700 hover:bg-green-600 rounded">Go Live</button>
+                            <button data-testid={`event-delete-${ev.id}`} onClick={() => handleDeleteEvent(ev)} className="text-xs px-3 py-1 bg-red-700 hover:bg-red-600 rounded">Delete</button>
+                          </>
+                        )}
+                        {ev.status === 'live' && (
+                          <button data-testid={`event-end-${ev.id}`} onClick={() => { setMergeForEventId(ev.id); setMergeDestProfileId(ev.profile_id); setShowMergeDialog(true); }} className="text-xs px-3 py-1 bg-yellow-700 hover:bg-yellow-600 rounded">End Event</button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Past Events (collapsed) */}
+            {events.filter(ev => ev.status === 'completed').length > 0 && (
+              <div className="bg-gray-800 rounded-xl border border-gray-700">
+                <button
+                  data-testid="past-events-toggle"
+                  onClick={() => setShowPastEvents(!showPastEvents)}
+                  className="w-full p-4 flex justify-between items-center hover:bg-gray-750 text-left"
+                >
+                  <span className="font-bold">Past Events ({events.filter(ev => ev.status === 'completed').length})</span>
+                  <span>{showPastEvents ? '−' : '+'}</span>
+                </button>
+                {showPastEvents && (
+                  <div className="p-4 border-t border-gray-700 space-y-2">
+                    {events.filter(ev => ev.status === 'completed').map(ev => {
+                      const merged = profiles.find(p => p.id === ev.merged_into_profile_id);
+                      return (
+                        <div key={ev.id} className="bg-gray-900 rounded p-3 flex justify-between items-center text-sm">
+                          <div>
+                            <span className="font-medium">{ev.name}</span>
+                            {ev.event_date && <span className="text-gray-500 text-xs ml-2">{String(ev.event_date).slice(0, 10)}</span>}
+                            {merged && <span className="text-gray-500 text-xs ml-2">→ merged into {merged.name}</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Event Editor Modal */}
+            {showEventEditor && (
+              <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+                <div className="bg-gray-800 rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-bold">{editingEvent ? 'Edit Event' : 'New Event'}</h3>
+                    <button onClick={() => { setShowEventEditor(false); setEditingEvent(null); }} className="text-gray-400 hover:text-white">✕</button>
+                  </div>
+                  <form onSubmit={handleEventFormSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Event Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={eventForm.name}
+                        onChange={(e) => setEventForm({ ...eventForm, name: e.target.value, slug: editingEvent ? eventForm.slug : slugifyForEvent(e.target.value) })}
+                        className="w-full bg-gray-700 rounded px-3 py-2 text-sm"
+                        data-testid="event-form-name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Slug (URL identifier)</label>
+                      <input
+                        type="text"
+                        value={eventForm.slug}
+                        onChange={(e) => setEventForm({ ...eventForm, slug: slugifyForEvent(e.target.value) })}
+                        className="w-full bg-gray-700 rounded px-3 py-2 text-sm font-mono"
+                        data-testid="event-form-slug"
+                      />
+                      {musician && eventForm.profile_id && eventForm.slug && (
+                        <p className="text-xs text-purple-300 mt-1 font-mono break-all">
+                          {AUDIENCE_BASE_URL}/musician/{musician.slug}/{profiles.find(p => p.id === eventForm.profile_id)?.slug || '?'}/{eventForm.slug}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Parent Profile *</label>
+                      <select
+                        required
+                        value={eventForm.profile_id}
+                        onChange={(e) => setEventForm({ ...eventForm, profile_id: e.target.value })}
+                        className="w-full bg-gray-700 rounded px-3 py-2 text-sm"
+                        data-testid="event-form-profile"
+                      >
+                        <option value="">— choose profile —</option>
+                        {profiles.map(p => (
+                          <option key={p.id} value={p.id}>{p.name} ({p.slug})</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Event Date (optional)</label>
+                      <input
+                        type="date"
+                        value={eventForm.event_date}
+                        onChange={(e) => setEventForm({ ...eventForm, event_date: e.target.value })}
+                        className="w-full bg-gray-700 rounded px-3 py-2 text-sm"
+                        data-testid="event-form-date"
+                      />
+                    </div>
+                    {!editingEvent && (
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Copy settings from</label>
+                        <select
+                          value={eventForm.copy_from_source}
+                          onChange={(e) => setEventForm({ ...eventForm, copy_from_source: e.target.value })}
+                          className="w-full bg-gray-700 rounded px-3 py-2 text-sm"
+                        >
+                          <option value="">— blank —</option>
+                          <optgroup label="Profiles">
+                            {profiles.map(p => <option key={p.id} value={`profile:${p.id}`}>{p.name}</option>)}
+                          </optgroup>
+                          <optgroup label="Events">
+                            {events.map(ev => <option key={ev.id} value={`event:${ev.id}`}>{ev.name}</option>)}
+                          </optgroup>
+                        </select>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-3">
+                      <label className="flex items-center space-x-2 text-sm">
+                        <input type="checkbox" checked={eventForm.show_tips_in_success_screen} onChange={(e) => setEventForm({ ...eventForm, show_tips_in_success_screen: e.target.checked })} />
+                        <span>Show tips on success screen</span>
+                      </label>
+                      <label className="flex items-center space-x-2 text-sm">
+                        <input type="checkbox" checked={eventForm.show_tips_in_orientation} onChange={(e) => setEventForm({ ...eventForm, show_tips_in_orientation: e.target.checked })} />
+                        <span>Show tips in orientation</span>
+                      </label>
+                    </div>
+                    <details className="bg-gray-900 rounded p-3">
+                      <summary className="cursor-pointer text-sm font-semibold">Override fields (optional)</summary>
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        {[
+                          ['musician_name', 'Display name'],
+                          ['bio', 'Bio'],
+                          ['venmo_username', 'Venmo'],
+                          ['paypal_username', 'PayPal'],
+                          ['cashapp_username', 'Cash App'],
+                          ['zelle_info', 'Zelle'],
+                          ['instagram_username', 'Instagram'],
+                          ['tiktok_username', 'TikTok'],
+                          ['facebook_url', 'Facebook URL'],
+                          ['spotify_url', 'Spotify URL'],
+                          ['apple_music_url', 'Apple Music URL'],
+                          ['website', 'Website'],
+                        ].map(([key, label]) => (
+                          <div key={key}>
+                            <label className="block text-xs text-gray-400 mb-1">{label}</label>
+                            <input
+                              type="text"
+                              value={eventForm[key] || ''}
+                              onChange={(e) => setEventForm({ ...eventForm, [key]: e.target.value })}
+                              className="w-full bg-gray-700 rounded px-2 py-1"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                    <div className="flex justify-end space-x-2 pt-2">
+                      <button type="button" onClick={() => { setShowEventEditor(false); setEditingEvent(null); }} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded">Cancel</button>
+                      <button type="submit" data-testid="event-form-save" className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded font-bold">
+                        {editingEvent ? 'Save Changes' : 'Create Event'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* End Event / Merge Dialog */}
+            {showMergeDialog && (
+              <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+                <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full">
+                  <h3 className="text-lg font-bold mb-2">End Event</h3>
+                  <p className="text-gray-400 text-sm mb-4">Optionally merge shows and requests from this event into a destination profile. Leave empty to keep them tagged on the event only.</p>
+                  <label className="block text-xs text-gray-400 mb-1">Merge into profile (optional)</label>
+                  <select value={mergeDestProfileId} onChange={(e) => setMergeDestProfileId(e.target.value)} className="w-full bg-gray-700 rounded px-3 py-2 text-sm mb-4">
+                    <option value="">— do not merge —</option>
+                    {profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                  <div className="flex justify-end space-x-2">
+                    <button onClick={() => { setShowMergeDialog(false); setMergeForEventId(null); }} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded">Cancel</button>
+                    <button
+                      data-testid="event-end-confirm"
+                      onClick={async () => {
+                        const ev = events.find(e => e.id === mergeForEventId);
+                        if (ev) await handleEventStatusChange(ev, 'completed', mergeDestProfileId || null);
+                        setShowMergeDialog(false); setMergeForEventId(null); setMergeDestProfileId('');
+                      }}
+                      className="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 rounded font-bold"
+                    >
+                      Complete Event
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -9143,7 +9562,7 @@ const MusicianDashboard = () => {
 
 
 const AudienceInterface = () => {
-  const { slug, masterSlug, profileSlug } = useParams();
+  const { slug, masterSlug, profileSlug, eventSlug } = useParams();
   const effectiveSlug = slug || masterSlug; // Use whichever is available
   const [musician, setMusician] = useState(null);
   const [profileData, setProfileData] = useState(null); // Multi-Profile context
@@ -9404,7 +9823,10 @@ const AudienceInterface = () => {
   const colors = colorSchemes[designSettings.color_scheme] || colorSchemes.purple;
 
   useEffect(() => {
-    if (profileSlug && masterSlug) {
+    if (eventSlug && profileSlug && masterSlug) {
+      // Event mode: fetch event-merged audience payload
+      fetchDesignSettings().then(() => fetchEventData());
+    } else if (profileSlug && masterSlug) {
       // Profile mode: fetch design settings first, then profile data overrides name/bio
       fetchDesignSettings().then(() => fetchProfileData());
     } else {
@@ -9426,7 +9848,32 @@ const AudienceInterface = () => {
         setRandomSeed(Date.now());
       }
     }
-  }, [slug, masterSlug, profileSlug]);
+  }, [slug, masterSlug, profileSlug, eventSlug]);
+
+  // Event-mode data fetcher (3-segment URL)
+  const fetchEventData = async () => {
+    try {
+      const response = await axios.get(`${API}/musicians/${masterSlug}/${profileSlug}/${eventSlug}`);
+      const data = response.data;
+      setMusician(data);
+      setProfileData(data);
+      setSongs(data.songs || []);
+      setFilteredSongs(data.songs || []);
+      if (data.design_settings) {
+        setDesignSettings(prev => ({ ...prev, ...data.design_settings }));
+      } else {
+        setDesignSettings(prev => ({
+          ...prev,
+          musician_name: data.name || prev.musician_name,
+          bio: data.bio || prev.bio,
+        }));
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error('Event fetch failed:', error);
+      setLoading(false);
+    }
+  };
 
   // Profile-mode data fetcher
   const fetchProfileData = async () => {
@@ -9996,7 +10443,8 @@ const AudienceInterface = () => {
         dedication: requestForm.dedication || '',
         tip_amount: parseFloat(tipAmount) || 0.0,
         audience_id: audienceId,  // Phase 2: Include stable audience identifier
-        profile_slug: profileSlug || null  // Multi-Profile: pass profile context
+        profile_slug: profileSlug || null,  // Multi-Profile: pass profile context
+        event_slug: eventSlug || null  // Events: pass event context if present
       });
       
       // Store request ID for analytics
@@ -12939,7 +13387,7 @@ const LandingPage = () => {
 
 // Short URL Redirect component - handles catch-all routes for vanity URLs
 const ShortUrlRedirect = () => {
-  const { seg1, seg2 } = useParams();
+  const { seg1, seg2, seg3 } = useParams();
   const navigate = useNavigate();
   const [notFound, setNotFound] = useState(false);
 
@@ -12948,7 +13396,9 @@ const ShortUrlRedirect = () => {
       try {
         await axios.get(`${API}/resolve/${seg1}`);
         // Slug found - redirect to the proper musician URL
-        if (seg2) {
+        if (seg3) {
+          navigate(`/musician/${seg1}/${seg2}/${seg3}`, { replace: true });
+        } else if (seg2) {
           navigate(`/musician/${seg1}/${seg2}`, { replace: true });
         } else {
           navigate(`/musician/${seg1}`, { replace: true });
@@ -12958,7 +13408,7 @@ const ShortUrlRedirect = () => {
       }
     };
     resolveSlug();
-  }, [seg1, seg2, navigate]);
+  }, [seg1, seg2, seg3, navigate]);
 
   if (notFound) {
     return (
@@ -13056,9 +13506,11 @@ const App = () => {
       <Routes>
         <Route path="/" element={musician ? <Navigate to="/dashboard" /> : <LandingPage />} />
         <Route path="/dashboard" element={musician ? <MusicianDashboard /> : <Navigate to="/" />} />
+        <Route path="/musician/:masterSlug/:profileSlug/:eventSlug" element={<AudienceInterface />} />
         <Route path="/musician/:masterSlug/:profileSlug" element={<AudienceInterface />} />
         <Route path="/musician/:slug" element={<AudienceInterface />} />
         <Route path="/on-stage/:slug" element={<OnStageInterface />} />
+        <Route path="/:seg1/:seg2/:seg3" element={<ShortUrlRedirect />} />
         <Route path="/:seg1/:seg2" element={<ShortUrlRedirect />} />
         <Route path="/:seg1" element={<ShortUrlRedirect />} />
       </Routes>

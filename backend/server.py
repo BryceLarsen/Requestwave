@@ -244,6 +244,7 @@ class RequestCreate(BaseModel):
     tip_amount: float = 0.0
     audience_id: Optional[str] = None  # Phase 2: Stable anonymous audience identifier
     profile_slug: Optional[str] = None  # Multi-Profile: optional profile context
+    event_slug: Optional[str] = None  # Events: optional event context (overrides profile when set)
 
 class RequestEmailAttach(BaseModel):
     """Moment 3: Attach email to an existing request after submission"""
@@ -262,6 +263,7 @@ class Request(BaseModel):
     tip_amount: float = 0.0
     audience_id: Optional[str] = None  # Phase 2: Stable anonymous audience identifier
     profile_id: Optional[str] = None  # Multi-Profile: profile context for this request
+    event_id: Optional[str] = None  # Events: event context for this request
     # Artist-controlled show grouping (not provided by audience)
     show_id: Optional[str] = None  # Artist can assign later
     show_name: Optional[str] = None  # Display only, not for filtering
@@ -297,6 +299,7 @@ class Show(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     musician_id: str
     profile_id: Optional[str] = None  # Per-profile shows: tags which profile owns this show
+    event_id: Optional[str] = None  # Events: tags which event owns this show (if any)
     name: str
     date: Optional[str] = None
     venue: Optional[str] = None
@@ -658,6 +661,84 @@ class ProfileResponse(BaseModel):
     design_show_notes: Optional[bool] = None
     current_show_id: Optional[str] = None
     current_show_name: Optional[str] = None
+
+# Event models (Sprint 2 Prompt 3)
+class EventCreate(BaseModel):
+    name: str
+    slug: str
+    profile_id: str  # parent profile (required)
+    event_date: Optional[datetime] = None
+    active_playlist_ids: List[str] = ["__all__"]
+    show_tips_in_success_screen: bool = True
+    show_tips_in_orientation: bool = True
+    paypal_username: Optional[str] = None
+    venmo_username: Optional[str] = None
+    cashapp_username: Optional[str] = None
+    zelle_info: Optional[str] = None
+    instagram_username: Optional[str] = None
+    tiktok_username: Optional[str] = None
+    facebook_url: Optional[str] = None
+    spotify_url: Optional[str] = None
+    apple_music_url: Optional[str] = None
+    website: Optional[str] = None
+    bio: Optional[str] = None
+    musician_name: Optional[str] = None
+    # Seed-from helpers (mutually exclusive; if both, copy_from_event_id wins)
+    copy_from_profile_id: Optional[str] = None
+    copy_from_event_id: Optional[str] = None
+
+class EventUpdateModel(BaseModel):
+    name: Optional[str] = None
+    slug: Optional[str] = None
+    profile_id: Optional[str] = None
+    event_date: Optional[datetime] = None
+    active_playlist_ids: Optional[List[str]] = None
+    show_tips_in_success_screen: Optional[bool] = None
+    show_tips_in_orientation: Optional[bool] = None
+    paypal_username: Optional[str] = None
+    venmo_username: Optional[str] = None
+    cashapp_username: Optional[str] = None
+    zelle_info: Optional[str] = None
+    instagram_username: Optional[str] = None
+    tiktok_username: Optional[str] = None
+    facebook_url: Optional[str] = None
+    spotify_url: Optional[str] = None
+    apple_music_url: Optional[str] = None
+    website: Optional[str] = None
+    bio: Optional[str] = None
+    musician_name: Optional[str] = None
+
+class EventResponse(BaseModel):
+    id: str
+    musician_id: str
+    profile_id: str
+    name: str
+    slug: str
+    event_date: Optional[datetime] = None
+    status: str = "upcoming"  # upcoming | live | completed
+    current_show_id: Optional[str] = None
+    current_show_name: Optional[str] = None
+    active_playlist_ids: List[str] = []
+    show_tips_in_success_screen: bool = True
+    show_tips_in_orientation: bool = True
+    paypal_username: Optional[str] = None
+    venmo_username: Optional[str] = None
+    cashapp_username: Optional[str] = None
+    zelle_info: Optional[str] = None
+    instagram_username: Optional[str] = None
+    tiktok_username: Optional[str] = None
+    facebook_url: Optional[str] = None
+    spotify_url: Optional[str] = None
+    apple_music_url: Optional[str] = None
+    website: Optional[str] = None
+    bio: Optional[str] = None
+    musician_name: Optional[str] = None
+    merged_into_profile_id: Optional[str] = None  # set when status=completed and merge requested
+    created_at: str
+
+class EventStatusUpdate(BaseModel):
+    status: str  # upcoming | live | completed
+    merge_into_profile_id: Optional[str] = None  # only used when status=completed
 
 # Utility functions
 def create_slug(name: str) -> str:
@@ -4227,12 +4308,19 @@ async def create_request(request_data: RequestCreate):
     # Multi-Profile: resolve the relevant profile for this request (from profile_slug, else default)
     active_profile = await _get_active_profile_for_request(musician_id, request_data.profile_slug)
     profile_id = active_profile["id"] if active_profile else None
-    current_show_id = active_profile.get("current_show_id") if active_profile else None
-    current_show_name = active_profile.get("current_show_name") if active_profile else None
     
-    # AUTO-SHOW CREATION: If no active show exists on this profile, create one automatically
-    if not current_show_id and active_profile:
-        # Optimistic lock: only set current_show_id if it's still null on the profile doc
+    # Events: if event_slug is set, prefer the event for show context
+    active_event = await _get_active_event_for_request(musician_id, profile_id, request_data.event_slug)
+    event_id = active_event["id"] if active_event else None
+    if active_event:
+        current_show_id = active_event.get("current_show_id")
+        current_show_name = active_event.get("current_show_name")
+    else:
+        current_show_id = active_profile.get("current_show_id") if active_profile else None
+        current_show_name = active_profile.get("current_show_name") if active_profile else None
+    
+    # AUTO-SHOW CREATION: auto-create on event when present, else on profile
+    if not current_show_id and (active_event or active_profile):
         from datetime import date
         today = date.today().strftime("%B %d, %Y")
         show_id = str(uuid.uuid4())
@@ -4240,6 +4328,7 @@ async def create_request(request_data: RequestCreate):
             "id": show_id,
             "musician_id": musician_id,
             "profile_id": profile_id,
+            "event_id": event_id,
             "name": f"Show - {today}",
             "date": date.today().isoformat(),
             "venue": None,
@@ -4251,10 +4340,16 @@ async def create_request(request_data: RequestCreate):
             "created_at": datetime.now(timezone.utc),
         }
         await db.shows.insert_one(new_show)
-        lock_result = await db.profiles.update_one(
-            {"id": profile_id, "$or": [{"current_show_id": None}, {"current_show_id": {"$exists": False}}]},
-            {"$set": {"current_show_id": show_id, "current_show_name": new_show["name"]}},
-        )
+        if active_event:
+            lock_result = await db.events.update_one(
+                {"id": event_id, "$or": [{"current_show_id": None}, {"current_show_id": {"$exists": False}}]},
+                {"$set": {"current_show_id": show_id, "current_show_name": new_show["name"]}},
+            )
+        else:
+            lock_result = await db.profiles.update_one(
+                {"id": profile_id, "$or": [{"current_show_id": None}, {"current_show_id": {"$exists": False}}]},
+                {"$set": {"current_show_id": show_id, "current_show_name": new_show["name"]}},
+            )
         if lock_result.modified_count == 1:
             current_show_id = show_id
             current_show_name = new_show["name"]
@@ -4265,13 +4360,15 @@ async def create_request(request_data: RequestCreate):
                 entity_type="show",
                 show_id=show_id,
                 entity_id=show_id,
-                metadata={"trigger": "no_active_show", "profile_id": profile_id},
+                metadata={"trigger": "no_active_show", "profile_id": profile_id, "event_id": event_id},
             )
         else:
-            # Lost the race - another concurrent request just set the current show on this profile.
-            # Discard our auto-created show and use the one that won the race.
+            # Lost the race
             await db.shows.delete_one({"id": show_id})
-            refreshed = await db.profiles.find_one({"id": profile_id}, {"_id": 0, "current_show_id": 1, "current_show_name": 1})
+            if active_event:
+                refreshed = await db.events.find_one({"id": event_id}, {"_id": 0, "current_show_id": 1, "current_show_name": 1})
+            else:
+                refreshed = await db.profiles.find_one({"id": profile_id}, {"_id": 0, "current_show_id": 1, "current_show_name": 1})
             current_show_id = refreshed.get("current_show_id") if refreshed else None
             current_show_name = refreshed.get("current_show_name") if refreshed else None
     
@@ -4291,6 +4388,9 @@ async def create_request(request_data: RequestCreate):
     # Multi-Profile: stamp profile_id on the request
     if profile_id:
         request_dict["profile_id"] = profile_id
+    # Events: stamp event_id on the request
+    if event_id:
+        request_dict["event_id"] = event_id
     
     await db.requests.insert_one(request_dict)
     
@@ -4387,11 +4487,19 @@ async def create_musician_request(
     # Multi-Profile: resolve the relevant profile for this request (from profile_slug, else default)
     active_profile = await _get_active_profile_for_request(musician_id, request_data.profile_slug)
     profile_id = active_profile["id"] if active_profile else None
-    current_show_id = active_profile.get("current_show_id") if active_profile else None
-    current_show_name = active_profile.get("current_show_name") if active_profile else None
 
-    # AUTO-SHOW CREATION: If no active show exists on this profile, create one automatically
-    if not current_show_id and active_profile:
+    # Events: if event_slug is set, prefer the event for show context
+    active_event = await _get_active_event_for_request(musician_id, profile_id, request_data.event_slug)
+    event_id = active_event["id"] if active_event else None
+    if active_event:
+        current_show_id = active_event.get("current_show_id")
+        current_show_name = active_event.get("current_show_name")
+    else:
+        current_show_id = active_profile.get("current_show_id") if active_profile else None
+        current_show_name = active_profile.get("current_show_name") if active_profile else None
+
+    # AUTO-SHOW CREATION: auto-create on event when present, else on profile
+    if not current_show_id and (active_event or active_profile):
         from datetime import date
         today = date.today().strftime("%B %d, %Y")
         show_id = str(uuid.uuid4())
@@ -4399,6 +4507,7 @@ async def create_musician_request(
             "id": show_id,
             "musician_id": musician_id,
             "profile_id": profile_id,
+            "event_id": event_id,
             "name": f"Show - {today}",
             "date": date.today().isoformat(),
             "venue": None,
@@ -4410,10 +4519,16 @@ async def create_musician_request(
             "created_at": datetime.now(timezone.utc),
         }
         await db.shows.insert_one(new_show)
-        lock_result = await db.profiles.update_one(
-            {"id": profile_id, "$or": [{"current_show_id": None}, {"current_show_id": {"$exists": False}}]},
-            {"$set": {"current_show_id": show_id, "current_show_name": new_show["name"]}},
-        )
+        if active_event:
+            lock_result = await db.events.update_one(
+                {"id": event_id, "$or": [{"current_show_id": None}, {"current_show_id": {"$exists": False}}]},
+                {"$set": {"current_show_id": show_id, "current_show_name": new_show["name"]}},
+            )
+        else:
+            lock_result = await db.profiles.update_one(
+                {"id": profile_id, "$or": [{"current_show_id": None}, {"current_show_id": {"$exists": False}}]},
+                {"$set": {"current_show_id": show_id, "current_show_name": new_show["name"]}},
+            )
         if lock_result.modified_count == 1:
             current_show_id = show_id
             current_show_name = new_show["name"]
@@ -4424,11 +4539,14 @@ async def create_musician_request(
                 entity_type="show",
                 show_id=show_id,
                 entity_id=show_id,
-                metadata={"trigger": "no_active_show", "profile_id": profile_id},
+                metadata={"trigger": "no_active_show", "profile_id": profile_id, "event_id": event_id},
             )
         else:
             await db.shows.delete_one({"id": show_id})
-            refreshed = await db.profiles.find_one({"id": profile_id}, {"_id": 0, "current_show_id": 1, "current_show_name": 1})
+            if active_event:
+                refreshed = await db.events.find_one({"id": event_id}, {"_id": 0, "current_show_id": 1, "current_show_name": 1})
+            else:
+                refreshed = await db.profiles.find_one({"id": profile_id}, {"_id": 0, "current_show_id": 1, "current_show_name": 1})
             current_show_id = refreshed.get("current_show_id") if refreshed else None
             current_show_name = refreshed.get("current_show_name") if refreshed else None
 
@@ -4448,6 +4566,9 @@ async def create_musician_request(
     # Multi-Profile: stamp profile_id on the request
     if profile_id:
         request_dict["profile_id"] = profile_id
+    # Events: stamp event_id on the request
+    if event_id:
+        request_dict["event_id"] = event_id
     
     # Update song request count
     await db.songs.update_one(
@@ -7625,6 +7746,50 @@ async def _get_active_profile_for_request(musician_id: str, profile_slug: Option
     return await _get_default_profile(musician_id)
 
 
+async def _get_active_event_for_request(musician_id: str, profile_id: Optional[str], event_slug: Optional[str]):
+    """Return the matching event for a (profile_id, event_slug) pair, or None.
+
+    Used when audience submits via /musician/{master}/{profile}/{event} URL pattern.
+    """
+    if not (profile_id and event_slug):
+        return None
+    return await db.events.find_one(
+        {"musician_id": musician_id, "profile_id": profile_id, "slug": event_slug},
+        {"_id": 0},
+    )
+
+
+def _event_doc_to_response(e: dict) -> "EventResponse":
+    return EventResponse(
+        id=e["id"],
+        musician_id=e["musician_id"],
+        profile_id=e["profile_id"],
+        name=e["name"],
+        slug=e["slug"],
+        event_date=e.get("event_date"),
+        status=e.get("status", "upcoming"),
+        current_show_id=e.get("current_show_id"),
+        current_show_name=e.get("current_show_name"),
+        active_playlist_ids=e.get("active_playlist_ids", []),
+        show_tips_in_success_screen=e.get("show_tips_in_success_screen", True),
+        show_tips_in_orientation=e.get("show_tips_in_orientation", True),
+        paypal_username=e.get("paypal_username"),
+        venmo_username=e.get("venmo_username"),
+        cashapp_username=e.get("cashapp_username"),
+        zelle_info=e.get("zelle_info"),
+        instagram_username=e.get("instagram_username"),
+        tiktok_username=e.get("tiktok_username"),
+        facebook_url=e.get("facebook_url"),
+        spotify_url=e.get("spotify_url"),
+        apple_music_url=e.get("apple_music_url"),
+        website=e.get("website"),
+        bio=e.get("bio"),
+        musician_name=e.get("musician_name"),
+        merged_into_profile_id=e.get("merged_into_profile_id"),
+        created_at=str(e.get("created_at", "")),
+    )
+
+
 def _build_profile_public_response(musician, profile, songs_list):
     """Build the merged public response for a profile audience page.
     Profile fields override master account values when set."""
@@ -7829,6 +7994,259 @@ async def get_musician_by_profile(master_slug: str, profile_slug: str):
     
     songs_list = await _get_profile_songs(profile, musician)
     return _build_profile_public_response(musician, profile, songs_list)
+
+
+# ======================================================================
+# Events (Sprint 2 Prompt 3) — Authenticated CRUD + Public resolution
+# ======================================================================
+
+async def _event_slug_unique(musician_id: str, slug: str, exclude_event_id: Optional[str] = None) -> bool:
+    q = {"musician_id": musician_id, "slug": slug}
+    if exclude_event_id:
+        q["id"] = {"$ne": exclude_event_id}
+    return await db.events.find_one(q, {"_id": 0, "id": 1}) is None
+
+
+def _validate_event_slug(slug: str) -> None:
+    if not re.match(r'^[a-z0-9-]+$', slug):
+        raise HTTPException(status_code=400, detail="Slug must contain only lowercase letters, numbers, and hyphens")
+    if len(slug) < 2 or len(slug) > 60:
+        raise HTTPException(status_code=400, detail="Slug must be 2 to 60 characters")
+    if slug.startswith('-') or slug.endswith('-'):
+        raise HTTPException(status_code=400, detail="Slug cannot start or end with a hyphen")
+
+
+OVERRIDE_FIELDS = [
+    "paypal_username", "venmo_username", "cashapp_username", "zelle_info",
+    "instagram_username", "tiktok_username", "facebook_url", "spotify_url",
+    "apple_music_url", "website", "bio", "musician_name",
+]
+
+
+@api_router.post("/events", response_model=EventResponse)
+async def create_event(event_data: EventCreate, musician_id: str = Depends(get_current_musician)):
+    """Create an event under a profile owned by the current musician."""
+    _validate_event_slug(event_data.slug)
+    
+    # Parent profile must belong to this musician
+    parent_profile = await db.profiles.find_one(
+        {"id": event_data.profile_id, "musician_id": musician_id}, {"_id": 0}
+    )
+    if not parent_profile:
+        raise HTTPException(status_code=404, detail="Parent profile not found")
+    
+    # Slug must be unique within this musician's events
+    if not await _event_slug_unique(musician_id, event_data.slug):
+        raise HTTPException(status_code=409, detail="An event with this slug already exists")
+    
+    # Build event_dict starting from the request payload
+    event_dict = {
+        "id": str(uuid.uuid4()),
+        "musician_id": musician_id,
+        "profile_id": event_data.profile_id,
+        "name": event_data.name,
+        "slug": event_data.slug,
+        "event_date": event_data.event_date,
+        "status": "upcoming",
+        "current_show_id": None,
+        "current_show_name": None,
+        "active_playlist_ids": event_data.active_playlist_ids or ["__all__"],
+        "show_tips_in_success_screen": event_data.show_tips_in_success_screen,
+        "show_tips_in_orientation": event_data.show_tips_in_orientation,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    for f in OVERRIDE_FIELDS:
+        event_dict[f] = getattr(event_data, f, None)
+    
+    # Seed from another profile/event if requested. copy_from_event_id wins if both provided.
+    seed = None
+    if event_data.copy_from_event_id:
+        seed = await db.events.find_one(
+            {"id": event_data.copy_from_event_id, "musician_id": musician_id}, {"_id": 0}
+        )
+    elif event_data.copy_from_profile_id:
+        seed = await db.profiles.find_one(
+            {"id": event_data.copy_from_profile_id, "musician_id": musician_id}, {"_id": 0}
+        )
+    if seed:
+        # Only seed fields that weren't explicitly set on the create payload (i.e., still None).
+        for f in OVERRIDE_FIELDS + ["show_tips_in_success_screen", "show_tips_in_orientation"]:
+            if event_dict.get(f) in (None, "", False) and seed.get(f) not in (None, ""):
+                event_dict[f] = seed.get(f)
+        # Active playlists: if user didn't override (left default), copy from seed
+        if event_dict["active_playlist_ids"] == ["__all__"] and seed.get("active_playlist_ids"):
+            event_dict["active_playlist_ids"] = seed["active_playlist_ids"]
+    
+    await db.events.insert_one(event_dict)
+    event_dict.pop("_id", None)
+    return _event_doc_to_response(event_dict)
+
+
+@api_router.get("/events", response_model=List[EventResponse])
+async def list_events(
+    profile_id: Optional[str] = None,
+    status: Optional[str] = None,
+    musician_id: str = Depends(get_current_musician),
+):
+    """List all events for current musician. Optional filters: profile_id, status."""
+    q: dict = {"musician_id": musician_id}
+    if profile_id:
+        q["profile_id"] = profile_id
+    if status:
+        q["status"] = status
+    events = await db.events.find(q, {"_id": 0}).sort("created_at", DESCENDING).to_list(500)
+    return [_event_doc_to_response(e) for e in events]
+
+
+@api_router.put("/events/{event_id}")
+async def update_event(event_id: str, update_data: EventUpdateModel, musician_id: str = Depends(get_current_musician)):
+    """Update fields on an event. If profile_id changes, include url_will_change in response."""
+    event = await db.events.find_one({"id": event_id, "musician_id": musician_id}, {"_id": 0})
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    update_fields: dict = {}
+    url_will_change = False
+    
+    if update_data.name is not None:
+        update_fields["name"] = update_data.name
+    if update_data.slug is not None and update_data.slug != event["slug"]:
+        _validate_event_slug(update_data.slug)
+        if not await _event_slug_unique(musician_id, update_data.slug, exclude_event_id=event_id):
+            raise HTTPException(status_code=409, detail="An event with this slug already exists")
+        update_fields["slug"] = update_data.slug
+        url_will_change = True
+    if update_data.profile_id is not None and update_data.profile_id != event["profile_id"]:
+        # New parent profile must belong to this musician
+        new_parent = await db.profiles.find_one({"id": update_data.profile_id, "musician_id": musician_id}, {"_id": 0, "id": 1})
+        if not new_parent:
+            raise HTTPException(status_code=404, detail="Parent profile not found")
+        update_fields["profile_id"] = update_data.profile_id
+        url_will_change = True
+    if update_data.event_date is not None:
+        update_fields["event_date"] = update_data.event_date
+    if update_data.active_playlist_ids is not None:
+        update_fields["active_playlist_ids"] = update_data.active_playlist_ids
+    for bool_field in ("show_tips_in_success_screen", "show_tips_in_orientation"):
+        val = getattr(update_data, bool_field, None)
+        if val is not None:
+            update_fields[bool_field] = val
+    for f in OVERRIDE_FIELDS:
+        val = getattr(update_data, f, None)
+        if val is not None:
+            update_fields[f] = val if val != "" else None
+    
+    if update_fields:
+        await db.events.update_one({"id": event_id}, {"$set": update_fields})
+    
+    updated = await db.events.find_one({"id": event_id}, {"_id": 0})
+    resp = _event_doc_to_response(updated).dict()
+    resp["url_will_change"] = url_will_change
+    return resp
+
+
+@api_router.delete("/events/{event_id}")
+async def delete_event(event_id: str, musician_id: str = Depends(get_current_musician)):
+    """Delete an event. Only allowed when status == 'upcoming'."""
+    event = await db.events.find_one({"id": event_id, "musician_id": musician_id}, {"_id": 0})
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    if event.get("status", "upcoming") != "upcoming":
+        raise HTTPException(status_code=400, detail="Only upcoming events can be deleted")
+    await db.events.delete_one({"id": event_id})
+    return {"ok": True, "message": "Event deleted"}
+
+
+@api_router.put("/events/{event_id}/status")
+async def update_event_status(event_id: str, payload: EventStatusUpdate, musician_id: str = Depends(get_current_musician)):
+    """Transition event status. Allowed: upcoming->live, live->completed.
+    When completing, optionally pass merge_into_profile_id to reassign shows + requests."""
+    event = await db.events.find_one({"id": event_id, "musician_id": musician_id}, {"_id": 0})
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    current = event.get("status", "upcoming")
+    new_status = (payload.status or "").strip().lower()
+    valid = {"upcoming -> live", "live -> completed"}
+    if f"{current} -> {new_status}" not in valid:
+        raise HTTPException(status_code=400, detail=f"Invalid status transition: {current} -> {new_status}")
+    
+    update_fields = {"status": new_status}
+    response_extra = {}
+    
+    if new_status == "completed" and payload.merge_into_profile_id:
+        dest_profile = await db.profiles.find_one(
+            {"id": payload.merge_into_profile_id, "musician_id": musician_id}, {"_id": 0, "id": 1}
+        )
+        if not dest_profile:
+            raise HTTPException(status_code=404, detail="Destination profile not found")
+        # Reassign all shows owned by this event to the destination profile
+        shows_res = await db.shows.update_many(
+            {"musician_id": musician_id, "event_id": event_id},
+            {"$set": {"profile_id": dest_profile["id"], "event_id": None}},
+        )
+        # Retag all requests that belong to this event to the destination profile
+        reqs_res = await db.requests.update_many(
+            {"musician_id": musician_id, "event_id": event_id},
+            {"$set": {"profile_id": dest_profile["id"]}},
+        )
+        update_fields["merged_into_profile_id"] = dest_profile["id"]
+        response_extra["shows_reassigned"] = shows_res.modified_count
+        response_extra["requests_retagged"] = reqs_res.modified_count
+    
+    if new_status == "completed":
+        # Clear event's current_show pointer (any auto-shows it owned)
+        update_fields["current_show_id"] = None
+        update_fields["current_show_name"] = None
+    
+    await db.events.update_one({"id": event_id}, {"$set": update_fields})
+    updated = await db.events.find_one({"id": event_id}, {"_id": 0})
+    return {**_event_doc_to_response(updated).dict(), **response_extra}
+
+
+@api_router.get("/musicians/{master_slug}/{profile_slug}/{event_slug}")
+async def get_musician_by_event(master_slug: str, profile_slug: str, event_slug: str):
+    """Public endpoint: Resolve event by all three slugs. Returns the public
+    audience payload (parent profile merged with event overrides) plus songs from
+    the event's active playlists.
+    Returns 404 if any of the slugs do not match."""
+    musician = await db.musicians.find_one({"slug": master_slug})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    
+    profile = await db.profiles.find_one({"musician_id": musician["id"], "slug": profile_slug}, {"_id": 0})
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    
+    event = await db.events.find_one(
+        {"musician_id": musician["id"], "profile_id": profile["id"], "slug": event_slug},
+        {"_id": 0},
+    )
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    # Build a merged "effective profile" = profile + event overrides (event wins when set)
+    merged = dict(profile)
+    for f in OVERRIDE_FIELDS + ["show_tips_in_success_screen", "show_tips_in_orientation"]:
+        ev_val = event.get(f)
+        if ev_val not in (None, ""):
+            merged[f] = ev_val
+    # Active playlists come from the EVENT
+    merged["active_playlist_ids"] = event.get("active_playlist_ids", ["__all__"])
+    # Live-show context comes from the EVENT (not profile)
+    merged["current_show_id"] = event.get("current_show_id")
+    merged["current_show_name"] = event.get("current_show_name")
+    
+    songs_list = await _get_profile_songs(merged, musician)
+    response = _build_profile_public_response(musician, merged, songs_list)
+    # Tell the audience client which event/profile slugs this is
+    response["event_id"] = event["id"]
+    response["event_slug"] = event["slug"]
+    response["event_name"] = event["name"]
+    response["event_status"] = event.get("status", "upcoming")
+    response["profile_slug"] = profile["slug"]
+    return response
+
 
 @api_router.get("/resolve/{slug}")
 async def resolve_slug(slug: str):
