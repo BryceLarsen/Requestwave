@@ -1,0 +1,53 @@
+{
+  "summary": "Tested new analytics requesters filter feature. Backend (11/11) PASSED. Frontend filter dropdown, fetch behavior, and Export-button label toggle work. CRITICAL bug found: 'All Profiles' default view renders empty rows because the new code uses fields that do not exist on /analytics/daily's top_requesters payload.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Analytics tab → Most Active Requesters",
+        "issue": "When requestersFilter === 'all' (default), each rendered row is empty (no name, email, or count badge). The mapping `r.requester_name / r.email / r.request_count / r.total_tips` does not match the /api/analytics?days=... payload, which returns `top_requesters: [{requester, count}]`. Net effect: 10 blank rows on first load, regressing the 'existing behavior preserved' contract.",
+        "selector": "[data-testid=\"most-active-requesters-list\"]",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_analytics_requesters_filters.py",
+    "/app/test_reports/pytest/pytest_results_analytics_filters.xml"
+  ],
+  "action_items": [
+    "Fix Most Active Requesters rendering for filter='all'. Recommended: keep one render shape and map analyticsData.top_requesters to {name: r.requester, email: '', request_count: r.count, total_tips: 0} OR update GET /api/analytics (daily) to include requester_name/email/request_count/total_tips on top_requesters. Frontend file: /app/frontend/src/App.js around lines 8447-8455."
+  ],
+  "critical_code_review_comments": [
+    "VERIFIED: Backend /api/analytics/requesters correctly applies profile_id and event_id to MongoDB $match and excludes archived.",
+    "VERIFIED: Backend /api/analytics/export-requesters returns text/csv with filenames: requesters-YYYYMMDD.csv (no filter), requesters-profile-<first8>-YYYYMMDD.csv, requesters-event-<first8>-YYYYMMDD.csv. When both params provided, event takes precedence in filename (matches code's if/elif).",
+    "VERIFIED: Frontend filter dropdown [data-testid='requesters-filter-select'] has 'All Profiles' default + optgroup 'Profiles' (Default Test 2) + optgroup 'Events' (Sprint4 Event, Alex and Jenna Reception).",
+    "VERIFIED: Selecting a profile triggers GET /api/analytics/requesters?profile_id=<id>; selecting an event triggers GET /api/analytics/requesters?event_id=<id>.",
+    "VERIFIED: Export button label correctly toggles 'Export CSV' ↔ 'Export filtered list' based on requestersFilter.",
+    "VERIFIED: Clicking Export CSV while a filter is active calls /api/analytics/export-requesters with the correct profile_id= or event_id= query param, and the browser downloads the CSV.",
+    "BUG: 'All Profiles' (default) renders blank rows due to field-name mismatch (see ui_bugs).",
+    "Note: requestersData is unused in the 'all' branch; the field-shape divergence makes this code path fragile. Consider normalizing once in fetch (e.g., shape analyticsData.top_requesters on load) instead of inside JSX.",
+    "Note: server.py /analytics/export-requesters does not exclude archived requests, but /analytics/requesters does. Confirm intended behavior—exports may include archived rows while the on-screen list does not."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_analytics_requesters_filters.py"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 tests passed)",
+    "frontend": "85% (filter dropdown, fetch on change, label toggle, filtered export all work; 'All Profiles' default rendering broken)"
+  },
+  "test_credentials": {
+    "email": "test@test.com",
+    "password": "test"
+  },
+  "seed_data_creation": "None — used existing data (1 profile: Default Test 2; 2 events: Sprint4 Event, Alex and Jenna Reception; 48 unique requesters under no-filter aggregation).",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend filter params are fully verified. Only outstanding issue is frontend rendering of analyticsData.top_requesters in 'All Profiles' view (field-name mismatch). Once fixed, re-run the playwright flow: login → Analytics tab → confirm rows show name + count in default state. Also verify /analytics/export-requesters archived-vs-non-archived consistency with /analytics/requesters if business intent requires it.",
+  "rca of the issue": "The PR refactored the Most Active Requesters render to use a unified shape {name, email, request_count, total_tips}. requestersData (from /api/analytics/requesters) returns exactly those keys, but analyticsData.top_requesters (from /api/analytics?days=...) still returns [{requester, count}]. The frontend mapping `r.requester_name` / `r.email` / `r.request_count` / `r.total_tips` therefore resolves to undefined on every row in the default 'all' state. Reproduction: login as test@test.com → Analytics → look at Most Active Requesters card with 'All Profiles' selected → all 10 rows are empty. Mitigation: map analyticsData.top_requesters to {name: r.requester, email: '', request_count: r.count, total_tips: 0} in the 'all' branch, OR extend the /analytics daily payload to include the richer fields."
+}

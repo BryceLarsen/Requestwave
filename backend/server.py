@@ -4658,15 +4658,30 @@ async def get_musician_requests(
 
 # NEW: Phase 3 - Analytics endpoints
 @api_router.get("/analytics/requesters")
-async def get_requester_analytics(musician_id: str = Depends(get_current_musician)):
-    """Get all unique requesters with their request counts and total tips"""
+async def get_requester_analytics(
+    profile_id: Optional[str] = None,
+    event_id: Optional[str] = None,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Get all unique requesters with their request counts and total tips.
+
+    Optional query params:
+      - profile_id: scope to a specific profile
+      - event_id: scope to a specific event
+    """
     try:
+        match_stage = {
+            "musician_id": musician_id,
+            "status": {"$ne": "archived"}  # Exclude archived requests for consistency
+        }
+        if profile_id:
+            match_stage["profile_id"] = profile_id
+        if event_id:
+            match_stage["event_id"] = event_id
+
         # Aggregate requesters with counts and tips (excluding archived requests)
         pipeline = [
-            {"$match": {
-                "musician_id": musician_id,
-                "status": {"$ne": "archived"}  # Exclude archived requests for consistency
-            }},
+            {"$match": match_stage},
             {
                 "$group": {
                     "_id": {
@@ -4701,12 +4716,27 @@ async def get_requester_analytics(musician_id: str = Depends(get_current_musicia
         raise HTTPException(status_code=500, detail="Error retrieving requester analytics")
 
 @api_router.get("/analytics/export-requesters")
-async def export_requesters_csv(musician_id: str = Depends(get_current_musician)):
-    """Export requester emails and names as CSV"""
+async def export_requesters_csv(
+    profile_id: Optional[str] = None,
+    event_id: Optional[str] = None,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Export requester emails and names as CSV.
+
+    Optional query params:
+      - profile_id: scope to a specific profile
+      - event_id: scope to a specific event
+    """
     try:
+        match_stage = {"musician_id": musician_id}
+        if profile_id:
+            match_stage["profile_id"] = profile_id
+        if event_id:
+            match_stage["event_id"] = event_id
+
         # Get unique requesters
         pipeline = [
-            {"$match": {"musician_id": musician_id}},
+            {"$match": match_stage},
             {
                 "$group": {
                     "_id": {
@@ -4735,11 +4765,18 @@ async def export_requesters_csv(musician_id: str = Depends(get_current_musician)
             ])
         
         csv_content = "\n".join([",".join([f'"{field}"' for field in row]) for row in csv_rows])
-        
+
+        # Use a filter-aware filename so exports are easy to distinguish on disk
+        filename_suffix = ""
+        if event_id:
+            filename_suffix = f"-event-{event_id[:8]}"
+        elif profile_id:
+            filename_suffix = f"-profile-{profile_id[:8]}"
+
         return Response(
             content=csv_content,
             media_type="text/csv",
-            headers={"Content-Disposition": f"attachment; filename=requesters-{datetime.now().strftime('%Y%m%d')}.csv"}
+            headers={"Content-Disposition": f"attachment; filename=requesters{filename_suffix}-{datetime.now().strftime('%Y%m%d')}.csv"}
         )
         
     except Exception as e:
@@ -8506,7 +8543,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_origins=[
         "https://requestwave.app", 
-        "https://musician-dashboard-1.preview.emergentagent.com", 
+        "https://musician-events-hub.preview.emergentagent.com", 
         os.environ.get('FRONTEND_URL', '').replace('http://', 'https://'),  # Dynamic production URL
         "https://requestwave.emergent.host",  # Emergent production pattern
         "https://requestwave-app.emergent.host",  # Alternative production pattern

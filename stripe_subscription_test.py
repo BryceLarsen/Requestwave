@@ -12,7 +12,7 @@ from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 
 # Configuration
-BASE_URL = "https://musician-dashboard-1.preview.emergentagent.com/api"
+BASE_URL = "https://musician-events-hub.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
     "name": "Subscription Test Musician",
     "email": "subscription.test@requestwave.com",

@@ -21,7 +21,7 @@ import time
 import os
 
 # Configuration from environment variables
-EXTERNAL_API_URL = "https://musician-dashboard-1.preview.emergentagent.com/api"
+EXTERNAL_API_URL = "https://musician-events-hub.preview.emergentagent.com/api"
 INTERNAL_API_URL = "http://localhost:8001/api"  # For internal testing if needed
 TEST_EMAIL = "brycelarsenmusic@gmail.com"
 TEST_PASSWORD = "RequestWave2024!"

@@ -624,6 +624,8 @@ const MusicianDashboard = () => {
   const [topRequestersLimit, setTopRequestersLimit] = useState(10);
   const [analyticsDays, setAnalyticsDays] = useState(null); // null = all time
   const [requestersData, setRequestersData] = useState([]);
+  // NEW: Requesters filter — 'all' | `profile:<id>` | `event:<id>`
+  const [requestersFilter, setRequestersFilter] = useState('all');
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   // NEW: Show management state
@@ -2765,10 +2767,23 @@ const MusicianDashboard = () => {
     }
   };
 
-  const fetchRequesters = async () => {
+  // Build the {profile_id, event_id} query params from a filter token like
+  // 'all', 'profile:<id>', or 'event:<id>'. Returns {} when no filter is set.
+  const buildRequestersFilterParams = (filterToken) => {
+    if (!filterToken || filterToken === 'all') return {};
+    const [kind, id] = filterToken.split(':');
+    if (!id) return {};
+    if (kind === 'profile') return { profile_id: id };
+    if (kind === 'event') return { event_id: id };
+    return {};
+  };
+
+  const fetchRequesters = async (filterToken = requestersFilter) => {
     try {
+      const params = buildRequestersFilterParams(filterToken);
       const response = await axios.get(`${API}/analytics/requesters`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        params
       });
       setRequestersData(response.data.requesters);
     } catch (error) {
@@ -2778,8 +2793,11 @@ const MusicianDashboard = () => {
 
   const exportRequestersCSV = async () => {
     try {
+      const params = buildRequestersFilterParams(requestersFilter);
       const response = await axios.get(`${API}/analytics/export-requesters`, {
-        responseType: 'blob'
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        responseType: 'blob',
+        params
       });
       
       const blob = new Blob([response.data], { type: 'text/csv' });
@@ -8298,11 +8316,14 @@ const MusicianDashboard = () => {
                   {/* NEW: Export CSV Button at Bottom of First Analytics Box */}
                   <div className="flex justify-end">
                     <button
+                      data-testid="analytics-export-requesters-btn"
                       onClick={async () => {
                         try {
+                          const params = buildRequestersFilterParams(requestersFilter);
                           const response = await axios.get(`${API}/analytics/export-requesters`, {
                             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                            responseType: 'blob'
+                            responseType: 'blob',
+                            params
                           });
                           
                           const blob = new Blob([response.data], { type: 'text/csv' });
@@ -8320,7 +8341,7 @@ const MusicianDashboard = () => {
                       className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium transition duration-300 flex items-center space-x-2"
                     >
                       <span>📊</span>
-                      <span>Export CSV</span>
+                      <span>{requestersFilter !== 'all' ? 'Export filtered list' : 'Export CSV'}</span>
                     </button>
                   </div>
                 </div>
@@ -8376,24 +8397,65 @@ const MusicianDashboard = () => {
 
                 {/* Most Active Requesters with Top 10/20/50 Dropdown */}
                 <div className="bg-gray-800 rounded-xl p-6">
-                  <div className="flex justify-between items-center mb-4">
+                  <div className="flex justify-between items-center mb-4 gap-2 flex-wrap">
                     <h3 className="text-xl font-bold">👥 Most Active Requesters</h3>
-                    {/* NEW: Top N Dropdown */}
-                    <select
-                      value={topRequestersLimit}
-                      onChange={(e) => setTopRequestersLimit(parseInt(e.target.value))}
-                      className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white text-sm"
-                    >
-                      <option value={10}>Top 10</option>
-                      <option value={20}>Top 20</option>
-                      <option value={50}>Top 50</option>
-                    </select>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {/* NEW: Filter by profile/event */}
+                      <select
+                        data-testid="requesters-filter-select"
+                        value={requestersFilter}
+                        onChange={(e) => {
+                          const next = e.target.value;
+                          setRequestersFilter(next);
+                          fetchRequesters(next);
+                        }}
+                        className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white text-sm"
+                      >
+                        <option value="all">All Profiles</option>
+                        {profiles && profiles.length > 0 && (
+                          <optgroup label="Profiles">
+                            {profiles.map((p) => (
+                              <option key={`p-${p.id}`} value={`profile:${p.id}`}>
+                                {p.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
+                        {events && events.length > 0 && (
+                          <optgroup label="Events">
+                            {events.map((ev) => (
+                              <option key={`e-${ev.id}`} value={`event:${ev.id}`}>
+                                {ev.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
+                      </select>
+                      {/* NEW: Top N Dropdown */}
+                      <select
+                        value={topRequestersLimit}
+                        onChange={(e) => setTopRequestersLimit(parseInt(e.target.value))}
+                        className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white text-sm"
+                      >
+                        <option value={10}>Top 10</option>
+                        <option value={20}>Top 20</option>
+                        <option value={50}>Top 50</option>
+                      </select>
+                    </div>
                   </div>
-                  <div className="space-y-3">
-                    {analyticsData.top_requesters.slice(0, topRequestersLimit).map((item, index) => (
+                  <div className="space-y-3" data-testid="most-active-requesters-list">
+                    {(requestersFilter === 'all'
+                      ? (analyticsData.top_requesters || []).map(r => ({
+                          name: r.requester_name,
+                          email: r.email,
+                          request_count: r.request_count,
+                          total_tips: r.total_tips,
+                        }))
+                      : requestersData
+                    ).slice(0, topRequestersLimit).map((item, index) => (
                       <div key={index} className="flex justify-between items-center">
                         <div className="flex-1">
-                          <p className="font-medium text-sm">{item.requester_name}</p>
+                          <p className="font-medium text-sm">{item.name}</p>
                           <p className="text-gray-400 text-xs">{item.email}</p>
                         </div>
                         <div className="text-right">
@@ -8407,7 +8469,7 @@ const MusicianDashboard = () => {
                       </div>
                     ))}
                     
-                    {analyticsData.top_requesters.length === 0 && (
+                    {((requestersFilter === 'all' ? (analyticsData.top_requesters || []) : requestersData).length === 0) && (
                       <div className="text-center py-8 text-gray-400">
                         <p>No requesters yet in this period</p>
                       </div>

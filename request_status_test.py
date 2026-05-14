@@ -12,7 +12,7 @@ from datetime import datetime
 import time
 
 # Configuration
-EXTERNAL_BASE_URL = "https://musician-dashboard-1.preview.emergentagent.com/api"
+EXTERNAL_BASE_URL = "https://musician-events-hub.preview.emergentagent.com/api"
 TEST_EMAIL = "brycelarsenmusic@gmail.com"
 TEST_PASSWORD = "RequestWave2024!"
 
