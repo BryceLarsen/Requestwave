@@ -296,6 +296,7 @@ class ShowCreate(BaseModel):
 class Show(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     musician_id: str
+    profile_id: Optional[str] = None  # Per-profile shows: tags which profile owns this show
     name: str
     date: Optional[str] = None
     venue: Optional[str] = None
@@ -601,6 +602,9 @@ class ProfileCreate(BaseModel):
     design_artist_photo: Optional[str] = None
     design_show_year: Optional[bool] = None
     design_show_notes: Optional[bool] = None
+    # Per-profile active show
+    current_show_id: Optional[str] = None
+    current_show_name: Optional[str] = None
 
 class ProfileUpdateModel(BaseModel):
     name: Optional[str] = None
@@ -652,6 +656,8 @@ class ProfileResponse(BaseModel):
     design_artist_photo: Optional[str] = None
     design_show_year: Optional[bool] = None
     design_show_notes: Optional[bool] = None
+    current_show_id: Optional[str] = None
+    current_show_name: Optional[str] = None
 
 # Utility functions
 def create_slug(name: str) -> str:
@@ -2241,7 +2247,7 @@ async def get_musician_by_slug(slug: str):
         apple_music_artist_url=musician.get("apple_music_artist_url"),
         tips_enabled=musician.get("tips_enabled", True),
         requests_enabled=musician.get("requests_enabled", True),
-        current_show_name=musician.get("current_show_name")
+        current_show_name=(default_profile.get("current_show_name") if default_profile else None) or musician.get("current_show_name")
     )
 
 @api_router.get("/musicians/{slug}/design")
@@ -2281,6 +2287,11 @@ async def get_profile(musician_id: str = Depends(get_current_musician)):
     if not musician:
         raise HTTPException(status_code=404, detail="Musician not found")
     
+    # Source current_show_* from the default profile (per-profile shows architecture)
+    default_profile = await _get_default_profile(musician_id)
+    cs_id = default_profile.get("current_show_id") if default_profile else None
+    cs_name = default_profile.get("current_show_name") if default_profile else None
+    
     return MusicianProfile(
         id=musician.get("id"),  # Add musician ID
         name=musician["name"],
@@ -2310,9 +2321,9 @@ async def get_profile(musician_id: str = Depends(get_current_musician)):
         tiktok_username=musician.get("tiktok_username", ""),
         spotify_artist_url=musician.get("spotify_artist_url", ""),
         apple_music_artist_url=musician.get("apple_music_artist_url", ""),
-        # Active show fields (source of truth for frontend)
-        current_show_id=musician.get("current_show_id"),
-        current_show_name=musician.get("current_show_name")
+        # Active show fields (sourced from default profile post-migration)
+        current_show_id=cs_id,
+        current_show_name=cs_name
     )
 
 @api_router.put("/profile", response_model=MusicianProfile)
@@ -3370,49 +3381,39 @@ async def create_song_suggestion(suggestion_data: dict):
         if existing:
             raise HTTPException(status_code=400, detail="This song has already been suggested")
         
-        # Get or create active show (same logic as requests)
-        current_show_id = musician.get("current_show_id")
-        current_show_name = musician.get("current_show_name")
-        
-        # AUTO-SHOW CREATION: If no active show exists, create one automatically
-        if not current_show_id:
-            active_show = await db.shows.find_one({
+        # Multi-Profile: resolve the relevant profile for this suggestion
+        active_profile = await _get_active_profile_for_request(musician_id, suggestion_data.get("profile_slug"))
+        profile_id = active_profile["id"] if active_profile else None
+        current_show_id = active_profile.get("current_show_id") if active_profile else None
+        current_show_name = active_profile.get("current_show_name") if active_profile else None
+
+        # AUTO-SHOW CREATION: If no active show exists on this profile, create one automatically
+        if not current_show_id and active_profile:
+            from datetime import date
+            today = date.today().strftime("%B %d, %Y")
+            show_id = str(uuid.uuid4())
+            new_show = {
+                "id": show_id,
                 "musician_id": musician_id,
-                "status": "active"
-            })
-            
-            if not active_show:
-                # Create a new auto-generated show
-                from datetime import date
-                today = date.today().strftime("%B %d, %Y")
-                show_id = str(uuid.uuid4())
-                new_show = {
-                    "id": show_id,
-                    "musician_id": musician_id,
-                    "name": f"Show - {today}",
-                    "date": date.today().isoformat(),
-                    "venue": None,
-                    "notes": "Auto-created show",
-                    "status": "active",
-                    "timezone": None,  # Auto-created shows don't have timezone yet
-                    "archived_at": None,
-                    "restored_at": None,
-                    "created_at": datetime.now(timezone.utc)  # Store as UTC Date
-                }
-                await db.shows.insert_one(new_show)
+                "profile_id": profile_id,
+                "name": f"Show - {today}",
+                "date": date.today().isoformat(),
+                "venue": None,
+                "notes": "Auto-created show",
+                "status": "active",
+                "timezone": None,
+                "archived_at": None,
+                "restored_at": None,
+                "created_at": datetime.now(timezone.utc),
+            }
+            await db.shows.insert_one(new_show)
+            lock_result = await db.profiles.update_one(
+                {"id": profile_id, "$or": [{"current_show_id": None}, {"current_show_id": {"$exists": False}}]},
+                {"$set": {"current_show_id": show_id, "current_show_name": new_show["name"]}},
+            )
+            if lock_result.modified_count == 1:
                 current_show_id = show_id
                 current_show_name = new_show["name"]
-                
-                # Update musician's current show
-                await db.musicians.update_one(
-                    {"id": musician_id},
-                    {"$set": {
-                        "current_show_id": current_show_id,
-                        "current_show_name": current_show_name
-                    }}
-                )
-                
-                # Emit system.auto_show_created event
                 await emit_analytics_event(
                     event_type="system.auto_show_created",
                     musician_id=musician_id,
@@ -3420,13 +3421,13 @@ async def create_song_suggestion(suggestion_data: dict):
                     entity_type="show",
                     show_id=show_id,
                     entity_id=show_id,
-                    metadata={
-                        "trigger": "no_active_show"
-                    }
+                    metadata={"trigger": "no_active_show", "profile_id": profile_id},
                 )
             else:
-                current_show_id = active_show["id"]
-                current_show_name = active_show["name"]
+                await db.shows.delete_one({"id": show_id})
+                refreshed = await db.profiles.find_one({"id": profile_id}, {"_id": 0, "current_show_id": 1, "current_show_name": 1})
+                current_show_id = refreshed.get("current_show_id") if refreshed else None
+                current_show_name = refreshed.get("current_show_name") if refreshed else None
         
         # Create suggestion with show_id
         suggestion = {
@@ -3549,9 +3550,9 @@ async def update_suggestion_status(
         )
         
         # Emit analytics events based on status transition
-        # Get musician's current show for show_id
-        musician = await db.musicians.find_one({"id": musician_id})
-        current_show_id = musician.get("current_show_id") if musician else None
+        # Get default profile's current show for show_id
+        default_profile = await _get_default_profile(musician_id)
+        current_show_id = default_profile.get("current_show_id") if default_profile else None
         
         if new_status == "rejected":
             await emit_analytics_event(
@@ -3622,10 +3623,10 @@ async def match_suggestion_to_song(
         if not song:
             raise HTTPException(status_code=404, detail="Song not found")
         
-        # Get musician's current show
-        musician = await db.musicians.find_one({"id": musician_id})
-        current_show_id = musician.get("current_show_id") if musician else None
-        current_show_name = musician.get("current_show_name") if musician else None
+        # Get default profile's current show
+        default_profile = await _get_default_profile(musician_id)
+        current_show_id = default_profile.get("current_show_id") if default_profile else None
+        current_show_name = default_profile.get("current_show_name") if default_profile else None
         
         # Create a normal request from the suggestion
         request_dict = {
@@ -3710,8 +3711,8 @@ async def mark_suggestion_learn_later(
         )
         
         # Emit analytics event
-        musician = await db.musicians.find_one({"id": musician_id})
-        current_show_id = musician.get("current_show_id") if musician else None
+        default_profile = await _get_default_profile(musician_id)
+        current_show_id = default_profile.get("current_show_id") if default_profile else None
         
         await emit_analytics_event(
             event_type="musician.suggestion_learn_later",
@@ -4090,8 +4091,9 @@ async def get_musician_songs(
     }
     
     # Show-scoped playlist filtering (takes precedence over global active_playlist_id)
-    # Use musician.current_show_id as the source of truth for active show
-    current_show_id = musician.get("current_show_id")
+    # Use the default profile's current_show_id as the source of truth for active show
+    default_profile = await _get_default_profile(musician["id"])
+    current_show_id = default_profile.get("current_show_id") if default_profile else None
     active_show = None
     if current_show_id:
         active_show = await db.shows.find_one({"id": current_show_id})
@@ -4222,53 +4224,40 @@ async def create_request(request_data: RequestCreate):
     # Create request
     request_dict = request_data.dict()
     
-    # Get musician's current active show
-    musician = await db.musicians.find_one({"id": musician_id})
-    current_show_id = musician.get("current_show_id") if musician else None
-    current_show_name = musician.get("current_show_name") if musician else None
+    # Multi-Profile: resolve the relevant profile for this request (from profile_slug, else default)
+    active_profile = await _get_active_profile_for_request(musician_id, request_data.profile_slug)
+    profile_id = active_profile["id"] if active_profile else None
+    current_show_id = active_profile.get("current_show_id") if active_profile else None
+    current_show_name = active_profile.get("current_show_name") if active_profile else None
     
-    # AUTO-SHOW CREATION: If no active show exists, create one automatically
-    auto_show_created = False
-    if not current_show_id:
-        # Check if any active show exists
-        active_show = await db.shows.find_one({
+    # AUTO-SHOW CREATION: If no active show exists on this profile, create one automatically
+    if not current_show_id and active_profile:
+        # Optimistic lock: only set current_show_id if it's still null on the profile doc
+        from datetime import date
+        today = date.today().strftime("%B %d, %Y")
+        show_id = str(uuid.uuid4())
+        new_show = {
+            "id": show_id,
             "musician_id": musician_id,
-            "status": "active"
-        })
-        
-        if not active_show:
-            # Create a new auto-generated show with unique ID
-            from datetime import date
-            today = date.today().strftime("%B %d, %Y")
-            show_id = str(uuid.uuid4())
-            new_show = {
-                "id": show_id,
-                "musician_id": musician_id,
-                "name": f"Show - {today}",
-                "date": date.today().isoformat(),
-                "venue": None,
-                "notes": "Auto-created show",
-                "status": "active",
-                "timezone": None,  # Auto-created shows don't have timezone yet
-                "archived_at": None,
-                "restored_at": None,
-                "created_at": datetime.now(timezone.utc)  # Store as UTC Date
-            }
-            await db.shows.insert_one(new_show)
+            "profile_id": profile_id,
+            "name": f"Show - {today}",
+            "date": date.today().isoformat(),
+            "venue": None,
+            "notes": "Auto-created show",
+            "status": "active",
+            "timezone": None,
+            "archived_at": None,
+            "restored_at": None,
+            "created_at": datetime.now(timezone.utc),
+        }
+        await db.shows.insert_one(new_show)
+        lock_result = await db.profiles.update_one(
+            {"id": profile_id, "$or": [{"current_show_id": None}, {"current_show_id": {"$exists": False}}]},
+            {"$set": {"current_show_id": show_id, "current_show_name": new_show["name"]}},
+        )
+        if lock_result.modified_count == 1:
             current_show_id = show_id
             current_show_name = new_show["name"]
-            auto_show_created = True
-            
-            # Update musician's current show ID and name
-            await db.musicians.update_one(
-                {"id": musician_id},
-                {"$set": {
-                    "current_show_id": current_show_id,
-                    "current_show_name": current_show_name
-                }}
-            )
-            
-            # Emit system.auto_show_created event
             await emit_analytics_event(
                 event_type="system.auto_show_created",
                 musician_id=musician_id,
@@ -4276,13 +4265,15 @@ async def create_request(request_data: RequestCreate):
                 entity_type="show",
                 show_id=show_id,
                 entity_id=show_id,
-                metadata={
-                    "trigger": "no_active_show"
-                }
+                metadata={"trigger": "no_active_show", "profile_id": profile_id},
             )
         else:
-            current_show_id = active_show["id"]
-            current_show_name = active_show["name"]
+            # Lost the race - another concurrent request just set the current show on this profile.
+            # Discard our auto-created show and use the one that won the race.
+            await db.shows.delete_one({"id": show_id})
+            refreshed = await db.profiles.find_one({"id": profile_id}, {"_id": 0, "current_show_id": 1, "current_show_name": 1})
+            current_show_id = refreshed.get("current_show_id") if refreshed else None
+            current_show_name = refreshed.get("current_show_name") if refreshed else None
     
     request_dict.update({
         "id": str(uuid.uuid4()),
@@ -4297,11 +4288,9 @@ async def create_request(request_data: RequestCreate):
         "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
     })
     
-    # Multi-Profile: Resolve profile_slug to profile_id if provided
-    if request_data.profile_slug:
-        profile = await db.profiles.find_one({"musician_id": musician_id, "slug": request_data.profile_slug})
-        if profile:
-            request_dict["profile_id"] = profile["id"]
+    # Multi-Profile: stamp profile_id on the request
+    if profile_id:
+        request_dict["profile_id"] = profile_id
     
     await db.requests.insert_one(request_dict)
     
@@ -4394,51 +4383,40 @@ async def create_musician_request(
     
     # Create request
     request_dict = request_data.dict()
-    current_show_id = musician.get("current_show_id")
-    current_show_name = musician.get("current_show_name")
-    
-    # AUTO-SHOW CREATION: If no active show exists, create one automatically
-    auto_show_created = False
-    if not current_show_id:
-        # Check if any active show exists
-        active_show = await db.shows.find_one({
+
+    # Multi-Profile: resolve the relevant profile for this request (from profile_slug, else default)
+    active_profile = await _get_active_profile_for_request(musician_id, request_data.profile_slug)
+    profile_id = active_profile["id"] if active_profile else None
+    current_show_id = active_profile.get("current_show_id") if active_profile else None
+    current_show_name = active_profile.get("current_show_name") if active_profile else None
+
+    # AUTO-SHOW CREATION: If no active show exists on this profile, create one automatically
+    if not current_show_id and active_profile:
+        from datetime import date
+        today = date.today().strftime("%B %d, %Y")
+        show_id = str(uuid.uuid4())
+        new_show = {
+            "id": show_id,
             "musician_id": musician_id,
-            "status": "active"
-        })
-        
-        if not active_show:
-            # Create a new auto-generated show with unique ID
-            from datetime import date
-            today = date.today().strftime("%B %d, %Y")
-            show_id = str(uuid.uuid4())
-            new_show = {
-                "id": show_id,
-                "musician_id": musician_id,
-                "name": f"Show - {today}",
-                "date": date.today().isoformat(),
-                "venue": None,
-                "notes": "Auto-created show",
-                "status": "active",
-                "timezone": None,  # Auto-created shows don't have timezone yet
-                "archived_at": None,
-                "restored_at": None,
-                "created_at": datetime.now(timezone.utc)  # Store as UTC Date
-            }
-            await db.shows.insert_one(new_show)
+            "profile_id": profile_id,
+            "name": f"Show - {today}",
+            "date": date.today().isoformat(),
+            "venue": None,
+            "notes": "Auto-created show",
+            "status": "active",
+            "timezone": None,
+            "archived_at": None,
+            "restored_at": None,
+            "created_at": datetime.now(timezone.utc),
+        }
+        await db.shows.insert_one(new_show)
+        lock_result = await db.profiles.update_one(
+            {"id": profile_id, "$or": [{"current_show_id": None}, {"current_show_id": {"$exists": False}}]},
+            {"$set": {"current_show_id": show_id, "current_show_name": new_show["name"]}},
+        )
+        if lock_result.modified_count == 1:
             current_show_id = show_id
             current_show_name = new_show["name"]
-            auto_show_created = True
-            
-            # Update musician's current show ID and name
-            await db.musicians.update_one(
-                {"id": musician_id},
-                {"$set": {
-                    "current_show_id": current_show_id,
-                    "current_show_name": current_show_name
-                }}
-            )
-            
-            # Emit system.auto_show_created event
             await emit_analytics_event(
                 event_type="system.auto_show_created",
                 musician_id=musician_id,
@@ -4446,14 +4424,14 @@ async def create_musician_request(
                 entity_type="show",
                 show_id=show_id,
                 entity_id=show_id,
-                metadata={
-                    "trigger": "no_active_show"
-                }
+                metadata={"trigger": "no_active_show", "profile_id": profile_id},
             )
         else:
-            current_show_id = active_show["id"]
-            current_show_name = active_show["name"]
-    
+            await db.shows.delete_one({"id": show_id})
+            refreshed = await db.profiles.find_one({"id": profile_id}, {"_id": 0, "current_show_id": 1, "current_show_name": 1})
+            current_show_id = refreshed.get("current_show_id") if refreshed else None
+            current_show_name = refreshed.get("current_show_name") if refreshed else None
+
     request_dict.update({
         "id": str(uuid.uuid4()),
         "musician_id": musician_id,
@@ -4466,12 +4444,10 @@ async def create_musician_request(
         "social_clicks": [],
         "created_at": datetime.now(timezone.utc)  # Store as UTC Date, not string
     })
-    
-    # Multi-Profile: Resolve profile_slug to profile_id if provided
-    if request_data.profile_slug:
-        profile = await db.profiles.find_one({"musician_id": musician_id, "slug": request_data.profile_slug})
-        if profile:
-            request_dict["profile_id"] = profile["id"]
+
+    # Multi-Profile: stamp profile_id on the request
+    if profile_id:
+        request_dict["profile_id"] = profile_id
     
     # Update song request count
     await db.songs.update_one(
@@ -5641,8 +5617,12 @@ async def record_tip(
         if tip_data.platform not in ["paypal", "venmo", "cashapp", "zelle"]:
             raise HTTPException(status_code=400, detail="Platform must be 'paypal', 'venmo', 'cashapp', or 'zelle'")
         
-        # Phase 2: Use provided show_id or fall back to musician's current show
-        show_id = tip_data.show_id or musician.get("current_show_id")
+        # Phase 2: Use provided show_id or fall back to default profile's current show
+        if tip_data.show_id:
+            show_id = tip_data.show_id
+        else:
+            _default_profile = await _get_default_profile(musician['id'])
+            show_id = _default_profile.get("current_show_id") if _default_profile else None
         
         # Create tip record
         tip_dict = {
@@ -6056,10 +6036,11 @@ async def get_requests_grouped_by_show(
 # NEW: Enhanced show management with active show tracking
 @api_router.post("/shows/start")
 async def start_show(
-    show_data: dict,  # {"name": "Show Name", "timezone": "America/New_York" (optional)}
+    show_data: dict,  # {"name": "Show Name", "timezone": "...", "profile_id": "..." (optional)}
     musician_id: str = Depends(get_current_musician)
 ):
-    """Start a new show - all subsequent requests will be assigned to this show"""
+    """Start a new show for a specific profile (per-profile shows).
+    Falls back to the musician's default profile when profile_id is not provided."""
     try:
         show_name = show_data.get("name", "").strip()
         if not show_name:
@@ -6068,11 +6049,23 @@ async def start_show(
         # Extract timezone from request (sent from frontend browser)
         show_timezone = show_data.get("timezone")  # IANA timezone string, e.g., "America/New_York"
         
-        # Defensively end any previously active show first
-        musician = await db.musicians.find_one({"id": musician_id})
-        previous_show_id = musician.get("current_show_id") if musician else None
+        # Resolve target profile (provided profile_id, else default profile)
+        target_profile_id = show_data.get("profile_id")
+        if target_profile_id:
+            target_profile = await db.profiles.find_one(
+                {"id": target_profile_id, "musician_id": musician_id}, {"_id": 0}
+            )
+            if not target_profile:
+                raise HTTPException(status_code=404, detail="Profile not found")
+        else:
+            target_profile = await _get_default_profile(musician_id)
+            if not target_profile:
+                raise HTTPException(status_code=400, detail="No default profile exists. Create a profile first.")
+        target_profile_id = target_profile["id"]
+        
+        # Defensively end any previously active show on this profile first
+        previous_show_id = target_profile.get("current_show_id")
         if previous_show_id:
-            # Mark the previous show as ended
             await db.shows.update_one(
                 {"id": previous_show_id},
                 {"$set": {
@@ -6080,43 +6073,41 @@ async def start_show(
                     "status": "ended"
                 }}
             )
-            logger.info(f"Defensively ended previous show {previous_show_id} before starting new show")
+            logger.info(f"Defensively ended previous show {previous_show_id} on profile {target_profile_id} before starting new show")
         
-        # Create show record
+        # Create show record (tagged with profile_id for per-profile show ownership)
         show_dict = {
             "id": str(uuid.uuid4()),
             "musician_id": musician_id,
+            "profile_id": target_profile_id,
             "name": show_name,
             "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "venue": show_data.get("venue", ""),
             "notes": show_data.get("notes", ""),
-            "timezone": show_timezone,  # Store show timezone for display/analytics
-            "status": "active",  # Explicit status field
-            "created_at": datetime.now(timezone.utc),  # Store as UTC Date, not string
-            # Show-scoped playlist filtering
+            "timezone": show_timezone,
+            "status": "active",
+            "created_at": datetime.now(timezone.utc),
             "playlist_filter_mode": show_data.get("playlist_filter_mode", "all"),
             "enabled_playlist_ids": show_data.get("enabled_playlist_ids", [])
         }
-        
         await db.shows.insert_one(show_dict)
         
-        # Update musician's current active show
-        update_data = {
-            "current_show_id": show_dict["id"],
-            "current_show_name": show_name
-        }
-        
-        # If musician doesn't have a timezone set yet, set it from this show
-        if musician and not musician.get("timezone") and show_timezone:
-            update_data["timezone"] = show_timezone
-        
-        await db.musicians.update_one(
-            {"id": musician_id},
-            {"$set": update_data}
+        # Update THIS PROFILE'S current active show (not the musician doc)
+        await db.profiles.update_one(
+            {"id": target_profile_id},
+            {"$set": {
+                "current_show_id": show_dict["id"],
+                "current_show_name": show_name,
+            }}
         )
         
-        # Fetch updated musician to return
-        updated_musician = await db.musicians.find_one({"id": musician_id})
+        # If musician doesn't have a timezone set yet, set it from this show
+        musician = await db.musicians.find_one({"id": musician_id})
+        if musician and not musician.get("timezone") and show_timezone:
+            await db.musicians.update_one(
+                {"id": musician_id},
+                {"$set": {"timezone": show_timezone}}
+            )
         
         # Emit analytics event
         await emit_analytics_event(
@@ -6127,19 +6118,26 @@ async def start_show(
             show_id=show_dict["id"],
             entity_id=show_dict["id"],
             metadata={
-                "show_name": show_name
+                "show_name": show_name,
+                "profile_id": target_profile_id,
             }
         )
         
-        logger.info(f"Started show '{show_name}' for musician {musician_id}")
+        logger.info(f"Started show '{show_name}' for musician {musician_id} on profile {target_profile_id}")
+        # Backwards-compatible response shape: current_show_* at top level under "musician"
+        # is sourced from the profile we just updated (default profile when not specified).
+        default_profile = await _get_default_profile(musician_id)
+        top_cs_id = default_profile.get("current_show_id") if default_profile else show_dict["id"]
+        top_cs_name = default_profile.get("current_show_name") if default_profile else show_name
         return {
             "success": True,
             "message": f"Started show: {show_name}",
             "show": Show(**show_dict),
             "musician": {
-                "current_show_id": updated_musician.get("current_show_id"),
-                "current_show_name": updated_musician.get("current_show_name")
-            }
+                "current_show_id": top_cs_id,
+                "current_show_name": top_cs_name
+            },
+            "profile_id": target_profile_id,
         }
         
     except HTTPException:
@@ -6150,14 +6148,28 @@ async def start_show(
 
 @api_router.post("/shows/stop")
 async def stop_show(
+    payload: Optional[dict] = None,
     musician_id: str = Depends(get_current_musician)
 ):
-    """Stop the current active show"""
+    """Stop the current active show on a profile (per-profile shows).
+    Accepts optional profile_id; defaults to the musician's default profile."""
     try:
-        # Get current show info BEFORE clearing it
-        musician = await db.musicians.find_one({"id": musician_id})
-        previous_show_id = musician.get("current_show_id") if musician else None
-        previous_show_name = musician.get("current_show_name") if musician else None
+        payload = payload or {}
+        target_profile_id = payload.get("profile_id")
+        if target_profile_id:
+            target_profile = await db.profiles.find_one(
+                {"id": target_profile_id, "musician_id": musician_id}, {"_id": 0}
+            )
+            if not target_profile:
+                raise HTTPException(status_code=404, detail="Profile not found")
+        else:
+            target_profile = await _get_default_profile(musician_id)
+            if not target_profile:
+                raise HTTPException(status_code=400, detail="No default profile exists.")
+        target_profile_id = target_profile["id"]
+        
+        previous_show_id = target_profile.get("current_show_id")
+        previous_show_name = target_profile.get("current_show_name")
         
         # Mark the show as ended with timestamp and status
         if previous_show_id:
@@ -6169,17 +6181,14 @@ async def stop_show(
                 }}
             )
         
-        # Clear musician's current active show
-        await db.musicians.update_one(
-            {"id": musician_id},
+        # Clear THIS PROFILE'S current active show
+        await db.profiles.update_one(
+            {"id": target_profile_id},
             {"$set": {
                 "current_show_id": None,
                 "current_show_name": None
             }}
         )
-        
-        # Fetch updated musician to return
-        updated_musician = await db.musicians.find_one({"id": musician_id})
         
         # Emit analytics event only if there was an active show
         if previous_show_id:
@@ -6191,37 +6200,47 @@ async def stop_show(
                 show_id=previous_show_id,
                 entity_id=previous_show_id,
                 metadata={
-                    "show_name": previous_show_name
+                    "show_name": previous_show_name,
+                    "profile_id": target_profile_id,
                 }
             )
         
-        logger.info(f"Stopped active show for musician {musician_id}")
+        logger.info(f"Stopped active show for musician {musician_id} on profile {target_profile_id}")
+        # Backwards-compatible response shape: read top-level current_show_* from default profile
+        default_profile = await _get_default_profile(musician_id)
+        top_cs_id = default_profile.get("current_show_id") if default_profile else None
+        top_cs_name = default_profile.get("current_show_name") if default_profile else None
         return {
             "success": True,
             "message": "Show stopped. New requests will go to main requests list.",
             "musician": {
-                "current_show_id": updated_musician.get("current_show_id"),
-                "current_show_name": updated_musician.get("current_show_name")
-            }
+                "current_show_id": top_cs_id,
+                "current_show_name": top_cs_name
+            },
+            "profile_id": target_profile_id,
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error stopping show: {str(e)}")
         raise HTTPException(status_code=500, detail="Error stopping show")
 
 @api_router.get("/shows/current")
 async def get_current_show(
+    profile_id: Optional[str] = None,
     musician_id: str = Depends(get_current_musician)
 ):
-    """Get the currently active show"""
+    """Get the currently active show for a profile (defaults to musician's default profile)."""
     try:
-        musician = await db.musicians.find_one({"id": musician_id})
+        if profile_id:
+            profile = await db.profiles.find_one(
+                {"id": profile_id, "musician_id": musician_id}, {"_id": 0}
+            )
+        else:
+            profile = await _get_default_profile(musician_id)
         
-        if not musician:
-            raise HTTPException(status_code=404, detail="Musician not found")
-        
-        current_show_name = musician.get("current_show_name")
-        current_show_id = musician.get("current_show_id")
+        current_show_id = profile.get("current_show_id") if profile else None
         
         if current_show_id:
             show = await db.shows.find_one({"id": current_show_id})
@@ -6257,13 +6276,11 @@ async def delete_show(
         # Delete the show
         await db.shows.delete_one({"id": show_id})
         
-        # If this was the current active show, clear it from musician
-        musician = await db.musicians.find_one({"id": musician_id})
-        if musician and musician.get("current_show_id") == show_id:
-            await db.musicians.update_one(
-                {"id": musician_id},
-                {"$set": {"current_show_id": None, "current_show_name": None}}
-            )
+        # If this was an active show on any profile, clear it on those profiles
+        await db.profiles.update_many(
+            {"musician_id": musician_id, "current_show_id": show_id},
+            {"$set": {"current_show_id": None, "current_show_name": None}}
+        )
         
         logger.info(f"Deleted show {show_id} and all associated requests for musician {musician_id}")
         return {"success": True, "message": f"Show '{show['name']}' and all associated requests deleted"}
@@ -6302,13 +6319,11 @@ async def archive_show(
             }}
         )
         
-        # If this was the current active show, clear it from musician
-        musician = await db.musicians.find_one({"id": musician_id})
-        if musician and musician.get("current_show_id") == show_id:
-            await db.musicians.update_one(
-                {"id": musician_id},
-                {"$set": {"current_show_id": None, "current_show_name": None}}
-            )
+        # If this was an active show on any profile, clear it on those profiles
+        await db.profiles.update_many(
+            {"musician_id": musician_id, "current_show_id": show_id},
+            {"$set": {"current_show_id": None, "current_show_name": None}}
+        )
         
         # Emit analytics event
         await emit_analytics_event(
@@ -7550,6 +7565,8 @@ def _profile_doc_to_response(p: dict) -> ProfileResponse:
         design_artist_photo=p.get("design_artist_photo"),
         design_show_year=p.get("design_show_year"),
         design_show_notes=p.get("design_show_notes"),
+        current_show_id=p.get("current_show_id"),
+        current_show_name=p.get("current_show_name"),
     )
 
 async def _get_profile_songs(profile, musician):
@@ -7588,12 +7605,31 @@ async def _get_profile_songs(profile, musician):
     ).to_list(5000)
     return songs
 
+async def _get_default_profile(musician_id: str):
+    """Return the musician's default profile, or None if none exists yet."""
+    return await db.profiles.find_one({"musician_id": musician_id, "is_default": True}, {"_id": 0})
+
+
+async def _get_active_profile_for_request(musician_id: str, profile_slug: Optional[str] = None):
+    """Resolve the relevant profile for a request/auto-show operation.
+
+    If profile_slug is given and matches a profile owned by this musician, return that one.
+    Otherwise fall back to the musician's default profile. Returns None if no profile exists.
+    """
+    if profile_slug:
+        profile = await db.profiles.find_one(
+            {"musician_id": musician_id, "slug": profile_slug}, {"_id": 0}
+        )
+        if profile:
+            return profile
+    return await _get_default_profile(musician_id)
+
+
 def _build_profile_public_response(musician, profile, songs_list):
     """Build the merged public response for a profile audience page.
     Profile fields override master account values when set."""
     # Get global design settings for fallback
-    global_design = musician.get("design_settings", {})
-    
+    global_design = musician.get("design_settings", {})    
     return {
         "id": musician["id"],
         "name": profile.get("musician_name") or musician["name"],
@@ -7627,7 +7663,7 @@ def _build_profile_public_response(musician, profile, songs_list):
         # Control settings
         "tips_enabled": musician.get("tips_enabled", True),
         "requests_enabled": musician.get("requests_enabled", True),
-        "current_show_name": musician.get("current_show_name"),
+        "current_show_name": profile.get("current_show_name"),
         # Design settings - profile overrides global
         "design_settings": {
             "color_scheme": profile.get("design_color_scheme") or global_design.get("color_scheme", "purple"),
@@ -7686,6 +7722,8 @@ async def create_profile(profile_data: ProfileCreate, musician_id: str = Depends
         "design_artist_photo": profile_data.design_artist_photo,
         "design_show_year": profile_data.design_show_year,
         "design_show_notes": profile_data.design_show_notes,
+        "current_show_id": profile_data.current_show_id,
+        "current_show_name": profile_data.current_show_name,
     }
     
     await db.profiles.insert_one(profile_dict)
@@ -7879,6 +7917,59 @@ Therefore I Am,Billie Eilish,Pop,Dark,2020,Minimalist pop
 app.include_router(freemium_router, prefix="/v2")
 
 # Route logging startup hook
+@app.on_event("startup")
+async def migrate_current_show_to_profiles():
+    """One-time migration: move musician.current_show_id/name to the default profile.
+
+    Idempotent: only runs for a musician if the default profile still has a null
+    current_show_id (so re-running on already-migrated data is a no-op).
+    Sets musician.current_show_id/name to null after successful copy.
+    """
+    try:
+        migrated = 0
+        skipped_no_profile = 0
+        cursor = db.musicians.find(
+            {"$or": [
+                {"current_show_id": {"$ne": None, "$exists": True}},
+                {"current_show_name": {"$ne": None, "$exists": True}},
+            ]},
+            {"_id": 0, "id": 1, "current_show_id": 1, "current_show_name": 1},
+        )
+        async for musician in cursor:
+            mid = musician.get("id")
+            csid = musician.get("current_show_id")
+            csname = musician.get("current_show_name")
+            if not mid:
+                continue
+            default_profile = await db.profiles.find_one(
+                {"musician_id": mid, "is_default": True}, {"_id": 0, "id": 1, "current_show_id": 1}
+            )
+            if not default_profile:
+                skipped_no_profile += 1
+                continue
+            # Idempotent guard: only copy if default profile's current_show_id is still null/missing
+            if default_profile.get("current_show_id"):
+                # Already migrated; just clear musician fields and move on
+                await db.musicians.update_one(
+                    {"id": mid},
+                    {"$set": {"current_show_id": None, "current_show_name": None}},
+                )
+                continue
+            await db.profiles.update_one(
+                {"id": default_profile["id"]},
+                {"$set": {"current_show_id": csid, "current_show_name": csname}},
+            )
+            await db.musicians.update_one(
+                {"id": mid},
+                {"$set": {"current_show_id": None, "current_show_name": None}},
+            )
+            migrated += 1
+        if migrated or skipped_no_profile:
+            print(f"🛠️  Show-to-profile migration: migrated={migrated}, skipped_no_default_profile={skipped_no_profile}")
+    except Exception as e:
+        logger.error(f"Show-to-profile migration failed: {e}")
+
+
 @app.on_event("startup")
 async def log_routes():
     """Log full route list and Stripe key prefix for diagnostics"""

@@ -8,6 +8,19 @@ RequestWave is a live music request platform enabling musicians to manage song r
 - **Frontend**: React (monolithic `App.js`) with Tailwind CSS
 - **Database**: MongoDB collections: musicians, songs, requests, shows, playlists, profiles, analytics_events
 
+## Sprint 2: Per-Profile Shows (In Progress)
+
+### Architecture
+- `current_show_id` / `current_show_name` moved from `musicians` doc to **`profiles`** doc — each profile can have its own active show simultaneously.
+- `shows` documents gain `profile_id` so they're owned by a specific profile.
+- Auto-show creation (no active show → create one) now operates per-profile with an **optimistic null-guard lock** (`update_one({"id": profile_id, "current_show_id": None}, {...})`) to prevent races.
+- One-time startup migration copies `musician.current_show_id/name` → default profile, nulls musician fields. Idempotent.
+- Backward-compat: top-level `current_show_id`/`current_show_name` on `/api/profile` and `/api/shows/start|stop` responses still populated, sourced from default profile. Frontend untouched.
+- `POST /api/shows/start` and `POST /api/shows/stop` accept optional `profile_id` body field; default to musician's default profile.
+- `GET /api/shows/current?profile_id=` query param for per-profile lookup.
+- `DELETE`/`archive` of a show now clears `current_show_id` on **all** profiles whose value matches.
+- Verified: starting a show on profile A leaves profile B with no active show; starting a show on profile B then yields two independent active shows simultaneously.
+
 ## Sprint 1: Multi-Profile System (Complete)
 
 ### Core Feature
@@ -21,6 +34,7 @@ paypal_username, venmo_username, cashapp_username, zelle_info,
 instagram_username, tiktok_username, facebook_url, spotify_url, apple_music_url,
 website, bio, musician_name,
 design_color_scheme, design_artist_photo, design_show_year, design_show_notes,
+current_show_id, current_show_name,  # Sprint 2: per-profile active show
 created_at
 ```
 
