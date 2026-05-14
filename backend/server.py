@@ -2501,6 +2501,52 @@ async def change_email(
         logger.error(f"Error changing email: {str(e)}")
         raise HTTPException(status_code=500, detail="Error updating email address")
 
+@api_router.put("/account/email")
+async def update_account_email(
+    payload: dict,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Inline update of musician's email (Account Settings Save button)."""
+    new_email = (payload.get("new_email") or "").strip().lower()
+    if not new_email:
+        raise HTTPException(status_code=400, detail="Email is required")
+
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_pattern, new_email):
+        raise HTTPException(status_code=400, detail="Invalid email format")
+
+    existing = await db.musicians.find_one({"email": new_email, "id": {"$ne": musician_id}})
+    if existing:
+        raise HTTPException(status_code=409, detail="This email is already in use by another account")
+
+    await db.musicians.update_one({"id": musician_id}, {"$set": {"email": new_email}})
+    return {"success": True, "email": new_email}
+
+
+@api_router.put("/account/slug")
+async def update_account_slug(
+    payload: dict,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Inline update of musician's master slug (Account Settings Save button)."""
+    new_slug = (payload.get("new_slug") or "").strip().lower()
+    if not new_slug:
+        raise HTTPException(status_code=400, detail="Slug is required")
+    if not re.match(r'^[a-z0-9-]+$', new_slug):
+        raise HTTPException(status_code=400, detail="Slug must contain only lowercase letters, numbers, and hyphens")
+    if len(new_slug) < 2 or len(new_slug) > 60:
+        raise HTTPException(status_code=400, detail="Slug must be between 2 and 60 characters")
+    if new_slug.startswith('-') or new_slug.endswith('-'):
+        raise HTTPException(status_code=400, detail="Slug cannot start or end with a hyphen")
+
+    existing = await db.musicians.find_one({"slug": new_slug, "id": {"$ne": musician_id}})
+    if existing:
+        raise HTTPException(status_code=409, detail="This slug is already taken by another musician")
+
+    await db.musicians.update_one({"id": musician_id}, {"$set": {"slug": new_slug}})
+    return {"success": True, "slug": new_slug}
+
+
 # NEW: Change Password endpoint  
 @api_router.put("/account/change-password")
 async def change_password(

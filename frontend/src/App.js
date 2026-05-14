@@ -738,6 +738,12 @@ const MusicianDashboard = () => {
   const [editingProfile, setEditingProfile] = useState(null);
   const [profileForm, setProfileForm] = useState({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
   const [accountSettingsExpanded, setAccountSettingsExpanded] = useState(false);
+  const [accountEmailInput, setAccountEmailInput] = useState('');
+  const [accountSlugInput, setAccountSlugInput] = useState('');
+  const [savingAccountEmail, setSavingAccountEmail] = useState(false);
+  const [savingAccountSlug, setSavingAccountSlug] = useState(false);
+  const [accountEmailMsg, setAccountEmailMsg] = useState({ type: '', text: '' });
+  const [accountSlugMsg, setAccountSlugMsg] = useState({ type: '', text: '' });
   const [profileFilterId, setProfileFilterId] = useState(''); // For requests tab filter
   
   // Error toast state for request operations
@@ -2074,6 +2080,71 @@ const MusicianDashboard = () => {
       setChangePasswordError(error.response?.data?.detail || 'Error updating password');
     } finally {
       setChangingPassword(false);
+    }
+  };
+
+  const handleSaveAccountEmail = async () => {
+    setAccountEmailMsg({ type: '', text: '' });
+    const trimmed = (accountEmailInput || '').trim().toLowerCase();
+    if (!trimmed) {
+      setAccountEmailMsg({ type: 'error', text: 'Email is required' });
+      return;
+    }
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(trimmed)) {
+      setAccountEmailMsg({ type: 'error', text: 'Invalid email format' });
+      return;
+    }
+    if (musician && trimmed === (musician.email || '').toLowerCase()) {
+      setAccountEmailMsg({ type: 'error', text: 'This is already your email' });
+      return;
+    }
+    setSavingAccountEmail(true);
+    try {
+      await axios.put(`${API}/account/email`, { new_email: trimmed });
+      setMusician({ ...musician, email: trimmed });
+      if (profile) setProfile({ ...profile, email: trimmed });
+      setAccountEmailMsg({ type: 'success', text: 'Email updated' });
+    } catch (error) {
+      setAccountEmailMsg({ type: 'error', text: error.response?.data?.detail || 'Error updating email' });
+    } finally {
+      setSavingAccountEmail(false);
+    }
+  };
+
+  const handleSaveAccountSlug = async () => {
+    setAccountSlugMsg({ type: '', text: '' });
+    const trimmed = (accountSlugInput || '').trim().toLowerCase();
+    if (!trimmed) {
+      setAccountSlugMsg({ type: 'error', text: 'Slug is required' });
+      return;
+    }
+    if (!/^[a-z0-9-]+$/.test(trimmed)) {
+      setAccountSlugMsg({ type: 'error', text: 'Use only lowercase letters, numbers, and hyphens' });
+      return;
+    }
+    if (trimmed.length < 2 || trimmed.length > 60) {
+      setAccountSlugMsg({ type: 'error', text: 'Slug must be 2–60 characters' });
+      return;
+    }
+    if (trimmed.startsWith('-') || trimmed.endsWith('-')) {
+      setAccountSlugMsg({ type: 'error', text: 'Slug cannot start or end with a hyphen' });
+      return;
+    }
+    if (musician && trimmed === musician.slug) {
+      setAccountSlugMsg({ type: 'error', text: 'This is already your slug' });
+      return;
+    }
+    setSavingAccountSlug(true);
+    try {
+      await axios.put(`${API}/account/slug`, { new_slug: trimmed });
+      setMusician({ ...musician, slug: trimmed });
+      if (profile) setProfile({ ...profile, slug: trimmed });
+      setAccountSlugMsg({ type: 'success', text: 'Master slug updated' });
+    } catch (error) {
+      setAccountSlugMsg({ type: 'error', text: error.response?.data?.detail || 'Error updating slug' });
+    } finally {
+      setSavingAccountSlug(false);
     }
   };
 
@@ -6957,7 +7028,16 @@ const MusicianDashboard = () => {
             <div className="bg-gray-800 rounded-xl overflow-hidden">
               <button
                 data-testid="account-settings-toggle"
-                onClick={() => setAccountSettingsExpanded(!accountSettingsExpanded)}
+                onClick={() => {
+                  const next = !accountSettingsExpanded;
+                  if (next) {
+                    setAccountEmailInput(profile?.email || musician?.email || '');
+                    setAccountSlugInput(musician?.slug || '');
+                    setAccountEmailMsg({ type: '', text: '' });
+                    setAccountSlugMsg({ type: '', text: '' });
+                  }
+                  setAccountSettingsExpanded(next);
+                }}
                 className="w-full p-5 flex justify-between items-center text-left hover:bg-gray-750"
               >
                 <h2 className="text-lg font-bold">Account Settings</h2>
@@ -6970,13 +7050,59 @@ const MusicianDashboard = () => {
                   {/* Email */}
                   <div>
                     <label className="block text-gray-300 text-sm font-bold mb-2">Email</label>
-                    <input type="email" value={profile.email} disabled className="w-full bg-gray-600 border border-gray-600 rounded-lg px-4 py-2 text-gray-400" />
+                    <div className="flex space-x-2">
+                      <input
+                        type="email"
+                        data-testid="account-email-input"
+                        value={accountEmailInput}
+                        onChange={(e) => setAccountEmailInput(e.target.value)}
+                        className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                        placeholder="you@example.com"
+                      />
+                      <button
+                        type="button"
+                        data-testid="account-email-save-btn"
+                        onClick={handleSaveAccountEmail}
+                        disabled={savingAccountEmail}
+                        className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-bold text-sm transition duration-300"
+                      >
+                        {savingAccountEmail ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                    {accountEmailMsg.text && (
+                      <p data-testid="account-email-msg" className={`mt-2 text-xs ${accountEmailMsg.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+                        {accountEmailMsg.text}
+                      </p>
+                    )}
                   </div>
                   {/* Master Slug */}
                   <div>
                     <label className="block text-gray-300 text-sm font-bold mb-2">Master Slug</label>
-                    <p className="text-gray-400 text-xs mb-1">{AUDIENCE_BASE_URL}/musician/{musician.slug}</p>
-                    <input type="text" value={musician.slug} disabled className="w-full bg-gray-600 border border-gray-600 rounded-lg px-4 py-2 text-gray-400" />
+                    <p className="text-gray-400 text-xs mb-1">{AUDIENCE_BASE_URL}/musician/{accountSlugInput || musician.slug}</p>
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        data-testid="account-slug-input"
+                        value={accountSlugInput}
+                        onChange={(e) => setAccountSlugInput(e.target.value)}
+                        className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                        placeholder="your-slug"
+                      />
+                      <button
+                        type="button"
+                        data-testid="account-slug-save-btn"
+                        onClick={handleSaveAccountSlug}
+                        disabled={savingAccountSlug}
+                        className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-bold text-sm transition duration-300"
+                      >
+                        {savingAccountSlug ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                    {accountSlugMsg.text && (
+                      <p data-testid="account-slug-msg" className={`mt-2 text-xs ${accountSlugMsg.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+                        {accountSlugMsg.text}
+                      </p>
+                    )}
                   </div>
                   {/* Change Password */}
                   <div className="border-t border-gray-600 pt-4">

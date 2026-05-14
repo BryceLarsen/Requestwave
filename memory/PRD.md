@@ -38,7 +38,7 @@ Profile fields override master account values when set. Falls back to master whe
 ### Frontend Structure
 - **Profiles tab**: Profile list cards (with Copy URL, QR, Edit, Set Default, Delete), profile editor modal
 - **Profile editor**: Name, slug, display name, bio, website, playlists, tip toggles, tip platform overrides, social link overrides, Design Settings (color theme, photo, display options)
-- **Account Settings**: Email, slug, password change only
+- **Account Settings**: Email and master slug are editable with inline Save buttons (PUT `/api/account/email`, PUT `/api/account/slug`); password change inline
 - **Design tab**: Removed (merged into profile editor)
 - **AudienceInterface**: Uses profile design_settings when available. Song display is always list layout (Grid/List toggle removed Feb 2026).
 - **Short URL redirects**: /:slug -> /musician/:slug, /:seg1/:seg2 -> /musician/:seg1/:seg2
