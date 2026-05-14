@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, UploadFile, File, Request as FastAPIRequest, Response, Query
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, UploadFile, File, Request as FastAPIRequest, Response, Query, Body
 from fastapi.routing import APIRoute
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
@@ -6148,8 +6148,8 @@ async def start_show(
 
 @api_router.post("/shows/stop")
 async def stop_show(
-    payload: Optional[dict] = None,
-    musician_id: str = Depends(get_current_musician)
+    musician_id: str = Depends(get_current_musician),
+    payload: Optional[dict] = Body(default=None),
 ):
     """Stop the current active show on a profile (per-profile shows).
     Accepts optional profile_id; defaults to the musician's default profile."""
