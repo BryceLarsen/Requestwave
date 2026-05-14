@@ -64,9 +64,17 @@ Profile fields override master account values when set. Falls back to master whe
 - "Copy from Default Profile" button in editor copies from default profile
 
 ## Test Reports
-- /app/test_reports/iteration_2.json through iteration_5.json
+- /app/test_reports/iteration_2.json through iteration_6.json
+
+## Recent Changes (Feb 2026)
+- **Analytics → Most Active Requesters filter**: `GET /api/analytics/requesters` and `GET /api/analytics/export-requesters` accept optional `profile_id` and `event_id` query params (added to `$match`). Both endpoints now consistently exclude archived requests.
+- Frontend Analytics tab: Most Active Requesters section has a filter dropdown ("All Profiles" / per-profile / per-event) that re-fetches and re-renders the list. Export CSV button label switches to "Export filtered list" when a filter is active and includes the filter in the export URL. Filename suffix on the server (`requesters-profile-<id8>-YYYYMMDD.csv` or `requesters-event-<id8>-YYYYMMDD.csv`) reflects the filter.
 
 ## Upcoming Tasks
 - Tip conversion analytics
-- Mailing list capture feature
 - Post-Show Reflection features
+- Spotify Web API enrichment
+- Analytics UI for `analytics_events` collection
+
+## Backlog (Deferred per user)
+- Refactor monolithic `App.js` (13.7k lines) and `server.py` (8.5k lines)

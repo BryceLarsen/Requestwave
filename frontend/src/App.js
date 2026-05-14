@@ -8444,15 +8444,7 @@ const MusicianDashboard = () => {
                     </div>
                   </div>
                   <div className="space-y-3" data-testid="most-active-requesters-list">
-                    {(requestersFilter === 'all'
-                      ? (analyticsData.top_requesters || []).map(r => ({
-                          name: r.requester_name,
-                          email: r.email,
-                          request_count: r.request_count,
-                          total_tips: r.total_tips,
-                        }))
-                      : requestersData
-                    ).slice(0, topRequestersLimit).map((item, index) => (
+                    {requestersData.slice(0, topRequestersLimit).map((item, index) => (
                       <div key={index} className="flex justify-between items-center">
                         <div className="flex-1">
                           <p className="font-medium text-sm">{item.name}</p>
@@ -8469,7 +8461,7 @@ const MusicianDashboard = () => {
                       </div>
                     ))}
                     
-                    {((requestersFilter === 'all' ? (analyticsData.top_requesters || []) : requestersData).length === 0) && (
+                    {requestersData.length === 0 && (
                       <div className="text-center py-8 text-gray-400">
                         <p>No requesters yet in this period</p>
                       </div>

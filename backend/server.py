@@ -4728,7 +4728,10 @@ async def export_requesters_csv(
       - event_id: scope to a specific event
     """
     try:
-        match_stage = {"musician_id": musician_id}
+        match_stage = {
+            "musician_id": musician_id,
+            "status": {"$ne": "archived"}  # match /analytics/requesters consistency
+        }
         if profile_id:
             match_stage["profile_id"] = profile_id
         if event_id:
