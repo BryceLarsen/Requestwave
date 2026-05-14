@@ -750,6 +750,9 @@ const MusicianDashboard = () => {
   const [onstageSelection, setOnstageSelection] = useState(() => {
     try { return localStorage.getItem('onstage_selection') || ''; } catch { return ''; }
   });
+  const [onstageSelectorExpanded, setOnstageSelectorExpanded] = useState(() => {
+    try { return localStorage.getItem('onstage_selector_expanded') === 'true'; } catch { return false; }
+  });
   
   // Events (Sprint 2 Prompt 3)
   const EVENT_FORM_DEFAULT = { name: '', slug: '', profile_id: '', event_date: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', copy_from_source: '' };
@@ -1563,6 +1566,9 @@ const MusicianDashboard = () => {
   useEffect(() => {
     try { if (onstageSelection) localStorage.setItem('onstage_selection', onstageSelection); } catch {}
   }, [onstageSelection]);
+  useEffect(() => {
+    try { localStorage.setItem('onstage_selector_expanded', String(onstageSelectorExpanded)); } catch {}
+  }, [onstageSelectorExpanded]);
 
   // Initialize selection to default profile on first On-Stage activation
   useEffect(() => {
@@ -6516,49 +6522,78 @@ const MusicianDashboard = () => {
         {/* On Stage Tab - Dedicated tab for live performance management */}
         {activeTab === 'onstage' && (
           <div className="space-y-6">
-            {/* Sprint 2 Prompt 4: Profile/Event selector */}
-            <div data-testid="onstage-context-selector" className="bg-gray-800 rounded-xl p-3 flex flex-wrap items-center gap-3">
-              <span className="text-gray-400 text-sm">Performing as:</span>
-              <select
-                data-testid="onstage-selector"
-                value={onstageSelection}
-                onChange={(e) => setOnstageSelection(e.target.value)}
-                className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm flex-1 min-w-[260px]"
-              >
-                <option value="">— choose context —</option>
-                {profiles.length > 0 && (
-                  <optgroup label="Profiles">
-                    {profiles.map(p => (
-                      <option key={`p-${p.id}`} value={`profile:${p.id}`}>
-                        {p.name}{p.is_default ? ' (Default)' : ''}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-                {events.filter(ev => ev.status === 'live' || ev.status === 'upcoming').length > 0 && (
-                  <optgroup label="Events">
-                    {events.filter(ev => ev.status === 'live' || ev.status === 'upcoming').map(ev => {
-                      const parent = profiles.find(p => p.id === ev.profile_id);
-                      return (
-                        <option key={`e-${ev.id}`} value={`event:${ev.id}`}>
-                          {ev.name} — {parent?.name || 'profile'}{ev.status === 'live' ? ' • LIVE' : ''}
-                        </option>
-                      );
-                    })}
-                  </optgroup>
-                )}
-              </select>
+            {/* Sprint 2 Prompt 4: Profile/Event selector (collapsible) */}
+            <div data-testid="onstage-context-selector" className="bg-gray-800 rounded-xl">
               {(() => {
-                if (!onstageSelection) return null;
-                const [kind, id] = onstageSelection.split(':');
-                const ref = kind === 'profile' ? profiles.find(p => p.id === id) : events.find(ev => ev.id === id);
-                if (!ref) return null;
+                const sel = onstageSelection ? onstageSelection.split(':') : [];
+                const kind = sel[0];
+                const id = sel[1];
+                const ref = kind === 'profile' ? profiles.find(p => p.id === id)
+                          : kind === 'event'   ? events.find(ev => ev.id === id)
+                          : null;
+                const parent = ref && kind === 'event' ? profiles.find(p => p.id === ref.profile_id) : null;
+                const summaryLabel = ref
+                  ? (kind === 'event'
+                      ? `${ref.name} — ${parent?.name || 'profile'}${ref.status === 'live' ? ' • LIVE' : ''}`
+                      : `${ref.name}${ref.is_default ? ' (Default)' : ''}`)
+                  : 'Choose context';
                 return (
-                  <span className="text-xs text-gray-400">
-                    {ref.current_show_id
-                      ? <>Active show: <span className="text-green-300">{ref.current_show_name}</span></>
-                      : <>No active show on this {kind}</>}
-                  </span>
+                  <>
+                    <button
+                      type="button"
+                      data-testid="onstage-selector-toggle"
+                      onClick={() => setOnstageSelectorExpanded(!onstageSelectorExpanded)}
+                      className="w-full p-3 flex items-center justify-between text-left hover:bg-gray-750"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-gray-400 text-sm shrink-0">Performing as:</span>
+                        <span className="text-sm font-medium truncate" data-testid="onstage-selector-summary">{summaryLabel}</span>
+                      </div>
+                      <svg className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${onstageSelectorExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    {onstageSelectorExpanded && (
+                      <div className="px-3 pb-3 flex flex-wrap items-center gap-3 border-t border-gray-700 pt-3">
+                        <select
+                          data-testid="onstage-selector"
+                          value={onstageSelection}
+                          onChange={(e) => setOnstageSelection(e.target.value)}
+                          className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm flex-1 min-w-[260px]"
+                        >
+                          <option value="">— choose context —</option>
+                          {profiles.length > 0 && (
+                            <optgroup label="Profiles">
+                              {profiles.map(p => (
+                                <option key={`p-${p.id}`} value={`profile:${p.id}`}>
+                                  {p.name}{p.is_default ? ' (Default)' : ''}
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
+                          {events.filter(ev => ev.status === 'live' || ev.status === 'upcoming').length > 0 && (
+                            <optgroup label="Events">
+                              {events.filter(ev => ev.status === 'live' || ev.status === 'upcoming').map(ev => {
+                                const pp = profiles.find(p => p.id === ev.profile_id);
+                                return (
+                                  <option key={`e-${ev.id}`} value={`event:${ev.id}`}>
+                                    {ev.name} — {pp?.name || 'profile'}{ev.status === 'live' ? ' • LIVE' : ''}
+                                  </option>
+                                );
+                              })}
+                            </optgroup>
+                          )}
+                        </select>
+                        {ref && (
+                          <span className="text-xs text-gray-400">
+                            {ref.current_show_id
+                              ? <>Active show: <span className="text-green-300">{ref.current_show_name}</span></>
+                              : <>No active show on this {kind}</>}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </>
                 );
               })()}
             </div>
