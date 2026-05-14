@@ -746,6 +746,11 @@ const MusicianDashboard = () => {
   const [accountSlugMsg, setAccountSlugMsg] = useState({ type: '', text: '' });
   const [profileFilterId, setProfileFilterId] = useState(''); // For requests tab filter
 
+  // On-Stage profile/event selector (Sprint 2 Prompt 4)
+  const [onstageSelection, setOnstageSelection] = useState(() => {
+    try { return localStorage.getItem('onstage_selection') || ''; } catch { return ''; }
+  });
+  
   // Events (Sprint 2 Prompt 3)
   const EVENT_FORM_DEFAULT = { name: '', slug: '', profile_id: '', event_date: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', copy_from_source: '' };
   const [events, setEvents] = useState([]);
@@ -1030,12 +1035,20 @@ const MusicianDashboard = () => {
       // Capture browser timezone to send with show creation
       const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       
-      const response = await axios.post(`${API}/shows/start`, { 
+      // Sprint 2 Prompt 4: target the On-Stage selected context if present
+      const startPayload = {
         name: newShowName,
-        timezone: browserTimezone,  // Send IANA timezone string for display/analytics
+        timezone: browserTimezone,
         playlist_filter_mode: showPlaylistFilterMode,
         enabled_playlist_ids: showPlaylistFilterMode === 'selected' ? showEnabledPlaylistIds : []
-      }, {
+      };
+      if (onstageSelection) {
+        const [kind, id] = onstageSelection.split(':');
+        if (kind === 'profile') startPayload.profile_id = id;
+        if (kind === 'event') startPayload.event_id = id;
+      }
+      
+      const response = await axios.post(`${API}/shows/start`, startPayload, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
 
@@ -1061,10 +1074,73 @@ const MusicianDashboard = () => {
       setShowEnabledPlaylistIds([]);
       fetchCurrentShow();
       fetchShows();
+      // Refresh per-profile / per-event current_show pointers so On-Stage selector reflects the new show
+      fetchProfiles();
+      fetchEvents();
     } catch (error) {
       console.error('Error starting show:', error);
       showErrorToast(error.response?.data?.detail || 'Error starting show. Please try again.', error);
     }
+  };
+
+  // ===== Sprint 2 Prompt 4: Export show requests as CSV =====
+  const csvEscape = (v) => {
+    if (v === null || v === undefined) return '';
+    const s = String(v);
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  
+  const exportShowRequestsCSV = (show) => {
+    const showRequests = requests.filter(r => r.show_id === show.id);
+    // Group by song (song_id when present, fallback to title+artist)
+    const groups = new Map();
+    for (const r of showRequests) {
+      const key = r.song_id || `${r.song_title}||${r.song_artist}`;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          title: r.song_title || '',
+          artist: r.song_artist || '',
+          count: 0,
+          requesters: [],
+          dedications: [],
+          latest: null,
+          latestStatus: null,
+        });
+      }
+      const g = groups.get(key);
+      g.count += 1;
+      if (r.requester_name) g.requesters.push(r.requester_name);
+      if (r.dedication && r.dedication.trim()) g.dedications.push(r.dedication.trim());
+      const ts = r.created_at ? new Date(r.created_at).getTime() : 0;
+      if (g.latest === null || ts > g.latest) {
+        g.latest = ts;
+        g.latestStatus = r.status || 'pending';
+      }
+    }
+    
+    const rows = Array.from(groups.values()).sort((a, b) => b.count - a.count);
+    
+    const headers = ['Song Title', 'Artist', 'Request Count', 'Requester Names', 'Dedications', 'Status'];
+    const body = rows.map(g => [
+      csvEscape(g.title),
+      csvEscape(g.artist),
+      g.count,
+      csvEscape(g.requesters.join(', ')),
+      csvEscape(g.dedications.join(', ')),
+      csvEscape(g.latestStatus || 'pending'),
+    ].join(','));
+    
+    const csv = [headers.join(','), ...body].join('\n') + '\n';
+    const safeName = (show.name || 'show').toLowerCase().replace(/[^a-z0-9-_]+/g, '-').replace(/^-+|-+$/g, '') || 'show';
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${safeName}-requests.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const handleStopShow = async () => {
@@ -1072,7 +1148,14 @@ const MusicianDashboard = () => {
 
     if (confirm(`Stop this show "${currentShow.name}"?`)) {
       try {
-        const response = await axios.post(`${API}/shows/stop`); // Removed manual headers - axios already has auth token set
+        // Sprint 2 Prompt 4: stop scoped to selected context if any
+        const stopBody = {};
+        if (onstageSelection) {
+          const [kind, id] = onstageSelection.split(':');
+          if (kind === 'profile') stopBody.profile_id = id;
+          if (kind === 'event') stopBody.event_id = id;
+        }
+        const response = await axios.post(`${API}/shows/stop`, stopBody);
 
         // Update musician state to clear show info from backend response
         if (response.data.musician) {
@@ -1092,6 +1175,9 @@ const MusicianDashboard = () => {
 
         setCurrentShow(null);
         fetchGroupedRequests();
+        // Refresh per-profile / per-event current_show pointers so On-Stage selector reflects the change
+        fetchProfiles();
+        fetchEvents();
       } catch (error) {
         console.error('Error stopping show:', error);
         showErrorToast(error.response?.data?.detail || 'Error stopping show. Please try again.', error);
@@ -1466,7 +1552,40 @@ const MusicianDashboard = () => {
       fetchEvents();
       if (profiles.length === 0) fetchProfiles();
     }
+    if (activeTab === 'onstage') {
+      // On-Stage selector needs profiles + events populated
+      if (profiles.length === 0) fetchProfiles();
+      fetchEvents();
+    }
   }, [activeTab]);
+
+  // On-Stage selector: persist + react to changes (Sprint 2 Prompt 4)
+  useEffect(() => {
+    try { if (onstageSelection) localStorage.setItem('onstage_selection', onstageSelection); } catch {}
+  }, [onstageSelection]);
+
+  // Initialize selection to default profile on first On-Stage activation
+  useEffect(() => {
+    if (activeTab !== 'onstage') return;
+    if (onstageSelection) return;
+    const dp = profiles.find(p => p.is_default);
+    if (dp) setOnstageSelection(`profile:${dp.id}`);
+  }, [activeTab, profiles, onstageSelection]);
+
+  // When selection changes, point currentShow at the selected context's show
+  useEffect(() => {
+    if (activeTab !== 'onstage') return;
+    if (!onstageSelection) return;
+    const [kind, id] = onstageSelection.split(':');
+    let ref = null;
+    if (kind === 'profile') ref = profiles.find(p => p.id === id);
+    if (kind === 'event') ref = events.find(ev => ev.id === id);
+    if (ref?.current_show_id) {
+      setCurrentShow({ id: ref.current_show_id, name: ref.current_show_name });
+    } else {
+      setCurrentShow(null);
+    }
+  }, [activeTab, onstageSelection, profiles, events]);
 
   // NEW: Handle URL parameters for sort option
   useEffect(() => {
@@ -5733,6 +5852,18 @@ const MusicianDashboard = () => {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
+                              exportShowRequestsCSV(show);
+                            }}
+                            data-testid={`export-csv-${show.id}`}
+                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition duration-300"
+                            title={`Export CSV of requests for "${show.name}"`}
+                          >
+                            📤 Export
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
                               handleArchiveShow(show.id, show.name);
                             }}
                             className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1 rounded transition duration-300"
@@ -6385,6 +6516,53 @@ const MusicianDashboard = () => {
         {/* On Stage Tab - Dedicated tab for live performance management */}
         {activeTab === 'onstage' && (
           <div className="space-y-6">
+            {/* Sprint 2 Prompt 4: Profile/Event selector */}
+            <div data-testid="onstage-context-selector" className="bg-gray-800 rounded-xl p-3 flex flex-wrap items-center gap-3">
+              <span className="text-gray-400 text-sm">Performing as:</span>
+              <select
+                data-testid="onstage-selector"
+                value={onstageSelection}
+                onChange={(e) => setOnstageSelection(e.target.value)}
+                className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm flex-1 min-w-[260px]"
+              >
+                <option value="">— choose context —</option>
+                {profiles.length > 0 && (
+                  <optgroup label="Profiles">
+                    {profiles.map(p => (
+                      <option key={`p-${p.id}`} value={`profile:${p.id}`}>
+                        {p.name}{p.is_default ? ' (Default)' : ''}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {events.filter(ev => ev.status === 'live' || ev.status === 'upcoming').length > 0 && (
+                  <optgroup label="Events">
+                    {events.filter(ev => ev.status === 'live' || ev.status === 'upcoming').map(ev => {
+                      const parent = profiles.find(p => p.id === ev.profile_id);
+                      return (
+                        <option key={`e-${ev.id}`} value={`event:${ev.id}`}>
+                          {ev.name} — {parent?.name || 'profile'}{ev.status === 'live' ? ' • LIVE' : ''}
+                        </option>
+                      );
+                    })}
+                  </optgroup>
+                )}
+              </select>
+              {(() => {
+                if (!onstageSelection) return null;
+                const [kind, id] = onstageSelection.split(':');
+                const ref = kind === 'profile' ? profiles.find(p => p.id === id) : events.find(ev => ev.id === id);
+                if (!ref) return null;
+                return (
+                  <span className="text-xs text-gray-400">
+                    {ref.current_show_id
+                      ? <>Active show: <span className="text-green-300">{ref.current_show_name}</span></>
+                      : <>No active show on this {kind}</>}
+                  </span>
+                );
+              })()}
+            </div>
+
             {/* Show empty state if no active show */}
             {!currentShow ? (
               <div className="text-center py-16 bg-gray-800/50 rounded-xl">
@@ -6392,7 +6570,7 @@ const MusicianDashboard = () => {
                 <h2 className="text-2xl font-bold text-white mb-2">No Active Show</h2>
                 <p className="text-gray-400 mb-6">Start a show to see live requests and manage your performance.</p>
                 <button
-                  onClick={() => setActiveTab('requests')}
+                  onClick={() => setShowStartModal(true)}
                   className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-bold transition duration-300"
                   data-testid="start-show-btn"
                 >

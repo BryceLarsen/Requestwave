@@ -6157,11 +6157,12 @@ async def get_requests_grouped_by_show(
 # NEW: Enhanced show management with active show tracking
 @api_router.post("/shows/start")
 async def start_show(
-    show_data: dict,  # {"name": "Show Name", "timezone": "...", "profile_id": "..." (optional)}
+    show_data: dict,  # {"name": "Show Name", "timezone": "...", "profile_id" or "event_id" (optional)}
     musician_id: str = Depends(get_current_musician)
 ):
-    """Start a new show for a specific profile (per-profile shows).
-    Falls back to the musician's default profile when profile_id is not provided."""
+    """Start a new show for a specific profile OR event (per-profile shows).
+    If event_id is provided, the show is event-scoped and event.current_show_id is updated.
+    Otherwise falls back to the musician's default profile (or specified profile_id)."""
     try:
         show_name = show_data.get("name", "").strip()
         if not show_name:
@@ -6170,22 +6171,38 @@ async def start_show(
         # Extract timezone from request (sent from frontend browser)
         show_timezone = show_data.get("timezone")  # IANA timezone string, e.g., "America/New_York"
         
-        # Resolve target profile (provided profile_id, else default profile)
-        target_profile_id = show_data.get("profile_id")
-        if target_profile_id:
+        # Resolve target: event takes precedence over profile when provided
+        target_event = None
+        target_event_id = show_data.get("event_id")
+        if target_event_id:
+            target_event = await db.events.find_one(
+                {"id": target_event_id, "musician_id": musician_id}, {"_id": 0}
+            )
+            if not target_event:
+                raise HTTPException(status_code=404, detail="Event not found")
+            target_profile_id = target_event["profile_id"]
             target_profile = await db.profiles.find_one(
                 {"id": target_profile_id, "musician_id": musician_id}, {"_id": 0}
             )
-            if not target_profile:
-                raise HTTPException(status_code=404, detail="Profile not found")
         else:
-            target_profile = await _get_default_profile(musician_id)
-            if not target_profile:
-                raise HTTPException(status_code=400, detail="No default profile exists. Create a profile first.")
-        target_profile_id = target_profile["id"]
+            target_profile_id = show_data.get("profile_id")
+            if target_profile_id:
+                target_profile = await db.profiles.find_one(
+                    {"id": target_profile_id, "musician_id": musician_id}, {"_id": 0}
+                )
+                if not target_profile:
+                    raise HTTPException(status_code=404, detail="Profile not found")
+            else:
+                target_profile = await _get_default_profile(musician_id)
+                if not target_profile:
+                    raise HTTPException(status_code=400, detail="No default profile exists. Create a profile first.")
+            target_profile_id = target_profile["id"]
         
-        # Defensively end any previously active show on this profile first
-        previous_show_id = target_profile.get("current_show_id")
+        # Defensively end any previously active show on this event or profile first
+        if target_event:
+            previous_show_id = target_event.get("current_show_id")
+        else:
+            previous_show_id = target_profile.get("current_show_id")
         if previous_show_id:
             await db.shows.update_one(
                 {"id": previous_show_id},
@@ -6194,13 +6211,14 @@ async def start_show(
                     "status": "ended"
                 }}
             )
-            logger.info(f"Defensively ended previous show {previous_show_id} on profile {target_profile_id} before starting new show")
+            logger.info(f"Defensively ended previous show {previous_show_id} before starting new show")
         
-        # Create show record (tagged with profile_id for per-profile show ownership)
+        # Create show record (tagged with both profile_id and optionally event_id)
         show_dict = {
             "id": str(uuid.uuid4()),
             "musician_id": musician_id,
             "profile_id": target_profile_id,
+            "event_id": target_event_id if target_event else None,
             "name": show_name,
             "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "venue": show_data.get("venue", ""),
@@ -6213,14 +6231,17 @@ async def start_show(
         }
         await db.shows.insert_one(show_dict)
         
-        # Update THIS PROFILE'S current active show (not the musician doc)
-        await db.profiles.update_one(
-            {"id": target_profile_id},
-            {"$set": {
-                "current_show_id": show_dict["id"],
-                "current_show_name": show_name,
-            }}
-        )
+        # Update current active show on EVENT or PROFILE
+        if target_event:
+            await db.events.update_one(
+                {"id": target_event["id"]},
+                {"$set": {"current_show_id": show_dict["id"], "current_show_name": show_name}}
+            )
+        else:
+            await db.profiles.update_one(
+                {"id": target_profile_id},
+                {"$set": {"current_show_id": show_dict["id"], "current_show_name": show_name}}
+            )
         
         # If musician doesn't have a timezone set yet, set it from this show
         musician = await db.musicians.find_one({"id": musician_id})
@@ -6241,12 +6262,13 @@ async def start_show(
             metadata={
                 "show_name": show_name,
                 "profile_id": target_profile_id,
+                "event_id": target_event["id"] if target_event else None,
             }
         )
         
-        logger.info(f"Started show '{show_name}' for musician {musician_id} on profile {target_profile_id}")
+        logger.info(f"Started show '{show_name}' for musician {musician_id} on {'event ' + target_event['id'] if target_event else 'profile ' + target_profile_id}")
         # Backwards-compatible response shape: current_show_* at top level under "musician"
-        # is sourced from the profile we just updated (default profile when not specified).
+        # is sourced from the default profile (so the global frontend indicator keeps working).
         default_profile = await _get_default_profile(musician_id)
         top_cs_id = default_profile.get("current_show_id") if default_profile else show_dict["id"]
         top_cs_name = default_profile.get("current_show_name") if default_profile else show_name
@@ -6259,6 +6281,7 @@ async def start_show(
                 "current_show_name": top_cs_name
             },
             "profile_id": target_profile_id,
+            "event_id": target_event["id"] if target_event else None,
         }
         
     except HTTPException:
@@ -6272,25 +6295,40 @@ async def stop_show(
     musician_id: str = Depends(get_current_musician),
     payload: Optional[dict] = Body(default=None),
 ):
-    """Stop the current active show on a profile (per-profile shows).
-    Accepts optional profile_id; defaults to the musician's default profile."""
+    """Stop the current active show on a profile or event.
+    Accepts optional event_id OR profile_id; defaults to the musician's default profile."""
     try:
         payload = payload or {}
-        target_profile_id = payload.get("profile_id")
-        if target_profile_id:
-            target_profile = await db.profiles.find_one(
-                {"id": target_profile_id, "musician_id": musician_id}, {"_id": 0}
+        target_event = None
+        target_event_id = payload.get("event_id")
+        if target_event_id:
+            target_event = await db.events.find_one(
+                {"id": target_event_id, "musician_id": musician_id}, {"_id": 0}
             )
-            if not target_profile:
-                raise HTTPException(status_code=404, detail="Profile not found")
+            if not target_event:
+                raise HTTPException(status_code=404, detail="Event not found")
+            target_profile_id = target_event["profile_id"]
+            target_profile = None
         else:
-            target_profile = await _get_default_profile(musician_id)
-            if not target_profile:
-                raise HTTPException(status_code=400, detail="No default profile exists.")
-        target_profile_id = target_profile["id"]
+            target_profile_id = payload.get("profile_id")
+            if target_profile_id:
+                target_profile = await db.profiles.find_one(
+                    {"id": target_profile_id, "musician_id": musician_id}, {"_id": 0}
+                )
+                if not target_profile:
+                    raise HTTPException(status_code=404, detail="Profile not found")
+            else:
+                target_profile = await _get_default_profile(musician_id)
+                if not target_profile:
+                    raise HTTPException(status_code=400, detail="No default profile exists.")
+            target_profile_id = target_profile["id"]
         
-        previous_show_id = target_profile.get("current_show_id")
-        previous_show_name = target_profile.get("current_show_name")
+        if target_event:
+            previous_show_id = target_event.get("current_show_id")
+            previous_show_name = target_event.get("current_show_name")
+        else:
+            previous_show_id = target_profile.get("current_show_id")
+            previous_show_name = target_profile.get("current_show_name")
         
         # Mark the show as ended with timestamp and status
         if previous_show_id:
@@ -6302,14 +6340,17 @@ async def stop_show(
                 }}
             )
         
-        # Clear THIS PROFILE'S current active show
-        await db.profiles.update_one(
-            {"id": target_profile_id},
-            {"$set": {
-                "current_show_id": None,
-                "current_show_name": None
-            }}
-        )
+        # Clear current active show on event OR profile
+        if target_event:
+            await db.events.update_one(
+                {"id": target_event["id"]},
+                {"$set": {"current_show_id": None, "current_show_name": None}}
+            )
+        else:
+            await db.profiles.update_one(
+                {"id": target_profile_id},
+                {"$set": {"current_show_id": None, "current_show_name": None}}
+            )
         
         # Emit analytics event only if there was an active show
         if previous_show_id:
@@ -6323,10 +6364,11 @@ async def stop_show(
                 metadata={
                     "show_name": previous_show_name,
                     "profile_id": target_profile_id,
+                    "event_id": target_event["id"] if target_event else None,
                 }
             )
         
-        logger.info(f"Stopped active show for musician {musician_id} on profile {target_profile_id}")
+        logger.info(f"Stopped active show for musician {musician_id} on {'event ' + target_event['id'] if target_event else 'profile ' + target_profile_id}")
         # Backwards-compatible response shape: read top-level current_show_* from default profile
         default_profile = await _get_default_profile(musician_id)
         top_cs_id = default_profile.get("current_show_id") if default_profile else None
@@ -6339,6 +6381,7 @@ async def stop_show(
                 "current_show_name": top_cs_name
             },
             "profile_id": target_profile_id,
+            "event_id": target_event["id"] if target_event else None,
         }
         
     except HTTPException:
