@@ -59,7 +59,6 @@ class TestDesignProfileFeatures:
             "slug": "design-test-profile",
             "active_playlist_ids": ["__all__"],
             "design_color_scheme": "blue",
-            "design_layout_mode": "list",
             "design_show_year": False,
             "design_show_notes": True
         }
@@ -86,11 +85,10 @@ class TestDesignProfileFeatures:
         
         # Verify design fields are stored
         assert profile.get("design_color_scheme") == "blue", f"Expected blue, got {profile.get('design_color_scheme')}"
-        assert profile.get("design_layout_mode") == "list", f"Expected list, got {profile.get('design_layout_mode')}"
         assert profile.get("design_show_year") == False, f"Expected False, got {profile.get('design_show_year')}"
         assert profile.get("design_show_notes") == True, f"Expected True, got {profile.get('design_show_notes')}"
         
-        print(f"✓ Profile design fields stored correctly: color_scheme={profile.get('design_color_scheme')}, layout_mode={profile.get('design_layout_mode')}")
+        print(f"✓ Profile design fields stored correctly: color_scheme={profile.get('design_color_scheme')}")
     
     # ============================================
     # Test 2: Profile public endpoint includes design_settings
@@ -122,7 +120,6 @@ class TestDesignProfileFeatures:
         
         # Verify design_settings has expected fields
         assert "color_scheme" in design_settings, "color_scheme not in design_settings"
-        assert "layout_mode" in design_settings, "layout_mode not in design_settings"
         assert "show_year" in design_settings, "show_year not in design_settings"
         assert "show_notes" in design_settings, "show_notes not in design_settings"
         
@@ -140,11 +137,10 @@ class TestDesignProfileFeatures:
         
         # Verify design settings structure
         assert "color_scheme" in data, "color_scheme not in design response"
-        assert "layout_mode" in data, "layout_mode not in design response"
         assert "show_year" in data, "show_year not in design response"
         assert "show_notes" in data, "show_notes not in design response"
         
-        print(f"✓ Design endpoint returns settings: color_scheme={data.get('color_scheme')}, layout_mode={data.get('layout_mode')}")
+        print(f"✓ Design endpoint returns settings: color_scheme={data.get('color_scheme')}")
     
     # ============================================
     # Test 4: Profile design settings override global
@@ -167,8 +163,7 @@ class TestDesignProfileFeatures:
             # Update with different color scheme than global
             different_color = "green" if global_settings.get("color_scheme") != "green" else "blue"
             update_response = self.session.put(f"{BASE_URL}/api/profiles/{test_profile['id']}", json={
-                "design_color_scheme": different_color,
-                "design_layout_mode": "list"
+                "design_color_scheme": different_color
             })
             assert update_response.status_code == 200
             
@@ -302,7 +297,6 @@ class TestDesignProfileFeatures:
         # Update design settings
         update_data = {
             "design_color_scheme": "orange",
-            "design_layout_mode": "grid",
             "design_show_year": True,
             "design_show_notes": False
         }
@@ -315,8 +309,6 @@ class TestDesignProfileFeatures:
         # Verify updates
         assert updated_profile.get("design_color_scheme") == "orange", \
             f"design_color_scheme not updated: {updated_profile.get('design_color_scheme')}"
-        assert updated_profile.get("design_layout_mode") == "grid", \
-            f"design_layout_mode not updated: {updated_profile.get('design_layout_mode')}"
         
         print(f"✓ Profile design settings updated: color_scheme={updated_profile.get('design_color_scheme')}")
     

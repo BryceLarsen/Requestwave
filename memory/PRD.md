@@ -10,48 +10,49 @@ RequestWave is a live music request platform enabling musicians to manage song r
 
 ## Sprint 1: Multi-Profile System (Complete)
 
-### Phase 1 (Initial Build)
-- Profile CRUD (POST/GET/PUT/DELETE /api/profiles) with slug validation
-- Public profile resolution (GET /api/musicians/{master_slug}/{profile_slug})
-- Slug resolver for short URLs (GET /api/resolve/{slug})
-- Profile-scoped songs via active_playlist_ids ("__all__" = full library)
-- Tip visibility toggles per profile
-- Request profile tracking (profile_id on requests)
-- Short URL redirects (/:slug -> /musician/:slug)
-- 404 page for unknown slugs
-- Profiles tab with card list, editor modal, collapsible Account Settings
+### Core Feature
+Musicians can create multiple performance profiles. Each profile has its own audience URL, active playlists, tip visibility, payment/social overrides, and design settings.
 
-### Phase 2 (Fixes & Additions)
-- Profile override fields: paypal_username, venmo_username, cashapp_username, zelle_info, instagram_username, tiktok_username, facebook_url, spotify_url, apple_music_url, website, bio, musician_name
-- is_default: first profile auto-default, cannot delete default, Set Default button
-- Default profile resolution: /musician/{slug} resolves to default profile
-- Account Settings slimmed to: stage name, email, slug
-
-### Phase 3 (Bug Fixes - Current)
-- Removed Master Audience Link section (redundant with default profile card)
-- Fixed profile card buttons: Delete + Set Default visible on non-default cards on their own row
-- Fixed profile overrides: chained fetchDesignSettings then fetchProfileData to prevent race condition
-- New profile form fields start empty (active_playlist_ids defaults to __all__)
-- Added "Copy from Account Settings" button in profile editor
-
-### Profile Override Logic
-Profile fields override master account values when set (non-null, non-empty). Falls back to master when blank. Frontend chains design settings fetch before profile data fetch to prevent race conditions.
-
-### Data Model: profiles collection
+### Profile Data Model
 ```
-id, musician_id, name, slug, active_playlist_ids, 
+id, musician_id, name, slug, active_playlist_ids ("__all__" = full library),
 show_tips_in_success_screen, show_tips_in_orientation, is_default,
 paypal_username, venmo_username, cashapp_username, zelle_info,
 instagram_username, tiktok_username, facebook_url, spotify_url, apple_music_url,
-website, bio, musician_name, created_at
+website, bio, musician_name,
+design_color_scheme, design_artist_photo, design_show_year, design_show_notes,
+created_at
 ```
 
+### Override Logic
+Profile fields override master account values when set. Falls back to master when blank/null. Design settings override global design_settings document.
+
+### Key Endpoints
+| Method | Path | Description |
+|--------|------|-------------|
+| POST/GET/PUT/DELETE | /api/profiles | Profile CRUD |
+| GET | /api/musicians/{master}/{profile} | Public profile resolution with merged data + design_settings |
+| GET | /api/musicians/{slug}/design | Returns default profile design or global fallback |
+| GET | /api/resolve/{slug} | Slug lookup for short URL redirects |
+
+### Frontend Structure
+- **Profiles tab**: Profile list cards (with Copy URL, QR, Edit, Set Default, Delete), profile editor modal
+- **Profile editor**: Name, slug, display name, bio, website, playlists, tip toggles, tip platform overrides, social link overrides, Design Settings (color theme, photo, display options)
+- **Account Settings**: Email, slug, password change only
+- **Design tab**: Removed (merged into profile editor)
+- **AudienceInterface**: Uses profile design_settings when available. Song display is always list layout (Grid/List toggle removed Feb 2026).
+- **Short URL redirects**: /:slug -> /musician/:slug, /:seg1/:seg2 -> /musician/:seg1/:seg2
+
+### is_default Profile
+- First profile auto-set as default
+- Cannot be deleted
+- /musician/{slug} master URL resolves to default profile
+- "Copy from Default Profile" button in editor copies from default profile
+
 ## Test Reports
-- /app/test_reports/iteration_2.json (Phase 1)
-- /app/test_reports/iteration_3.json (Phase 2)
-- /app/test_reports/iteration_4.json (Phase 3 fixes)
+- /app/test_reports/iteration_2.json through iteration_5.json
 
 ## Upcoming Tasks
-- Analytics: Tip conversion analytics
-- Mailing list: Capture feature
+- Tip conversion analytics
+- Mailing list capture feature
 - Post-Show Reflection features

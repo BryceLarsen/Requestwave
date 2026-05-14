@@ -736,7 +736,7 @@ const MusicianDashboard = () => {
   const [profiles, setProfiles] = useState([]);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [editingProfile, setEditingProfile] = useState(null);
-  const [profileForm, setProfileForm] = useState({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_layout_mode: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
+  const [profileForm, setProfileForm] = useState({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
   const [accountSettingsExpanded, setAccountSettingsExpanded] = useState(false);
   const [profileFilterId, setProfileFilterId] = useState(''); // For requests tab filter
   
@@ -1346,7 +1346,6 @@ const MusicianDashboard = () => {
   // Design settings state
   const [designSettings, setDesignSettings] = useState({
     color_scheme: 'purple',
-    layout_mode: 'grid',
     artist_photo: null,
     show_year: true,
     show_notes: true
@@ -1799,7 +1798,7 @@ const MusicianDashboard = () => {
       const response = await axios.post(`${API}/profiles`, profileForm);
       setProfiles([...profiles, response.data]);
       setShowProfileEditor(false);
-      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_layout_mode: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
+      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
     } catch (error) {
       alert(error.response?.data?.detail || 'Error creating profile');
     }
@@ -1812,7 +1811,7 @@ const MusicianDashboard = () => {
       setProfiles(profiles.map(p => p.id === editingProfile.id ? response.data : p));
       setShowProfileEditor(false);
       setEditingProfile(null);
-      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_layout_mode: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
+      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
     } catch (error) {
       alert(error.response?.data?.detail || 'Error updating profile');
     }
@@ -1850,14 +1849,13 @@ const MusicianDashboard = () => {
         bio: profileToEdit.bio || '',
         musician_name: profileToEdit.musician_name || '',
         design_color_scheme: profileToEdit.design_color_scheme || '',
-        design_layout_mode: profileToEdit.design_layout_mode || '',
         design_artist_photo: profileToEdit.design_artist_photo || '',
         design_show_year: profileToEdit.design_show_year !== false,
         design_show_notes: profileToEdit.design_show_notes !== false,
       });
     } else {
       setEditingProfile(null);
-      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_layout_mode: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
+      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
     }
     setShowProfileEditor(true);
   };
@@ -6711,7 +6709,6 @@ const MusicianDashboard = () => {
                         spotify_url: defaultProfile.spotify_url || '',
                         apple_music_url: defaultProfile.apple_music_url || '',
                         design_color_scheme: defaultProfile.design_color_scheme || '',
-                        design_layout_mode: defaultProfile.design_layout_mode || '',
                         design_artist_photo: defaultProfile.design_artist_photo || '',
                         design_show_year: defaultProfile.design_show_year !== false,
                         design_show_notes: defaultProfile.design_show_notes !== false,
@@ -6900,23 +6897,6 @@ const MusicianDashboard = () => {
                           ))}
                         </div>
                         <p className="text-gray-500 text-xs mt-1">Leave unselected to use global default</p>
-                      </div>
-
-                      {/* Layout Mode */}
-                      <div className="mb-4">
-                        <label className="block text-gray-400 text-xs mb-2">Song Display Layout</label>
-                        <div className="grid grid-cols-2 gap-3">
-                          <button type="button" onClick={() => setProfileForm({...profileForm, design_layout_mode: 'grid'})}
-                            className={`p-3 rounded-lg border-2 transition duration-300 ${profileForm.design_layout_mode === 'grid' ? 'border-purple-500 bg-purple-900/20' : 'border-gray-600 hover:border-gray-400'}`}>
-                            <div className="grid grid-cols-2 gap-1 mb-1"><div className="bg-gray-600 h-2 rounded"></div><div className="bg-gray-600 h-2 rounded"></div><div className="bg-gray-600 h-2 rounded"></div><div className="bg-gray-600 h-2 rounded"></div></div>
-                            <span className="text-xs">Grid</span>
-                          </button>
-                          <button type="button" onClick={() => setProfileForm({...profileForm, design_layout_mode: 'list'})}
-                            className={`p-3 rounded-lg border-2 transition duration-300 ${profileForm.design_layout_mode === 'list' ? 'border-purple-500 bg-purple-900/20' : 'border-gray-600 hover:border-gray-400'}`}>
-                            <div className="space-y-1 mb-1"><div className="bg-gray-600 h-1.5 rounded w-full"></div><div className="bg-gray-600 h-1.5 rounded w-full"></div><div className="bg-gray-600 h-1.5 rounded w-full"></div></div>
-                            <span className="text-xs">List</span>
-                          </button>
-                        </div>
                       </div>
 
                       {/* Artist Photo */}
@@ -7718,47 +7698,6 @@ const MusicianDashboard = () => {
                       <span className="text-xs text-gray-300">{theme.label}</span>
                     </button>
                   ))}
-                </div>
-              </div>
-
-              {/* Layout Mode */}
-              <div>
-                <label className="block text-gray-300 text-sm font-bold mb-3">Song Display Layout</label>
-                <div className="grid grid-cols-2 gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setDesignSettings({...designSettings, layout_mode: 'grid'})}
-                    className={`p-4 rounded-lg border-2 transition duration-300 ${
-                      designSettings.layout_mode === 'grid'
-                        ? 'border-purple-500 bg-purple-900/20'
-                        : 'border-gray-600 hover:border-gray-400'
-                    }`}
-                  >
-                    <div className="grid grid-cols-2 gap-1 mb-2">
-                      <div className="bg-gray-600 h-3 rounded"></div>
-                      <div className="bg-gray-600 h-3 rounded"></div>
-                      <div className="bg-gray-600 h-3 rounded"></div>
-                      <div className="bg-gray-600 h-3 rounded"></div>
-                    </div>
-                    <span className="text-sm">Grid View</span>
-                  </button>
-                  
-                  <button
-                    type="button"
-                    onClick={() => setDesignSettings({...designSettings, layout_mode: 'list'})}
-                    className={`p-4 rounded-lg border-2 transition duration-300 ${
-                      designSettings.layout_mode === 'list'
-                        ? 'border-purple-500 bg-purple-900/20'
-                        : 'border-gray-600 hover:border-gray-400'
-                    }`}
-                  >
-                    <div className="space-y-1 mb-2">
-                      <div className="bg-gray-600 h-2 rounded w-full"></div>
-                      <div className="bg-gray-600 h-2 rounded w-full"></div>
-                      <div className="bg-gray-600 h-2 rounded w-full"></div>
-                    </div>
-                    <span className="text-sm">List View</span>
-                  </button>
                 </div>
               </div>
 
@@ -9088,7 +9027,6 @@ const AudienceInterface = () => {
   const [playlists, setPlaylists] = useState([]); // NEW: Add playlists state
   const [designSettings, setDesignSettings] = useState({
     color_scheme: 'purple',
-    layout_mode: 'grid',
     artist_photo: null,
     show_year: true,
     show_notes: true,
@@ -10507,33 +10445,7 @@ const AudienceInterface = () => {
           )}
         </div>
 
-        {/* List/Grid Toggle - De-emphasized */}
-        <div className="hidden md:flex justify-end mb-3">
-          <div className="flex bg-gray-800/50 rounded-lg p-0.5 border border-gray-700/50">
-            <button
-              onClick={() => setDesignSettings({...designSettings, layout_mode: 'grid'})}
-              className={`px-2 py-1 rounded text-xs transition duration-300 ${
-                designSettings.layout_mode === 'grid'
-                  ? 'bg-gray-700 text-gray-300'
-                  : 'text-gray-500 hover:text-gray-400'
-              }`}
-            >
-              Grid
-            </button>
-            <button
-              onClick={() => setDesignSettings({...designSettings, layout_mode: 'list'})}
-              className={`px-2 py-1 rounded text-xs transition duration-300 ${
-                designSettings.layout_mode === 'list'
-                  ? 'bg-gray-700 text-gray-300'
-                  : 'text-gray-500 hover:text-gray-400'
-              }`}
-            >
-              List
-            </button>
-          </div>
-        </div>
-
-        {/* Songs Grid/List */}
+        {/* Songs List */}
         {musician?.requests_enabled === false ? (
           /* Requests Disabled Message */
           <div className="bg-orange-900/20 border border-orange-500/30 rounded-xl p-8 text-center">
@@ -10566,11 +10478,7 @@ const AudienceInterface = () => {
           </div>
         ) : (
           /* Normal Songs Display - Tappable cards */
-          <div className={`${
-            designSettings.layout_mode === 'list' 
-              ? 'space-y-2 md:space-y-3' 
-              : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4'
-          }`}>
+          <div className="space-y-2 md:space-y-3">
             {filteredSongs.map((song) => (
               <button
                 key={song.id}
@@ -10579,12 +10487,12 @@ const AudienceInterface = () => {
                   setSelectedSong(song);
                 }}
                 data-testid={`song-card-${song.id}`}
-                className={`w-full text-left rounded-lg py-2.5 px-3.5
+                className="w-full text-left rounded-lg py-2.5 px-3.5
                   hover:brightness-110
                   active:scale-[0.98] active:brightness-95
                   transition-all duration-150 ease-out cursor-pointer
                   border border-gray-700/30
-                  ${designSettings.layout_mode === 'list' ? 'flex items-center space-x-4' : ''}`}
+                  flex items-center space-x-4"
                 style={{
                   background: 'linear-gradient(to bottom, rgb(42, 48, 60) 0%, rgb(31, 41, 55) 100%)'
                 }}

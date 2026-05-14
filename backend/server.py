@@ -448,7 +448,6 @@ class BatchEditResponse(BaseModel):
 
 class DesignSettings(BaseModel):
     color_scheme: str = "purple"  # purple, blue, green, red, orange
-    layout_mode: str = "grid"     # grid, list
     artist_photo: Optional[str] = None  # base64 image data
     show_year: bool = True
     show_notes: bool = True
@@ -456,7 +455,6 @@ class DesignSettings(BaseModel):
 
 class DesignUpdate(BaseModel):
     color_scheme: Optional[str] = None
-    layout_mode: Optional[str] = None
     artist_photo: Optional[str] = None
     show_year: Optional[bool] = None
     show_notes: Optional[bool] = None
@@ -600,7 +598,6 @@ class ProfileCreate(BaseModel):
     musician_name: Optional[str] = None
     # Design settings per profile
     design_color_scheme: Optional[str] = None
-    design_layout_mode: Optional[str] = None
     design_artist_photo: Optional[str] = None
     design_show_year: Optional[bool] = None
     design_show_notes: Optional[bool] = None
@@ -625,7 +622,6 @@ class ProfileUpdateModel(BaseModel):
     bio: Optional[str] = None
     musician_name: Optional[str] = None
     design_color_scheme: Optional[str] = None
-    design_layout_mode: Optional[str] = None
     design_artist_photo: Optional[str] = None
     design_show_year: Optional[bool] = None
     design_show_notes: Optional[bool] = None
@@ -653,7 +649,6 @@ class ProfileResponse(BaseModel):
     bio: Optional[str] = None
     musician_name: Optional[str] = None
     design_color_scheme: Optional[str] = None
-    design_layout_mode: Optional[str] = None
     design_artist_photo: Optional[str] = None
     design_show_year: Optional[bool] = None
     design_show_notes: Optional[bool] = None
@@ -2016,7 +2011,6 @@ async def register_musician(musician_data: MusicianRegister):
         "subscription_ends_at": None,
         "design_settings": {
             "color_scheme": "purple",
-            "layout_mode": "grid",
             "artist_photo": None,
             "show_year": True,
             "show_notes": True
@@ -2264,7 +2258,6 @@ async def get_musician_design(slug: str):
     if default_profile:
         return {
             "color_scheme": default_profile.get("design_color_scheme") or global_design.get("color_scheme", "purple"),
-            "layout_mode": default_profile.get("design_layout_mode") or global_design.get("layout_mode", "grid"),
             "artist_photo": default_profile.get("design_artist_photo") or global_design.get("artist_photo"),
             "show_year": default_profile.get("design_show_year") if default_profile.get("design_show_year") is not None else global_design.get("show_year", True),
             "show_notes": default_profile.get("design_show_notes") if default_profile.get("design_show_notes") is not None else global_design.get("show_notes", True),
@@ -2274,7 +2267,6 @@ async def get_musician_design(slug: str):
     
     return {
         "color_scheme": global_design.get("color_scheme", "purple"),
-        "layout_mode": global_design.get("layout_mode", "grid"),
         "artist_photo": global_design.get("artist_photo"),
         "show_year": global_design.get("show_year", True),
         "show_notes": global_design.get("show_notes", True),
@@ -3101,8 +3093,6 @@ async def update_design_settings(design_data: DesignUpdate, musician_id: str = D
     update_data = {}
     if design_data.color_scheme is not None:
         update_data["design_settings.color_scheme"] = design_data.color_scheme
-    if design_data.layout_mode is not None:
-        update_data["design_settings.layout_mode"] = design_data.layout_mode
     if design_data.artist_photo is not None:
         update_data["design_settings.artist_photo"] = design_data.artist_photo
     if design_data.show_year is not None:
@@ -7511,7 +7501,6 @@ def _profile_doc_to_response(p: dict) -> ProfileResponse:
         bio=p.get("bio"),
         musician_name=p.get("musician_name"),
         design_color_scheme=p.get("design_color_scheme"),
-        design_layout_mode=p.get("design_layout_mode"),
         design_artist_photo=p.get("design_artist_photo"),
         design_show_year=p.get("design_show_year"),
         design_show_notes=p.get("design_show_notes"),
@@ -7596,7 +7585,6 @@ def _build_profile_public_response(musician, profile, songs_list):
         # Design settings - profile overrides global
         "design_settings": {
             "color_scheme": profile.get("design_color_scheme") or global_design.get("color_scheme", "purple"),
-            "layout_mode": profile.get("design_layout_mode") or global_design.get("layout_mode", "grid"),
             "artist_photo": profile.get("design_artist_photo") or global_design.get("artist_photo"),
             "show_year": profile.get("design_show_year") if profile.get("design_show_year") is not None else global_design.get("show_year", True),
             "show_notes": profile.get("design_show_notes") if profile.get("design_show_notes") is not None else global_design.get("show_notes", True),
@@ -7649,7 +7637,6 @@ async def create_profile(profile_data: ProfileCreate, musician_id: str = Depends
         "bio": profile_data.bio,
         "musician_name": profile_data.musician_name,
         "design_color_scheme": profile_data.design_color_scheme,
-        "design_layout_mode": profile_data.design_layout_mode,
         "design_artist_photo": profile_data.design_artist_photo,
         "design_show_year": profile_data.design_show_year,
         "design_show_notes": profile_data.design_show_notes,
@@ -7706,7 +7693,7 @@ async def update_profile_by_id(profile_id: str, update_data: ProfileUpdateModel,
     for field in ["paypal_username", "venmo_username", "cashapp_username", "zelle_info",
                   "instagram_username", "tiktok_username", "facebook_url", "spotify_url",
                   "apple_music_url", "website", "bio", "musician_name",
-                  "design_color_scheme", "design_layout_mode", "design_artist_photo"]:
+                  "design_color_scheme", "design_artist_photo"]:
         val = getattr(update_data, field, None)
         if val is not None:
             update_fields[field] = val if val != "" else None
