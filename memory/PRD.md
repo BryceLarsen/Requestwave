@@ -67,6 +67,7 @@ Profile fields override master account values when set. Falls back to master whe
 - /app/test_reports/iteration_2.json through iteration_6.json
 
 ## Recent Changes (Feb 2026)
+- **Show-scoped per-song request badge**: Added transient `requests_this_show: int` to the `Song` Pydantic model (not persisted). `GET /api/songs` and `GET /api/musicians/{slug}/songs` now resolve the active show via the default profile's `current_show_id` and aggregate `db.requests` by `{musician_id, show_id, song_id ∈ catalog}` to attach a per-song count. When there is no active show, all songs return `requests_this_show=0`. `request_count` (all-time) is unchanged. Frontend Songs tab badge replaced from "🔥 N requests" to "🔥 N tonight" rendered only when N>0. Same conditional badge added to the Audience song list. `data-testid`s: `song-tonight-badge-<id>` and `audience-song-tonight-badge-<id>`.
 - **Analytics → Most Active Requesters filter**: `GET /api/analytics/requesters` and `GET /api/analytics/export-requesters` accept optional `profile_id` and `event_id` query params (added to `$match`). Both endpoints now consistently exclude archived requests.
 - Frontend Analytics tab: Most Active Requesters section has a filter dropdown ("All Profiles" / per-profile / per-event) that re-fetches and re-renders the list. Export CSV button label switches to "Export filtered list" when a filter is active and includes the filter in the export URL. Filename suffix on the server (`requesters-profile-<id8>-YYYYMMDD.csv` or `requesters-event-<id8>-YYYYMMDD.csv`) reflects the filter.
 
