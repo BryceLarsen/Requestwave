@@ -7342,9 +7342,22 @@ const MusicianDashboard = () => {
                           )}
                         </div>
                       </div>
-                      <div className="bg-gray-900 rounded px-3 py-2 text-xs text-purple-300 break-all mb-3 font-mono">{url}</div>
+                      <a href={url} target="_blank" rel="noopener noreferrer" data-testid={`event-url-${ev.id}`} className="block bg-gray-900 rounded px-3 py-2 text-xs text-purple-300 hover:text-purple-200 break-all mb-3 font-mono underline">{url}</a>
                       <div className="flex flex-wrap gap-2">
-                        <button data-testid={`event-copy-url-${ev.id}`} onClick={() => { navigator.clipboard?.writeText(url); }} className="text-xs px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded">Copy URL</button>
+                        <button data-testid={`event-copy-url-${ev.id}`} onClick={async () => {
+                          try {
+                            if (navigator.clipboard?.writeText) {
+                              await navigator.clipboard.writeText(url);
+                            } else {
+                              const ta = document.createElement('textarea');
+                              ta.value = url; document.body.appendChild(ta); ta.select();
+                              document.execCommand('copy'); document.body.removeChild(ta);
+                            }
+                            showErrorToast('URL copied');
+                          } catch {
+                            showErrorToast('Could not copy URL');
+                          }
+                        }} className="text-xs px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded">Copy URL</button>
                         <button data-testid={`event-edit-${ev.id}`} onClick={() => openEventEditor(ev)} className="text-xs px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded">Edit</button>
                         {ev.status === 'upcoming' && (
                           <>
