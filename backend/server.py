@@ -225,6 +225,7 @@ class Song(BaseModel):
     decade: Optional[str] = None  # NEW: Automatically calculated from year (e.g., "70's", "80's")
     notes: str = ""
     request_count: int = 0  # Track number of requests for this song
+    requests_this_show: int = 0  # Requests for this song within the current active show (transient; not persisted)
     hidden: bool = False  # NEW: Hide song from audience view
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -3856,6 +3857,25 @@ async def get_my_songs(
     
     songs = await db.songs.find({"musician_id": musician_id}).sort(sort_field, sort_direction).to_list(None)  # Removed 1000 limit
     
+    # Resolve the active show from the musician's default profile (Sprint 2: per-profile show)
+    default_profile = await _get_default_profile(musician_id)
+    current_show_id = default_profile.get("current_show_id") if default_profile else None
+    
+    # Aggregate per-song request counts within the active show (if any)
+    requests_this_show_map = {}
+    if current_show_id and songs:
+        song_ids = [s["id"] for s in songs]
+        pipeline = [
+            {"$match": {
+                "musician_id": musician_id,
+                "show_id": current_show_id,
+                "song_id": {"$in": song_ids}
+            }},
+            {"$group": {"_id": "$song_id", "count": {"$sum": 1}}}
+        ]
+        async for row in db.requests.aggregate(pipeline):
+            requests_this_show_map[row["_id"]] = row["count"]
+    
     # Ensure request_count and hidden fields exist for older songs
     # Update all existing songs to populate decade field for songs with years
     songs_updated = 0
@@ -3877,6 +3897,8 @@ async def get_my_songs(
             song["request_count"] = 0
         if "hidden" not in song:
             song["hidden"] = False  # Default to visible for older songs
+        # Attach show-scoped request count (0 when no active show or no requests yet)
+        song["requests_this_show"] = requests_this_show_map.get(song["id"], 0)
         updated_songs.append(Song(**song))
     
     # Log migration if songs were updated
@@ -4261,6 +4283,22 @@ async def get_musician_songs(
     songs_cursor = db.songs.find(query).sort("created_at", DESCENDING)
     songs = await songs_cursor.to_list(length=None)
     
+    # Aggregate per-song request counts within the active show (Sprint 2: per-profile show).
+    # `current_show_id` was already resolved above from the default profile.
+    requests_this_show_map = {}
+    if current_show_id and songs:
+        song_ids = [s["id"] for s in songs]
+        pipeline = [
+            {"$match": {
+                "musician_id": musician["id"],
+                "show_id": current_show_id,
+                "song_id": {"$in": song_ids}
+            }},
+            {"$group": {"_id": "$song_id", "count": {"$sum": 1}}}
+        ]
+        async for row in db.requests.aggregate(pipeline):
+            requests_this_show_map[row["_id"]] = row["count"]
+    
     # Update song counts for request tracking
     updated_songs = []
     for song in songs:
@@ -4272,6 +4310,8 @@ async def get_musician_songs(
         if "decade" not in song and song.get("year"):
             decade_calc = calculate_decade(song["year"])
             song["decade"] = decade_calc
+        # Attach show-scoped request count (0 when no active show or no requests yet)
+        song["requests_this_show"] = requests_this_show_map.get(song["id"], 0)
         updated_songs.append(Song(**song))
     
     return updated_songs

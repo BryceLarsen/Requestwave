@@ -1,0 +1,51 @@
+{
+  "summary": "Verified the new show-scoped per-song request count (requests_this_show) feature end-to-end. Backend 5/5 pytest cases passed. Frontend Playwright E2E covering (no-active-show → no badge), (active show + 2 requests → '🔥 2 tonight' badge on both Songs tab and Audience page with correct data-testids), and (POST /shows/stop → badges hidden) all passed. request_count (all-time) confirmed unchanged in semantics and incremented correctly alongside.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Audience page (all pages)",
+        "issues": [
+          "Non-blocking: Console logs 'PRODUCTION CONFIG ERROR: AUDIENCE_BASE_URL must be https://requestwave.app in production' on every page load. The preview env intentionally uses a different host, but the error-level log is noisy and could mask real prod errors. Consider downgrading to console.warn when host !== requestwave.app instead of console.error."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_requests_this_show.py",
+    "/app/test_reports/pytest/pytest_requests_this_show.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "VERIFIED: Song model (/app/backend/server.py L228) adds requests_this_show: int = 0 as transient field; not persisted via SongCreate (good — keeps DB clean).",
+    "VERIFIED: GET /api/songs (L3833-3908) resolves current_show_id from default profile, runs aggregation pipeline {$match musician_id+show_id+song_id $in songs, $group by song_id}, attaches per-song count, defaults to 0 when no active show. Pipeline is bounded by song_ids (safe).",
+    "VERIFIED: GET /api/musicians/{slug}/songs (L4161-4317) uses the already-resolved current_show_id and runs the identical aggregation. Behavior matches the auth endpoint.",
+    "VERIFIED: Both frontend renderings are conditional ((song.requests_this_show || 0) > 0) — the badge is NOT rendered when count is 0 (no '0 tonight' string ever appears in the DOM).",
+    "VERIFIED: data-testid patterns match the contract exactly: song-tonight-badge-<song_id> (Songs tab) and audience-song-tonight-badge-<song_id> (Audience list).",
+    "VERIFIED: After POST /shows/stop, default profile's current_show_id is cleared; aggregation short-circuits → all songs return requests_this_show=0. Confirmed via API + UI.",
+    "VERIFIED: request_count (all-time) is still incremented by POST /api/requests and is independent of requests_this_show. No regression observed.",
+    "Minor code-quality observation: in GET /api/songs the per-song decade backfill writes to db inside the response loop. Not introduced by this PR but worth tracking — could become slow on large catalogs.",
+    "Minor code-quality observation: GET /moods uses sync db.songs.find while the rest of the file is async motor; pre-existing issue, not part of this feature."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_requests_this_show.py"
+  ],
+  "success_rate": {
+    "backend": "100% (5/5 tests passed)",
+    "frontend": "100% (all 6 UI assertions passed: no-show baseline on audience, active-show audience badge text '🔥 2 tonight' + count=1, Songs-tab badge with same text + count=1, post-stop audience=0, post-stop Songs tab=0)"
+  },
+  "test_credentials": {
+    "email": "test@test.com",
+    "password": "test",
+    "slug": "test"
+  },
+  "seed_data_creation": "No new persistent seed data. Test flow created an ephemeral show ('TEST_e2e_show'/'TEST_show_<hex>') and 2 audience requests against the first song. The show is stopped at the end of the test; the 2 request rows persist (intentional — verifies request_count lifetime behavior). Cleanup of those request rows is not strictly required but can be done by filtering db.requests by requester_email LIKE 'TEST_E2E_%' or 'TEST_<hex>@example.com' if desired.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend tests are in /app/backend/tests/test_requests_this_show.py and are stable; run with `REACT_APP_BACKEND_URL=$(grep REACT_APP_BACKEND_URL /app/frontend/.env | cut -d= -f2) pytest backend/tests/test_requests_this_show.py -v`. The feature is fully working: badges render with correct text format and data-testids and disappear when count is 0. The only non-blocking observation is the noisy console.error about AUDIENCE_BASE_URL on the preview host."
+}

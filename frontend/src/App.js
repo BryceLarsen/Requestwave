@@ -5611,10 +5611,15 @@ const MusicianDashboard = () => {
                                   {song.year}
                                 </span>
                               )}
-                              {/* Request Count Badge */}
-                              <span className="bg-orange-600 text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap">
-                                🔥 {song.request_count || 0} requests
-                              </span>
+                              {/* Request Count Badge: show-scoped, hidden when zero */}
+                              {(song.requests_this_show || 0) > 0 && (
+                                <span
+                                  data-testid={`song-tonight-badge-${song.id}`}
+                                  className="bg-orange-600 text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap"
+                                >
+                                  🔥 {song.requests_this_show} tonight
+                                </span>
+                              )}
                             </div>
                             {song.notes && (
                               <p className={`text-sm mt-1 ${song.hidden ? 'text-gray-500' : 'text-gray-400'}`}>
@@ -11359,6 +11364,14 @@ const AudienceInterface = () => {
                     <span className="text-gray-400">{song.artist}</span>
                   </p>
                 </div>
+                {(song.requests_this_show || 0) > 0 && (
+                  <span
+                    data-testid={`audience-song-tonight-badge-${song.id}`}
+                    className="bg-orange-600 text-white text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap shrink-0"
+                  >
+                    🔥 {song.requests_this_show} tonight
+                  </span>
+                )}
               </button>
             ))}
             
