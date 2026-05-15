@@ -1,0 +1,37 @@
+{
+  "summary": "Verified the unique_show_count popularity ranking feature end-to-end. Backend pytest 6/6 passed (new helper, /api/songs popularity sort, /api/songs unique_show_count field, public /api/musicians/{slug}/songs, /api/analytics/daily top_songs ranking, regression on request_count increment). Frontend Playwright covered Songs-tab Most Popular sort, Audience Most Popular sort, and Analytics Most Requested Songs (no badge, titles only, Top 10/20/50 dropdown).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_unique_show_count_popularity.py",
+    "/app/test_reports/pytest/pytest_unique_show_count.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "VERIFIED: backend helper get_unique_show_counts (server.py L3836-3866) uses a single $match ($ne archived, song_id $in list) + $group $addToSet show_id + $project $size aggregation. Songs with no matching requests are correctly omitted (callers default to 0).",
+    "VERIFIED: GET /api/songs (server.py L3869-3955) attaches unique_show_count to every Song and, when sort_by=popularity, sorts in-memory by unique_show_count desc AFTER attaching the field. Empirical proof from live DB: Test Song (usc=7, request_count=86) ranks #1, Test Song 1 (usc=6, request_count=10) ranks #2 — confirming raw request_count is no longer the primary key.",
+    "VERIFIED: Public GET /api/musicians/{slug}/songs (server.py L4349-4368) attaches unique_show_count without disturbing request_count or requests_this_show.",
+    "VERIFIED: GET /api/analytics/daily top_songs (server.py L4998-5052) ranks by len(set(show_id)) per song_id, limited to 50 items (was 10) to support the Top 50 UI option. count field in payload equals the unique-show count.",
+    "VERIFIED: Song Pydantic model (server.py L229) declares unique_show_count: int = 0 as a transient (response-only) field — not persisted to DB.",
+    "VERIFIED: Frontend applySorting (App.js L2523-2524) and applyAudienceSorting (App.js L10440-10441) both sort by (b.unique_show_count || 0) - (a.unique_show_count || 0).",
+    "VERIFIED: Analytics Most Requested Songs (App.js L8431-8445) container has data-testid='most-requested-songs-list', renders only <p>{item.song}</p>, no badge / no .bg-purple-600 chip. Top 10/20/50 dropdown still functional.",
+    "VERIFIED regression: POST /api/requests still increments request_count and requests_this_show; new test exercises a fresh song through one show and asserts request_count>=1, requests_this_show>=1, unique_show_count==1.",
+    "MINOR (pre-existing, intentional per spec): $addToSet of show_id will treat null/None as a distinct value. If a song has both null-show_id and one real show_id, unique_show_count would be 2. Per problem statement this is intentional, but worth a future ticket if product wants to ignore null show_ids."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_unique_show_count_popularity.py"
+  ],
+  "success_rate": {
+    "backend": "100% (6/6 pytest)",
+    "frontend": "100% (Songs sort, Audience sort, Analytics rendering, Top 10/20/50)"
+  },
+  "test_credentials": {"email": "test@test.com", "password": "test", "slug": "test"},
+  "seed_data_creation": "Created 2 TEST_ songs (TEST_UniqueShowSong_<hex>, TEST_RegSong_<hex>) and ephemeral shows TEST_Show_<hex>/TEST_RegShow_<hex>. Posted 4 requests against TEST_UniqueShowSong across two distinct shows to validate distinct-show counting (yielding unique_show_count==2). Teardown archives the seeded requests and stops the shows; song/profile rows remain clearly TEST_ prefixed.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Run the regression with `REACT_APP_BACKEND_URL=$(grep REACT_APP_BACKEND_URL /app/frontend/.env | cut -d= -f2) python -m pytest backend/tests/test_unique_show_count_popularity.py -v`. The test file seeds its own data (TEST_-prefixed) so it can run repeatedly. Frontend testid contract: most-requested-songs-list (Analytics), Songs-tab sort select has option value 'popularity', audience sort select has option value 'most-popular'. Public musician slug URL is /musician/test (not /m/test). For login automation, use input[type=email] / input[type=password] on the root page; there is no /login route. Use page.evaluate fetch with localStorage.getItem('token') to make authenticated requests from the browser context (avoids Cloudflare 1010 bot block on direct urllib)."
+}

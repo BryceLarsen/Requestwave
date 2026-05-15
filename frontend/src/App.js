@@ -2521,7 +2521,7 @@ const MusicianDashboard = () => {
     
     switch (sortOption) {
       case 'most-popular':
-        return sorted.sort((a, b) => (b.request_count || 0) - (a.request_count || 0));
+        return sorted.sort((a, b) => (b.unique_show_count || 0) - (a.unique_show_count || 0));
       case 'alphabetical':
         return sorted.sort((a, b) => a.title.localeCompare(b.title));
       case 'newest':
@@ -8428,16 +8428,11 @@ const MusicianDashboard = () => {
                       <option value={50}>Top 50</option>
                     </select>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-3" data-testid="most-requested-songs-list">
                     {analyticsData.top_songs.slice(0, topSongsLimit).map((item, index) => (
                       <div key={index} className="flex justify-between items-center">
                         <div className="flex-1">
                           <p className="font-medium text-sm">{item.song}</p>
-                        </div>
-                        <div className="text-right">
-                          <span className="bg-purple-600 px-2 py-1 rounded-full text-xs">
-                            {item.count}
-                          </span>
                         </div>
                       </div>
                     ))}
@@ -10443,7 +10438,7 @@ const AudienceInterface = () => {
     
     switch (sortOption) {
       case 'most-popular':
-        return sorted.sort((a, b) => (b.request_count || 0) - (a.request_count || 0));
+        return sorted.sort((a, b) => (b.unique_show_count || 0) - (a.unique_show_count || 0));
       case 'alphabetical':
         return sorted.sort((a, b) => a.title.localeCompare(b.title));
       case 'newest':

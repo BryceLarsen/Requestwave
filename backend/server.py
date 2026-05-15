@@ -226,6 +226,7 @@ class Song(BaseModel):
     notes: str = ""
     request_count: int = 0  # Track number of requests for this song
     requests_this_show: int = 0  # Requests for this song within the current active show (transient; not persisted)
+    unique_show_count: int = 0  # Distinct non-archived shows this song has been requested in (transient; not persisted)
     hidden: bool = False  # NEW: Hide song from audience view
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -3831,19 +3832,55 @@ async def delete_song_suggestion(suggestion_id: str, musician_id: str = Depends(
         raise HTTPException(status_code=500, detail="Error deleting song suggestion")
 
 # Song endpoints
+
+async def get_unique_show_counts(musician_id: str, song_ids: List[str]) -> Dict[str, int]:
+    """Return a {song_id: unique_show_count} dict for the given songs.
+
+    For each song, counts the number of distinct show_id values across all
+    non-archived requests for that musician+song. A single MongoDB aggregation
+    is used: $match on (musician_id, status != archived, song_id in list),
+    $group by song_id with $addToSet of show_id, then $size of that set.
+    Songs with no matching requests are omitted from the dict (callers should
+    default missing keys to 0).
+    """
+    if not song_ids:
+        return {}
+    pipeline = [
+        {"$match": {
+            "musician_id": musician_id,
+            "status": {"$ne": "archived"},
+            "song_id": {"$in": song_ids},
+        }},
+        {"$group": {
+            "_id": "$song_id",
+            "shows": {"$addToSet": "$show_id"},
+        }},
+        {"$project": {
+            "_id": 1,
+            "count": {"$size": "$shows"},
+        }},
+    ]
+    result: Dict[str, int] = {}
+    async for row in db.requests.aggregate(pipeline):
+        result[row["_id"]] = row["count"]
+    return result
+
+
 @api_router.get("/songs", response_model=List[Song])
 async def get_my_songs(
     musician_id: str = Depends(get_current_musician),
     sort_by: Optional[str] = "created_at"  # NEW: Support sorting by different fields
 ):
     """Get songs for authenticated musician with sorting support"""
-    # Determine sort field and direction
+    # Determine sort field and direction. Note: 'popularity' is handled in-memory
+    # below (sorted by unique_show_count desc) since it is a derived field.
     sort_field = "created_at"
     sort_direction = DESCENDING
     
     if sort_by == "popularity":
-        sort_field = "request_count"
-        sort_direction = DESCENDING  # Most requested first
+        # Defer sort — applied after we compute unique_show_count below.
+        sort_field = "created_at"
+        sort_direction = DESCENDING
     elif sort_by == "title":
         sort_field = "title"
         sort_direction = ASCENDING
@@ -3876,6 +3913,10 @@ async def get_my_songs(
         async for row in db.requests.aggregate(pipeline):
             requests_this_show_map[row["_id"]] = row["count"]
     
+    # Unique-show count per song (popularity signal — distinct non-archived shows)
+    all_song_ids = [s["id"] for s in songs]
+    unique_show_map = await get_unique_show_counts(musician_id, all_song_ids)
+    
     # Ensure request_count and hidden fields exist for older songs
     # Update all existing songs to populate decade field for songs with years
     songs_updated = 0
@@ -3899,7 +3940,13 @@ async def get_my_songs(
             song["hidden"] = False  # Default to visible for older songs
         # Attach show-scoped request count (0 when no active show or no requests yet)
         song["requests_this_show"] = requests_this_show_map.get(song["id"], 0)
+        # Attach unique-show count for popularity ranking
+        song["unique_show_count"] = unique_show_map.get(song["id"], 0)
         updated_songs.append(Song(**song))
+    
+    # Apply popularity sort in-memory using the derived unique_show_count
+    if sort_by == "popularity":
+        updated_songs.sort(key=lambda s: s.unique_show_count, reverse=True)
     
     # Log migration if songs were updated
     if songs_updated > 0:
@@ -4299,6 +4346,10 @@ async def get_musician_songs(
         async for row in db.requests.aggregate(pipeline):
             requests_this_show_map[row["_id"]] = row["count"]
     
+    # Unique-show count per song for popularity ranking on the audience client
+    all_song_ids = [s["id"] for s in songs]
+    unique_show_map = await get_unique_show_counts(musician["id"], all_song_ids)
+    
     # Update song counts for request tracking
     updated_songs = []
     for song in songs:
@@ -4312,6 +4363,8 @@ async def get_musician_songs(
             song["decade"] = decade_calc
         # Attach show-scoped request count (0 when no active show or no requests yet)
         song["requests_this_show"] = requests_this_show_map.get(song["id"], 0)
+        # Attach unique-show count for popularity ranking
+        song["unique_show_count"] = unique_show_map.get(song["id"], 0)
         updated_songs.append(Song(**song))
     
     return updated_songs
@@ -4942,7 +4995,10 @@ async def get_daily_analytics(
         
         # Group by date
         daily_stats = {}
-        song_requests = {}
+        # Track unique non-archived shows per song_id for top_songs ranking (replaces raw count)
+        song_shows_map: Dict[str, set] = {}
+        # Keep a stable display label per song_id (latest title-artist seen)
+        song_label_map: Dict[str, str] = {}
         requester_counts = {}
         
         for request in requests:
@@ -4963,9 +5019,14 @@ async def get_daily_analytics(
             daily_stats[date_key]["tip_total"] += request.get("tip_amount", 0.0)
             daily_stats[date_key]["unique_requesters"].add(request["requester_email"])
             
-            # Track song requests
-            song_key = f"{request['song_title']} - {request['song_artist']}"
-            song_requests[song_key] = song_requests.get(song_key, 0) + 1
+            # Track unique shows per song (mirrors get_unique_show_counts semantics,
+            # but scoped to the analytics window's request set and only for non-archived)
+            if request.get("status") != "archived":
+                sid = request.get("song_id")
+                if sid:
+                    song_shows_map.setdefault(sid, set()).add(request.get("show_id"))
+                    label = f"{request.get('song_title','')} - {request.get('song_artist','')}"
+                    song_label_map[sid] = label
             
             # Track requester frequency
             requester_key = f"{request['requester_name']} ({request['requester_email']})"
@@ -4982,8 +5043,13 @@ async def get_daily_analytics(
                 "unique_requesters": len(stats["unique_requesters"])
             })
         
-        # Get top songs and requesters
-        top_songs = sorted(song_requests.items(), key=lambda x: x[1], reverse=True)[:10]
+        # Top songs: rank by unique non-archived show count (highest first).
+        # Note: count is included in the payload for client-side ranking only;
+        # the Analytics UI intentionally does not render it as a badge.
+        song_unique_counts = [
+            (song_label_map[sid], len(shows)) for sid, shows in song_shows_map.items()
+        ]
+        top_songs = sorted(song_unique_counts, key=lambda x: x[1], reverse=True)[:50]
         top_requesters = sorted(requester_counts.items(), key=lambda x: x[1], reverse=True)[:10]
         
         return {
