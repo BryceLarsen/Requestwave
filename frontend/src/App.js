@@ -1190,6 +1190,38 @@ const MusicianDashboard = () => {
     }
   };
 
+  // Per-profile stop: used by the Requests tab live banners.
+  // Stops only the show running on the given profile, leaving other profiles' shows untouched.
+  const handleStopShowForProfile = async (profileId, showName) => {
+    if (!profileId) return;
+    if (!confirm(`Stop this show "${showName || ''}"?`)) return;
+    try {
+      const response = await axios.post(`${API}/shows/stop`, { profile_id: profileId });
+      if (response.data?.musician) {
+        setMusician(prev => ({
+          ...prev,
+          current_show_id: response.data.musician.current_show_id,
+          current_show_name: response.data.musician.current_show_name
+        }));
+        const storedMusician = JSON.parse(localStorage.getItem('musician') || '{}');
+        localStorage.setItem('musician', JSON.stringify({
+          ...storedMusician,
+          current_show_id: response.data.musician.current_show_id,
+          current_show_name: response.data.musician.current_show_name
+        }));
+      }
+      // Refresh everything that depends on per-profile current_show state
+      await fetchProfiles();
+      await fetchEvents();
+      await fetchCurrentShow();
+      await fetchShows();
+      fetchGroupedRequests();
+    } catch (error) {
+      console.error('Error stopping show for profile:', error);
+      showErrorToast(error.response?.data?.detail || 'Error stopping show. Please try again.', error);
+    }
+  };
+
   // NEW: Delete individual request from history
   const handleDeleteRequest = async (requestId, requestTitle) => {
     if (confirm(`Permanently delete request for "${requestTitle}"? This cannot be undone.`)) {
@@ -5717,28 +5749,46 @@ const MusicianDashboard = () => {
                   )}
                 </button>
                 
-                {/* Start/Stop Show Button */}
-                {currentShow ? (
-                  <div className="flex-1 flex items-center justify-between bg-green-600 px-4 py-3 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium">🎤 Live: {currentShow.name}</span>
+                {/* Start/Stop Show Button — per-profile live banners (Sprint 2: shows are profile-scoped) */}
+                {(() => {
+                  const liveProfiles = (profiles || []).filter(p => p && p.current_show_id);
+                  if (liveProfiles.length === 0) {
+                    return (
+                      <button
+                        onClick={() => setShowStartModal(true)}
+                        className="flex-1 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700"
+                        data-testid="start-a-show-btn"
+                      >
+                        <span>🎭</span>
+                        <span>Start a Show</span>
+                      </button>
+                    );
+                  }
+                  return (
+                    <div className="flex-1 flex flex-col gap-2" data-testid="live-shows-banners">
+                      {liveProfiles.map(p => (
+                        <div
+                          key={p.id}
+                          data-testid={`live-show-banner-${p.id}`}
+                          className="flex items-center justify-between bg-green-600 px-4 py-3 rounded-lg"
+                        >
+                          <div className="flex items-center space-x-2 min-w-0">
+                            <span className="text-sm font-medium truncate">
+                              🎤 Live: {p.name} ({p.current_show_name})
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => handleStopShowForProfile(p.id, p.current_show_name)}
+                            className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm font-medium transition duration-300 shrink-0 ml-3"
+                            data-testid={`stop-show-btn-${p.id}`}
+                          >
+                            Stop Show
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                    <button
-                      onClick={handleStopShow}
-                      className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm font-medium transition duration-300"
-                    >
-                      Stop Show
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setShowStartModal(true)}
-                    className="flex-1 px-4 py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700"
-                  >
-                    <span>🎭</span>
-                    <span>Start a Show</span>
-                  </button>
-                )}
+                  );
+                })()}
               </div>
             </div>
 
