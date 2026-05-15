@@ -626,6 +626,8 @@ const MusicianDashboard = () => {
   const [requestersData, setRequestersData] = useState([]);
   // NEW: Requesters filter — 'all' | `profile:<id>` | `event:<id>`
   const [requestersFilter, setRequestersFilter] = useState('all');
+  // NEW (Sprint 3): show filter applied only to the email export — 'all' or a show id
+  const [requestersExportShowId, setRequestersExportShowId] = useState('all');
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   // NEW: Show management state
@@ -8368,13 +8370,34 @@ const MusicianDashboard = () => {
                     </div>
                   </div>
                   
-                  {/* NEW: Export CSV Button at Bottom of First Analytics Box */}
-                  <div className="flex justify-end">
+                  {/* NEW: Export controls — show filter dropdown + Export Email List button */}
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <select
+                      data-testid="export-show-select"
+                      value={requestersExportShowId}
+                      onChange={(e) => setRequestersExportShowId(e.target.value)}
+                      className="bg-gray-700 border border-gray-600 rounded px-2 py-2 text-white text-sm"
+                    >
+                      <option value="all">All Shows</option>
+                      {[...(shows || [])]
+                        .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+                        .map((s) => {
+                          const d = s.date || (s.created_at ? new Date(s.created_at).toISOString().slice(0, 10) : '');
+                          return (
+                            <option key={s.id} value={s.id}>
+                              {s.name}{d ? ` (${d})` : ''}
+                            </option>
+                          );
+                        })}
+                    </select>
                     <button
                       data-testid="analytics-export-requesters-btn"
                       onClick={async () => {
                         try {
                           const params = buildRequestersFilterParams(requestersFilter);
+                          if (requestersExportShowId && requestersExportShowId !== 'all') {
+                            params.show_id = requestersExportShowId;
+                          }
                           const response = await axios.get(`${API}/analytics/export-requesters`, {
                             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                             responseType: 'blob',
@@ -8395,8 +8418,8 @@ const MusicianDashboard = () => {
                       }}
                       className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium transition duration-300 flex items-center space-x-2"
                     >
-                      <span>📊</span>
-                      <span>{requestersFilter !== 'all' ? 'Export filtered list' : 'Export CSV'}</span>
+                      <span>📧</span>
+                      <span>Export Email List</span>
                     </button>
                   </div>
                 </div>

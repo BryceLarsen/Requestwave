@@ -4812,13 +4812,18 @@ async def get_requester_analytics(
 async def export_requesters_csv(
     profile_id: Optional[str] = None,
     event_id: Optional[str] = None,
+    show_id: Optional[str] = None,
     musician_id: str = Depends(get_current_musician)
 ):
-    """Export requester emails and names as CSV.
+    """Export requester email list as CSV.
 
     Optional query params:
       - profile_id: scope to a specific profile
       - event_id: scope to a specific event
+      - show_id: scope to a specific show
+
+    Output CSV columns: name, email, show_name.
+    Only non-archived requests with a well-formed email address are included.
     """
     try:
         match_stage = {
@@ -4829,42 +4834,58 @@ async def export_requesters_csv(
             match_stage["profile_id"] = profile_id
         if event_id:
             match_stage["event_id"] = event_id
+        if show_id:
+            match_stage["show_id"] = show_id
 
-        # Get unique requesters
+        # Group by (email, name, show_id) so each row in the CSV is a
+        # requester-per-show. When show_id query param is set every row will
+        # carry that same show_id (the show filter is already in $match).
         pipeline = [
             {"$match": match_stage},
-            {
-                "$group": {
-                    "_id": {
-                        "email": "$requester_email",
-                        "name": "$requester_name"
-                    },
-                    "request_count": {"$sum": 1},
-                    "total_tips": {"$sum": "$tip_amount"},
-                    "latest_request": {"$max": "$created_at"}
-                }
-            },
-            {"$sort": {"request_count": -1}}
+            {"$group": {
+                "_id": {
+                    "email": "$requester_email",
+                    "name": "$requester_name",
+                    "show_id": "$show_id",
+                },
+                "request_count": {"$sum": 1},
+                "latest_request": {"$max": "$created_at"},
+            }},
+            {"$sort": {"request_count": -1}},
         ]
-        
-        requesters = await db.requests.aggregate(pipeline).to_list(1000)
-        
-        # Create CSV content
-        csv_rows = [["Name", "Email", "Request Count", "Total Tips", "Latest Request"]]
-        for requester in requesters:
-            csv_rows.append([
-                requester["_id"]["name"],
-                requester["_id"]["email"],
-                str(requester["request_count"]),
-                f"${requester['total_tips']:.2f}",
-                format_datetime_string(requester["latest_request"], "%Y-%m-%d %H:%M")
-            ])
-        
+        grouped = await db.requests.aggregate(pipeline).to_list(5000)
+
+        # Resolve show_name per row from the shows collection (one batched fetch)
+        show_ids_in_results = {g["_id"].get("show_id") for g in grouped if g["_id"].get("show_id")}
+        show_name_map: Dict[str, str] = {}
+        if show_ids_in_results:
+            cursor = db.shows.find(
+                {"id": {"$in": list(show_ids_in_results)}, "musician_id": musician_id},
+                {"_id": 0, "id": 1, "name": 1},
+            )
+            async for s in cursor:
+                show_name_map[s["id"]] = s.get("name", "")
+
+        # Basic email validation: must contain @ and a domain segment with a dot
+        email_re = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+        csv_rows = [["name", "email", "show_name"]]
+        for g in grouped:
+            email = (g["_id"].get("email") or "").strip()
+            if not email or not email_re.match(email):
+                continue
+            name = (g["_id"].get("name") or "").strip()
+            sid = g["_id"].get("show_id")
+            show_name = show_name_map.get(sid, "") if sid else ""
+            csv_rows.append([name, email, show_name])
+
         csv_content = "\n".join([",".join([f'"{field}"' for field in row]) for row in csv_rows])
 
         # Use a filter-aware filename so exports are easy to distinguish on disk
         filename_suffix = ""
-        if event_id:
+        if show_id:
+            filename_suffix = f"-show-{show_id[:8]}"
+        elif event_id:
             filename_suffix = f"-event-{event_id[:8]}"
         elif profile_id:
             filename_suffix = f"-profile-{profile_id[:8]}"

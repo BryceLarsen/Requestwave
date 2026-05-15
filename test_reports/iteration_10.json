@@ -1,0 +1,38 @@
+{
+  "summary": "Verified the new GET /api/analytics/export-requesters (show_id param, 3-col CSV, email validation, show_name resolution) plus the Analytics tab UI changes (Export Email List button + show selector). 12/12 backend pytest passed and Playwright covered button label, dropdown contents, and three network scenarios (no show_id, show_id only, profile_id+show_id).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_export_requesters_show_filter.py",
+    "/app/test_reports/pytest/pytest_export_show.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "VERIFIED: server.py L4811-4901 — $match adds {show_id: <id>} when query param provided; columns header is exactly ['name','email','show_name']; legacy 'Request Count','Total Tips','Latest Request' fully removed from CSV body (test_no_legacy_columns_anywhere asserts this).",
+    "VERIFIED: email regex ^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$ correctly rejects empty / no-at / no-TLD; seed test posted 4 mixed-validity requests and only the valid 'good+<marker>@example.com' surfaced in the no-filter export.",
+    "VERIFIED: show_name is resolved per-row from db.shows in a single batched fetch (test_show_name_matches_show_doc walks 200 rows of the no-filter export — every row's show_name is either '' or matches a real show name).",
+    "VERIFIED: filename suffix logic — no params -> requesters-YYYYMMDD.csv; show_id -> requesters-show-<id8>-...csv; profile_id+show_id -> show suffix wins (correct precedence per code order: show > event > profile).",
+    "VERIFIED: $match AND-intersects profile_id and show_id; test_intersection_results_subset asserts (profile_id AND show_id) emails ⊆ (show_id only) emails across all profiles.",
+    "VERIFIED: bogus show_id returns empty data body with intact 3-column header.",
+    "VERIFIED frontend (App.js L8371-8425): button data-testid='analytics-export-requesters-btn' renders '📧 Export Email List' (no 'Export CSV' / 'Export filtered list' anywhere); show selector data-testid='export-show-select' has 116 options (1 default + 115 shows) labeled 'Name (YYYY-MM-DD)' sorted by created_at desc; default value='all'.",
+    "VERIFIED frontend integration: clicking Export with 'All Shows' fires GET /api/analytics/export-requesters with NO show_id; selecting a show fires the same endpoint with ?show_id=<id>; selecting profile filter + show fires ?profile_id=<pid>&show_id=<sid>. requesters-filter-select still present (regression intact).",
+    "OBSERVATION (not a bug): POST /api/musicians/{slug}/requests appears to ignore the show_id field in the payload and binds requests to the server's currently-active show; this is preexisting behaviour and unrelated to the export changes. The export-side show filtering still works correctly because it reads whatever show_id is persisted on the request.",
+    "MINOR (low priority, pre-existing): the CSV writer wraps every field in double quotes via simple string interpolation; values containing literal double quotes would not be escaped (RFC 4180 violation). Unlikely with names/emails but worth a follow-up for show names that may contain quotes."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_export_requesters_show_filter.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 pytest)",
+    "frontend": "100% (button label, dropdown contents+ordering+default, 3 network scenarios incl. coexistence with requesters-filter-select)"
+  },
+  "test_credentials": {"email": "test@test.com", "password": "test", "slug": "test"},
+  "seed_data_creation": "Inserted 4 requests via POST /api/musicians/test/requests with names TEST_empty_<marker>, TEST_noat_<marker>, TEST_nodot_<marker>, TEST_good_<marker> and emails ['', 'no-at-symbol', 'invalid@nodomain', 'good+<marker>@example.com']. Test fixture archives them in teardown via PUT /api/requests/<id>/archive.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Run: `REACT_APP_BACKEND_URL=$(grep REACT_APP_BACKEND_URL /app/frontend/.env | cut -d= -f2) python -m pytest backend/tests/test_export_requesters_show_filter.py -v`. The TestEmailValidation class is intentionally written to verify behaviour in the GLOBAL (unfiltered) export, because POST /api/musicians/{slug}/requests assigns the request to the server's active show rather than honouring the show_id in the payload — so do NOT change it to assert presence within a specific-show export. Frontend testids: analytics-export-requesters-btn (button), export-show-select (new show dropdown), requesters-filter-select (preexisting profile/event filter). Export click is captured via page.on('request') filter on '/analytics/export-requesters'."
+}
