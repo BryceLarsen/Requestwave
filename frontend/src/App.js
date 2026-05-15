@@ -8430,10 +8430,16 @@ const MusicianDashboard = () => {
                   </div>
                   <div className="space-y-3" data-testid="most-requested-songs-list">
                     {analyticsData.top_songs.slice(0, topSongsLimit).map((item, index) => (
-                      <div key={index} className="flex justify-between items-center">
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{item.song}</p>
+                      <div key={index} className="flex justify-between items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{item.song}</p>
                         </div>
+                        <span
+                          data-testid={`most-requested-song-shows-${index}`}
+                          className="text-xs text-gray-400 whitespace-nowrap shrink-0"
+                        >
+                          Requested in {item.count} {item.count === 1 ? 'show' : 'shows'}
+                        </span>
                       </div>
                     ))}
                     
