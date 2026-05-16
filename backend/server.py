@@ -3851,6 +3851,7 @@ async def get_unique_show_counts(musician_id: str, song_ids: List[str]) -> Dict[
             "musician_id": musician_id,
             "status": {"$ne": "archived"},
             "song_id": {"$in": song_ids},
+            "show_id": {"$ne": None},
         }},
         {"$group": {
             "_id": "$song_id",
