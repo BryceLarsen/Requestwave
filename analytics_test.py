@@ -13,7 +13,7 @@ import time
 
 # Configuration
 INTERNAL_BASE_URL = "http://localhost:8001/api"
-EXTERNAL_BASE_URL = "https://musician-events-hub.preview.emergentagent.com/api"
+EXTERNAL_BASE_URL = "https://profile-event-system.preview.emergentagent.com/api"
 TEST_EMAIL = "brycelarsenmusic@gmail.com"
 TEST_PASSWORD = "RequestWave2024!"
 

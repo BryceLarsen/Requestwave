@@ -4900,6 +4900,234 @@ async def export_requesters_csv(
         logger.error(f"Error exporting requesters CSV: {str(e)}")
         raise HTTPException(status_code=500, detail="Error exporting requesters")
 
+@api_router.get("/analytics/show-detail")
+async def get_show_detail_analytics(
+    show_id: str,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Detailed analytics for a single show: email capture, tips, CTR, top songs/tippers, repeat requesters."""
+    try:
+        show = await db.shows.find_one(
+            {"id": show_id, "musician_id": musician_id},
+            {"_id": 0}
+        )
+        if not show:
+            raise HTTPException(status_code=404, detail="Show not found")
+
+        profile_id = show.get("profile_id")
+
+        # Pull all non-archived requests for this show
+        requests = await db.requests.find(
+            {"musician_id": musician_id, "show_id": show_id, "status": {"$ne": "archived"}},
+            {"_id": 0}
+        ).to_list(None)
+
+        total_requests = len(requests)
+
+        email_re = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+        requests_with_email = sum(
+            1 for r in requests if email_re.match((r.get("requester_email") or "").strip())
+        )
+        email_capture_rate = round((requests_with_email / total_requests) * 100, 1) if total_requests > 0 else 0.0
+
+        # Tips for the show (actual recorded tip events)
+        tips = await db.tips.find(
+            {"musician_id": musician_id, "show_id": show_id},
+            {"_id": 0}
+        ).to_list(None)
+        total_tip_revenue = round(sum(float(t.get("amount", 0) or 0) for t in tips), 2)
+        tip_count = len(tips)
+
+        # Click-through: any tip click or social click on the request
+        requests_with_click = sum(
+            1 for r in requests
+            if r.get("tip_clicked") or (r.get("social_clicks") or [])
+        )
+        click_through_rate = round((requests_with_click / total_requests) * 100, 1) if total_requests > 0 else 0.0
+
+        # Top 5 most requested songs in this show
+        song_counts: Dict[tuple, Dict[str, Any]] = {}
+        for r in requests:
+            key = (r.get("song_id"), r.get("song_title"), r.get("song_artist"))
+            if key not in song_counts:
+                song_counts[key] = {
+                    "song_id": r.get("song_id"),
+                    "title": r.get("song_title") or "",
+                    "artist": r.get("song_artist") or "",
+                    "count": 0,
+                }
+            song_counts[key]["count"] += 1
+        top_songs = sorted(song_counts.values(), key=lambda x: x["count"], reverse=True)[:5]
+
+        # Top 5 highest tippers (aggregate by tipper name; "Anonymous" buckets unnamed tips)
+        tipper_totals: Dict[str, Dict[str, Any]] = {}
+        for t in tips:
+            name = ((t.get("tipper_name") or "").strip() or "Anonymous")
+            if name not in tipper_totals:
+                tipper_totals[name] = {"name": name, "amount": 0.0, "count": 0}
+            tipper_totals[name]["amount"] += float(t.get("amount", 0) or 0)
+            tipper_totals[name]["count"] += 1
+        top_tippers = sorted(tipper_totals.values(), key=lambda x: x["amount"], reverse=True)[:5]
+        for tt in top_tippers:
+            tt["amount"] = round(tt["amount"], 2)
+
+        # Repeat requesters: emails in THIS show that also appear in OTHER shows (same profile if known)
+        show_emails = {
+            (r.get("requester_email") or "").strip().lower()
+            for r in requests
+            if r.get("requester_email") and email_re.match((r.get("requester_email") or "").strip())
+        }
+        repeat_requesters: List[Dict[str, Any]] = []
+        if show_emails:
+            match: Dict[str, Any] = {
+                "musician_id": musician_id,
+                "requester_email": {"$in": list(show_emails)},
+                "show_id": {"$nin": [None, show_id], "$exists": True},
+                "status": {"$ne": "archived"},
+            }
+            if profile_id:
+                match["profile_id"] = profile_id
+
+            pipeline = [
+                {"$match": match},
+                {"$group": {
+                    "_id": {"email": "$requester_email", "name": "$requester_name"},
+                    "other_show_ids": {"$addToSet": "$show_id"},
+                    "request_count": {"$sum": 1},
+                }},
+                {"$project": {
+                    "_id": 0,
+                    "email": "$_id.email",
+                    "name": "$_id.name",
+                    "other_shows_count": {"$size": "$other_show_ids"},
+                    "request_count": 1,
+                }},
+                {"$sort": {"other_shows_count": -1, "request_count": -1}},
+                {"$limit": 100},
+            ]
+            others = await db.requests.aggregate(pipeline).to_list(100)
+            # shows_count includes the current show plus the distinct other shows the email appeared in
+            for o in others:
+                o["shows_count"] = (o.get("other_shows_count") or 0) + 1
+                o.pop("other_shows_count", None)
+            repeat_requesters = others
+
+        return {
+            "show": {
+                "id": show["id"],
+                "name": show.get("name"),
+                "date": show.get("date"),
+                "venue": show.get("venue"),
+                "profile_id": profile_id,
+            },
+            "metrics": {
+                "total_requests": total_requests,
+                "requests_with_email": requests_with_email,
+                "email_capture_rate": email_capture_rate,
+                "total_tip_revenue": total_tip_revenue,
+                "tip_count": tip_count,
+                "click_through_rate": click_through_rate,
+                "requests_with_click": requests_with_click,
+            },
+            "top_songs": top_songs,
+            "top_tippers": top_tippers,
+            "repeat_requesters": repeat_requesters,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting show detail analytics: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error retrieving show analytics")
+
+
+@api_router.get("/analytics/show-trends")
+async def get_show_trends(
+    profile_id: str,
+    limit: int = 5,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Trend metrics across the last N shows for a profile (N in {5, 10, 20})."""
+    try:
+        if limit not in (5, 10, 20):
+            limit = 5
+
+        # Last N shows for this profile (newest first), then reverse for oldest -> newest plotting
+        shows_cursor = db.shows.find(
+            {"musician_id": musician_id, "profile_id": profile_id},
+            {"_id": 0}
+        ).sort("created_at", DESCENDING).limit(limit)
+        shows = await shows_cursor.to_list(limit)
+        shows.reverse()
+
+        if not shows:
+            return {"shows": [], "limit": limit, "profile_id": profile_id}
+
+        show_ids = [s["id"] for s in shows]
+        email_regex = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
+
+        request_pipeline = [
+            {"$match": {
+                "musician_id": musician_id,
+                "show_id": {"$in": show_ids},
+                "status": {"$ne": "archived"},
+            }},
+            {"$group": {
+                "_id": "$show_id",
+                "total": {"$sum": 1},
+                "with_email": {"$sum": {"$cond": [
+                    {"$regexMatch": {
+                        "input": {"$ifNull": ["$requester_email", ""]},
+                        "regex": email_regex,
+                    }},
+                    1, 0,
+                ]}},
+                "with_click": {"$sum": {"$cond": [
+                    {"$or": [
+                        {"$eq": ["$tip_clicked", True]},
+                        {"$gt": [{"$size": {"$ifNull": ["$social_clicks", []]}}, 0]},
+                    ]},
+                    1, 0,
+                ]}},
+            }},
+        ]
+        req_agg = await db.requests.aggregate(request_pipeline).to_list(None)
+        req_map = {r["_id"]: r for r in req_agg}
+
+        tip_pipeline = [
+            {"$match": {"musician_id": musician_id, "show_id": {"$in": show_ids}}},
+            {"$group": {"_id": "$show_id", "tip_revenue": {"$sum": "$amount"}}},
+        ]
+        tip_agg = await db.tips.aggregate(tip_pipeline).to_list(None)
+        tip_map = {t["_id"]: float(t.get("tip_revenue", 0) or 0) for t in tip_agg}
+
+        result: List[Dict[str, Any]] = []
+        for s in shows:
+            sid = s["id"]
+            r = req_map.get(sid, {})
+            total = int(r.get("total", 0))
+            with_email = int(r.get("with_email", 0))
+            with_click = int(r.get("with_click", 0))
+            created = s.get("created_at")
+            date_iso = s.get("date") or (created.isoformat() if isinstance(created, datetime) else None)
+            result.append({
+                "show_id": sid,
+                "show_name": s.get("name") or "Untitled Show",
+                "date": date_iso,
+                "total_requests": total,
+                "email_capture_count": with_email,
+                "tip_revenue": round(tip_map.get(sid, 0.0), 2),
+                "click_through_rate": round((with_click / total) * 100, 1) if total > 0 else 0.0,
+            })
+
+        return {"shows": result, "limit": limit, "profile_id": profile_id}
+
+    except Exception as e:
+        logger.error(f"Error getting show trends: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error retrieving show trends")
+
+
+
 @api_router.get("/analytics/daily")
 async def get_daily_analytics(
     days: Optional[int] = None,  # None = all time, matches requests tab
@@ -8673,7 +8901,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_origins=[
         "https://requestwave.app", 
-        "https://musician-events-hub.preview.emergentagent.com", 
+        "https://profile-event-system.preview.emergentagent.com", 
         os.environ.get('FRONTEND_URL', '').replace('http://', 'https://'),  # Dynamic production URL
         "https://requestwave.emergent.host",  # Emergent production pattern
         "https://requestwave-app.emergent.host",  # Alternative production pattern

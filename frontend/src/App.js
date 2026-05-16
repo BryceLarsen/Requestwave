@@ -1,6 +1,18 @@
-import React, { useState, useEffect, createContext, useContext, useRef } from 'react';
+import React, { useState, useEffect, useMemo, createContext, useContext, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import {
+  ResponsiveContainer,
+  ComposedChart,
+  LineChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from 'recharts';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -629,6 +641,16 @@ const MusicianDashboard = () => {
   // NEW (Sprint 3): show filter applied only to the email export — 'all' or a show id
   const [requestersExportShowId, setRequestersExportShowId] = useState('all');
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+  // NEW: Show Analytics Dashboard state
+  const [showAnalyticsView, setShowAnalyticsView] = useState('detail'); // 'detail' | 'trends'
+  const [showAnalyticsProfileId, setShowAnalyticsProfileId] = useState('');
+  const [showAnalyticsShowId, setShowAnalyticsShowId] = useState('');
+  const [showDetailData, setShowDetailData] = useState(null);
+  const [showDetailLoading, setShowDetailLoading] = useState(false);
+  const [showTrendsLimit, setShowTrendsLimit] = useState(5);
+  const [showTrendsData, setShowTrendsData] = useState(null);
+  const [showTrendsLoading, setShowTrendsLoading] = useState(false);
 
   // NEW: Show management state
   const [currentShow, setCurrentShow] = useState(null);
@@ -2849,6 +2871,49 @@ const MusicianDashboard = () => {
     }
   };
 
+  // NEW: Show Analytics Dashboard fetchers
+  const fetchShowDetailAnalytics = async (showId) => {
+    if (!showId) {
+      setShowDetailData(null);
+      return;
+    }
+    setShowDetailLoading(true);
+    try {
+      const response = await axios.get(`${API}/analytics/show-detail`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        params: { show_id: showId },
+      });
+      setShowDetailData(response.data);
+    } catch (error) {
+      console.error('Error fetching show detail analytics:', error);
+      setShowDetailData(null);
+    } finally {
+      setShowDetailLoading(false);
+    }
+  };
+
+  const fetchShowTrendsAnalytics = async (profileId, limit) => {
+    if (!profileId) {
+      setShowTrendsData(null);
+      return;
+    }
+    setShowTrendsLoading(true);
+    try {
+      const response = await axios.get(`${API}/analytics/show-trends`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        params: { profile_id: profileId, limit },
+      });
+      setShowTrendsData(response.data);
+    } catch (error) {
+      console.error('Error fetching show trends analytics:', error);
+      setShowTrendsData(null);
+    } finally {
+      setShowTrendsLoading(false);
+    }
+  };
+
+
+
   const handleTimeframeChange = (timeframe) => {
     setAnalyticsTimeframe(timeframe);
     let days = 7;
@@ -2892,6 +2957,54 @@ const MusicianDashboard = () => {
       fetchRequesters();
     }
   }, [activeTab, analyticsPeriod]);
+
+  // NEW: Show Analytics Dashboard — initialize default profile + auto-load data
+  useEffect(() => {
+    if (activeTab !== 'analytics' || !profiles || profiles.length === 0) return;
+    // Default profile selection: prefer is_default, else first profile
+    if (!showAnalyticsProfileId) {
+      const def = profiles.find((p) => p.is_default) || profiles[0];
+      if (def) setShowAnalyticsProfileId(def.id);
+    }
+  }, [activeTab, profiles]);
+
+  // Filter shows scoped to the selected analytics profile
+  const showAnalyticsScopedShows = useMemo(() => {
+    if (!showAnalyticsProfileId || !shows) return [];
+    return shows
+      .filter((s) => s.profile_id === showAnalyticsProfileId)
+      .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  }, [shows, showAnalyticsProfileId]);
+
+  // Auto-select the most recent show when profile changes
+  useEffect(() => {
+    if (activeTab !== 'analytics') return;
+    if (showAnalyticsScopedShows.length === 0) {
+      setShowAnalyticsShowId('');
+      setShowDetailData(null);
+      return;
+    }
+    // If the currently selected show isn't in scope, reset to the most recent
+    const currentInScope = showAnalyticsScopedShows.some((s) => s.id === showAnalyticsShowId);
+    if (!currentInScope) {
+      setShowAnalyticsShowId(showAnalyticsScopedShows[0].id);
+    }
+  }, [showAnalyticsScopedShows, activeTab]);
+
+  // Fetch show-detail when selected show changes (and view is 'detail')
+  useEffect(() => {
+    if (activeTab !== 'analytics') return;
+    if (showAnalyticsView !== 'detail') return;
+    if (showAnalyticsShowId) fetchShowDetailAnalytics(showAnalyticsShowId);
+  }, [showAnalyticsShowId, showAnalyticsView, activeTab]);
+
+  // Fetch show-trends when profile or limit changes (and view is 'trends')
+  useEffect(() => {
+    if (activeTab !== 'analytics') return;
+    if (showAnalyticsView !== 'trends') return;
+    if (showAnalyticsProfileId) fetchShowTrendsAnalytics(showAnalyticsProfileId, showTrendsLimit);
+  }, [showAnalyticsProfileId, showTrendsLimit, showAnalyticsView, activeTab]);
+
 
   // Fetch analytics when analyticsDays changes
   useEffect(() => {
@@ -8549,6 +8662,349 @@ const MusicianDashboard = () => {
                 </div>
               </div>
             )}
+
+            {/* NEW: Show Analytics Dashboard (profile-scoped) */}
+            <div className="bg-gray-800 rounded-xl p-6 mt-6" data-testid="show-analytics-dashboard">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div>
+                  <h3 className="text-xl font-bold">📊 Show Analytics</h3>
+                  <p className="text-gray-400 text-sm">Per-show insights and cross-show trends, scoped to a profile</p>
+                </div>
+
+                {/* View toggle */}
+                <div className="inline-flex rounded-lg overflow-hidden border border-gray-600" role="tablist">
+                  <button
+                    data-testid="show-analytics-view-detail"
+                    role="tab"
+                    aria-selected={showAnalyticsView === 'detail'}
+                    onClick={() => setShowAnalyticsView('detail')}
+                    className={`px-4 py-2 text-sm font-medium transition ${
+                      showAnalyticsView === 'detail'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    Show Detail
+                  </button>
+                  <button
+                    data-testid="show-analytics-view-trends"
+                    role="tab"
+                    aria-selected={showAnalyticsView === 'trends'}
+                    onClick={() => setShowAnalyticsView('trends')}
+                    className={`px-4 py-2 text-sm font-medium transition border-l border-gray-600 ${
+                      showAnalyticsView === 'trends'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    Show Trends
+                  </button>
+                </div>
+              </div>
+
+              {/* Profile + scope selectors */}
+              <div className="flex flex-wrap items-end gap-3 mb-6">
+                <div className="flex-1 min-w-[180px]">
+                  <label className="block text-gray-300 text-xs font-bold mb-1">Profile</label>
+                  <select
+                    data-testid="show-analytics-profile-select"
+                    value={showAnalyticsProfileId}
+                    onChange={(e) => {
+                      setShowAnalyticsProfileId(e.target.value);
+                      setShowAnalyticsShowId('');
+                      setShowDetailData(null);
+                      setShowTrendsData(null);
+                    }}
+                    className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm"
+                  >
+                    {profiles && profiles.length > 0 ? (
+                      profiles.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}{p.is_default ? ' (Default)' : ''}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">No profiles available</option>
+                    )}
+                  </select>
+                </div>
+
+                {showAnalyticsView === 'detail' ? (
+                  <div className="flex-1 min-w-[200px]">
+                    <label className="block text-gray-300 text-xs font-bold mb-1">Show</label>
+                    <select
+                      data-testid="show-analytics-show-select"
+                      value={showAnalyticsShowId}
+                      onChange={(e) => setShowAnalyticsShowId(e.target.value)}
+                      className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm"
+                      disabled={showAnalyticsScopedShows.length === 0}
+                    >
+                      {showAnalyticsScopedShows.length === 0 ? (
+                        <option value="">No shows for this profile</option>
+                      ) : (
+                        showAnalyticsScopedShows.map((s) => {
+                          const d = s.date || (s.created_at ? new Date(s.created_at).toISOString().slice(0, 10) : '');
+                          return (
+                            <option key={s.id} value={s.id}>
+                              {s.name}{d ? ` (${d})` : ''}
+                            </option>
+                          );
+                        })
+                      )}
+                    </select>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-gray-300 text-xs font-bold mb-1">Last N shows</label>
+                    <select
+                      data-testid="show-analytics-trends-limit"
+                      value={showTrendsLimit}
+                      onChange={(e) => setShowTrendsLimit(parseInt(e.target.value))}
+                      className="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm"
+                    >
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {/* Show Detail View */}
+              {showAnalyticsView === 'detail' && (
+                <div data-testid="show-analytics-detail-view">
+                  {showDetailLoading && (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto"></div>
+                      <p className="text-gray-400 mt-2">Loading show analytics...</p>
+                    </div>
+                  )}
+
+                  {!showDetailLoading && !showDetailData && showAnalyticsScopedShows.length === 0 && (
+                    <div className="text-center py-8 text-gray-400">
+                      <p>No shows exist for this profile yet.</p>
+                    </div>
+                  )}
+
+                  {!showDetailLoading && showDetailData && (
+                    <>
+                      {/* Metric Cards */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div className="bg-gray-700 rounded-lg p-4" data-testid="metric-email-capture">
+                          <h4 className="text-xs font-medium text-gray-300 uppercase tracking-wide">Email Capture</h4>
+                          <p className="text-2xl font-bold text-blue-400">
+                            {showDetailData.metrics.email_capture_rate}%
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {showDetailData.metrics.requests_with_email} of {showDetailData.metrics.total_requests} requests
+                          </p>
+                        </div>
+                        <div className="bg-gray-700 rounded-lg p-4" data-testid="metric-tip-revenue">
+                          <h4 className="text-xs font-medium text-gray-300 uppercase tracking-wide">Tip Revenue</h4>
+                          <p className="text-2xl font-bold text-green-400">
+                            ${showDetailData.metrics.total_tip_revenue.toFixed(2)}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {showDetailData.metrics.tip_count} {showDetailData.metrics.tip_count === 1 ? 'tip' : 'tips'}
+                          </p>
+                        </div>
+                        <div className="bg-gray-700 rounded-lg p-4" data-testid="metric-click-through">
+                          <h4 className="text-xs font-medium text-gray-300 uppercase tracking-wide">Click-Through</h4>
+                          <p className="text-2xl font-bold text-orange-400">
+                            {showDetailData.metrics.click_through_rate}%
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {showDetailData.metrics.requests_with_click} clicks on tip/social
+                          </p>
+                        </div>
+                        <div className="bg-gray-700 rounded-lg p-4" data-testid="metric-total-requests">
+                          <h4 className="text-xs font-medium text-gray-300 uppercase tracking-wide">Total Requests</h4>
+                          <p className="text-2xl font-bold text-purple-400">
+                            {showDetailData.metrics.total_requests}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {showDetailData.show.name}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Lists Grid */}
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        {/* Top 5 Songs */}
+                        <div className="bg-gray-700 rounded-lg p-4" data-testid="show-top-songs">
+                          <h4 className="text-sm font-bold mb-3 text-purple-300">🎵 Top 5 Most Requested</h4>
+                          {showDetailData.top_songs.length === 0 ? (
+                            <p className="text-gray-400 text-sm">No requests yet</p>
+                          ) : (
+                            <ol className="space-y-2">
+                              {showDetailData.top_songs.map((song, i) => (
+                                <li key={i} className="flex justify-between items-center gap-2 text-sm">
+                                  <span className="text-gray-200 truncate">
+                                    <span className="text-gray-400 mr-1">{i + 1}.</span>
+                                    {song.title}{song.artist ? ` — ${song.artist}` : ''}
+                                  </span>
+                                  <span className="text-purple-300 whitespace-nowrap text-xs">{song.count}×</span>
+                                </li>
+                              ))}
+                            </ol>
+                          )}
+                        </div>
+
+                        {/* Top 5 Tippers */}
+                        <div className="bg-gray-700 rounded-lg p-4" data-testid="show-top-tippers">
+                          <h4 className="text-sm font-bold mb-3 text-green-300">💵 Top 5 Tippers</h4>
+                          {showDetailData.top_tippers.length === 0 ? (
+                            <p className="text-gray-400 text-sm">No tips recorded yet</p>
+                          ) : (
+                            <ol className="space-y-2">
+                              {showDetailData.top_tippers.map((t, i) => (
+                                <li key={i} className="flex justify-between items-center gap-2 text-sm">
+                                  <span className="text-gray-200 truncate">
+                                    <span className="text-gray-400 mr-1">{i + 1}.</span>
+                                    {t.name}
+                                  </span>
+                                  <span className="text-green-300 whitespace-nowrap text-xs">${t.amount.toFixed(2)}</span>
+                                </li>
+                              ))}
+                            </ol>
+                          )}
+                        </div>
+
+                        {/* Repeat Requesters */}
+                        <div className="bg-gray-700 rounded-lg p-4" data-testid="show-repeat-requesters">
+                          <h4 className="text-sm font-bold mb-3 text-blue-300">🔁 Repeat Requesters</h4>
+                          <p className="text-xs text-gray-400 mb-2">Emails seen in 2+ shows for this profile</p>
+                          {showDetailData.repeat_requesters.length === 0 ? (
+                            <p className="text-gray-400 text-sm">No repeat requesters yet</p>
+                          ) : (
+                            <ol className="space-y-2">
+                              {showDetailData.repeat_requesters.slice(0, 10).map((r, i) => (
+                                <li key={i} className="flex justify-between items-center gap-2 text-sm">
+                                  <span className="text-gray-200 truncate">
+                                    <span className="text-gray-400 mr-1">{i + 1}.</span>
+                                    {r.name || r.email}
+                                  </span>
+                                  <span className="text-blue-300 whitespace-nowrap text-xs">
+                                    {r.shows_count} shows
+                                  </span>
+                                </li>
+                              ))}
+                            </ol>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Show Trends View */}
+              {showAnalyticsView === 'trends' && (
+                <div data-testid="show-analytics-trends-view">
+                  {showTrendsLoading && (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto"></div>
+                      <p className="text-gray-400 mt-2">Loading trends...</p>
+                    </div>
+                  )}
+
+                  {!showTrendsLoading && showTrendsData && showTrendsData.shows.length === 0 && (
+                    <div className="text-center py-8 text-gray-400">
+                      <p>No shows exist for this profile yet.</p>
+                    </div>
+                  )}
+
+                  {!showTrendsLoading && showTrendsData && showTrendsData.shows.length > 0 && (
+                    <div className="space-y-6">
+                      {/* Graph 1: Email capture count + Tip revenue (dual axis) */}
+                      <div className="bg-gray-700 rounded-lg p-4" data-testid="trend-graph-email-tips">
+                        <h4 className="text-sm font-bold mb-3 text-purple-300">
+                          Email Captures &amp; Tip Revenue — Last {showTrendsData.shows.length} {showTrendsData.shows.length === 1 ? 'show' : 'shows'}
+                        </h4>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <ComposedChart
+                            data={showTrendsData.shows}
+                            margin={{ top: 10, right: 16, left: 0, bottom: 32 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                            <XAxis
+                              dataKey="show_name"
+                              stroke="#9ca3af"
+                              tick={{ fontSize: 11 }}
+                              angle={-20}
+                              textAnchor="end"
+                              height={50}
+                              interval={0}
+                            />
+                            <YAxis
+                              yAxisId="left"
+                              stroke="#60a5fa"
+                              tick={{ fontSize: 11 }}
+                              label={{ value: 'Emails', angle: -90, position: 'insideLeft', fill: '#60a5fa', fontSize: 11 }}
+                            />
+                            <YAxis
+                              yAxisId="right"
+                              orientation="right"
+                              stroke="#34d399"
+                              tick={{ fontSize: 11 }}
+                              label={{ value: '$ Tips', angle: 90, position: 'insideRight', fill: '#34d399', fontSize: 11 }}
+                            />
+                            <Tooltip
+                              contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', color: '#f3f4f6' }}
+                              formatter={(value, name) => {
+                                if (name === 'Tip Revenue') return [`$${Number(value).toFixed(2)}`, name];
+                                return [value, name];
+                              }}
+                            />
+                            <Legend wrapperStyle={{ color: '#d1d5db' }} />
+                            <Bar yAxisId="left" dataKey="email_capture_count" name="Email Captures" fill="#60a5fa" radius={[4, 4, 0, 0]} />
+                            <Line yAxisId="right" type="monotone" dataKey="tip_revenue" name="Tip Revenue" stroke="#34d399" strokeWidth={2} dot={{ r: 4 }} />
+                          </ComposedChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      {/* Graph 2: Click-through rate */}
+                      <div className="bg-gray-700 rounded-lg p-4" data-testid="trend-graph-ctr">
+                        <h4 className="text-sm font-bold mb-3 text-orange-300">
+                          Click-Through Rate % — Last {showTrendsData.shows.length} {showTrendsData.shows.length === 1 ? 'show' : 'shows'}
+                        </h4>
+                        <ResponsiveContainer width="100%" height={260}>
+                          <LineChart
+                            data={showTrendsData.shows}
+                            margin={{ top: 10, right: 16, left: 0, bottom: 32 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                            <XAxis
+                              dataKey="show_name"
+                              stroke="#9ca3af"
+                              tick={{ fontSize: 11 }}
+                              angle={-20}
+                              textAnchor="end"
+                              height={50}
+                              interval={0}
+                            />
+                            <YAxis
+                              stroke="#fb923c"
+                              tick={{ fontSize: 11 }}
+                              domain={[0, 100]}
+                              tickFormatter={(v) => `${v}%`}
+                            />
+                            <Tooltip
+                              contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', color: '#f3f4f6' }}
+                              formatter={(value) => [`${value}%`, 'CTR']}
+                            />
+                            <Legend wrapperStyle={{ color: '#d1d5db' }} />
+                            <Line type="monotone" dataKey="click_through_rate" name="CTR %" stroke="#fb923c" strokeWidth={2} dot={{ r: 4 }} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+
             
             {/* Audience Requesters Box - REMOVED per requirements */}
             {/* This section has been completely removed as requested */}

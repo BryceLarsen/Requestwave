@@ -1,0 +1,29 @@
+{
+  "summary": "Verified new Show Analytics Dashboard end-to-end. Backend pytest: 17/17 passed (auth, 404, structure, math invariants for email_capture_rate and CTR, top_songs sort+cap, top_tippers sort+cap, repeat_requesters shape with shows_count>=2, show-trends limits 5/10/20, invalid-limit-defaults-to-5, chronological oldest->newest ordering, unknown profile returns empty). Frontend Playwright: login -> Analytics tab -> show-analytics-dashboard visible; all 14 testids present; metric cards populated; switching to Trends renders both recharts graphs (5 SVGs detected, dual-axis bar+line); changing N selector and show selector trigger fresh fetches; pre-existing Most Requested Songs / Most Active Requesters / Export Email List still working (regression intact).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_show_analytics_dashboard.py",
+    "/app/test_reports/pytest/pytest_show_analytics_dashboard.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "VERIFIED server.py L4903-5041 (show-detail): musician_id scoping on db.shows lookup correctly returns 404 for missing/foreign shows; email regex ^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$ used consistently for capture rate; tip revenue aggregated from db.tips (NOT request.tip_amount) — no double counting; CTR counts request.tip_clicked OR non-empty social_clicks; top_songs/top_tippers correctly sorted desc and capped at 5; repeat_requesters pipeline excludes current show_id with $nin and bumps shows_count by +1 (current show), so shows_count>=2 invariant holds.",
+    "VERIFIED server.py L5044-5127 (show-trends): invalid limit silently coerced to 5; shows fetched DESCENDING by created_at then reversed -> oldest-first for plotting (cross-checked against /api/shows index ordering in test_shows_sorted_oldest_to_newest); per-show with_email/with_click counts computed in single $group with $regexMatch + $or; tip_revenue summed from db.tips by show_id; CTR computed safely with 0-division guard; unknown profile_id returns empty list (no 404, returns 200 with {shows:[], limit, profile_id}).",
+    "VERIFIED both endpoints require auth via Depends(get_current_musician) — unauth requests return 403 (FastAPI default for missing HTTPBearer).",
+    "VERIFIED data-testid set on UI matches the spec: show-analytics-dashboard, show-analytics-view-detail/trends, show-analytics-profile-select, show-analytics-show-select, show-analytics-trends-limit, metric-email-capture, metric-tip-revenue, metric-click-through, metric-total-requests, show-top-songs, show-top-tippers, show-repeat-requesters, trend-graph-email-tips, trend-graph-ctr (all 14 confirmed present in the DOM at runtime).",
+    "OBSERVATION (low priority): the show-detail repeat_requesters pipeline uses requester_email exact-string $in (no .lower()) — emails in db are stored as-typed, so case-variants would not be deduped. Acceptable for current data but worth normalising later.",
+    "OBSERVATION (low priority): the 'PRODUCTION CONFIG ERROR: AUDIENCE_BASE_URL...' console error is emitted on every page load in this preview env (because the preview URL != requestwave.app). Non-blocking and pre-existing; not introduced by this change."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_show_analytics_dashboard.py",
+    "/app/test_reports/pytest/pytest_show_analytics_dashboard.xml",
+    "/app/test_reports/iteration_11.json"
+  ],
+  "success_rate": {"backend": "100% (17/17 pytest)", "frontend": "100% (14/14 testids, both views render, fetches re-trigger on selector change, regression intact)"},
+  "test_credentials": {"email": "test@test.com", "password": "test", "slug": "test"},
+  "seed_data_creation": "None. Used existing seeded shows/profiles/requests/tips under test@test.com.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Run: `REACT_APP_BACKEND_URL=$(grep REACT_APP_BACKEND_URL /app/frontend/.env | cut -d= -f2) python -m pytest backend/tests/test_show_analytics_dashboard.py -v`. Note FastAPI returns 403 (not 401) for missing HTTPBearer credentials — test_requires_auth accepts both. test_shows_sorted_oldest_to_newest cross-references /api/shows order indices and skips when the profile has <2 shows. Unknown profile_id correctly returns 200 with empty shows[] (not 404). Frontend dashboard is below the existing analytics charts — must scroll into view. View toggle data-testids are show-analytics-view-detail / show-analytics-view-trends (buttons, not a select). N selector is show-analytics-trends-limit and only accepts 5/10/20."
+}

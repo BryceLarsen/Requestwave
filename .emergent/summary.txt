@@ -1,156 +1,142 @@
-<analysis>**original_problem_statement**:
-The user's high-level goal is to stabilize and enhance the RequestWave application through a structured, phased approach, focusing on refining audience-facing UI and musician dashboard state management. 
-
+<analysis>**original_problem_statement**: 
+**Sprint 1, 2 & 3 Goals: Multi-Profile & Events System, Analytics Enhancements, Show-Scoped Features**
+The application requires a robust Multi-Profile system where one musician account can have multiple profiles, and those profiles can have nested Events. Each needs its own audience URL, show tracking, and design overrides. Analytics and song popularity metrics need to be scoped by unique shows and specific events/profiles.
 **PRODUCT REQUIREMENTS**
-- **P0: Fix Runtime Error**: Address any application crashes before implementing new features.
-- **P1: Orientation “Leave a tip” CTA button**: Improve the tipping call-to-action in the post-request flow.
-- **P2: Hide Empty Payment Methods**: Prevent UI from showing non-functional tipping elements.
-- **Fix Show State Integrity**: Backend must be the single source of truth for stopping/starting shows.
-- **Show-Scoped Playlist Selection**: Feature allowing the musician to select which playlists are active for a specific show.
-- **Extend Playlist Export/Import**: Audit and extend playlist export/import to support pipe-delimited names, create missing playlists on import, and maintain backward compatibility.
+- Add  &  filters to Analytics requesters and export endpoints.
+- Update UI to filter and export Most Active Requesters by profile/event/show.
+- Export email list CSV limited to 3 columns (name, email, show_name) with email validation.
+- Implement show-scoped per-song request badges () instead of all-time counts.
+- Rank song popularity based on  rather than raw request counts.
+- Add Start a Show inheritance from On-Stage selector and implement per-profile Live Banners.
 
 **User's preferred language**: English (INSTRUCT next agent to respond in English only)
 
 **what currently exists?** 
-The application consists of a monolithic FastAPI backend () and a monolithic React frontend (). The app manages song requests, shows, and tipping. In the recent session, the CSV export/import functionality was upgraded. The backend now maps a pipe-delimited  column during CSV uploads, automatically creates missing playlists, and links songs to them. The frontend export logic was updated to use a pipe  delimiter for playlists instead of a comma.
+A monolithic React frontend () and FastAPI backend () supporting a complex Multi-Profile and Events hierarchy. The system accurately handles 1-segment, 2-segment, and 3-segment routing. It features robust Analytics for top songs and requesters, show-scoped request tracking, unique-show popularity rankings, and per-profile Live Show management.
 
 **Last working item**: 
-    - Last item agent was working: Implementing and backend-testing the extended CSV export/import functionality for playlists. The backend logic was fully tested using Python scripts/curl, but frontend visual testing failed due to an unrelated UI routing/blank screen error.
+    - Last item agent was working: Fix the requester export endpoint () and update UI. Added a  query parameter, restricted CSV to 3 columns (, , ), added basic email validation, and added a Show selector dropdown in the frontend.
     - Status: USER VERIFICATION PENDING
-    - Agent Testing Done: Y (Backend only. Frontend UI verification was skipped due to a blank screen error on ).
-    - Which testing method agent to use? screenshot tool (for verifying the frontend CSV export behavior) and backend testing agent (for full coverage of import).
+    - Agent Testing Done: Y
+    - Which testing method agent to use? NA (Testing agent already completed iteration 10 successfully)
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:  
-  - Issue 1: Agent is unable to interact with the 'Start Show' UI (P0) (Carried over from previous fork)
-     - Attempted fixes: Previous agent tried multiple CSS selectors and failed. The current agent didn't attempt this as they were given the CSV export task.
-     - Next debug checklist: Analyze frontend DOM to locate a stable selector for the Start Show button. Ensure the frontend isn't throwing a blank screen/routing error before testing.
-     - Why fix this issue and what will be achieved with the fix? Unblocks testing of the show-scoped playlist filtering feature, which is a core product requirement.
-     - Status: BLOCKED
-     - Is recurring issue? Y
-     - Should Test frontend/backend/both after fix? frontend
-     - Blocked on other issue: Frontend blank screen / routing error (see Issue 2)
+*(None.)*
 
-  - Issue 2: Frontend  route renders a blank screen (P1)
-     - Attempted fixes: Agent noticed the issue during a screenshot attempt ( and ), but skipped fixing it to focus on backend API validation.
-     - Next debug checklist: Check  routing logic and  configuration. Ensure  is set or handled gracefully.
-     - Why fix this issue and what will be achieved with the fix? Required to allow visual testing and actual user interaction with the application.
-     - Status: NOT STARTED
-     - Is recurring issue? N
-     - Should Test frontend/backend/both after fix? frontend
-
-**In progress Task List**:
-  - Task 1: Complete and Verify Show-Scoped Playlist Filtering (P0)
-     - Where to resume: Debug interaction with the frontend UI to test the Start Show modal.
-     - What will be achieved with this? Musicians will be able to filter the songs available to the audience on a per-show basis.
-     - Status: BLOCKED
-     - Should Test frontend/backend/both after fix? frontend
-     - Blocked on something: Issue 1 (Start Show UI Interaction) and Issue 2 (Frontend blank screen).
+**In progress Task List**: 
+*(None. All requested Sprint tasks were successfully completed.)*
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
-    - Documentation (P1): Update  with the new show-scoped playlist behavior.
     - Analytics (P2): Implement analytics for tip conversion.
-    - Mailing List (P2): Implement the mailing list capture feature.
     
     Future Tasks:
-    - Refactor (P2): Decompose the monolithic  into smaller components.
+    - Refactor (P2): Decompose the monolithic  into smaller components and  into separate routers. (CRITICAL - DO NOT execute until explicitly requested).
     - Phase 3 (P3): Implement Post-Show Reflection features for musicians.
     - Integration (P3): Integrate with Spotify Web API for song data enrichment.
     - Analytics UI (P3): Build a new UI to display analytics from the  collection.
 
 **Completed work in this session**
-- Updated CSV Export logic (): Changed the playlist delimiter from  to  (pipe) to support commas in playlist names.
-- Updated CSV Import/Preview logic ():
-    - Mapped the  column in .
-    - Handled empty values to prevent  errors on rows with missing columns.
-    - Updated  to automatically create non-existent playlists and assign imported songs to them.
-- Verified backward compatibility for older CSVs missing the  column.
-- Updated  with the new CSV capabilities.
+- Added  &  filters to Analytics requesters UI and API (DONE)
+- Show-scoped per-song request badge () replacing all-time count (DONE)
+- Per-profile live banners on Requests Tab (DONE)
+- On-Stage selector context inheritance for Start a Show modal (DONE)
+- Unique-show popularity ranking () replacing raw request count sorting (DONE)
+- Added Requested in N shows label to Analytics Most Requested Songs UI (DONE)
+- Email List Export by Show with email validation and 3-column CSV output (DONE)
 
 **Earlier issues found/mentioned but not fixed**
-   - Issue 1: Frontend Routing / Blank Screen Error
-   - Debug checklist: Check browser console logs for  and . Verify React Router setup in .
-   - Why to solve this issue and what will be achieved with this? Prevents users and the testing agent from accessing the frontend application interface.
-   - Should Test frontend/backend/both after fix: frontend
-   - Is recurring issue? N
+   - Issue 1: Noisy console.error about  on the preview host.
+     - Debug checklist: Check frontend environment variables or hardcoded assumptions for .
+     - Why to solve this issue and what will be achieved with this?: Cleans up the console and prevents potential frontend routing/link bugs.
+     - Should Test frontend/backend/both after fix: Frontend
+     - Is recurring issue? N
+   - Issue 2: CSV double-quote escaping and POST requests ignoring payload  (noted in test report 10).
+     - Debug checklist: Check  escaping logic in .
+     - Why to solve this issue and what will be achieved with this?: Ensures data cleanliness for edge-case inputs in CSV exports.
+     - Should Test frontend/backend/both after fix: Backend
+     - Is recurring issue? N
 
 **Known issue recurrence from previous fork**
-  - Issue recurrence in previous fork: Agent stuck in a loop trying to click the 'Start Show' button for testing.
-  - Recurrence count: 1 (over 10 failed interaction attempts in the prior fork).
-  - Status: BLOCKED
+  - Issue recurrence in previous fork: N/A
+  - Recurrence count: 0
+  - Status: RESOLVED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
 - State-Driven Conditional UI (React state in a single component)
-- Backend as Single Source of Truth for show state
-- CSV Parsing and Object Mapping in FastAPI
+- 3-tier Data Merging: Event fields override Profile fields, which override Master Musician fields.
+- 3-segment Conditional Routing ()
+- Transient/Dynamic API Fields: Fields like  and  are injected dynamically via MongoDB aggregations at request time and are not statically persisted in the Song schema.
 
 **key DB schema**
-  - :  (Source of truth for playlist membership)
+  - : 
+  - : 
+  - : 
   - : 
   - : 
 
 **changes in tech stack**
-  - None
+  - None.
 
 **All files of reference** 
-  -  (Modified: Updated , CSV upload, and preview endpoints to handle pipe-delimited playlists)
-  -  (Modified: Updated  function to use  delimiter)
-  -  (Updated: Added CSV import/export documentation)
+  -  (Updated extensively with new aggregation pipelines and export logic)
+  -  (Updated with UI labels, banners, dropdowns, and sorting adjustments)
+  -  (Updated with Sprint 3 tasks)
 
 **Areas that need refactoring**: 
-  -  is extremely monolithic and requires decomposition into smaller components.
-  - Backend  contains all API routes, data models, and business logic. Consider moving routes and models to separate directories.
+  -  (exceeds 13,800 lines). Highly fragile and needs component decomposition.
+  -  (exceeds 8,600 lines). Needs router and model decomposition.
 
 **key api endpoints**
-  - : Validates CSV layout and processes pipe-delimited playlists.
-  - : Inserts songs, auto-creates missing playlists, and handles assignments.
+  - : Fetch requesters, supports  &  query params.
+  - : Export email list, supports , , and  query params.
+  -  & : Both updated to return dynamically calculated  and .
+  - : Returns  ranked by unique show counts.
 
-**Critical Info for New Agent**
-- **Context Shift**: The previous fork was blocked on testing the Start Show UI (Issue 1). However, the user provided a *new* prompt to work on CSV export/import in this session. The CSV task is complete, but the previous blocker (Issue 1) was ignored and is still unresolved.
-- **Frontend Blockage**: During an attempt to visually test the CSV export, the agent encountered a blank screen on  accompanied by configuration warnings (). You should prioritize investigating if the frontend is fully accessible before attempting any UI-driven testing. 
+**Critical Info for New Agent** 
+- **Transient Data:** Do not assume  or  are stored permanently on the  object in the DB. They are aggregated on-the-fly using shared helpers ().
+- **Show Context:** Shows are scoped per-profile. Banners and start/stop actions must always resolve to the correctly selected profile ().
+- **Do not refactor (yet):** The user has explicitly stated as a hard constraint *not* to refactor  or  structure during feature sprints unless expressly asked.
 
 **documents and test reports created in this job**
-  - /app/memory/PRD.md (updated)
+  -  (updated)
+  -  to 
 
 **Last 10 User Messages and any pending HUMAN messages** 
- 1.  **User**: Task: Audit and extend playlist export/import. Goals: 1. Add playlist membership to CSV export (pipe-delimited names). 2. Support importing playlists from CSV, creating playlists if missing. 3. Preserve backward compatibility with existing CSVs. 4. Do NOT change show logic, request flow, or audience behavior. **(Completed)**
+ 1. **User**: Fix the requester export endpoint (add show_id param, 3-column CSV, email validation) and update export UI to select shows. (Completed)
+ 2. **User**: Add the unique_show_count back as a label (Requested in N shows) next to each song title in the Analytics tab. (Completed)
+ 3. **User**: Replace raw request_count-based popularity ranking with a unique shows requested in signal across all three surfaces. (Completed)
+ 4. **User**: Start a Show modal must inherit selected profile, and Requests tab must display one live banner per profile. (Completed)
+ 5. **User**: Replace the all-time request_count badge on song cards with a show-scoped count (). (Completed)
+ 6. **User**: Add optional profile_id and event_id query params to analytics requesters, update Most Active Requesters UI with dropdown. (Completed)
 
 **Project Health Check:**
-  - Broken: Frontend  route failing/rendering a blank screen. Show-scoped playlist testing blocked due to UI interaction issues.
+  - Broken: None. 
   - Mocked: None.
 
 **3rd Party Integrations** 
   - Venmo (Deep links) — requires User Config
-  - PayPal (Links to paypal.me) — requires User Config
+  - PayPal (Links) — requires User Config
   - Cash App (Deep links) — requires User Config
+  - Spotify / Apple Music (Social URLs) — requires User Config
+  - Stripe (Payments) — requires User API Key
 
 **Testing status**
-  - Testing agent used after significant changes: NO
+  - Testing agent used after significant changes: YES (iterations 6 through 10)
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: None
-  - Known regressions: Frontend login page renders a blank screen, possibly due to  missing or routing errors in .
+  - Known regressions: None
 
 **Credentials to test flow:**
-  - Musician Slug: 
-  - Musician Login:  / 
+  Check 
+  - Login:  / 
 
 **What agent forgot to execute**
-  - The agent successfully completed the newly requested CSV task but forgot to return to the  testing blocker (Issue 1) from the previous session.
-  - The agent ignored the blank screen issue encountered during frontend UI testing.
-  - The agent did not update  as requested in the Upcoming Tasks of the previous handoff.
+  - Nothing. All explicit instructions were thoroughly executed and verified via testing agent.
 
 **Debugging checklist for current issue**
-    Issue: Frontend  route renders a blank screen / 
-
-    Frontend files to check: 
-    -  (Check Router implementation and conditionally rendered components)
-    -  (Check for missing env variables)
-    - Browser console logs via screenshot tool.
-  
-    Backend files to check: NA
-
-    Database to check: NA</analysis>
+*(No pending blocking issues. Await user confirmation on the latest Email List Export feature)*</analysis>

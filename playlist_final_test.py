@@ -8,7 +8,7 @@ import requests
 import json
 
 # Configuration
-BASE_URL = "https://musician-events-hub.preview.emergentagent.com/api"
+BASE_URL = "https://profile-event-system.preview.emergentagent.com/api"
 
 # Pro account credentials
 PRO_MUSICIAN = {

@@ -9,7 +9,7 @@ import json
 import os
 
 # Configuration
-BASE_URL = "https://musician-events-hub.preview.emergentagent.com/api"
+BASE_URL = "https://profile-event-system.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
     "name": "Test Musician Categories",
     "email": "test.categories@requestwave.com",
