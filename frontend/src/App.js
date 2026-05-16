@@ -12234,13 +12234,25 @@ const AudienceInterface = () => {
                   
                   {/* Skip button - always visible */}
                   <div className="mt-4 pt-3 border-t border-gray-700/30">
-                    <button
-                      onClick={handleSkipTip}
-                      className="w-full text-gray-400 hover:text-gray-300 py-2 text-sm transition duration-200"
-                      data-testid="success-tip-skip-btn"
-                    >
-                      Skip / I'm all set
-                    </button>
+                    {(() => {
+                      const tipSource = profileData || musician || {};
+                      const hasTipLinkConfigured = !!(
+                        (tipSource.paypal_username && String(tipSource.paypal_username).trim()) ||
+                        (tipSource.venmo_username && String(tipSource.venmo_username).trim()) ||
+                        (tipSource.cash_app_username && String(tipSource.cash_app_username).trim()) ||
+                        (tipSource.zelle_email && String(tipSource.zelle_email).trim()) ||
+                        (tipSource.zelle_phone && String(tipSource.zelle_phone).trim())
+                      );
+                      return (
+                        <button
+                          onClick={handleSkipTip}
+                          className="w-full text-gray-400 hover:text-gray-300 py-2 text-sm transition duration-200"
+                          data-testid="success-tip-skip-btn"
+                        >
+                          {hasTipLinkConfigured ? "Skip / I'm all set" : 'Done'}
+                        </button>
+                      );
+                    })()}
                   </div>
                 </>
               )}
