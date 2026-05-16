@@ -6204,6 +6204,7 @@ const MusicianDashboard = () => {
                                     <div className="flex items-center space-x-2 mb-1">
                                       {request.requester_email && <span className="text-gray-400 text-sm" title="Email provided">📧</span>}
                                       <span className="font-medium text-blue-400 text-sm">{request.song_title}</span>
+                                      {renderLearnLaterBookmark({ songId: request.song_id, size: 16 })}
                                       <span className="text-gray-400 text-sm">by {request.song_artist}</span>
                                       {request.tip_clicked && <span className="text-green-400 text-xs">💰</span>}
                                       {request.social_clicks?.length > 0 && (
@@ -6416,6 +6417,7 @@ const MusicianDashboard = () => {
                         <div className="flex items-center space-x-3 mb-2">
                           {request.requester_email && <span className="text-gray-400 text-sm" title="Email provided">📧</span>}
                           <span className="font-medium text-blue-400">{request.song_title}</span>
+                          {renderLearnLaterBookmark({ songId: request.song_id, size: 18 })}
                           <span className="text-gray-400">by {request.song_artist}</span>
                           {request.tip_clicked && <span className="text-green-400 text-sm">💰</span>}
                           {request.social_clicks?.length > 0 && (

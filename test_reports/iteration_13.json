@@ -1,0 +1,32 @@
+{
+  "summary": "RETEST of Learn Later bookmark on Requests tab after main agent inserted renderLearnLaterBookmark at App.js L6207 (per-show grouped view) and L6420 (currentShow filtered view). All three required checks PASS. Backend was skipped per request (was 100% in iteration_12).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_learn_later_bookmark.py",
+    "/app/test_reports/pytest/pytest_learn_later_bookmark.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Same data-testid value is rendered multiple times in the DOM for the same song (5 occurrences for one song id was observed: 2 in Requests grouped view + 2 in currentShow filtered view + 1 on Songs tab off-screen). This is intentional and works because state is sourced from songs[] state — every render reflects the same authoritative value. Playwright tests that re-query by testid get a deterministic 'first match'. No bug, but tests that intend to click 'all instances' should iterate the full nodelist (.locator.all()).",
+    "renderLearnLaterBookmark gracefully no-ops when the request's song_id isn't in the local songs[] catalog (App.js L1452 `if (!resolved) return null;`) — this is the mechanism that satisfies the 'only bookmark when song matches musician's catalog' spec. Working as designed.",
+    "Optimistic UI is correctly bounded: setSongs flips immediately, axios success reconciles with response.data.in_learn_later (authoritative), axios failure reverts. Good pattern preserved across this change."
+  ],
+  "updated_files": [
+    "/app/test_reports/iteration_13.json"
+  ],
+  "success_rate": {
+    "backend": "skipped (was 100% in iteration_12)",
+    "frontend": "100% (Requests bookmarks render + toggle + cross-view sync; Songs and On Stage regression intact)"
+  },
+  "test_credentials": {"email": "test@test.com", "password": "test", "slug": "test"},
+  "seed_data_creation": "POST /api/musicians/test/requests with TEST_Bookmark_Req requesting catalog song TEST_RegSong_166220 (id 339e397b-...) to ensure a request card exists with a song_id present in the musician's catalog. After test, toggled the song's learn-later state back to false via POST /api/songs/<id>/learn-later so the catalog state is left clean for the next iteration.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "iteration_13 validated the fix for the iteration_12 bug. Playwright confirmed: (1) Requests tab now renders 52 bookmarks across both per-show grouped + currentShow filtered views (2) clicking a bookmark fires POST /api/songs/<id>/learn-later -> 200 and flips all DOM instances of that song's testid to data-in-learn-later='true' (cross-view sync) (3) Songs tab still shows 13 bookmarks (4) On Stage view still shows 2 bookmarks. Backend tests (10/10) were left untouched from iteration_12; if you need to re-run: `cd /app && python -m pytest backend/tests/test_learn_later_bookmark.py -v`. Feature appears fully complete.",
+  "rca of the issue": "No issue this iteration — the bug from iteration_12 (renderLearnLaterBookmark not invoked next to {request.song_title} in the Requests tab) has been fixed by the main agent adding the call at App.js L6207 (size=16) and L6420 (size=18). Verified by network log capturing POST /api/songs/339e397b-8e7b-412b-a76a-455faa87eb25/learn-later -> 200 and DOM data-in-learn-later attribute flip on all 5 matching elements."
+}
