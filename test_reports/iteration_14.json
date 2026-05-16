@@ -1,0 +1,43 @@
+{
+  "summary": "End-to-end tested the new Unassigned Requests panel feature (backend + frontend). Backend: 14/14 pytest tests pass for GET /api/requests/unassigned and POST /api/requests/{id}/assign-show (auth, scoping, filtering, sort order, missing/404 error paths, persistence via DB read-back, reuse of PUT archive and DELETE endpoints). Frontend: Playwright validated panel render condition, header count, collapsed-by-default behavior, expand toggle, card content (title/requester/submitted date), all three action buttons with correct data-testids, assign-to-show dropdown sorted descending, assign POST fires and card is removed, archive removes card, and panel disappears entirely when all orphans resolved. Feature works as specified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/requests/grouped", "issue": "Returns 500 Pydantic validation error when ANY request doc in the musician's collection is missing 'song_id' (e.g. seed/orphan requests inserted without song_id). Pre-existing model strictness; NOT introduced by this feature (the new /unassigned endpoint correctly returns dicts directly). Repro: insert a request doc without song_id, then GET /api/requests/grouped -> 500 'song_id Field required'. Recommend making Request.song_id Optional or filtering/projecting in the grouped endpoint."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_unassigned_requests.py",
+    "/app/test_reports/pytest/pytest_unassigned_requests.xml"
+  ],
+  "action_items": [
+    "(Optional, not part of this task) Harden /api/requests/grouped to tolerate request docs that are missing song_id — currently returns 500 if any such doc exists. Pre-existing issue unrelated to the new feature."
+  ],
+  "critical_code_review_comments": [
+    "Backend GET /api/requests/unassigned correctly excludes Mongo _id (projection {'_id':0}) and uses $or for null/missing/empty show_id — matches spec exactly.",
+    "Backend POST /api/requests/{id}/assign-show correctly returns 404 for both unknown request and unknown show, 400 for missing show_id, and 404 for cross-musician access (because the request lookup is scoped by musician_id). Persistence verified.",
+    "Frontend: panel guard `activeTab === 'requests' && unassignedRequests.length > 0` correctly handles the disappear-when-empty case. Verified Playwright after assigning+archiving the only two orphans, panel is gone.",
+    "Frontend dropdown sort by `new Date(b.created_at) - new Date(a.created_at)` looks correct; verified visually the first option matched the most-recently-created show.",
+    "Frontend uses optimistic UI removal via removeUnassigned() — fine, but no rollback on assign/archive/delete failure (will alert but won't reinsert the card). Low-priority polish.",
+    "Pre-existing /api/requests/grouped is fragile to malformed request docs; only flagged because seed/orphan workflows may inadvertently create such docs in dev."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_unassigned_requests.py",
+    "/app/test_reports/iteration_14.json"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14 pytest)",
+    "frontend": "100% (panel visibility/collapse/expand, card content, 3 buttons, assign dropdown + POST + remove, archive + remove, panel disappears on empty)"
+  },
+  "test_credentials": {"email": "test@test.com", "password": "test", "slug": "test"},
+  "seed_data_creation": "Inserted 2 orphan request docs directly into mongo (db.requests) bypassing /api/musicians/test/requests (which auto-assigns to a show). All seed data deleted after tests (test_unassigned_requests.py fixtures + final manual cleanup of TEST_OrphanUI_* docs).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Feature is fully complete and working. Backend tests live at /app/backend/tests/test_unassigned_requests.py (14 tests). To re-run: `cd /app && python -m pytest backend/tests/test_unassigned_requests.py -v`. Important seeding note: POST /api/musicians/test/requests auto-assigns to any active show, so to create true orphans you must insert directly into Mongo without show_id (see fixture orphan_request). Side note: /api/requests/grouped has a pre-existing 500 if any request doc lacks song_id — not in scope but flagged.",
+  "rca of the issue": "N/A — no bugs found in the new feature. Spec checklist fully verified."
+}

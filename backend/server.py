@@ -6657,6 +6657,77 @@ async def assign_request_to_show(
         logger.error(f"Error assigning request to show: {str(e)}")
         raise HTTPException(status_code=500, detail="Error assigning request to show")
 
+
+@api_router.get("/requests/unassigned")
+async def get_unassigned_requests(musician_id: str = Depends(get_current_musician)):
+    """Return all non-archived requests for the current musician that have no show_id.
+
+    A request is considered orphaned when show_id is null, the field is missing,
+    or the field is an empty string. Sorted by created_at descending.
+    """
+    try:
+        cursor = db.requests.find(
+            {
+                "musician_id": musician_id,
+                "status": {"$ne": "archived"},
+                "$or": [
+                    {"show_id": None},
+                    {"show_id": {"$exists": False}},
+                    {"show_id": ""},
+                ],
+            },
+            {"_id": 0},
+        ).sort("created_at", DESCENDING)
+        requests = await cursor.to_list(None)
+        return {"requests": requests}
+    except Exception as e:
+        logger.error(f"Error fetching unassigned requests: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error fetching unassigned requests")
+
+
+@api_router.post("/requests/{request_id}/assign-show")
+async def assign_request_to_show_by_id(
+    request_id: str,
+    body: dict,  # {"show_id": "<show id>"}
+    musician_id: str = Depends(get_current_musician),
+):
+    """Assign a request to a show by show_id (sets both show_id and show_name)."""
+    try:
+        request = await db.requests.find_one({"id": request_id, "musician_id": musician_id})
+        if not request:
+            raise HTTPException(status_code=404, detail="Request not found")
+
+        show_id = (body or {}).get("show_id")
+        if not show_id or not isinstance(show_id, str):
+            raise HTTPException(status_code=400, detail="show_id is required")
+
+        show = await db.shows.find_one(
+            {"id": show_id, "musician_id": musician_id},
+            {"_id": 0, "id": 1, "name": 1},
+        )
+        if not show:
+            raise HTTPException(status_code=404, detail="Show not found")
+
+        await db.requests.update_one(
+            {"id": request_id},
+            {"$set": {"show_id": show["id"], "show_name": show.get("name", "")}},
+        )
+
+        return {
+            "success": True,
+            "request_id": request_id,
+            "show_id": show["id"],
+            "show_name": show.get("name", ""),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error assigning request {request_id} to show: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error assigning request to show")
+
+
+
 @api_router.get("/requests/grouped")
 async def get_requests_grouped_by_show(
     musician_id: str = Depends(get_current_musician),

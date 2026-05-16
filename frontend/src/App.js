@@ -661,6 +661,11 @@ const MusicianDashboard = () => {
   const [shows, setShows] = useState([]);
   const [groupedRequests, setGroupedRequests] = useState({ unassigned: [], shows: {} });
 
+  // NEW: Unassigned Requests panel state (Requests tab bottom panel)
+  const [unassignedRequests, setUnassignedRequests] = useState([]);
+  const [unassignedPanelOpen, setUnassignedPanelOpen] = useState(false);
+  const [unassignedAssignFor, setUnassignedAssignFor] = useState(null); // request_id currently showing the assign-show dropdown
+
   // Batch selection state for requests
   const [selectedRequests, setSelectedRequests] = useState(new Set());
   const [showAllRequests, setShowAllRequests] = useState(true); // For collapsible All Requests
@@ -1047,6 +1052,70 @@ const MusicianDashboard = () => {
       console.error('Error fetching grouped requests:', error);
     }
   };
+
+  // NEW: Unassigned Requests panel — fetch + actions
+  const fetchUnassignedRequests = async () => {
+    try {
+      const response = await axios.get(`${API}/requests/unassigned`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      setUnassignedRequests(response.data?.requests || []);
+    } catch (error) {
+      console.error('Error fetching unassigned requests:', error);
+    }
+  };
+
+  const removeUnassigned = (requestId) => {
+    setUnassignedRequests((prev) => prev.filter((r) => r.id !== requestId));
+    if (unassignedAssignFor === requestId) setUnassignedAssignFor(null);
+  };
+
+  const handleAssignUnassignedToShow = async (requestId, showId) => {
+    if (!showId) return;
+    try {
+      await axios.post(
+        `${API}/requests/${requestId}/assign-show`,
+        { show_id: showId },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+      removeUnassigned(requestId);
+      // Refresh main requests list so the newly-assigned card shows up under its show
+      fetchRequests();
+    } catch (error) {
+      console.error('Error assigning unassigned request to show:', error);
+      alert(error.response?.data?.detail || 'Failed to assign request to show');
+    }
+  };
+
+  const handleArchiveUnassigned = async (requestId) => {
+    try {
+      await axios.put(
+        `${API}/requests/${requestId}/archive`,
+        {},
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+      removeUnassigned(requestId);
+    } catch (error) {
+      console.error('Error archiving unassigned request:', error);
+      alert(error.response?.data?.detail || 'Failed to archive request');
+    }
+  };
+
+  const handleDeleteUnassigned = async (requestId, songTitle) => {
+    const confirmMsg = `Delete this request${songTitle ? ` for "${songTitle}"` : ''}? This cannot be undone.`;
+    if (!window.confirm(confirmMsg)) return;
+    try {
+      await axios.delete(`${API}/requests/${requestId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      removeUnassigned(requestId);
+    } catch (error) {
+      console.error('Error deleting unassigned request:', error);
+      alert(error.response?.data?.detail || 'Failed to delete request');
+    }
+  };
+
+
 
   const handleStartShow = async () => {
     if (!newShowName.trim()) {
@@ -1697,6 +1766,10 @@ const MusicianDashboard = () => {
       // Need events available for badge rendering and event filter dropdown
       fetchEvents();
       if (profiles.length === 0) fetchProfiles();
+    }
+    if (activeTab === 'requests') {
+      // NEW: Refresh orphaned/unassigned requests panel when the Requests tab is opened
+      fetchUnassignedRequests();
     }
     if (activeTab === 'onstage') {
       // On-Stage selector needs profiles + events populated
@@ -6794,6 +6867,127 @@ const MusicianDashboard = () => {
             </details>
           </div>
         )}
+
+        {/* NEW: Unassigned Requests panel — Requests tab bottom. Only rendered when at least one orphan exists. */}
+        {activeTab === 'requests' && unassignedRequests.length > 0 && (
+          <div className="mt-6" data-testid="unassigned-requests-panel">
+            <button
+              type="button"
+              onClick={() => setUnassignedPanelOpen((v) => !v)}
+              className="w-full flex items-center justify-between bg-gray-800 hover:bg-gray-750 border border-gray-700 rounded-xl px-4 py-3 text-left transition"
+              data-testid="unassigned-requests-toggle"
+              aria-expanded={unassignedPanelOpen}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-yellow-400">📥</span>
+                <span className="font-semibold text-white">
+                  Unassigned Requests ({unassignedRequests.length})
+                </span>
+              </div>
+              <svg
+                className={`w-4 h-4 text-gray-400 transition-transform ${unassignedPanelOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {unassignedPanelOpen && (
+              <div className="mt-3 space-y-3" data-testid="unassigned-requests-list">
+                {unassignedRequests.map((r) => {
+                  const sortedShows = [...(shows || [])].sort(
+                    (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)
+                  );
+                  return (
+                    <div
+                      key={r.id}
+                      className="bg-gray-800 border border-gray-700 rounded-lg p-4"
+                      data-testid={`unassigned-request-${r.id}`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-blue-300 truncate">{r.song_title}</p>
+                          <p className="text-sm text-gray-300">
+                            From: <span className="text-white">{r.requester_name || 'Anonymous'}</span>
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Submitted {formatTimestamp(r.created_at)}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 shrink-0">
+                          {unassignedAssignFor === r.id ? (
+                            <select
+                              autoFocus
+                              defaultValue=""
+                              data-testid={`unassigned-assign-select-${r.id}`}
+                              onChange={(e) => {
+                                const sid = e.target.value;
+                                if (sid) handleAssignUnassignedToShow(r.id, sid);
+                              }}
+                              onBlur={() => setUnassignedAssignFor(null)}
+                              className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm text-white"
+                            >
+                              <option value="" disabled>
+                                Select a show…
+                              </option>
+                              {sortedShows.length === 0 ? (
+                                <option value="" disabled>
+                                  No shows available
+                                </option>
+                              ) : (
+                                sortedShows.map((s) => {
+                                  const d =
+                                    s.date ||
+                                    (s.created_at ? new Date(s.created_at).toISOString().slice(0, 10) : '');
+                                  return (
+                                    <option key={s.id} value={s.id}>
+                                      {s.name}{d ? ` (${d})` : ''}
+                                    </option>
+                                  );
+                                })
+                              )}
+                            </select>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setUnassignedAssignFor(r.id)}
+                              data-testid={`unassigned-assign-btn-${r.id}`}
+                              className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded transition"
+                            >
+                              Assign to Show
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleArchiveUnassigned(r.id)}
+                            data-testid={`unassigned-archive-btn-${r.id}`}
+                            className="bg-gray-600 hover:bg-gray-500 text-white text-xs px-3 py-1 rounded transition"
+                          >
+                            Archive
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteUnassigned(r.id, r.song_title)}
+                            data-testid={`unassigned-delete-btn-${r.id}`}
+                            className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded transition"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+
 
         {/* On Stage Tab - Dedicated tab for live performance management */}
         {activeTab === 'onstage' && (
