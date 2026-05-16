@@ -2109,6 +2109,45 @@ async def register_musician(musician_data: MusicianRegister):
     }
     
     await db.musicians.insert_one(musician_dict)
+
+    # Auto-create a default profile so the musician has a working URL/profile
+    # immediately after registration.
+    profile_base_slug = create_slug(musician_data.name) or "default"
+    profile_slug = profile_base_slug
+    profile_counter = 1
+    while await db.profiles.find_one({"musician_id": musician_dict["id"], "slug": profile_slug}):
+        profile_slug = f"{profile_base_slug}-{profile_counter}"
+        profile_counter += 1
+    default_profile_dict = {
+        "id": str(uuid.uuid4()),
+        "musician_id": musician_dict["id"],
+        "name": musician_data.name,
+        "slug": profile_slug,
+        "active_playlist_ids": [],
+        "show_tips_in_success_screen": True,
+        "show_tips_in_orientation": True,
+        "is_default": True,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "paypal_username": None,
+        "venmo_username": None,
+        "cashapp_username": None,
+        "zelle_info": None,
+        "instagram_username": None,
+        "tiktok_username": None,
+        "facebook_url": None,
+        "spotify_url": None,
+        "apple_music_url": None,
+        "website": None,
+        "bio": None,
+        "musician_name": None,
+        "design_color_scheme": None,
+        "design_artist_photo": None,
+        "design_show_year": None,
+        "design_show_notes": None,
+        "current_show_id": None,
+        "current_show_name": None,
+    }
+    await db.profiles.insert_one(default_profile_dict)
     
     # Log trial start
     await db.subscription_events.insert_one({
