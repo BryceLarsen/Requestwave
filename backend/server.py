@@ -227,6 +227,7 @@ class Song(BaseModel):
     request_count: int = 0  # Track number of requests for this song
     requests_this_show: int = 0  # Requests for this song within the current active show (transient; not persisted)
     unique_show_count: int = 0  # Distinct non-archived shows this song has been requested in (transient; not persisted)
+    in_learn_later: bool = False  # Transient: whether this song is in the musician's Learn Later playlist (not persisted)
     hidden: bool = False  # NEW: Hide song from audience view
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -3866,6 +3867,63 @@ async def get_unique_show_counts(musician_id: str, song_ids: List[str]) -> Dict[
     return result
 
 
+LEARN_LATER_PLAYLIST_NAME = "Learn Later"
+
+
+async def _get_or_create_learn_later_playlist(musician_id: str) -> Dict[str, Any]:
+    """Return the musician's Learn Later playlist document (creating it if missing).
+
+    Matches by exact name (case-insensitive) within the musician's playlists and
+    ignores soft-deleted entries. The Learn Later bookmark store is a regular
+    playlist row so it benefits from existing playlist tooling, but it is created
+    on-demand without going through Pro gating since it's used as a per-song
+    bookmark UX, not a user-defined playlist.
+    """
+    playlist = await db.playlists.find_one({
+        "musician_id": musician_id,
+        "name": {"$regex": f"^{re.escape(LEARN_LATER_PLAYLIST_NAME)}$", "$options": "i"},
+        "is_deleted": {"$ne": True},
+    })
+    if playlist:
+        return playlist
+
+    now = datetime.utcnow()
+    playlist = {
+        "id": str(uuid.uuid4()),
+        "musician_id": musician_id,
+        "name": LEARN_LATER_PLAYLIST_NAME,
+        "song_ids": [],
+        "created_at": now,
+        "updated_at": now,
+        "is_public": False,
+        "is_deleted": False,
+    }
+    await db.playlists.insert_one(playlist)
+    # Drop _id added by insert before returning
+    playlist.pop("_id", None)
+    return playlist
+
+
+async def _get_learn_later_song_ids(musician_id: str) -> set:
+    """Return the set of song_ids currently in the musician's Learn Later playlist.
+
+    Returns an empty set when no Learn Later playlist exists yet (the playlist is
+    created lazily on first toggle).
+    """
+    playlist = await db.playlists.find_one(
+        {
+            "musician_id": musician_id,
+            "name": {"$regex": f"^{re.escape(LEARN_LATER_PLAYLIST_NAME)}$", "$options": "i"},
+            "is_deleted": {"$ne": True},
+        },
+        {"_id": 0, "song_ids": 1},
+    )
+    if not playlist:
+        return set()
+    return set(playlist.get("song_ids") or [])
+
+
+
 @api_router.get("/songs", response_model=List[Song])
 async def get_my_songs(
     musician_id: str = Depends(get_current_musician),
@@ -3916,6 +3974,9 @@ async def get_my_songs(
     # Unique-show count per song (popularity signal — distinct non-archived shows)
     all_song_ids = [s["id"] for s in songs]
     unique_show_map = await get_unique_show_counts(musician_id, all_song_ids)
+
+    # Learn Later membership lookup (transient bookmark state per song)
+    learn_later_ids = await _get_learn_later_song_ids(musician_id)
     
     # Ensure request_count and hidden fields exist for older songs
     # Update all existing songs to populate decade field for songs with years
@@ -3942,6 +4003,8 @@ async def get_my_songs(
         song["requests_this_show"] = requests_this_show_map.get(song["id"], 0)
         # Attach unique-show count for popularity ranking
         song["unique_show_count"] = unique_show_map.get(song["id"], 0)
+        # Attach Learn Later bookmark state
+        song["in_learn_later"] = song["id"] in learn_later_ids
         updated_songs.append(Song(**song))
     
     # Apply popularity sort in-memory using the derived unique_show_count
@@ -4165,6 +4228,55 @@ async def toggle_song_visibility(
     except Exception as e:
         logger.error(f"Error toggling song visibility: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error toggling song visibility: {str(e)}")
+
+
+@api_router.post("/songs/{song_id}/learn-later")
+async def toggle_song_learn_later(
+    song_id: str,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Toggle membership of a song in the musician's Learn Later playlist.
+
+    Idempotent: if the song is already in the Learn Later playlist it is removed,
+    otherwise it is added. The Learn Later playlist is created lazily on first
+    use. Returns {in_learn_later: bool} so the frontend can flip its bookmark
+    state without refetching.
+    """
+    try:
+        # Verify song belongs to musician
+        song = await db.songs.find_one({"id": song_id, "musician_id": musician_id})
+        if not song:
+            raise HTTPException(status_code=404, detail="Song not found")
+
+        playlist = await _get_or_create_learn_later_playlist(musician_id)
+        current_ids = list(playlist.get("song_ids") or [])
+        is_in = song_id in current_ids
+
+        if is_in:
+            new_ids = [sid for sid in current_ids if sid != song_id]
+            new_state = False
+        else:
+            new_ids = current_ids + [song_id]
+            new_state = True
+
+        await db.playlists.update_one(
+            {"id": playlist["id"]},
+            {"$set": {"song_ids": new_ids, "updated_at": datetime.utcnow()}},
+        )
+
+        return {
+            "in_learn_later": new_state,
+            "song_id": song_id,
+            "playlist_id": playlist["id"],
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error toggling Learn Later for song {song_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error toggling Learn Later")
+
+
 
 # Genres and Moods endpoints
 @api_router.get("/genres")

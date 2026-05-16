@@ -1412,6 +1412,91 @@ const MusicianDashboard = () => {
     }
   };
 
+  // Toggle Learn Later bookmark for a song. Optimistically updates the local
+  // songs array so the bookmark icon flips immediately on all visible cards.
+  const handleToggleLearnLater = async (songId) => {
+    if (!songId) return;
+    // Optimistic update
+    setSongs((prev) =>
+      prev.map((s) => (s.id === songId ? { ...s, in_learn_later: !s.in_learn_later } : s))
+    );
+    try {
+      const response = await axios.post(
+        `${API}/songs/${songId}/learn-later`,
+        {},
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+      const next = !!response.data?.in_learn_later;
+      // Reconcile with the server's authoritative state
+      setSongs((prev) =>
+        prev.map((s) => (s.id === songId ? { ...s, in_learn_later: next } : s))
+      );
+    } catch (error) {
+      console.error('Error toggling Learn Later:', error);
+      // Revert optimistic update on failure
+      setSongs((prev) =>
+        prev.map((s) => (s.id === songId ? { ...s, in_learn_later: !s.in_learn_later } : s))
+      );
+    }
+  };
+
+  // Compact Learn Later bookmark icon. Filled when in_learn_later=true, outline otherwise.
+  // Pass either {songId} (looks up state from songs) or {song} (full object). The
+  // icon is intentionally small/unobtrusive — no labels or dialogs.
+  const renderLearnLaterBookmark = ({ songId, song, size = 18 }) => {
+    const resolvedId = songId || song?.id;
+    if (!resolvedId) return null;
+    const resolved = song || songs.find((s) => s.id === resolvedId);
+    // If the song isn't in our songs catalogue yet (e.g. a request for an
+    // unknown song), don't render the bookmark at all rather than guessing.
+    if (!resolved) return null;
+    const isFilled = !!resolved.in_learn_later;
+    return (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          handleToggleLearnLater(resolvedId);
+        }}
+        title={isFilled ? 'Remove from Learn Later' : 'Add to Learn Later'}
+        aria-label={isFilled ? 'Remove from Learn Later' : 'Add to Learn Later'}
+        aria-pressed={isFilled}
+        data-testid={`learn-later-bookmark-${resolvedId}`}
+        data-in-learn-later={isFilled ? 'true' : 'false'}
+        className={`inline-flex items-center justify-center align-middle rounded p-0.5 transition-colors duration-150 ${
+          isFilled ? 'text-yellow-400 hover:text-yellow-300' : 'text-gray-400 hover:text-gray-200'
+        }`}
+      >
+        <svg
+          width={size}
+          height={size}
+          viewBox="0 0 24 24"
+          fill={isFilled ? 'currentColor' : 'none'}
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+          <text
+            x="12"
+            y="13"
+            textAnchor="middle"
+            fontSize="7"
+            fontWeight="700"
+            fill={isFilled ? '#1f2937' : 'currentColor'}
+            stroke="none"
+            fontFamily="ui-sans-serif, system-ui, -apple-system, sans-serif"
+          >
+            LL
+          </text>
+        </svg>
+      </button>
+    );
+  };
+
   const handleBatchEnrich = async () => {
     if (!confirm('Auto-fill missing metadata for all your existing songs using Spotify? This may take a few moments.')) {
       return;
@@ -5781,6 +5866,7 @@ const MusicianDashboard = () => {
                             >
                               Edit
                             </button>
+                            {renderLearnLaterBookmark({ song, size: 20 })}
                             {/* NEW: Hide/Show Button */}
                             <button
                               onClick={() => handleToggleSongVisibility(song.id)}
@@ -6827,9 +6913,10 @@ const MusicianDashboard = () => {
                       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
                       .map((request) => (
                         <div key={request.id} className="bg-blue-800/50 rounded-lg p-4">
-                          <h4 className="font-bold text-lg text-white">
-                            {request.requester_email && <span className="text-gray-400 mr-2" title="Email provided">📧</span>}
-                            {request.song_title}
+                          <h4 className="font-bold text-lg text-white flex items-center gap-2">
+                            {request.requester_email && <span className="text-gray-400" title="Email provided">📧</span>}
+                            <span>{request.song_title}</span>
+                            {renderLearnLaterBookmark({ songId: request.song_id, size: 18 })}
                           </h4>
                           <p className="text-blue-200">{request.song_artist}</p>
                           <p className="text-sm text-gray-300 mt-2">
@@ -6975,9 +7062,10 @@ const MusicianDashboard = () => {
                       ) : (
                         // Render normal request
                         <div key={item.id} className="bg-purple-800/50 rounded-lg p-4">
-                          <h4 className="font-bold text-lg text-white">
-                            {item.requester_email && <span className="text-gray-400 mr-2" title="Email provided">📧</span>}
-                            {item.song_title}
+                          <h4 className="font-bold text-lg text-white flex items-center gap-2">
+                            {item.requester_email && <span className="text-gray-400" title="Email provided">📧</span>}
+                            <span>{item.song_title}</span>
+                            {renderLearnLaterBookmark({ songId: item.song_id, size: 18 })}
                           </h4>
                           <p className="text-purple-200">{item.song_artist}</p>
                           <p className="text-sm text-gray-300 mt-2">

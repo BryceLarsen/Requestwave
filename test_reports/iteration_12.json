@@ -1,0 +1,55 @@
+{
+  "summary": "Tested Learn Later bookmark toggle (POST /api/songs/{song_id}/learn-later) end-to-end. Backend pytest: 10/10 passed covering response shape ({in_learn_later, song_id, playlist_id}), idempotent flip, GET /api/songs in_learn_later field, lazy single Learn Later playlist creation, unknown song -> 404, foreign-musician song -> 404 (scoping), no-auth -> 401/403, other playlists' song_ids untouched by toggle (regression), and audience GET /api/musicians/test/songs never leaks in_learn_later=true. Frontend Playwright on test@test.com: Songs tab (13 cards) — bookmark with data-testid 'learn-later-bookmark-<id>' rendered between Edit and Hide buttons, data-in-learn-later flips immediately on click (optimistic), reconciles with server response, persists across full page reload; Edit/Hide present (regression intact). On Stage view — seeded a live request for a catalog song; bookmark renders next to the song title on Live Requests card, click toggles state, cross-view sync OnStage->Songs verified. Requests tab — BUG: bookmark icon NOT rendered next to song_title in either per-show grouped view (App.js L6206) or currentShow filtered view (App.js L6418). 0 bookmarks found across both views even when the request's song_id matches a catalog song (verified TEST_RegSong_166220 is in catalog and bookmarkable from On Stage / Songs).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Requests tab — per-show grouped view (App.js ~L6196-6212)",
+        "issue": "renderLearnLaterBookmark is NOT called next to {request.song_title} on the request card inside expanded show groups. Spec requires bookmark on this view for catalog-matched song_ids.",
+        "selector": "[data-testid^='learn-later-bookmark-']",
+        "priority": "HIGH"
+      },
+      {
+        "component": "Requests tab — currentShow filtered view (App.js ~L6408-6424)",
+        "issue": "renderLearnLaterBookmark is NOT called next to {request.song_title} in the currentShow-filtered live requests list. Same fix needed as the grouped view.",
+        "selector": "[data-testid^='learn-later-bookmark-']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_learn_later_bookmark.py",
+    "/app/test_reports/pytest/pytest_learn_later_bookmark.xml"
+  ],
+  "action_items": [
+    "Add renderLearnLaterBookmark({ songId: request.song_id }) call in App.js L6206 (per-show grouped Requests view) immediately after the {request.song_title} span (the helper already no-ops when song_id is not in catalog, so the 'only when matches musician's catalog' rule is satisfied automatically).",
+    "Add the same call in App.js L6418 (currentShow filtered Requests view) next to {request.song_title}.",
+    "Optional: confirm there isn't a third 'song suggestions' card path on the Requests tab that also needs the bookmark — the per-show grouped view also renders a Suggestions group (App.js ~L6280-ish based on the screenshots) which should follow the same convention."
+  ],
+  "critical_code_review_comments": [
+    "Backend /api/songs/{song_id}/learn-later: clean implementation. Verifies song belongs to musician BEFORE creating the playlist, so a 404 on a foreign song does NOT side-effect a Learn Later playlist for the caller (good). The helper _get_or_create_learn_later_playlist uses a case-insensitive regex match scoped to musician_id and excludes soft-deleted rows — idempotent and safe.",
+    "Backend GET /api/songs: in_learn_later is computed via a single set lookup populated once per request (learn_later_ids) — O(1) per song, no N+1.",
+    "Backend audience endpoint GET /api/musicians/{slug}/songs: in_learn_later defaults to False on Song model and is never populated for the public endpoint — verified by test that even when the authenticated owner has the song bookmarked, the public response returns in_learn_later=false. No leak.",
+    "Frontend handleToggleLearnLater (App.js L1417): optimistic update is correctly bounded — on axios failure the catch block reverts by re-flipping. The server-side reconcile uses the response's authoritative value (not a re-flip), so even if optimistic state was wrong (e.g., out-of-sync), the UI converges. Good pattern.",
+    "Frontend renderLearnLaterBookmark (App.js L1446): the early return `if (!resolved) return null;` when the song_id is not found in songs[] is the mechanism that delivers the 'only when song matches catalog' requirement. That works for On Stage (verified). The bug on Requests tab is that the helper is NEVER CALLED on those cards — not a helper bug.",
+    "Minor: the bookmark button uses e.stopPropagation() and e.preventDefault() — good, prevents bubbling into the surrounding clickable card.",
+    "Minor: Frontend has not introduced any unrelated regressions — Edit/Hide buttons still present on Songs (13 each), Play button still present on Requests cards."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_learn_later_bookmark.py",
+    "/app/test_reports/pytest/pytest_learn_later_bookmark.xml",
+    "/app/test_reports/iteration_12.json"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 pytest)",
+    "frontend": "67% (Songs tab + On Stage view fully pass; Requests tab bookmark missing in 2/2 views)"
+  },
+  "test_credentials": {"email": "test@test.com", "password": "test", "slug": "test"},
+  "seed_data_creation": "Seeded one live request via POST /api/musicians/test/requests with TEST_Bookmark_Requester to exercise the On Stage Live Requests bookmark. Cleaned up after testing (DELETE /api/requests/{id}). The On Stage view test required a catalog-song request to be present so the bookmark could render — without one, no Live Request card exists.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run backend: `cd /app && python -m pytest backend/tests/test_learn_later_bookmark.py -v`. The Requests-tab bookmark bug is in App.js — the helper renderLearnLaterBookmark is fully working (proven on Songs tab and On Stage view); it just needs to be invoked next to {request.song_title} at L6206 (grouped view) AND L6418 (currentShow filtered view). To reproduce on UI: login as test@test.com / test, create a request with song_id from GET /api/songs via POST /api/musicians/test/requests, then on the Requests tab expand the active show 'Show - May 15, 2026'. You will see the request card showing the song title with NO bookmark icon next to it — but the same song's bookmark works on the Songs tab and (when active) on On Stage view. The data-testid format used everywhere is 'learn-later-bookmark-<song_id>' and the attribute that reflects state is data-in-learn-later='true'|'false'. After main agent fixes, just re-run the same script with `final_req = await page.query_selector_all('[data-testid^=\"learn-later-bookmark-\"]')` after switching to the Requests tab — should return >0 once the helper is invoked.",
+  "rca of the issue": "Root cause: App.js L6206 (per-show grouped Requests view) and L6418 (currentShow filtered Requests view) render `<span className=\"font-medium text-blue-400 ...\">{request.song_title}</span>` but never call `renderLearnLaterBookmark({ songId: request.song_id })`. The helper itself works correctly (verified on Songs tab and On Stage view) and gracefully no-ops when the song_id isn't in the local songs[] state (App.js L1452 `if (!resolved) return null;`), so the spec's 'only render when song matches catalog' rule will be auto-satisfied once the helper is invoked. Mitigation: add `{renderLearnLaterBookmark({ songId: request.song_id, size: 14 })}` immediately after each `{request.song_title}` span in both views. No backend changes needed."
+}
