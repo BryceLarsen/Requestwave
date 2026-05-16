@@ -73,6 +73,12 @@ Profile fields override master account values when set. Falls back to master whe
 - **Analytics → Most Active Requesters filter**: `GET /api/analytics/requesters` and `GET /api/analytics/export-requesters` accept optional `profile_id` and `event_id` query params (added to `$match`). Both endpoints now consistently exclude archived requests.
 - Frontend Analytics tab: Most Active Requesters section has a filter dropdown ("All Profiles" / per-profile / per-event) that re-fetches and re-renders the list. Export CSV button label switches to "Export filtered list" when a filter is active and includes the filter in the export URL. Filename suffix on the server (`requesters-profile-<id8>-YYYYMMDD.csv` or `requesters-event-<id8>-YYYYMMDD.csv`) reflects the filter.
 
+- **Email List Export by Show**: `GET /api/analytics/export-requesters` accepts `show_id` query param; CSV restricted to 3 columns (`name`, `email`, `show_name`) with basic regex email validation. Frontend Analytics tab Export panel adds a Show selector dropdown (`export-show-select`) that scopes the email-list CSV to a single show. Filename suffix `-show-<id8>` when the show filter is active.
+- **Show Analytics Dashboard (Feb 16, 2026)**: Two new endpoints + UI section in the Analytics tab, both profile-scoped.
+  - `GET /api/analytics/show-detail?show_id=<id>` returns `{show, metrics:{total_requests, requests_with_email, email_capture_rate, total_tip_revenue, tip_count, click_through_rate, requests_with_click}, top_songs[<=5], top_tippers[<=5], repeat_requesters[]}`. Tip revenue aggregated from `db.tips` (not `request.tip_amount`) to avoid double counting. CTR counts requests where `tip_clicked=true OR social_clicks` non-empty. Repeat requesters compares emails in the selected show against other shows in the same profile (`shows_count >= 2`).
+  - `GET /api/analytics/show-trends?profile_id=<id>&limit=5|10|20` returns last N shows for the profile in chronological order with per-show `total_requests, email_capture_count, tip_revenue, click_through_rate`. Invalid `limit` coerces to 5. Unknown profile returns `{shows:[]}` with 200.
+  - Frontend: new `Show Analytics` section under existing Analytics charts with view toggle (Show Detail / Show Trends), profile selector (defaults to is_default profile), show selector scoped to profile, and 5/10/20 N selector for trends. Trends view renders two `recharts` charts: `ComposedChart` dual-axis (bar = email captures, line = tip revenue) + `LineChart` for CTR % (0-100 domain). `data-testid`s: `show-analytics-dashboard`, `show-analytics-view-detail`, `show-analytics-view-trends`, `show-analytics-profile-select`, `show-analytics-show-select`, `show-analytics-trends-limit`, `metric-email-capture`, `metric-tip-revenue`, `metric-click-through`, `metric-total-requests`, `show-top-songs`, `show-top-tippers`, `show-repeat-requesters`, `trend-graph-email-tips`, `trend-graph-ctr`. Dependency added: `recharts` (yarn).
+
 ## Upcoming Tasks
 - Tip conversion analytics
 - Post-Show Reflection features
@@ -80,4 +86,4 @@ Profile fields override master account values when set. Falls back to master whe
 - Analytics UI for `analytics_events` collection
 
 ## Backlog (Deferred per user)
-- Refactor monolithic `App.js` (13.7k lines) and `server.py` (8.5k lines)
+- Refactor monolithic `App.js` (13.9k lines) and `server.py` (8.9k lines)
