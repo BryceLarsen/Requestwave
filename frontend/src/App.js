@@ -19,22 +19,10 @@ import './App.css';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const BILLING_ENABLED = process.env.REACT_APP_BILLING_ENABLED === 'true';
 
-// PRODUCTION DEPLOYMENT FIX: Runtime environment detection and API URL override
-const isProductionDeployment = () => {
-  return window.location.hostname === 'requestwave.app' || 
-         window.location.hostname.includes('requestwave.emergent.host') ||
-         process.env.NODE_ENV === 'production';
-};
-
-// PRODUCTION-AWARE API URL: Use production backend when deployed to production
-const API = (() => {
-  // If deployed to production domain, use production backend
-  if (isProductionDeployment()) {
-    return 'https://requestwave.app/api';
-  }
-  // Otherwise use configured backend URL (development/preview)
-  return `${BACKEND_URL}/api`;
-})();
+// API URL — always derive from the environment-configured backend URL.
+// Emergent auto-updates REACT_APP_BACKEND_URL at deploy time so this works
+// for preview, production, and custom-domain deployments.
+const API = `${BACKEND_URL}/api`;
 
 // Audience URL base domain — derived at runtime from the page's origin so the
 // app works correctly on any domain it's served from (preview, production, or
