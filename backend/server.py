@@ -8975,6 +8975,273 @@ async def test_endpoint_before_inclusion():
     """Simple test to verify endpoint registration works"""
     return {"message": "test endpoint before inclusion works", "timestamp": datetime.utcnow().isoformat().isoformat()}
 
+# ============================================================================
+# ADMIN PANEL — Password-gated administrative endpoints
+# ============================================================================
+# Access requires the ADMIN_PASSWORD environment variable. The admin panel UI
+# lives at /admin in the frontend. None of the endpoints below are linked from
+# the regular musician dashboard.
+
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
+ADMIN_JWT_ROLE = "requestwave-admin"
+
+
+def _create_admin_token() -> str:
+    """Mint a signed JWT marking the bearer as an admin. Lifetime is 24h."""
+    payload = {
+        "role": ADMIN_JWT_ROLE,
+        "exp": datetime.utcnow() + timedelta(hours=24),
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+async def require_admin(credentials: HTTPAuthorizationCredentials = Depends(security)) -> bool:
+    """Dependency that validates an admin-role JWT and grants access."""
+    try:
+        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        if payload.get("role") != ADMIN_JWT_ROLE:
+            raise HTTPException(status_code=401, detail="Admin access required")
+        return True
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Admin session expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid admin token")
+
+
+class AdminLoginRequest(BaseModel):
+    password: str
+
+
+@api_router.post("/admin/login")
+async def admin_login(body: AdminLoginRequest):
+    """Validate the admin password against the ADMIN_PASSWORD env var."""
+    if not ADMIN_PASSWORD:
+        raise HTTPException(
+            status_code=503,
+            detail="Admin panel is disabled: ADMIN_PASSWORD environment variable not set",
+        )
+    if not body.password or body.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Incorrect admin password")
+    return {"token": _create_admin_token()}
+
+
+@api_router.get("/admin/users")
+async def admin_list_users(_: bool = Depends(require_admin)):
+    """Return all musician accounts with aggregated counts.
+
+    Each row: id, name, email, created_at, profile_count, show_count, request_count.
+    """
+    musicians = await db.musicians.find(
+        {},
+        {"_id": 0, "id": 1, "name": 1, "email": 1, "created_at": 1},
+    ).sort("created_at", DESCENDING).to_list(None)
+
+    if not musicians:
+        return {"users": []}
+
+    musician_ids = [m["id"] for m in musicians]
+
+    profile_counts = {
+        d["_id"]: d["count"]
+        for d in await db.profiles.aggregate([
+            {"$match": {"musician_id": {"$in": musician_ids}}},
+            {"$group": {"_id": "$musician_id", "count": {"$sum": 1}}},
+        ]).to_list(None)
+    }
+
+    show_counts = {
+        d["_id"]: d["count"]
+        for d in await db.shows.aggregate([
+            {"$match": {"musician_id": {"$in": musician_ids}}},
+            {"$group": {"_id": "$musician_id", "count": {"$sum": 1}}},
+        ]).to_list(None)
+    }
+
+    request_counts = {
+        d["_id"]: d["count"]
+        for d in await db.requests.aggregate([
+            {"$match": {"musician_id": {"$in": musician_ids}}},
+            {"$group": {"_id": "$musician_id", "count": {"$sum": 1}}},
+        ]).to_list(None)
+    }
+
+    users = []
+    for m in musicians:
+        created = m.get("created_at")
+        if isinstance(created, datetime):
+            created = created.isoformat()
+        users.append({
+            "id": m["id"],
+            "name": m.get("name"),
+            "email": m.get("email"),
+            "created_at": created,
+            "profile_count": profile_counts.get(m["id"], 0),
+            "show_count": show_counts.get(m["id"], 0),
+            "request_count": request_counts.get(m["id"], 0),
+        })
+    return {"users": users}
+
+
+@api_router.get("/admin/users/{musician_id}")
+async def admin_user_detail(musician_id: str, _: bool = Depends(require_admin)):
+    """Detail view for a single musician.
+
+    Returns profiles[] each with their shows[] (name, date, request_count) plus
+    the total count of unassigned requests for this musician.
+    """
+    musician = await db.musicians.find_one(
+        {"id": musician_id},
+        {"_id": 0, "id": 1, "name": 1, "email": 1, "created_at": 1, "slug": 1},
+    )
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    if isinstance(musician.get("created_at"), datetime):
+        musician["created_at"] = musician["created_at"].isoformat()
+
+    profiles = await db.profiles.find(
+        {"musician_id": musician_id},
+        {"_id": 0, "id": 1, "name": 1, "slug": 1, "is_default": 1, "current_show_id": 1},
+    ).to_list(None)
+
+    shows = await db.shows.find(
+        {"musician_id": musician_id},
+        {"_id": 0, "id": 1, "profile_id": 1, "name": 1, "date": 1, "status": 1, "created_at": 1},
+    ).sort("created_at", DESCENDING).to_list(None)
+
+    # Per-show request counts
+    request_counts_by_show = {
+        d["_id"]: d["count"]
+        for d in await db.requests.aggregate([
+            {"$match": {"musician_id": musician_id, "show_id": {"$ne": None}}},
+            {"$group": {"_id": "$show_id", "count": {"$sum": 1}}},
+        ]).to_list(None)
+    }
+
+    # Unassigned (show_id null/missing/empty)
+    unassigned_count = await db.requests.count_documents({
+        "musician_id": musician_id,
+        "$or": [
+            {"show_id": None},
+            {"show_id": {"$exists": False}},
+            {"show_id": ""},
+        ],
+    })
+
+    # Group shows by profile
+    profile_show_map: Dict[Optional[str], List[Dict[str, Any]]] = {}
+    for s in shows:
+        created = s.get("created_at")
+        if isinstance(created, datetime):
+            created = created.isoformat()
+        entry = {
+            "id": s["id"],
+            "name": s.get("name"),
+            "date": s.get("date"),
+            "status": s.get("status"),
+            "created_at": created,
+            "request_count": request_counts_by_show.get(s["id"], 0),
+        }
+        profile_show_map.setdefault(s.get("profile_id"), []).append(entry)
+
+    profile_list = []
+    for p in profiles:
+        profile_list.append({
+            "id": p["id"],
+            "name": p.get("name"),
+            "slug": p.get("slug"),
+            "is_default": p.get("is_default", False),
+            "current_show_id": p.get("current_show_id"),
+            "shows": profile_show_map.get(p["id"], []),
+        })
+
+    return {
+        "musician": musician,
+        "profiles": profile_list,
+        "orphan_shows": profile_show_map.get(None, []),  # shows with no profile_id (legacy)
+        "unassigned_request_count": unassigned_count,
+    }
+
+
+@api_router.get("/admin/users/{musician_id}/requests")
+async def admin_user_requests(
+    musician_id: str,
+    show_id: str = "unassigned",
+    _: bool = Depends(require_admin),
+):
+    """List a musician's requests filtered by show_id, or unassigned ones."""
+    musician = await db.musicians.find_one({"id": musician_id}, {"_id": 0, "id": 1})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+
+    if show_id == "unassigned":
+        query = {
+            "musician_id": musician_id,
+            "$or": [
+                {"show_id": None},
+                {"show_id": {"$exists": False}},
+                {"show_id": ""},
+            ],
+        }
+    else:
+        query = {"musician_id": musician_id, "show_id": show_id}
+
+    requests = await db.requests.find(query, {"_id": 0}).sort("created_at", DESCENDING).to_list(None)
+    # ISO-format created_at for JSON safety
+    for r in requests:
+        if isinstance(r.get("created_at"), datetime):
+            r["created_at"] = r["created_at"].isoformat()
+    return {"requests": requests, "count": len(requests)}
+
+
+class AdminBulkRequestAction(BaseModel):
+    request_ids: List[str]
+    show_id: Optional[str] = None  # required for reassign
+
+
+@api_router.post("/admin/requests/reassign")
+async def admin_reassign_requests(
+    body: AdminBulkRequestAction,
+    _: bool = Depends(require_admin),
+):
+    """Bulk-reassign a list of requests to a target show. Sets show_id and show_name."""
+    if not body.request_ids:
+        raise HTTPException(status_code=400, detail="request_ids cannot be empty")
+    if not body.show_id:
+        raise HTTPException(status_code=400, detail="show_id is required")
+
+    target_show = await db.shows.find_one({"id": body.show_id}, {"_id": 0, "id": 1, "name": 1, "musician_id": 1})
+    if not target_show:
+        raise HTTPException(status_code=404, detail="Target show not found")
+
+    result = await db.requests.update_many(
+        {"id": {"$in": body.request_ids}},
+        {"$set": {
+            "show_id": target_show["id"],
+            "show_name": target_show.get("name", ""),
+        }},
+    )
+    return {
+        "success": True,
+        "matched": result.matched_count,
+        "modified": result.modified_count,
+        "show_id": target_show["id"],
+        "show_name": target_show.get("name", ""),
+    }
+
+
+@api_router.post("/admin/requests/delete")
+async def admin_delete_requests(
+    body: AdminBulkRequestAction,
+    _: bool = Depends(require_admin),
+):
+    """Bulk-delete a list of requests."""
+    if not body.request_ids:
+        raise HTTPException(status_code=400, detail="request_ids cannot be empty")
+    result = await db.requests.delete_many({"id": {"$in": body.request_ids}})
+    return {"success": True, "deleted": result.deleted_count}
+
+
+
 # Include the main router
 app.include_router(api_router)
 

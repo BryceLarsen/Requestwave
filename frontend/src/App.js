@@ -13,6 +13,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import AdminPanel from './AdminPanel';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -14618,6 +14619,7 @@ const App = () => {
     <Router>
       <Routes>
         <Route path="/" element={musician ? <Navigate to="/dashboard" /> : <LandingPage />} />
+        <Route path="/admin" element={<AdminPanel />} />
         <Route path="/dashboard" element={musician ? <MusicianDashboard /> : <Navigate to="/" />} />
         <Route path="/musician/:masterSlug/:profileSlug/:eventSlug" element={<AudienceInterface />} />
         <Route path="/musician/:masterSlug/:profileSlug" element={<AudienceInterface />} />
