@@ -3614,7 +3614,7 @@ async def get_song_suggestions(
         if show_id is not None:
             query["show_id"] = show_id
         
-        suggestions = await db.song_suggestions.find(query).sort("created_at", DESCENDING).to_list(length=None)
+        suggestions = await db.song_suggestions.find(query).sort("created_at", DESCENDING).to_list(length=1000)
         return [SongSuggestion(**suggestion) for suggestion in suggestions]
     except Exception as e:
         logger.error(f"Error getting song suggestions: {str(e)}")
