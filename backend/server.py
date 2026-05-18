@@ -3510,6 +3510,12 @@ async def create_song_suggestion(suggestion_data: dict):
         current_show_id = active_profile.get("current_show_id") if active_profile else None
         current_show_name = active_profile.get("current_show_name") if active_profile else None
 
+        # If current_show_id references a deleted show, clear it so auto-creation can refire
+        cleared = await _clear_stale_current_show(musician_id, current_show_id, profile_id, None)
+        if cleared is None:
+            current_show_id = None
+            current_show_name = None
+
         # AUTO-SHOW CREATION: If no active show exists on this profile, create one automatically
         if not current_show_id and active_profile:
             from datetime import date
@@ -4563,7 +4569,13 @@ async def create_request(request_data: RequestCreate):
     else:
         current_show_id = active_profile.get("current_show_id") if active_profile else None
         current_show_name = active_profile.get("current_show_name") if active_profile else None
-    
+
+    # If current_show_id references a deleted show, clear it so auto-creation can refire
+    cleared = await _clear_stale_current_show(musician_id, current_show_id, profile_id, event_id)
+    if cleared is None:
+        current_show_id = None
+        current_show_name = None
+
     # AUTO-SHOW CREATION: auto-create on event when present, else on profile
     if not current_show_id and (active_event or active_profile):
         from datetime import date
@@ -4742,6 +4754,12 @@ async def create_musician_request(
     else:
         current_show_id = active_profile.get("current_show_id") if active_profile else None
         current_show_name = active_profile.get("current_show_name") if active_profile else None
+
+    # If current_show_id references a deleted show, clear it so auto-creation can refire
+    cleared = await _clear_stale_current_show(musician_id, current_show_id, profile_id, event_id)
+    if cleared is None:
+        current_show_id = None
+        current_show_name = None
 
     # AUTO-SHOW CREATION: auto-create on event when present, else on profile
     if not current_show_id and (active_event or active_profile):
@@ -8386,6 +8404,39 @@ async def _get_profile_songs(profile, musician):
         {"_id": 0}
     ).to_list(5000)
     return songs
+
+async def _clear_stale_current_show(
+    musician_id: str,
+    current_show_id: Optional[str],
+    profile_id: Optional[str],
+    event_id: Optional[str],
+) -> Optional[str]:
+    """If current_show_id points to a show that no longer exists in db.shows,
+    clear the stale pointer at its source (event row when event_id is set, else
+    profile row) and return None. Otherwise return current_show_id unchanged.
+
+    This is the fix for the bug where a profile/event's current_show_id can be
+    set to a show that was later deleted, leaving the auto-show creation guard
+    permanently disabled because `not current_show_id` is False. We treat a
+    missing show document the same as no active show.
+    """
+    if not current_show_id:
+        return current_show_id
+    existing = await db.shows.find_one({"id": current_show_id}, {"_id": 0, "id": 1})
+    if existing:
+        return current_show_id
+    if event_id:
+        await db.events.update_one(
+            {"id": event_id, "musician_id": musician_id},
+            {"$set": {"current_show_id": None, "current_show_name": None}},
+        )
+    elif profile_id:
+        await db.profiles.update_one(
+            {"id": profile_id, "musician_id": musician_id},
+            {"$set": {"current_show_id": None, "current_show_name": None}},
+        )
+    return None
+
 
 async def _get_default_profile(musician_id: str):
     """Return the musician's default profile, or None if none exists yet."""
