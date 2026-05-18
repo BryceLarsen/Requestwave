@@ -9440,16 +9440,12 @@ async def log_routes():
 # )
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=[
-        "https://requestwave.app", 
-        "https://profile-event-system.preview.emergentagent.com", 
-        os.environ.get('FRONTEND_URL', '').replace('http://', 'https://'),  # Dynamic production URL
-        "https://requestwave.emergent.host",  # Emergent production pattern
-        "https://requestwave-app.emergent.host",  # Alternative production pattern
-        f"https://{os.environ.get('APP_NAME', 'requestwave')}.emergent.host",  # Dynamic Emergent domain
-        os.environ.get('REACT_APP_AUDIENCE_BASE_URL', 'https://requestwave.app')  # Frontend audience URL
-    ],
+    allow_origins=(
+        ["*"]
+        if os.environ.get("CORS_ORIGINS", "*").strip() == "*"
+        else [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()]
+    ),
+    allow_credentials=os.environ.get("CORS_ORIGINS", "*").strip() != "*",
     allow_methods=["*"],
     allow_headers=["*"],
 )
