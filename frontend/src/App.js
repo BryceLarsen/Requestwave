@@ -35,16 +35,13 @@ const API = (() => {
   return `${BACKEND_URL}/api`;
 })();
 
-// PRODUCTION SOURCE OF TRUTH: Audience URL base domain
-const AUDIENCE_BASE_URL = process.env.REACT_APP_AUDIENCE_BASE_URL || 'https://requestwave.app';
-
-// Environment guard for production
-const validateProductionConfig = () => {
-  if (AUDIENCE_BASE_URL !== 'https://requestwave.app') {
-    console.error('❌ PRODUCTION CONFIG ERROR: AUDIENCE_BASE_URL must be https://requestwave.app in production');
-    console.error('Current value:', AUDIENCE_BASE_URL);
-  }
-};
+// Audience URL base domain — derived at runtime from the page's origin so the
+// app works correctly on any domain it's served from (preview, production, or
+// a custom domain) without environment-specific configuration.
+const AUDIENCE_BASE_URL =
+  typeof window !== 'undefined' && window.location && window.location.origin
+    ? window.location.origin
+    : '';
 
 // Single helper function for all audience URL generation
 const getAudienceUrl = (slug) => {
@@ -54,9 +51,6 @@ const getAudienceUrl = (slug) => {
   }
   return `${AUDIENCE_BASE_URL}/musician/${slug}`;
 };
-
-// Initialize production validation
-validateProductionConfig();
 
 // Auth Context
 const AuthContext = createContext();
