@@ -6148,40 +6148,11 @@ const MusicianDashboard = () => {
                     Start a show or wait for your first request to arrive.
                   </p>
                 </div>
-                
-                {/* Past Shows - non-archived active shows when no current show */}
-                {shows.filter(show => show.status === 'active').length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold mb-4">📋 Past Shows</h3>
-                    <p className="text-gray-400 text-sm mb-3">Shows that are not currently active. Click to view or reopen.</p>
-                    <div className="space-y-3">
-                      {shows.filter(show => show.status === 'active').map((show) => (
-                        <div key={show.id} className="bg-gray-700 rounded-lg p-4">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <span className="font-medium">📁 {show.name}</span>
-                              <span className="text-gray-400 text-sm ml-2">({show.date || 'No date'})</span>
-                              <span className="text-gray-400 text-sm ml-2">
-                                • {requests.filter(r => r.show_id === show.id).length} requests
-                              </span>
-                            </div>
-                            <button
-                              onClick={() => setCurrentShow(show)}
-                              className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded transition duration-300"
-                            >
-                              Open Show
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
             
             {/* Active Shows Folders (MOVED ABOVE ALL REQUESTS) */}
-            {currentShow && shows.filter(show => show.status !== 'archived').length > 0 && (
+            {shows.filter(show => show.status !== 'archived').length > 0 && (
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-4">🎭 Shows</h3>
                 <div className="space-y-3">
