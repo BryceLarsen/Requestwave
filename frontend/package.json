@@ -13,7 +13,7 @@
   },
   "scripts": {
     "start": "craco start",
-    "build": "craco build && node -e \"require('fs').copyFileSync('build/index.html','build/admin.html')\"",
+    "build": "craco build && node -e \"require('fs').copyFileSync('build/index.html','build/rw-ops.html')\"",
     "test": "craco test",
     "eject": "react-scripts eject"
   },
