@@ -6771,6 +6771,10 @@ async def get_requests_grouped_by_show(
         }
         
         for request in requests:
+            # Skip malformed/legacy documents that are missing a song_id so they
+            # don't blow up Pydantic validation and turn the whole endpoint into a 500.
+            if not request.get("song_id"):
+                continue
             if request.get("show_name"):
                 show_name = request["show_name"]
                 if show_name not in grouped["shows"]:
