@@ -6176,7 +6176,7 @@ const MusicianDashboard = () => {
                             ({requests.filter(r => r.show_id === show.id).length} requests, {songSuggestions.filter(s => s.show_id === show.id && s.status === 'pending').length} suggestions)
                           </span>
                         </div>
-                        <div className="flex items-center space-x-1">
+                        <div className="flex items-center space-x-1 shrink-0">
                           <button
                             onClick={(e) => {
                               e.preventDefault();
@@ -6186,8 +6186,9 @@ const MusicianDashboard = () => {
                             data-testid={`export-csv-${show.id}`}
                             className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition duration-300"
                             title={`Export CSV of requests for "${show.name}"`}
+                            aria-label={`Export CSV for ${show.name}`}
                           >
-                            📤 Export
+                            📤<span className="hidden sm:inline"> Export</span>
                           </button>
                           <button
                             onClick={(e) => {
@@ -6197,8 +6198,9 @@ const MusicianDashboard = () => {
                             }}
                             className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1 rounded transition duration-300"
                             title={`Archive show "${show.name}" (moves to bottom, preserves requests)`}
+                            aria-label={`Archive ${show.name}`}
                           >
-                            📦 Archive
+                            📦<span className="hidden sm:inline"> Archive</span>
                           </button>
                           <button
                             onClick={(e) => {
@@ -6208,8 +6210,9 @@ const MusicianDashboard = () => {
                             }}
                             className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded transition duration-300"
                             title={`Delete show "${show.name}" and all requests permanently`}
+                            aria-label={`Delete ${show.name}`}
                           >
-                            🗑️ Delete
+                            🗑️<span className="hidden sm:inline"> Delete</span>
                           </button>
                         </div>
                       </summary>
