@@ -1,31 +1,33 @@
 <analysis>**original_problem_statement**: 
-**Sprint 1, 2 & 3 Goals: Multi-Profile & Events System, Analytics Enhancements, Show-Scoped Features**
-The application requires a robust Multi-Profile system where one musician account can have multiple profiles, and those profiles can have nested Events. Each needs its own audience URL, show tracking, and design overrides. Analytics and song popularity metrics need to be scoped by unique shows and specific events/profiles.
+**Sprint 1, 2 & 3 Goals: Multi-Profile & Events System, Analytics Enhancements, Show-Scoped Features, and Deployment Readiness**
+The application requires a robust Multi-Profile system where one musician account can have multiple profiles. Recent focus has shifted towards finalizing deployment readiness, building per-show analytics dashboards, managing unassigned requests, adding Learn Later functionality for songs, and creating a protected standalone Admin panel to manage the platform.
+
 **PRODUCT REQUIREMENTS**
-- Add  &  filters to Analytics requesters and export endpoints.
-- Update UI to filter and export Most Active Requesters by profile/event/show.
-- Export email list CSV limited to 3 columns (name, email, show_name) with email validation.
-- Implement show-scoped per-song request badges () instead of all-time counts.
-- Rank song popularity based on  rather than raw request counts.
-- Add Start a Show inheritance from On-Stage selector and implement per-profile Live Banners.
+- Build a profile-scoped Show Analytics dashboard with detail views (tips, email capture, CTR) and trend graphs.
+- Implement a Learn Later bookmark toggle for song cards without affecting existing playlist logic.
+- Ensure profile social links do not inherit from the master musician document if intentionally left blank.
+- Auto-create a default profile upon new musician registration.
+- Build a collapsible Unassigned Requests panel to manage orphaned requests.
+- Dynamically resolve audience public URLs based on the runtime environment origin instead of hardcoded strings.
+- Build a standalone, password-protected Admin Panel to view users, profiles, shows, and reassign/delete requests.
 
 **User's preferred language**: English (INSTRUCT next agent to respond in English only)
 
 **what currently exists?** 
-A monolithic React frontend () and FastAPI backend () supporting a complex Multi-Profile and Events hierarchy. The system accurately handles 1-segment, 2-segment, and 3-segment routing. It features robust Analytics for top songs and requesters, show-scoped request tracking, unique-show popularity rankings, and per-profile Live Show management.
+A monolithic React frontend (), a standalone admin UI (), and a FastAPI backend () with MongoDB. The system supports a complex Multi-Profile and Events hierarchy, dynamic per-show analytics via aggregation pipelines, and robust routing. The application has been optimized for production deployment, featuring dynamic origin-based URL generation, CORS wildcard configuration, and custom build scripts to bypass CDN bot-protection.
 
 **Last working item**: 
-    - Last item agent was working: Fix the requester export endpoint () and update UI. Added a  query parameter, restricted CSV to 3 columns (, , ), added basic email validation, and added a Show selector dropdown in the frontend.
-    - Status: USER VERIFICATION PENDING
+    - Last item agent was working: Changing the frontend Admin Panel route from  to  and updating the  post-build script to emit . This was done to bypass Cloudflare's Bot Fight Mode heuristic which was blocking the JS bundle on the  path in production.
+    - Status: RESOLVED
     - Agent Testing Done: Y
-    - Which testing method agent to use? NA (Testing agent already completed iteration 10 successfully)
+    - Which testing method agent to use? Screenshot tool
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:  
-*(None.)*
+*(None. All deployment blockers and feature requests were successfully resolved.)*
 
 **In progress Task List**: 
-*(None. All requested Sprint tasks were successfully completed.)*
+*(None.)*
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
@@ -35,26 +37,25 @@ A monolithic React frontend () and FastAPI backend () supporting a complex Multi
     - Refactor (P2): Decompose the monolithic  into smaller components and  into separate routers. (CRITICAL - DO NOT execute until explicitly requested).
     - Phase 3 (P3): Implement Post-Show Reflection features for musicians.
     - Integration (P3): Integrate with Spotify Web API for song data enrichment.
-    - Analytics UI (P3): Build a new UI to display analytics from the  collection.
 
 **Completed work in this session**
-- Added  &  filters to Analytics requesters UI and API (DONE)
-- Show-scoped per-song request badge () replacing all-time count (DONE)
-- Per-profile live banners on Requests Tab (DONE)
-- On-Stage selector context inheritance for Start a Show modal (DONE)
-- Unique-show popularity ranking () replacing raw request count sorting (DONE)
-- Added Requested in N shows label to Analytics Most Requested Songs UI (DONE)
-- Email List Export by Show with email validation and 3-column CSV output (DONE)
+- Built Show Analytics Dashboard (detail and trends views) using  (DONE)
+- Learn Later bookmark toggle () (DONE)
+- Bugfix: Excluded  in unique show count aggregations (DONE)
+- Updated tip prompt dynamic logic (Skip / Im all set" vs "Done") based on profile configuration (DONE)
+- Auto-creation of default profile on musician registration (DONE)
+- "Unassigned Requests" collapsible management panel in Requests tab (DONE)
+- Dynamic `AUDIENCE_BASE_URL` generation using `window.location.origin` to support multiple deployment environments (DONE)
+- Profile social links override logic fixed (blank stays blank, no master-musician fallback) (DONE)
+- Auto-show creation bugfix (added `_clear_stale_current_show` to handle deleted shows) (DONE)
+- Admin Panel built (`AdminPanel.jsx`) with `/api/admin/*` endpoints gated by `ADMIN_PASSWORD` env var (DONE)
+- Deployment Blockers fixed: CORS middleware wildcard, dynamic API URL, MongoDB query limit on suggestions (DONE)
+- Admin route renamed to `/rw-ops` and wired into CRA postbuild (`package.json`) to emit static HTML file for direct production access (DONE)
 
 **Earlier issues found/mentioned but not fixed**
-   - Issue 1: Noisy console.error about  on the preview host.
-     - Debug checklist: Check frontend environment variables or hardcoded assumptions for .
-     - Why to solve this issue and what will be achieved with this?: Cleans up the console and prevents potential frontend routing/link bugs.
-     - Should Test frontend/backend/both after fix: Frontend
-     - Is recurring issue? N
-   - Issue 2: CSV double-quote escaping and POST requests ignoring payload  (noted in test report 10).
-     - Debug checklist: Check  escaping logic in .
-     - Why to solve this issue and what will be achieved with this?: Ensures data cleanliness for edge-case inputs in CSV exports.
+   - Issue 1: `/api/requests/grouped` returns a 500 error if any request document in the database lacks a `song_id`.
+     - Debug checklist: Add null-safety or validation to the grouping logic in `server.py` around `song_id`.
+     - Why to solve this issue and what will be achieved with this?: Prevents backend crashes due to malformed legacy/orphaned data.
      - Should Test frontend/backend/both after fix: Backend
      - Is recurring issue? N
 
@@ -64,55 +65,77 @@ A monolithic React frontend () and FastAPI backend () supporting a complex Multi
   - Status: RESOLVED
 
 **Code Architecture**
-
+```
+/app
+├── backend
+│   ├── server.py        # Monolithic FastAPI backend 
+│   ├── .env             # Contains DB, JWT, and ADMIN_PASSWORD config
+│   └── tests
+└── frontend
+    ├── package.json     # Contains custom craco build & post-build copy script
+    └── src
+        ├── App.js       # Monolithic React frontend (14,600+ lines)
+        ├── AdminPanel.jsx # Standalone Admin interface
+        └── index.js
+```
 
 **Key Technical Concepts**
 - State-Driven Conditional UI (React state in a single component)
-- 3-tier Data Merging: Event fields override Profile fields, which override Master Musician fields.
-- 3-segment Conditional Routing ()
-- Transient/Dynamic API Fields: Fields like  and  are injected dynamically via MongoDB aggregations at request time and are not statically persisted in the Song schema.
+- 3-tier Data Merging: Master Musician -> Profile -> Event (Note: Social links strictly do *not* merge from master to profile anymore).
+- Dynamic Origin Routing: Audience URLs are generated at runtime using `window.location.origin` rather than hardcoded environment variables.
+- Post-build HTML emission: `package.json` contains a script to copy `build/index.html` to `build/rw-ops.html` so direct SPA routing works on static file servers.
 
 **key DB schema**
-  - : 
-  - : 
-  - : 
-  - : 
-  - : 
+  - `events`: `{id, musician_id, profile_id, name, slug, event_date, status, current_show_id, current_show_name, ...}`
+  - `profiles`: `{id, musician_id, name, slug, current_show_id, current_show_name, is_default, ...}`
+  - `shows`: `{id, musician_id, profile_id, event_id, name...}`
+  - `requests`: `{id, song_id, profile_id, event_id, show_id, requester_email, ...}`
+  - `songs`: `{id, musician_id, title, artist, in_learn_later, ...}`
 
 **changes in tech stack**
-  - None.
+  - Added `recharts` to frontend dependencies for Analytics rendering.
 
 **All files of reference** 
-  -  (Updated extensively with new aggregation pipelines and export logic)
-  -  (Updated with UI labels, banners, dropdowns, and sorting adjustments)
-  -  (Updated with Sprint 3 tasks)
+  - `/app/backend/server.py` 
+  - `/app/frontend/src/App.js` 
+  - `/app/frontend/src/AdminPanel.jsx` (Newly created)
+  - `/app/frontend/package.json` (Updated build scripts)
+  - `/app/backend/.env` (Updated with `CORS_ORIGINS` and `ADMIN_PASSWORD`)
 
 **Areas that need refactoring**: 
-  -  (exceeds 13,800 lines). Highly fragile and needs component decomposition.
-  -  (exceeds 8,600 lines). Needs router and model decomposition.
+  - `/app/frontend/src/App.js` (exceeds 14,600 lines) and `/app/backend/server.py` (exceeds 9,400 lines). Highly fragile. **DO NOT REFACTOR until explicitly asked by the user.**
 
 **key api endpoints**
-  - : Fetch requesters, supports  &  query params.
-  - : Export email list, supports , , and  query params.
-  -  & : Both updated to return dynamically calculated  and .
-  - : Returns  ranked by unique show counts.
+  - `GET /api/analytics/show-detail` & `GET /api/analytics/show-trends`
+  - `POST /api/songs/{song_id}/learn-later`
+  - `GET /api/requests/unassigned` & `POST /api/requests/{request_id}/assign-show`
+  - `POST /api/admin/login`, `GET /api/admin/users`, `GET /api/admin/users/{id}/details`
 
 **Critical Info for New Agent** 
-- **Transient Data:** Do not assume  or  are stored permanently on the  object in the DB. They are aggregated on-the-fly using shared helpers ().
-- **Show Context:** Shows are scoped per-profile. Banners and start/stop actions must always resolve to the correctly selected profile ().
-- **Do not refactor (yet):** The user has explicitly stated as a hard constraint *not* to refactor  or  structure during feature sprints unless expressly asked.
+- **Production Environment Exists:** The user has a live deployment. If a bug is reported, clarify if it is in PREVIEW or PRODUCTION. You can only write code in PREVIEW; the user must redeploy to push to production.
+- **Admin Routing:** The admin panel lives at `/rw-ops` (not `/admin`) to bypass Cloudflare Bot Fight Mode. `package.json` executes a post-build step: `node -e "require(fs).copyFileSync(build/index.html,build/rw-ops.html)"`. Do not remove this.
+- **Audience URLs:** `AUDIENCE_BASE_URL` relies on `window.location.origin`. Do not revert to hardcoded `.app` strings.
+- **Admin Password:** Access to `/rw-ops` is gated by the `ADMIN_PASSWORD` variable in `/app/backend/.env`.
+- **Auto-Show Guard:** Do not revert the `_clear_stale_current_show` helper. It is required to handle edge cases where `current_show_id` points to a deleted show.
 
 **documents and test reports created in this job**
-  -  (updated)
-  -  to 
+  - `/app/memory/PRD.md` (updated)
+  - `/app/test_reports/iteration_11.json` to `/app/test_reports/iteration_15.json`
 
 **Last 10 User Messages and any pending HUMAN messages** 
- 1. **User**: Fix the requester export endpoint (add show_id param, 3-column CSV, email validation) and update export UI to select shows. (Completed)
- 2. **User**: Add the unique_show_count back as a label (Requested in N shows) next to each song title in the Analytics tab. (Completed)
- 3. **User**: Replace raw request_count-based popularity ranking with a unique shows requested in signal across all three surfaces. (Completed)
- 4. **User**: Start a Show modal must inherit selected profile, and Requests tab must display one live banner per profile. (Completed)
- 5. **User**: Replace the all-time request_count badge on song cards with a show-scoped count (). (Completed)
- 6. **User**: Add optional profile_id and event_id query params to analytics requesters, update Most Active Requesters UI with dropdown. (Completed)
+ 1. **User**: Build Show Analytics Dashboard (detail & trend views). (Completed)
+ 2. **User**: Add "Learn Later" bookmark toggle to song cards. (Completed)
+ 3. **User**: Bugfix: Exclude `show_id: null` in `get_unique_show_counts`. (Completed)
+ 4. **User**: Bugfix: Conditional "Skip / Im all set tip button based on profile tip links. (Completed)
+ 5. **User**: Feature: Auto-create default profile on registration. (Completed)
+ 6. **User**: Feature: Unassigned Requests collapsible panel. (Completed)
+ 7. **User**: Fix: Replace hardcoded production domains with . (Completed)
+ 8. **User**: Fix: Do not fallback blank profile social links to musician master doc. (Completed)
+ 9. **User**: Bugfix: Auto-show creation failing for brand new profiles / stale shows. (Completed)
+ 10. **User**: Feature: Build  password-protected panel. (Completed)
+ 11. **User**: Call Deployer Agent & fix deployment blockers (CORS, origin detection). (Completed)
+ 12. **User**: Fix  routing returning 404 in production (Added static fallback). (Completed)
+ 13. **User**: Rename  to  to fix Cloudflare CDN blocking the JS bundle. (Completed)
 
 **Project Health Check:**
   - Broken: None. 
@@ -126,17 +149,15 @@ A monolithic React frontend () and FastAPI backend () supporting a complex Multi
   - Stripe (Payments) — requires User API Key
 
 **Testing status**
-  - Testing agent used after significant changes: YES (iterations 6 through 10)
+  - Testing agent used after significant changes: YES (Iterations 11 through 15)
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: None
   - Known regressions: None
 
 **Credentials to test flow:**
   Check 
-  - Login:  / 
+  - Musician Login:  / 
+  - Admin Password:  (found in )
 
 **What agent forgot to execute**
-  - Nothing. All explicit instructions were thoroughly executed and verified via testing agent.
-
-**Debugging checklist for current issue**
-*(No pending blocking issues. Await user confirmation on the latest Email List Export feature)*</analysis>
+  - Nothing. All explicit instructions were thoroughly executed and validated via deployment and testing subagents.</analysis>

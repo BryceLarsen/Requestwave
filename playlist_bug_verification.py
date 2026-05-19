@@ -24,7 +24,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://profile-event-system.preview.emergentagent.com/api"
+BASE_URL = "https://musician-hub-50.preview.emergentagent.com/api"
 
 # User credentials from review request
 USER_CREDENTIALS = {

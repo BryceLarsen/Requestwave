@@ -18,7 +18,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://profile-event-system.preview.emergentagent.com/api"
+BASE_URL = "https://musician-hub-50.preview.emergentagent.com/api"
 
 # New account credentials (created during investigation)
 NEW_BRYCE_CREDENTIALS = {

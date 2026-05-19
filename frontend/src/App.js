@@ -1062,8 +1062,19 @@ const MusicianDashboard = () => {
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
       removeUnassigned(requestId);
-      // Refresh main requests list so the newly-assigned card shows up under its show
-      fetchRequests();
+      // Optimistically update local requests so show card counts reflect the new
+      // assignment immediately, even before the refetch completes.
+      setRequests((prev) =>
+        Array.isArray(prev)
+          ? prev.map((r) => (r.id === requestId ? { ...r, show_id: showId } : r))
+          : prev
+      );
+      // Re-fetch authoritative data so show cards list and grouped views stay in sync.
+      await Promise.all([
+        fetchRequests(),
+        fetchShows(),
+        fetchGroupedRequests(),
+      ]);
     } catch (error) {
       console.error('Error assigning unassigned request to show:', error);
       alert(error.response?.data?.detail || 'Failed to assign request to show');
