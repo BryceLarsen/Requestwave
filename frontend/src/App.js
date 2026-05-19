@@ -653,6 +653,10 @@ const MusicianDashboard = () => {
   const [selectedRequests, setSelectedRequests] = useState(new Set());
   const [showAllRequests, setShowAllRequests] = useState(true); // For collapsible All Requests
 
+  // Requests tab — single/bulk action modals (post-show mobile review)
+  const [singleRequestModal, setSingleRequestModal] = useState(null); // request object or null
+  const [bulkRequestModalOpen, setBulkRequestModalOpen] = useState(false);
+
   // Batch selection state for song suggestions
   const [selectedSuggestions, setSelectedSuggestions] = useState(new Set());
   
@@ -1802,6 +1806,13 @@ const MusicianDashboard = () => {
       setCurrentShow(null);
     }
   }, [activeTab, onstageSelection, profiles, events]);
+
+  // Requests tab — auto-dismiss bulk modal when fewer than 2 cards are selected
+  useEffect(() => {
+    if (selectedRequests.size < 2 && bulkRequestModalOpen) {
+      setBulkRequestModalOpen(false);
+    }
+  }, [selectedRequests, bulkRequestModalOpen]);
 
   // NEW: Handle URL parameters for sort option
   useEffect(() => {
@@ -6231,61 +6242,45 @@ const MusicianDashboard = () => {
                               requests.filter(r => r.show_id === show.id)
                                 .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
                                 .map((request) => (
-                                <div key={request.id} className="bg-gray-600 p-3 rounded flex items-center space-x-3">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedRequests.has(request.id)}
-                                    onChange={() => toggleRequestSelection(request.id)}
-                                    className="rounded bg-gray-600 border-gray-500 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
-                                  />
-                                  <div className="flex-1">
-                                    <div className="flex items-center space-x-2 mb-1">
-                                      {request.requester_email && <span className="text-gray-400 text-sm" title="Email provided">📧</span>}
-                                      <span className="font-medium text-blue-400 text-sm">{request.song_title}</span>
-                                      {renderLearnLaterBookmark({ songId: request.song_id, size: 16 })}
-                                      <span className="text-gray-400 text-sm">by {request.song_artist}</span>
-                                      {request.tip_clicked && <span className="text-green-400 text-xs">💰</span>}
-                                      {request.social_clicks?.length > 0 && (
-                                        <span className="text-purple-400 text-xs">📱 {request.social_clicks.length}</span>
-                                      )}
+                                <div
+                                  key={request.id}
+                                  data-testid={`request-card-${request.id}`}
+                                  className="bg-gray-600 p-3 rounded flex items-center gap-3"
+                                >
+                                  <label className="flex items-center justify-center p-2 -m-2 cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedRequests.has(request.id)}
+                                      onChange={() => toggleRequestSelection(request.id)}
+                                      className="h-5 w-5 rounded bg-gray-600 border-gray-500 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
+                                      data-testid={`request-checkbox-${request.id}`}
+                                    />
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (selectedRequests.size >= 2) {
+                                        setBulkRequestModalOpen(true);
+                                      } else {
+                                        setSingleRequestModal(request);
+                                      }
+                                    }}
+                                    data-testid={`request-card-body-${request.id}`}
+                                    className="flex-1 min-w-0 flex items-center justify-between gap-2 text-left"
+                                  >
+                                    <div className="min-w-0">
+                                      <div className="font-medium text-blue-400 text-sm truncate">{request.song_title}</div>
+                                      <div className="text-xs text-gray-300 truncate">From: {request.requester_name}</div>
                                     </div>
-                                    <p className="text-xs text-gray-300">
-                                      From: {request.requester_name}
-                                      {request.dedication && <span className="italic ml-1">"{request.dedication}"</span>}
-                                    </p>
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    <span className={`px-2 py-1 rounded text-xs ${
+                                    <span className={`shrink-0 px-2 py-1 rounded text-xs font-medium ${
                                       request.status === 'pending' ? 'bg-yellow-600/20 text-yellow-400' :
                                       request.status === 'played' ? 'bg-blue-600/20 text-blue-400' :
+                                      request.status === 'archived' ? 'bg-gray-500/30 text-gray-300' :
                                       'bg-red-600/20 text-red-400'
                                     }`}>
                                       {getStatusLabel(request.status)}
                                     </span>
-                                    {request.status === 'pending' && (
-                                      <div className="flex space-x-1">
-                                        <button
-                                          onClick={() => updateRequestStatus(request.id, 'played')}
-                                          className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 rounded"
-                                        >
-                                          Play
-                                        </button>
-                                        <button
-                                          onClick={() => updateRequestStatus(request.id, 'rejected')}
-                                          className="bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
-                                        >
-                                          Reject
-                                        </button>
-                                      </div>
-                                    )}
-                                    <button
-                                      onClick={() => handleDeleteRequest(request.id, request.song_title)}
-                                      className="bg-gray-600 hover:bg-red-600 text-white text-xs px-2 py-1 rounded transition duration-300"
-                                      title="Delete this request permanently"
-                                    >
-                                      🗑️
-                                    </button>
-                                  </div>
+                                  </button>
                                 </div>
                               ))
                             )}
@@ -6444,78 +6439,47 @@ const MusicianDashboard = () => {
                       .filter(r => !eventFilterId || (eventFilterId === '__none__' ? !r.event_id : r.event_id === eventFilterId))
                       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Most recent first
                       .slice(0, 50).map((request) => (
-                    <div key={request.id} className="p-4 rounded-lg flex items-center space-x-3 bg-gray-600 border-l-4 border-green-500">
-                      <input
-                        type="checkbox"
-                        checked={selectedRequests.has(request.id)}
-                        onChange={() => toggleRequestSelection(request.id)}
-                        className="rounded bg-gray-600 border-gray-500 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          {request.requester_email && <span className="text-gray-400 text-sm" title="Email provided">📧</span>}
-                          <span className="font-medium text-blue-400">{request.song_title}</span>
-                          {renderLearnLaterBookmark({ songId: request.song_id, size: 18 })}
-                          <span className="text-gray-400">by {request.song_artist}</span>
-                          {request.tip_clicked && <span className="text-green-400 text-sm">💰</span>}
-                          {request.social_clicks?.length > 0 && (
-                            <span className="text-purple-400 text-sm">📱 {request.social_clicks.length}</span>
-                          )}
+                    <div
+                      key={request.id}
+                      data-testid={`request-card-${request.id}`}
+                      className="p-4 rounded-lg flex items-center gap-3 bg-gray-600 border-l-4 border-green-500"
+                    >
+                      <label className="flex items-center justify-center p-2 -m-2 cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedRequests.has(request.id)}
+                          onChange={() => toggleRequestSelection(request.id)}
+                          className="h-5 w-5 rounded bg-gray-600 border-gray-500 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
+                          data-testid={`request-checkbox-${request.id}`}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedRequests.size >= 2) {
+                            setBulkRequestModalOpen(true);
+                          } else {
+                            setSingleRequestModal(request);
+                          }
+                        }}
+                        data-testid={`request-card-body-${request.id}`}
+                        className="flex-1 min-w-0 flex items-center justify-between gap-3 text-left"
+                      >
+                        <div className="min-w-0">
+                          <div className="font-medium text-blue-400 truncate">{request.song_title}</div>
+                          <div className="text-sm text-gray-300 truncate">
+                            From: <span className="text-white">{request.requester_name}</span>
+                          </div>
                         </div>
-                        <p className="text-sm text-gray-300">
-                          From: <span className="text-white">{request.requester_name}</span>
-                          {request.dedication && (
-                            <span className="italic ml-2">"{request.dedication}"</span>
-                          )}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {formatTimestamp(request.created_at)}
-                          {request.profile_id ? (
-                            <span className="ml-2 bg-purple-600/20 text-purple-300 px-1.5 py-0.5 rounded text-xs">
-                              {profiles.find(p => p.id === request.profile_id)?.name || 'Profile'}
-                            </span>
-                          ) : (
-                            <span className="ml-2 bg-gray-700/50 text-gray-500 px-1.5 py-0.5 rounded text-xs">Main</span>
-                          )}
-                          {request.event_id && (
-                            <span data-testid={`request-event-badge-${request.id}`} className="ml-2 bg-yellow-600/20 text-yellow-300 px-1.5 py-0.5 rounded text-xs">
-                              {events.find(ev => ev.id === request.event_id)?.name || 'Event'}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        <span className={`shrink-0 px-2 py-1 rounded text-xs font-medium ${
                           request.status === 'pending' ? 'bg-yellow-600/20 text-yellow-400' :
                           request.status === 'played' ? 'bg-blue-600/20 text-blue-400' :
+                          request.status === 'archived' ? 'bg-gray-500/30 text-gray-300' :
                           'bg-red-600/20 text-red-400'
                         }`}>
                           {getStatusLabel(request.status)}
                         </span>
-                        {request.status === 'pending' && (
-                          <div className="flex space-x-1">
-                            <button
-                              onClick={() => updateRequestStatus(request.id, 'played')}
-                              className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 rounded"
-                            >
-                              Play
-                            </button>
-                            <button
-                              onClick={() => updateRequestStatus(request.id, 'rejected')}
-                              className="bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        )}
-                        <button
-                          onClick={() => handleDeleteRequest(request.id, request.song_title)}
-                          className="bg-gray-600 hover:bg-red-600 text-white text-xs px-2 py-1 rounded transition duration-300"
-                          title="Delete this request permanently"
-                        >
-                          🗑️
-                        </button>
-                      </div>
+                      </button>
                     </div>
                   ))}
                   {(currentShow ? 
@@ -6615,6 +6579,182 @@ const MusicianDashboard = () => {
           </div>
         )}
         
+        {/* Requests Tab — Single Request Action Modal (mobile-first post-show review) */}
+        {activeTab === 'requests' && singleRequestModal && (
+          <div
+            className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
+            onClick={() => setSingleRequestModal(null)}
+            data-testid="single-request-modal"
+          >
+            <div
+              className="bg-gray-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-5 border-b border-gray-700 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="text-lg font-bold text-white truncate" data-testid="single-request-modal-title">
+                    {singleRequestModal.song_title}
+                  </h3>
+                  <p className="text-sm text-gray-400 truncate">by {singleRequestModal.song_artist}</p>
+                </div>
+                <button
+                  onClick={() => setSingleRequestModal(null)}
+                  className="text-gray-400 hover:text-white text-2xl leading-none"
+                  data-testid="single-request-modal-close"
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="p-5 space-y-3 text-sm">
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-gray-500 mb-0.5">Requester</div>
+                  <div className="text-white">{singleRequestModal.requester_name || 'Anonymous'}</div>
+                </div>
+                {singleRequestModal.requester_email && (
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-gray-500 mb-0.5">Email</div>
+                    <div className="text-gray-200 break-all">{singleRequestModal.requester_email}</div>
+                  </div>
+                )}
+                {singleRequestModal.dedication && (
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-gray-500 mb-0.5">Dedication</div>
+                    <div className="text-gray-200 italic">"{singleRequestModal.dedication}"</div>
+                  </div>
+                )}
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-gray-500 mb-0.5">Submitted</div>
+                  <div className="text-gray-300">{formatTimestamp(singleRequestModal.created_at)}</div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-gray-500 mb-0.5">Profile</div>
+                  <div>
+                    {singleRequestModal.profile_id ? (
+                      <span className="bg-purple-600/20 text-purple-300 px-2 py-0.5 rounded text-xs">
+                        {profiles.find(p => p.id === singleRequestModal.profile_id)?.name || 'Profile'}
+                      </span>
+                    ) : (
+                      <span className="bg-gray-700/50 text-gray-400 px-2 py-0.5 rounded text-xs">Main</span>
+                    )}
+                    {singleRequestModal.event_id && (
+                      <span className="ml-2 bg-yellow-600/20 text-yellow-300 px-2 py-0.5 rounded text-xs">
+                        {events.find(ev => ev.id === singleRequestModal.event_id)?.name || 'Event'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 border-t border-gray-700 grid grid-cols-2 gap-2">
+                <button
+                  onClick={async () => {
+                    const id = singleRequestModal.id;
+                    setSingleRequestModal(null);
+                    await updateRequestStatus(id, 'played');
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium"
+                  data-testid="single-request-action-played"
+                >
+                  Played
+                </button>
+                <button
+                  onClick={async () => {
+                    const id = singleRequestModal.id;
+                    setSingleRequestModal(null);
+                    await updateRequestStatus(id, 'rejected');
+                  }}
+                  className="bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-lg font-medium"
+                  data-testid="single-request-action-skip"
+                >
+                  Skip
+                </button>
+                <button
+                  onClick={async () => {
+                    const id = singleRequestModal.id;
+                    setSingleRequestModal(null);
+                    await archiveRequest(id);
+                  }}
+                  className="bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg font-medium"
+                  data-testid="single-request-action-archive"
+                >
+                  Archive
+                </button>
+                <button
+                  onClick={() => {
+                    const { id, song_title } = singleRequestModal;
+                    setSingleRequestModal(null);
+                    handleDeleteRequest(id, song_title);
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium"
+                  data-testid="single-request-action-delete"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Requests Tab — Bulk Action Modal (2+ selected) */}
+        {activeTab === 'requests' && bulkRequestModalOpen && selectedRequests.size >= 2 && (
+          <div
+            className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
+            onClick={() => setBulkRequestModalOpen(false)}
+            data-testid="bulk-request-modal"
+          >
+            <div
+              className="bg-gray-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-5 border-b border-gray-700 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-white" data-testid="bulk-request-modal-count">
+                  {selectedRequests.size} requests selected
+                </h3>
+                <button
+                  onClick={() => setBulkRequestModalOpen(false)}
+                  className="text-gray-400 hover:text-white text-2xl leading-none"
+                  data-testid="bulk-request-modal-close"
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="p-4 space-y-2">
+                <button
+                  onClick={async () => {
+                    setBulkRequestModalOpen(false);
+                    await batchUpdateRequestStatus('played');
+                  }}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium"
+                  data-testid="bulk-request-action-played"
+                >
+                  Mark as Played
+                </button>
+                <button
+                  onClick={async () => {
+                    setBulkRequestModalOpen(false);
+                    await batchArchiveRequests();
+                  }}
+                  className="w-full bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg font-medium"
+                  data-testid="bulk-request-action-archive"
+                >
+                  Archive
+                </button>
+                <button
+                  onClick={async () => {
+                    setBulkRequestModalOpen(false);
+                    await batchDeleteRequests();
+                  }}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium"
+                  data-testid="bulk-request-action-delete"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Start Show Modal */}
         {showStartModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
