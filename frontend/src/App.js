@@ -6169,51 +6169,55 @@ const MusicianDashboard = () => {
                 <div className="space-y-3">
                   {shows.filter(show => show.status !== 'archived').map((show) => (
                     <details key={show.id} className="bg-gray-700 rounded-lg">
-                      <summary className="cursor-pointer p-4 font-medium hover:bg-gray-600 rounded-lg transition duration-300 flex justify-between items-center">
-                        <div className="flex items-center space-x-3">
-                          <span>📁 {show.name} ({show.date || 'No date'})</span>
-                          <span className="text-gray-400 text-sm">
-                            ({requests.filter(r => r.show_id === show.id).length} requests, {songSuggestions.filter(s => s.show_id === show.id && s.status === 'pending').length} suggestions)
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-1 shrink-0">
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              exportShowRequestsCSV(show);
-                            }}
-                            data-testid={`export-csv-${show.id}`}
-                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition duration-300"
-                            title={`Export CSV of requests for "${show.name}"`}
-                            aria-label={`Export CSV for ${show.name}`}
-                          >
-                            📤<span className="hidden sm:inline"> Export</span>
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleArchiveShow(show.id, show.name);
-                            }}
-                            className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1 rounded transition duration-300"
-                            title={`Archive show "${show.name}" (moves to bottom, preserves requests)`}
-                            aria-label={`Archive ${show.name}`}
-                          >
-                            📦<span className="hidden sm:inline"> Archive</span>
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleDeleteShow(show.id, show.name);
-                            }}
-                            className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded transition duration-300"
-                            title={`Delete show "${show.name}" and all requests permanently`}
-                            aria-label={`Delete ${show.name}`}
-                          >
-                            🗑️<span className="hidden sm:inline"> Delete</span>
-                          </button>
+                      <summary className="cursor-pointer p-4 font-medium hover:bg-gray-600 rounded-lg transition duration-300">
+                        <div className="flex flex-col gap-2">
+                          <div className="break-words">
+                            📁 {show.name} ({show.date || 'No date'})
+                          </div>
+                          <div className="flex justify-between items-center gap-3">
+                            <span className="text-gray-400 text-sm">
+                              {requests.filter(r => r.show_id === show.id).length} requests · {songSuggestions.filter(s => s.show_id === show.id && s.status === 'pending').length} suggestions
+                            </span>
+                            <div className="flex items-center space-x-1 shrink-0">
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  exportShowRequestsCSV(show);
+                                }}
+                                data-testid={`export-csv-${show.id}`}
+                                className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition duration-300"
+                                title={`Export CSV of requests for "${show.name}"`}
+                                aria-label={`Export CSV for ${show.name}`}
+                              >
+                                📤
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleArchiveShow(show.id, show.name);
+                                }}
+                                className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1 rounded transition duration-300"
+                                title={`Archive show "${show.name}" (moves to bottom, preserves requests)`}
+                                aria-label={`Archive ${show.name}`}
+                              >
+                                📦
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleDeleteShow(show.id, show.name);
+                                }}
+                                className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded transition duration-300"
+                                title={`Delete show "${show.name}" and all requests permanently`}
+                                aria-label={`Delete ${show.name}`}
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </summary>
                       <div className="px-4 pb-4 space-y-4">
