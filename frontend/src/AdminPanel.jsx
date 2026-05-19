@@ -255,19 +255,20 @@ function DataActionsPanel({ token, musician, onActionDone }) {
               <th className="px-2 py-2 text-left">Requester</th>
               <th className="px-2 py-2 text-left">Submitted</th>
               <th className="px-2 py-2 text-left">Show</th>
+              <th className="px-2 py-2 text-left">Show ID</th>
             </tr>
           </thead>
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={5} className="px-2 py-4 text-center text-gray-400">
+                <td colSpan={6} className="px-2 py-4 text-center text-gray-400">
                   Loading…
                 </td>
               </tr>
             )}
             {!loading && requests.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-2 py-4 text-center text-gray-500">
+                <td colSpan={6} className="px-2 py-4 text-center text-gray-500">
                   No requests for this filter
                 </td>
               </tr>
@@ -299,6 +300,13 @@ function DataActionsPanel({ token, musician, onActionDone }) {
                   <td className="px-2 py-2 text-xs text-gray-400">{fmtDate(r.created_at)}</td>
                   <td className="px-2 py-2 text-xs text-gray-400">
                     {r.show_name || (r.show_id ? r.show_id.slice(0, 8) : '—')}
+                  </td>
+                  <td
+                    className="px-2 py-2 text-xs font-mono text-gray-500"
+                    data-testid={`admin-request-show-id-${r.id}`}
+                    title={r.show_id || ''}
+                  >
+                    {r.show_id || '—'}
                   </td>
                 </tr>
               ))}
@@ -389,11 +397,12 @@ function UserRow({ user, token, expanded, onToggle }) {
                           {p.shows.map((s) => (
                             <li key={s.id} className="flex items-center justify-between gap-2">
                               <span className="truncate">
-                                {s.name}
+                                {s.name}{' '}
+                                <span className="text-gray-400">({s.request_count} req)</span>
                                 {s.date ? ` · ${s.date}` : ''}
                               </span>
                               <span className="text-gray-500 whitespace-nowrap">
-                                {s.request_count} req · {s.status}
+                                {s.status}
                               </span>
                             </li>
                           ))}
