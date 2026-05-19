@@ -109,7 +109,6 @@ function DataActionsPanel({ token, musician, onActionDone }) {
 
   useEffect(() => {
     fetchRequests();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterShowId, musician.musician.id]);
 
   const toggleSelect = (id) => {
@@ -330,7 +329,6 @@ function UserRow({ user, token, expanded, onToggle }) {
 
   useEffect(() => {
     if (expanded && !detail && !loading) loadDetail();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expanded]);
 
   return (
@@ -448,7 +446,6 @@ function AdminDashboard({ token, onLogout }) {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filtered = useMemo(() => {
