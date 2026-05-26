@@ -4432,17 +4432,39 @@ async def get_musician_songs(
             # "selected" mode but no playlists enabled - return empty
             return []
     elif not active_show:
-        # No active show: use existing behavior (query param playlist OR global active_playlist_id)
-        playlist_to_filter = playlist or musician.get("active_playlist_id")
-        if playlist_to_filter:
-            # Get the specified playlist
-            playlist_doc = await db.playlists.find_one({"id": playlist_to_filter, "musician_id": musician["id"]})
+        # No active show: prefer explicit query param override, otherwise fall back
+        # to the default profile's active_playlist_ids (Sprint 1 multi-profile model).
+        if playlist:
+            # Explicit query param override (single playlist)
+            playlist_doc = await db.playlists.find_one({"id": playlist, "musician_id": musician["id"]})
             if playlist_doc and playlist_doc.get("song_ids"):
-                # Only show songs that are in the playlist
                 query["id"] = {"$in": playlist_doc["song_ids"]}
             else:
                 # If playlist not found or empty, show no songs
                 return []
+        else:
+            # Read playlist selection from the default profile document.
+            active_ids = (default_profile or {}).get("active_playlist_ids", [])
+            if "__all__" in active_ids:
+                # No playlist restriction - show all non-hidden songs
+                pass
+            elif not active_ids:
+                # No playlists selected on the profile - return empty
+                return []
+            else:
+                # Union of song_ids across the selected playlists (exclude deleted)
+                union_song_ids = set()
+                playlists_cursor = db.playlists.find({
+                    "id": {"$in": active_ids},
+                    "musician_id": musician["id"],
+                    "is_deleted": {"$ne": True}
+                })
+                async for pl in playlists_cursor:
+                    for sid in pl.get("song_ids", []):
+                        union_song_ids.add(sid)
+                if not union_song_ids:
+                    return []
+                query["id"] = {"$in": list(union_song_ids)}
     # else: active show with mode="all" - no playlist restriction (show all non-hidden songs)
     
     # Apply search across all fields (title, artist, genres, moods, year)

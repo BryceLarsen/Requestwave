@@ -7,7 +7,7 @@ import requests
 import json
 
 # Configuration
-BASE_URL = "https://musician-hub-50.preview.emergentagent.com/api"
+BASE_URL = "https://show-analytics-hub.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {

@@ -17,7 +17,7 @@ import json
 import time
 
 # Configuration
-BASE_URL = "https://musician-hub-50.preview.emergentagent.com/api"
+BASE_URL = "https://show-analytics-hub.preview.emergentagent.com/api"
 PRO_MUSICIAN = {
     "email": "brycelarsenmusic@gmail.com",
     "password": "RequestWave2024!"

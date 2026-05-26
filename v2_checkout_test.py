@@ -26,7 +26,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration - Use the correct backend URL from frontend/.env
-BASE_URL = "https://musician-hub-50.preview.emergentagent.com/api"
+BASE_URL = "https://show-analytics-hub.preview.emergentagent.com/api"
 
 # Pro account credentials
 PRO_MUSICIAN = {

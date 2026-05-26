@@ -24,7 +24,7 @@ import os
 from typing import Dict, Any
 
 # Configuration
-BASE_URL = os.getenv("REACT_APP_BACKEND_URL", "https://musician-hub-50.preview.emergentagent.com") + "/api"
+BASE_URL = os.getenv("REACT_APP_BACKEND_URL", "https://show-analytics-hub.preview.emergentagent.com") + "/api"
 
 # Authentication credentials from review request
 AUTH_CREDENTIALS = {

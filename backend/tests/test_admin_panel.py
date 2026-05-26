@@ -12,7 +12,7 @@ import uuid
 import requests
 import pytest
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://musician-hub-50.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://show-analytics-hub.preview.emergentagent.com").rstrip("/")
 API = f"{BASE_URL}/api"
 ADMIN_PASSWORD = "changeme-admin-pwd"
 

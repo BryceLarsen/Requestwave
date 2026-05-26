@@ -31,7 +31,7 @@ import pymongo
 from pymongo import MongoClient
 
 # Configuration
-BASE_URL = "https://musician-hub-50.preview.emergentagent.com/api"
+BASE_URL = "https://show-analytics-hub.preview.emergentagent.com/api"
 
 # Existing Pro account credentials
 EXISTING_PRO_ACCOUNT = {

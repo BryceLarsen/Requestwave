@@ -19,7 +19,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://musician-hub-50.preview.emergentagent.com/api"
+BASE_URL = "https://show-analytics-hub.preview.emergentagent.com/api"
 
 # Bryce's credentials
 BRYCE_CREDENTIALS = {
