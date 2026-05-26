@@ -4431,9 +4431,12 @@ async def get_musician_songs(
         else:
             # "selected" mode but no playlists enabled - return empty
             return []
-    elif not active_show:
-        # No active show: prefer explicit query param override, otherwise fall back
-        # to the default profile's active_playlist_ids (Sprint 1 multi-profile model).
+    else:
+        # Either there's no active show, or the active show is not in "selected"
+        # mode. In both cases the show does not restrict by playlist, so fall back
+        # to the profile-level filter (Sprint 1 multi-profile model):
+        #   - explicit ?playlist=<id> query param overrides everything
+        #   - else use the default profile's active_playlist_ids
         if playlist:
             # Explicit query param override (single playlist)
             playlist_doc = await db.playlists.find_one({"id": playlist, "musician_id": musician["id"]})
@@ -4465,7 +4468,6 @@ async def get_musician_songs(
                 if not union_song_ids:
                     return []
                 query["id"] = {"$in": list(union_song_ids)}
-    # else: active show with mode="all" - no playlist restriction (show all non-hidden songs)
     
     # Apply search across all fields (title, artist, genres, moods, year)
     if search:

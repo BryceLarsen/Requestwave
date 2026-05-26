@@ -11,9 +11,10 @@ RequestWave is a multi-profile platform for live musicians to accept song reques
 
 ## Authoritative Rules
 - Playlist selection lives on the **profile** as `active_playlist_ids` (list). `__all__` means full library; `[]` means empty. The legacy `musician.active_playlist_id` is **not** consulted.
+- A show only restricts playlist when `playlist_filter_mode == "selected"`. Otherwise the profile's `active_playlist_ids` is the source of truth.
 - Profile social links never inherit from master musician if intentionally blank.
 - Default profile is auto-created on new musician registration.
-- Audience public URLs are resolved at runtime via `window.location.origin` (not hardcoded).
+- Audience public URLs are resolved at runtime via `window.location.origin`.
 - Admin panel lives at `/rw-ops` (Cloudflare bypass). `package.json` post-build copies `index.html` → `rw-ops.html`. **Do not remove.**
 
 ## Implemented (Recent)
@@ -21,7 +22,8 @@ RequestWave is a multi-profile platform for live musicians to accept song reques
 - Requests tab mobile-first redesign (single + bulk action modals, 2-row show cards).
 - Admin: per-show request count + `show_id` column in Data Actions.
 - Null-safe `GET /api/requests/grouped` (skips missing `song_id`).
-- **2026-02 — Fix:** `GET /api/musicians/{slug}/songs` no-active-show branch now reads `active_playlist_ids` from the default profile (Sprint 1 model). `__all__` → full catalog; specific IDs → union across playlists; `[]` → empty. `?playlist=` query param override preserved.
+- **2026-02 — Fix:** `GET /api/musicians/{slug}/songs` now respects the default profile's `active_playlist_ids` in all cases except an active show with `playlist_filter_mode="selected"` (which still wins). `__all__` → full catalog; specific IDs → union; `[]` → empty. `?playlist=` query param override preserved. Verified against the live preview for 5 scenarios.
+- **2026-02 — UX:** Audience page no longer flashes "Musician not found" before the initial fetch resolves. Loading spinner shows until the musician/profile/event fetch completes.
 
 ## Roadmap
 ### P2
@@ -30,7 +32,7 @@ RequestWave is a multi-profile platform for live musicians to accept song reques
 - Post-Show Reflection features.
 - Spotify Web API enrichment.
 ### Refactor (P2 — DO NOT execute unless explicitly requested)
-- Decompose `App.js` (14.6K lines) and `server.py` (9.4K lines).
+- Decompose `App.js` (14.7K lines) and `server.py` (9.4K lines).
 
 ## Project Health
 - Broken: None. Mocked: None.

@@ -10805,6 +10805,10 @@ const AudienceInterface = () => {
   const [submittedRequestId, setSubmittedRequestId] = useState(null); // Track request ID for email attachment
   const [followUpEmail, setFollowUpEmail] = useState(''); // Email captured in follow-up step
   const [loading, setLoading] = useState(true);
+  // Tracks whether the initial musician/profile/event fetch has resolved
+  // (either successfully or with an error). Prevents the "Musician not found"
+  // screen from flashing before the musician fetch has had a chance to run.
+  const [musicianFetchDone, setMusicianFetchDone] = useState(false);
   const [success, setSuccess] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   // NEW: Prominent search functionality
@@ -11083,6 +11087,8 @@ const AudienceInterface = () => {
     } catch (error) {
       console.error('Event fetch failed:', error);
       setLoading(false);
+    } finally {
+      setMusicianFetchDone(true);
     }
   };
 
@@ -11113,6 +11119,8 @@ const AudienceInterface = () => {
     } catch (error) {
       console.error('Error fetching profile data:', error);
       setLoading(false);
+    } finally {
+      setMusicianFetchDone(true);
     }
   };
 
@@ -11172,6 +11180,8 @@ const AudienceInterface = () => {
       }
     } catch (error) {
       console.error('Error fetching musician:', error);
+    } finally {
+      setMusicianFetchDone(true);
     }
   };
 
@@ -11946,7 +11956,7 @@ const AudienceInterface = () => {
     }
   };
 
-  if (loading) {
+  if (loading || !musicianFetchDone) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-500"></div>
