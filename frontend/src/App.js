@@ -576,6 +576,8 @@ const MusicianDashboard = () => {
   const [songFilter, setSongFilter] = useState('');
   const [genreFilter, setGenreFilter] = useState('');
   const [playlistFilter, setPlaylistFilter] = useState('');
+  // Songs tab: 'in' shows songs IN the selected playlist (default), 'not_in' shows songs NOT in it
+  const [playlistFilterMode, setPlaylistFilterMode] = useState('in');
   const [moodFilter, setMoodFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
   const [showLearnLater, setShowLearnLater] = useState(false);  // NEW: Learn Later filter toggle
@@ -2664,13 +2666,13 @@ const MusicianDashboard = () => {
           ? (!song.genres || song.genres.length === 0 || song.genres.every(g => !g || g.trim() === ''))
           : song.genres.some(genre => genre.toLowerCase().includes(genreFilter.toLowerCase())));
       
-      // Playlist filter (client-side)
+      // Playlist filter (client-side) — supports 'in' and 'not_in' modes
       const playlistMatch = playlistFilter === '' || (() => {
         // Find the selected playlist
         const selectedPlaylist = playlists.find(p => p.id === playlistFilter);
         if (!selectedPlaylist || !selectedPlaylist.song_ids) return false;
-        // Check if current song is in the selected playlist
-        return selectedPlaylist.song_ids.includes(song.id);
+        const isInPlaylist = selectedPlaylist.song_ids.includes(song.id);
+        return playlistFilterMode === 'not_in' ? !isInPlaylist : isInPlaylist;
       })();
       
       // Mood filter - including special "No Mood" option
@@ -2936,7 +2938,12 @@ const MusicianDashboard = () => {
   // Update filtered songs when songs or filters change
   React.useEffect(() => {
     filterSongs();
-  }, [songs, songFilter, genreFilter, playlistFilter, moodFilter, yearFilter, decadeFilter, notesFilter, sortOption, randomSeed]);
+  }, [songs, songFilter, genreFilter, playlistFilter, playlistFilterMode, moodFilter, yearFilter, decadeFilter, notesFilter, sortOption, randomSeed]);
+
+  // Reset playlist filter mode to 'in' whenever the selected playlist changes
+  React.useEffect(() => {
+    setPlaylistFilterMode('in');
+  }, [playlistFilter]);
 
   // NEW: Refetch songs and filter options when sort order changes
   React.useEffect(() => {
@@ -4082,6 +4089,36 @@ const MusicianDashboard = () => {
       setPlaylistManagementError(error.response?.data?.detail || 'Error adding songs to playlist');
     } finally {
       setPlaylistLoading(false);
+    }
+  };
+
+  // Context-aware bulk: add selected songs to the currently filtered playlist (not_in mode)
+  const bulkAddToFilteredPlaylist = async () => {
+    if (!playlistFilter || selectedSongs.size === 0) return;
+    const playlist = playlists.find(p => p.id === playlistFilter);
+    if (!playlist) return;
+    try {
+      const merged = Array.from(new Set([...(playlist.song_ids || []), ...Array.from(selectedSongs)]));
+      await axios.put(`${API}/playlists/${playlistFilter}/songs`, { song_ids: merged });
+      setSelectedSongs(new Set());
+      fetchPlaylists();
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Error adding songs to playlist');
+    }
+  };
+
+  // Context-aware bulk: remove selected songs from the currently filtered playlist (in mode)
+  const bulkRemoveFromFilteredPlaylist = async () => {
+    if (!playlistFilter || selectedSongs.size === 0) return;
+    const playlist = playlists.find(p => p.id === playlistFilter);
+    if (!playlist) return;
+    try {
+      const remaining = (playlist.song_ids || []).filter(id => !selectedSongs.has(id));
+      await axios.put(`${API}/playlists/${playlistFilter}/songs`, { song_ids: remaining });
+      setSelectedSongs(new Set());
+      fetchPlaylists();
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Error removing songs from playlist');
     }
   };
 
@@ -5627,6 +5664,36 @@ const MusicianDashboard = () => {
                       </button>
                     )}
                   </div>
+
+                  {/* Playlist filter mode toggle - only when a playlist is selected */}
+                  {playlistFilter && playlistFilter !== 'all_songs' && (
+                    <div className="flex items-center gap-2" data-testid="playlist-filter-mode-toggle">
+                      <button
+                        type="button"
+                        onClick={() => setPlaylistFilterMode('in')}
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition duration-200 ${
+                          playlistFilterMode === 'in'
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                        data-testid="playlist-filter-mode-in"
+                      >
+                        In playlist
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPlaylistFilterMode('not_in')}
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition duration-200 ${
+                          playlistFilterMode === 'not_in'
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                        data-testid="playlist-filter-mode-not-in"
+                      >
+                        Not in playlist
+                      </button>
+                    </div>
+                  )}
                   
                   {/* Row 1: Genres (left) + Moods (right) */}
                   <div className="grid grid-cols-2 gap-3">
@@ -5787,12 +5854,40 @@ const MusicianDashboard = () => {
                     
                     {selectedSongs.size > 0 && (
                       <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                        <button
-                          onClick={() => setShowPlaylistModal(true)}
-                          className="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded text-sm font-medium transition duration-300 flex-shrink-0"
-                        >
-                          Add to Playlist ({selectedSongs.size})
-                        </button>
+                        {(() => {
+                          const isRealPlaylistFilter = playlistFilter && playlistFilter !== 'all_songs';
+                          const selectedPlaylist = isRealPlaylistFilter ? playlists.find(p => p.id === playlistFilter) : null;
+                          if (selectedPlaylist && playlistFilterMode === 'in') {
+                            return (
+                              <button
+                                onClick={bulkRemoveFromFilteredPlaylist}
+                                className="bg-orange-600 hover:bg-orange-700 px-3 py-1 rounded text-sm font-medium transition duration-300 flex-shrink-0"
+                                data-testid="bulk-remove-from-playlist-btn"
+                              >
+                                Remove from Playlist ({selectedSongs.size})
+                              </button>
+                            );
+                          }
+                          if (selectedPlaylist && playlistFilterMode === 'not_in') {
+                            return (
+                              <button
+                                onClick={bulkAddToFilteredPlaylist}
+                                className="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded text-sm font-medium transition duration-300 flex-shrink-0"
+                                data-testid="bulk-add-to-filtered-playlist-btn"
+                              >
+                                Add to {selectedPlaylist.name} ({selectedSongs.size})
+                              </button>
+                            );
+                          }
+                          return (
+                            <button
+                              onClick={() => setShowPlaylistModal(true)}
+                              className="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded text-sm font-medium transition duration-300 flex-shrink-0"
+                            >
+                              Add to Playlist ({selectedSongs.size})
+                            </button>
+                          );
+                        })()}
                         <button
                           onClick={() => setShowBatchEdit(!showBatchEdit)}
                           className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm font-medium transition duration-300 flex-shrink-0"
