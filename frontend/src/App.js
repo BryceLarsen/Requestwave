@@ -11546,10 +11546,11 @@ const AudienceInterface = () => {
         // Clear dedication for next request, but preserve requester name
         setRequestForm(prev => ({ ...prev, dedication: '' }));
         
-        // Check if email already exists in localStorage - skip Moment 3 if so
+        // Branch on profile email_capture_mode ("optional" | "off" | "required")
+        const captureMode = profileData?.email_capture_mode || 'optional';
         const savedEmail = localStorage.getItem('requestwave_requester_email');
-        if (savedEmail) {
-          // Skip Moment 3, go directly to success/tip screen
+
+        const goStraightToSuccessTip = () => {
           // Initialize tip state
           setTipAmount('');
           setTipMessage('');
@@ -11563,8 +11564,20 @@ const AudienceInterface = () => {
             setTipPlatform('zelle');
           }
           setRequestStep('success_tip');
+        };
+
+        if (captureMode === 'off') {
+          // Email capture disabled - never show the followup step
+          goStraightToSuccessTip();
+        } else if (captureMode === 'required') {
+          // Email is required - always show the followup step regardless of localStorage
+          setRequestStep('followup');
+          setFollowUpEmail('');
+        } else if (savedEmail) {
+          // 'optional' + previously captured email -> skip followup
+          goStraightToSuccessTip();
         } else {
-          // No saved email - show Moment 3: Optional Email Follow-Up
+          // 'optional' + no saved email -> show followup step
           setRequestStep('followup');
           setFollowUpEmail('');
         }
@@ -11580,7 +11593,18 @@ const AudienceInterface = () => {
   
   const handleFollowUpComplete = async (addEmail = false) => {
     setFollowUpError('');
-    
+
+    const captureMode = profileData?.email_capture_mode || 'optional';
+    // When email is required, enforce a valid non-empty email
+    if (captureMode === 'required' && addEmail) {
+      const trimmed = (followUpEmail || '').trim();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!trimmed || !emailRegex.test(trimmed)) {
+        setFollowUpError('A valid email is required.');
+        return;
+      }
+    }
+
     if (addEmail && followUpEmail && submittedRequestId) {
       try {
         // Call backend endpoint to attach email to request
@@ -12548,8 +12572,11 @@ const AudienceInterface = () => {
                 </>
               )}
               
-              {/* Email Step: Identity moment (optional) */}
-              {requestStep === 'followup' && (
+              {/* Email Step: Identity moment (optional/required, hidden when off) */}
+              {requestStep === 'followup' && (() => {
+                const captureMode = profileData?.email_capture_mode || 'optional';
+                const isRequired = captureMode === 'required';
+                return (
                 <>
                   <div className="text-center mb-6">
                     <h2 className="text-xl font-bold mb-2 text-white">You're on the list 🎶</h2>
@@ -12560,7 +12587,11 @@ const AudienceInterface = () => {
                   
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm text-gray-400 mb-1.5">Your Email (to personalize your request)</label>
+                      <label className="block text-sm text-gray-400 mb-1.5">
+                        {isRequired
+                          ? 'Your email is required for this event.'
+                          : 'Your Email (to personalize your request)'}
+                      </label>
                       <input
                         type="email"
                         placeholder="email@example.com"
@@ -12574,6 +12605,11 @@ const AudienceInterface = () => {
                         }`}
                         data-testid="followup-email-input"
                       />
+                      {isRequired && (
+                        <p className="text-xs text-gray-500 mt-1.5" data-testid="followup-required-note">
+                          You'll only need to enter this once — we remember you on this device.
+                        </p>
+                      )}
                     </div>
                     {followUpError && (
                       <p className="text-red-400 text-sm" data-testid="followup-error">
@@ -12590,16 +12626,19 @@ const AudienceInterface = () => {
                     >
                       Continue
                     </button>
-                    <button
-                      onClick={() => handleFollowUpComplete(false)}
-                      className="w-full bg-gray-700 hover:bg-gray-600 py-3 rounded-lg text-gray-300 transition duration-300"
-                      data-testid="followup-anonymous-btn"
-                    >
-                      Continue anonymously
-                    </button>
+                    {!isRequired && (
+                      <button
+                        onClick={() => handleFollowUpComplete(false)}
+                        className="w-full bg-gray-700 hover:bg-gray-600 py-3 rounded-lg text-gray-300 transition duration-300"
+                        data-testid="followup-anonymous-btn"
+                      >
+                        Continue anonymously
+                      </button>
+                    )}
                   </div>
                 </>
-              )}
+                );
+              })()}
               
               {/* Combined Success + Tip Screen */}
               {requestStep === 'success_tip' && (
