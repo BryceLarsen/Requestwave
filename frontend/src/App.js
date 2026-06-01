@@ -12578,12 +12578,14 @@ const AudienceInterface = () => {
                 const isRequired = captureMode === 'required';
                 return (
                 <>
-                  <div className="text-center mb-6">
-                    <h2 className="text-xl font-bold mb-2 text-white">You're on the list 🎶</h2>
-                    <p className="text-gray-400 text-sm">
-                      Add your email so the artist can call this out by name or follow up later.
-                    </p>
-                  </div>
+                  {!isRequired && (
+                    <div className="text-center mb-6">
+                      <h2 className="text-xl font-bold mb-2 text-white">You're on the list 🎶</h2>
+                      <p className="text-gray-400 text-sm">
+                        Add your email so the artist can call this out by name or follow up later.
+                      </p>
+                    </div>
+                  )}
                   
                   <div className="space-y-4">
                     <div>
