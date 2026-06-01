@@ -8553,6 +8553,7 @@ def _build_profile_public_response(musician, profile, songs_list):
         "profile_slug": profile["slug"],
         "show_tips_in_success_screen": profile.get("show_tips_in_success_screen", True),
         "show_tips_in_orientation": profile.get("show_tips_in_orientation", True),
+        "email_capture_mode": profile.get("email_capture_mode", "optional"),
         "is_default": profile.get("is_default", False),
         # Payment info - profile overrides master
         "paypal_username": profile.get("paypal_username") or musician.get("paypal_username"),
@@ -8983,7 +8984,7 @@ async def get_musician_by_event(master_slug: str, profile_slug: str, event_slug:
     
     # Build a merged "effective profile" = profile + event overrides (event wins when set)
     merged = dict(profile)
-    for f in OVERRIDE_FIELDS + ["show_tips_in_success_screen", "show_tips_in_orientation"]:
+    for f in OVERRIDE_FIELDS + ["show_tips_in_success_screen", "show_tips_in_orientation", "email_capture_mode"]:
         ev_val = event.get(f)
         if ev_val not in (None, ""):
             merged[f] = ev_val

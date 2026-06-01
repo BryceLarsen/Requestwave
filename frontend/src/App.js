@@ -12589,7 +12589,7 @@ const AudienceInterface = () => {
                     <div>
                       <label className="block text-sm text-gray-400 mb-1.5">
                         {isRequired
-                          ? 'Your email is required for this event.'
+                          ? 'Enter your email to send your request'
                           : 'Your Email (to personalize your request)'}
                       </label>
                       <input
@@ -12607,7 +12607,7 @@ const AudienceInterface = () => {
                       />
                       {isRequired && (
                         <p className="text-xs text-gray-500 mt-1.5" data-testid="followup-required-note">
-                          You'll only need to enter this once — we remember you on this device.
+                          You'll only need to enter this once. We remember you on this device.
                         </p>
                       )}
                     </div>
