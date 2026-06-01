@@ -589,6 +589,7 @@ class ProfileCreate(BaseModel):
     active_playlist_ids: List[str] = []
     show_tips_in_success_screen: bool = True
     show_tips_in_orientation: bool = True
+    email_capture_mode: Optional[str] = "optional"  # "optional" | "off" | "required"
     is_default: bool = False
     # Override fields (when set, override master account values)
     paypal_username: Optional[str] = None
@@ -618,6 +619,7 @@ class ProfileUpdateModel(BaseModel):
     active_playlist_ids: Optional[List[str]] = None
     show_tips_in_success_screen: Optional[bool] = None
     show_tips_in_orientation: Optional[bool] = None
+    email_capture_mode: Optional[str] = None  # "optional" | "off" | "required"
     is_default: Optional[bool] = None
     paypal_username: Optional[str] = None
     venmo_username: Optional[str] = None
@@ -644,6 +646,7 @@ class ProfileResponse(BaseModel):
     active_playlist_ids: List[str] = []
     show_tips_in_success_screen: bool = True
     show_tips_in_orientation: bool = True
+    email_capture_mode: str = "optional"  # "optional" | "off" | "required"
     is_default: bool = False
     created_at: str
     paypal_username: Optional[str] = None
@@ -674,6 +677,7 @@ class EventCreate(BaseModel):
     active_playlist_ids: List[str] = ["__all__"]
     show_tips_in_success_screen: bool = True
     show_tips_in_orientation: bool = True
+    email_capture_mode: Optional[str] = "optional"  # "optional" | "off" | "required"
     paypal_username: Optional[str] = None
     venmo_username: Optional[str] = None
     cashapp_username: Optional[str] = None
@@ -698,6 +702,7 @@ class EventUpdateModel(BaseModel):
     active_playlist_ids: Optional[List[str]] = None
     show_tips_in_success_screen: Optional[bool] = None
     show_tips_in_orientation: Optional[bool] = None
+    email_capture_mode: Optional[str] = None  # "optional" | "off" | "required"
     paypal_username: Optional[str] = None
     venmo_username: Optional[str] = None
     cashapp_username: Optional[str] = None
@@ -724,6 +729,7 @@ class EventResponse(BaseModel):
     active_playlist_ids: List[str] = []
     show_tips_in_success_screen: bool = True
     show_tips_in_orientation: bool = True
+    email_capture_mode: str = "optional"  # "optional" | "off" | "required"
     paypal_username: Optional[str] = None
     venmo_username: Optional[str] = None
     cashapp_username: Optional[str] = None
@@ -2126,6 +2132,7 @@ async def register_musician(musician_data: MusicianRegister):
         "active_playlist_ids": [],
         "show_tips_in_success_screen": True,
         "show_tips_in_orientation": True,
+        "email_capture_mode": "optional",
         "is_default": True,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "paypal_username": None,
@@ -8375,6 +8382,7 @@ def _profile_doc_to_response(p: dict) -> ProfileResponse:
         active_playlist_ids=p.get("active_playlist_ids", []),
         show_tips_in_success_screen=p.get("show_tips_in_success_screen", True),
         show_tips_in_orientation=p.get("show_tips_in_orientation", True),
+        email_capture_mode=p.get("email_capture_mode", "optional"),
         is_default=p.get("is_default", False),
         created_at=p.get("created_at", ""),
         paypal_username=p.get("paypal_username"),
@@ -8513,6 +8521,7 @@ def _event_doc_to_response(e: dict) -> "EventResponse":
         active_playlist_ids=e.get("active_playlist_ids", []),
         show_tips_in_success_screen=e.get("show_tips_in_success_screen", True),
         show_tips_in_orientation=e.get("show_tips_in_orientation", True),
+        email_capture_mode=e.get("email_capture_mode", "optional"),
         paypal_username=e.get("paypal_username"),
         venmo_username=e.get("venmo_username"),
         cashapp_username=e.get("cashapp_username"),
@@ -8610,6 +8619,7 @@ async def create_profile(profile_data: ProfileCreate, musician_id: str = Depends
         "active_playlist_ids": profile_data.active_playlist_ids,
         "show_tips_in_success_screen": profile_data.show_tips_in_success_screen,
         "show_tips_in_orientation": profile_data.show_tips_in_orientation,
+        "email_capture_mode": profile_data.email_capture_mode or "optional",
         "is_default": is_default,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "paypal_username": profile_data.paypal_username,
@@ -8670,6 +8680,8 @@ async def update_profile_by_id(profile_id: str, update_data: ProfileUpdateModel,
         update_fields["show_tips_in_success_screen"] = update_data.show_tips_in_success_screen
     if update_data.show_tips_in_orientation is not None:
         update_fields["show_tips_in_orientation"] = update_data.show_tips_in_orientation
+    if update_data.email_capture_mode is not None:
+        update_fields["email_capture_mode"] = update_data.email_capture_mode
     
     # Handle is_default: if setting this profile as default, unset all others
     if update_data.is_default is True:
@@ -8794,6 +8806,7 @@ async def create_event(event_data: EventCreate, musician_id: str = Depends(get_c
         "active_playlist_ids": event_data.active_playlist_ids or ["__all__"],
         "show_tips_in_success_screen": event_data.show_tips_in_success_screen,
         "show_tips_in_orientation": event_data.show_tips_in_orientation,
+        "email_capture_mode": event_data.email_capture_mode or "optional",
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     for f in OVERRIDE_FIELDS:
@@ -8872,6 +8885,8 @@ async def update_event(event_id: str, update_data: EventUpdateModel, musician_id
         val = getattr(update_data, bool_field, None)
         if val is not None:
             update_fields[bool_field] = val
+    if update_data.email_capture_mode is not None:
+        update_fields["email_capture_mode"] = update_data.email_capture_mode
     for f in OVERRIDE_FIELDS:
         val = getattr(update_data, f, None)
         if val is not None:

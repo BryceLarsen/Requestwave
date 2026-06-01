@@ -776,7 +776,7 @@ const MusicianDashboard = () => {
   const [profiles, setProfiles] = useState([]);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [editingProfile, setEditingProfile] = useState(null);
-  const [profileForm, setProfileForm] = useState({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
+  const [profileForm, setProfileForm] = useState({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, email_capture_mode: 'optional', paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
   const [accountSettingsExpanded, setAccountSettingsExpanded] = useState(false);
   const [accountEmailInput, setAccountEmailInput] = useState('');
   const [accountSlugInput, setAccountSlugInput] = useState('');
@@ -795,7 +795,7 @@ const MusicianDashboard = () => {
   });
   
   // Events (Sprint 2 Prompt 3)
-  const EVENT_FORM_DEFAULT = { name: '', slug: '', profile_id: '', event_date: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', copy_from_source: '' };
+  const EVENT_FORM_DEFAULT = { name: '', slug: '', profile_id: '', event_date: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, email_capture_mode: 'optional', paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', copy_from_source: '' };
   const [events, setEvents] = useState([]);
   const [showEventEditor, setShowEventEditor] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
@@ -2188,7 +2188,7 @@ const MusicianDashboard = () => {
       const response = await axios.post(`${API}/profiles`, profileForm);
       setProfiles([...profiles, response.data]);
       setShowProfileEditor(false);
-      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
+      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, email_capture_mode: 'optional', paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
     } catch (error) {
       alert(error.response?.data?.detail || 'Error creating profile');
     }
@@ -2201,7 +2201,7 @@ const MusicianDashboard = () => {
       setProfiles(profiles.map(p => p.id === editingProfile.id ? response.data : p));
       setShowProfileEditor(false);
       setEditingProfile(null);
-      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
+      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, email_capture_mode: 'optional', paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
     } catch (error) {
       alert(error.response?.data?.detail || 'Error updating profile');
     }
@@ -2240,6 +2240,7 @@ const MusicianDashboard = () => {
         active_playlist_ids: eventToEdit.active_playlist_ids || ['__all__'],
         show_tips_in_success_screen: eventToEdit.show_tips_in_success_screen !== false,
         show_tips_in_orientation: eventToEdit.show_tips_in_orientation !== false,
+        email_capture_mode: eventToEdit.email_capture_mode || 'optional',
         paypal_username: eventToEdit.paypal_username || '',
         venmo_username: eventToEdit.venmo_username || '',
         cashapp_username: eventToEdit.cashapp_username || '',
@@ -2349,6 +2350,7 @@ const MusicianDashboard = () => {
         active_playlist_ids: profileToEdit.active_playlist_ids || [],
         show_tips_in_success_screen: profileToEdit.show_tips_in_success_screen !== false,
         show_tips_in_orientation: profileToEdit.show_tips_in_orientation !== false,
+        email_capture_mode: profileToEdit.email_capture_mode || 'optional',
         paypal_username: profileToEdit.paypal_username || '',
         venmo_username: profileToEdit.venmo_username || '',
         cashapp_username: profileToEdit.cashapp_username || '',
@@ -2368,7 +2370,7 @@ const MusicianDashboard = () => {
       });
     } else {
       setEditingProfile(null);
-      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
+      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, email_capture_mode: 'optional', paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
     }
     setShowProfileEditor(true);
   };
@@ -7957,6 +7959,19 @@ const MusicianDashboard = () => {
                           onChange={(e) => setProfileForm({...profileForm, show_tips_in_orientation: e.target.checked})}
                           className="w-5 h-5 text-purple-600 bg-gray-800 border-gray-600 rounded" />
                       </label>
+                      <div>
+                        <label className="block text-gray-300 text-sm mb-1">Email capture from requesters</label>
+                        <select
+                          value={profileForm.email_capture_mode || 'optional'}
+                          onChange={(e) => setProfileForm({...profileForm, email_capture_mode: e.target.value})}
+                          className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+                          data-testid="profile-email-capture-mode"
+                        >
+                          <option value="optional">Optional (ask but skippable)</option>
+                          <option value="off">Off (no email step)</option>
+                          <option value="required">Required (must provide email)</option>
+                        </select>
+                      </div>
                     </div>
 
                     {/* Tip Platform Overrides */}
@@ -8403,6 +8418,19 @@ const MusicianDashboard = () => {
                         <input type="checkbox" checked={eventForm.show_tips_in_orientation} onChange={(e) => setEventForm({ ...eventForm, show_tips_in_orientation: e.target.checked })} />
                         <span>Show tips in orientation</span>
                       </label>
+                    </div>
+                    <div>
+                      <label className="block text-gray-300 text-sm mb-1">Email capture from requesters</label>
+                      <select
+                        value={eventForm.email_capture_mode || 'optional'}
+                        onChange={(e) => setEventForm({ ...eventForm, email_capture_mode: e.target.value })}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+                        data-testid="event-email-capture-mode"
+                      >
+                        <option value="optional">Optional (ask but skippable)</option>
+                        <option value="off">Off (no email step)</option>
+                        <option value="required">Required (must provide email)</option>
+                      </select>
                     </div>
                     <details className="bg-gray-900 rounded p-3">
                       <summary className="cursor-pointer text-sm font-semibold">Override fields (optional)</summary>
