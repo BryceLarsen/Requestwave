@@ -66,6 +66,26 @@ const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
+  // Register a global axios response interceptor so any 401 from the API
+  // immediately logs the user out and redirects them to the login screen.
+  // Without this, a musician with an expired token would otherwise be left
+  // staring at an empty logged-in shell.
+  useEffect(() => {
+    const interceptorId = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error?.response?.status === 401) {
+          logout();
+          window.location.href = '/';
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => {
+      axios.interceptors.response.eject(interceptorId);
+    };
+  }, []);
+
   const login = (authData) => {
     console.log('Logging in user:', authData.musician.name);
     setMusician(authData.musician);
@@ -1473,7 +1493,6 @@ const MusicianDashboard = () => {
       if (response.data.success) {
         // Refresh songs to show updated visibility
         fetchSongs();
-        alert(response.data.message);
       }
     } catch (error) {
       console.error('Error toggling song visibility:', error);
