@@ -572,7 +572,8 @@ const MusicianDashboard = () => {
     year: '',
     notes: '',
     chart_type: '',
-    chart_url: ''
+    chart_url: '',
+    chart_chordpro: ''
   });
 
   // Song editing state
@@ -2032,7 +2033,8 @@ const MusicianDashboard = () => {
         year: '',
         notes: '',
         chart_type: '',
-        chart_url: ''
+        chart_url: '',
+        chart_chordpro: ''
       });
       fetchSongs();
       fetchFilterOptions(); // Refresh filter options when songs change
@@ -2051,7 +2053,8 @@ const MusicianDashboard = () => {
       year: song.year ? song.year.toString() : '',
       notes: song.notes,
       chart_type: song.chart_type || '',
-      chart_url: song.chart_url || ''
+      chart_url: song.chart_url || '',
+      chart_chordpro: song.chart_chordpro || ''
     });
     setSongError('');
     setShowEditModal(true); // NEW: Open modal instead of scrolling to form
@@ -2080,7 +2083,8 @@ const MusicianDashboard = () => {
         year: '',
         notes: '',
         chart_type: '',
-        chart_url: ''
+        chart_url: '',
+        chart_chordpro: ''
       });
       fetchSongs();
     } catch (error) {
@@ -2099,7 +2103,8 @@ const MusicianDashboard = () => {
       year: '',
       notes: '',
       chart_type: '',
-      chart_url: ''
+      chart_url: '',
+      chart_chordpro: ''
     });
     setSongError('');
   };
@@ -5296,7 +5301,7 @@ const MusicianDashboard = () => {
                   <div className="col-span-1 md:col-span-2 bg-gray-700/40 border border-gray-600 rounded-lg p-3">
                     <label className="block text-sm font-medium text-gray-300 mb-2">Chart (optional)</label>
                     <div className="flex flex-wrap gap-2 mb-2">
-                      {[{v: '', l: 'None'}, {v: 'link', l: 'Link'}, {v: 'pdf', l: 'PDF'}].map(opt => (
+                      {[{v: '', l: 'None'}, {v: 'link', l: 'Link'}, {v: 'pdf', l: 'PDF'}, {v: 'chordpro', l: 'ChordPro'}].map(opt => (
                         <button
                           key={opt.v || 'none'}
                           type="button"
@@ -5321,6 +5326,17 @@ const MusicianDashboard = () => {
                         onChange={(e) => setSongForm({...songForm, chart_url: e.target.value})}
                         className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
                         aria-label={songForm.chart_type === 'pdf' ? 'PDF URL' : 'Chart link URL'}
+                      />
+                    )}
+                    {songForm.chart_type === 'chordpro' && (
+                      <textarea
+                        data-testid="add-chart-chordpro-input"
+                        placeholder="Paste ChordPro text here, e.g. [G]Amazing [C]grace"
+                        value={songForm.chart_chordpro}
+                        onChange={(e) => setSongForm({...songForm, chart_chordpro: e.target.value})}
+                        rows={10}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 font-mono"
+                        aria-label="ChordPro chart text"
                       />
                     )}
                   </div>
@@ -10213,7 +10229,7 @@ const MusicianDashboard = () => {
                 <div className="md:col-span-2 bg-gray-700/40 border border-gray-600 rounded-lg p-3">
                   <label className="block text-sm font-medium text-gray-300 mb-2">Chart (optional)</label>
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {[{v: '', l: 'None'}, {v: 'link', l: 'Link'}, {v: 'pdf', l: 'PDF'}].map(opt => (
+                    {[{v: '', l: 'None'}, {v: 'link', l: 'Link'}, {v: 'pdf', l: 'PDF'}, {v: 'chordpro', l: 'ChordPro'}].map(opt => (
                       <button
                         key={opt.v || 'none'}
                         type="button"
@@ -10238,6 +10254,17 @@ const MusicianDashboard = () => {
                       onChange={(e) => setSongForm({...songForm, chart_url: e.target.value})}
                       className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
                       aria-label={songForm.chart_type === 'pdf' ? 'PDF URL' : 'Chart link URL'}
+                    />
+                  )}
+                  {songForm.chart_type === 'chordpro' && (
+                    <textarea
+                      data-testid="edit-chart-chordpro-input"
+                      placeholder="Paste ChordPro text here, e.g. [G]Amazing [C]grace"
+                      value={songForm.chart_chordpro}
+                      onChange={(e) => setSongForm({...songForm, chart_chordpro: e.target.value})}
+                      rows={10}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 font-mono"
+                      aria-label="ChordPro chart text"
                     />
                   )}
                 </div>
