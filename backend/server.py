@@ -229,6 +229,8 @@ class Song(BaseModel):
     unique_show_count: int = 0  # Distinct non-archived shows this song has been requested in (transient; not persisted)
     in_learn_later: bool = False  # Transient: whether this song is in the musician's Learn Later playlist (not persisted)
     hidden: bool = False  # NEW: Hide song from audience view
+    chart_type: Optional[str] = None  # Chart support: None, "link", or "pdf"
+    chart_url: Optional[str] = ""  # Chart URL (link or hosted PDF URL)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class SongCreate(BaseModel):
@@ -238,6 +240,8 @@ class SongCreate(BaseModel):
     moods: List[str] = []
     year: Optional[int] = None
     notes: str = ""
+    chart_type: Optional[str] = None  # Chart support: None, "link", or "pdf"
+    chart_url: Optional[str] = ""  # Chart URL (link or hosted PDF URL)
 
 class RequestCreate(BaseModel):
     song_id: str
@@ -4218,6 +4222,16 @@ async def update_song(song_id: str, song_data: SongCreate, musician_id: str = De
     # Update song
     update_data = song_data.dict()
     update_data["decade"] = decade  # NEW: Update decade when year changes
+
+    # Non-destructive chart handling: only persist chart fields that were
+    # explicitly provided in the payload. This prevents erasing an existing
+    # chart_url when only chart_type is being updated (frontend retains values).
+    provided = song_data.dict(exclude_unset=True)
+    if "chart_type" not in provided:
+        update_data.pop("chart_type", None)
+    if "chart_url" not in provided:
+        update_data.pop("chart_url", None)
+
     await db.songs.update_one(
         {"id": song_id},
         {"$set": update_data}
