@@ -7382,6 +7382,20 @@ const MusicianDashboard = () => {
                             {request.requester_email && <span className="text-gray-400" title="Email provided">📧</span>}
                             <span>{request.song_title}</span>
                             {renderLearnLaterBookmark({ songId: request.song_id, size: 18 })}
+                            {(() => {
+                              const chartSong = songs.find(s => s.id === request.song_id) || {};
+                              return (chartSong.chart_type === 'link' || chartSong.chart_type === 'pdf') && chartSong.chart_url ? (
+                                <button
+                                  type="button"
+                                  data-testid="onstage-charts-button"
+                                  onClick={() => window.open(chartSong.chart_url, '_blank')}
+                                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs transition duration-300"
+                                  title="Open chart"
+                                >
+                                  📄 Charts
+                                </button>
+                              ) : null;
+                            })()}
                           </h4>
                           <p className="text-blue-200">{request.song_artist}</p>
                           <p className="text-sm text-gray-300 mt-2">
@@ -7531,6 +7545,20 @@ const MusicianDashboard = () => {
                             {item.requester_email && <span className="text-gray-400" title="Email provided">📧</span>}
                             <span>{item.song_title}</span>
                             {renderLearnLaterBookmark({ songId: item.song_id, size: 18 })}
+                            {(() => {
+                              const chartSong = songs.find(s => s.id === item.song_id) || {};
+                              return (chartSong.chart_type === 'link' || chartSong.chart_type === 'pdf') && chartSong.chart_url ? (
+                                <button
+                                  type="button"
+                                  data-testid="onstage-charts-button"
+                                  onClick={() => window.open(chartSong.chart_url, '_blank')}
+                                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs transition duration-300"
+                                  title="Open chart"
+                                >
+                                  📄 Charts
+                                </button>
+                              ) : null;
+                            })()}
                           </h4>
                           <p className="text-purple-200">{item.song_artist}</p>
                           <p className="text-sm text-gray-300 mt-2">
@@ -13878,7 +13906,7 @@ const CompletedRequestItem = ({ request, onRestore, compact = false }) => {
 };
 
 // Request Card Component for On Stage Interface
-const RequestCard = ({ item, index, onAccept, onPlay, onSkip, onRestore, showMoveButtons, isUpNext, isCompleted, chartType, chartUrl }) => {
+const RequestCard = ({ item, index, onAccept, onPlay, onSkip, onRestore, showMoveButtons, isUpNext, isCompleted }) => {
   const isNewRequest = index === 0 && !isCompleted && !isUpNext;
   
   return (
@@ -13911,21 +13939,9 @@ const RequestCard = ({ item, index, onAccept, onPlay, onSkip, onRestore, showMov
       
       {/* Song Info - LARGER FONTS */}
       <div className="mb-4">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className={`font-bold ${isUpNext || isCompleted ? 'text-xl' : 'text-2xl'}`}>
-            {item.song_title || item.title}
-          </h3>
-          {(chartType === 'link' || chartType === 'pdf') && chartUrl && (
-            <button
-              type="button"
-              data-testid="onstage-charts-button"
-              onClick={() => window.open(chartUrl, '_blank')}
-              className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition duration-200 touch-manipulation"
-            >
-              📄 Charts
-            </button>
-          )}
-        </div>
+        <h3 className={`font-bold mb-2 ${isUpNext || isCompleted ? 'text-xl' : 'text-2xl'}`}>
+          {item.song_title || item.title}
+        </h3>
         <p className={`text-gray-300 ${isUpNext || isCompleted ? 'text-base' : 'text-lg'}`}>
           by {item.song_artist || item.artist}
         </p>
@@ -14618,8 +14634,6 @@ const OnStageInterface = () => {
                   onSkip={handleSkip}
                   showMoveButtons={false}
                   isUpNext={true}
-                  chartType={(songs.find(s => s.id === item.song_id) || {}).chart_type}
-                  chartUrl={(songs.find(s => s.id === item.song_id) || {}).chart_url}
                 />
               ))}
             </div>
@@ -14651,11 +14665,8 @@ const OnStageInterface = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {activeRequests.map((item, index) => {
-                if (item.type !== 'suggestion') {
-                  console.log('CHART DEBUG', { song_id: item.song_id, matchedSong: songs.find(s => s.id === item.song_id), chartType: (songs.find(s => s.id === item.song_id) || {}).chart_type, chartUrl: (songs.find(s => s.id === item.song_id) || {}).chart_url, songsCount: songs.length });
-                }
-                return item.type === 'suggestion' ? (
+              {activeRequests.map((item, index) => (
+                item.type === 'suggestion' ? (
                   <SuggestionCard
                     key={item.id}
                     item={item}
@@ -14675,11 +14686,9 @@ const OnStageInterface = () => {
                     onSkip={handleSkip}
                     showMoveButtons={true}
                     isUpNext={false}
-                    chartType={(songs.find(s => s.id === item.song_id) || {}).chart_type}
-                    chartUrl={(songs.find(s => s.id === item.song_id) || {}).chart_url}
                   />
-                );
-              })}
+                )
+              ))}
             </div>
           )}
         </div>
