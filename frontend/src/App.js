@@ -13906,7 +13906,7 @@ const CompletedRequestItem = ({ request, onRestore, compact = false }) => {
 };
 
 // Request Card Component for On Stage Interface
-const RequestCard = ({ item, index, onAccept, onPlay, onSkip, onRestore, showMoveButtons, isUpNext, isCompleted }) => {
+const RequestCard = ({ item, index, onAccept, onPlay, onSkip, onRestore, showMoveButtons, isUpNext, isCompleted, chartType, chartUrl }) => {
   const isNewRequest = index === 0 && !isCompleted && !isUpNext;
   
   return (
@@ -13939,8 +13939,19 @@ const RequestCard = ({ item, index, onAccept, onPlay, onSkip, onRestore, showMov
       
       {/* Song Info - LARGER FONTS */}
       <div className="mb-4">
-        <h3 className={`font-bold mb-2 ${isUpNext || isCompleted ? 'text-xl' : 'text-2xl'}`}>
-          {item.song_title || item.title}
+        <h3 className={`font-bold mb-2 flex items-center gap-2 ${isUpNext || isCompleted ? 'text-xl' : 'text-2xl'}`}>
+          <span>{item.song_title || item.title}</span>
+          {(chartType === 'link' || chartType === 'pdf') && chartUrl && (
+            <button
+              type="button"
+              data-testid="onstage-charts-button"
+              onClick={() => window.open(chartUrl, '_blank')}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs transition duration-300"
+              title="Open chart"
+            >
+              📄 Charts
+            </button>
+          )}
         </h3>
         <p className={`text-gray-300 ${isUpNext || isCompleted ? 'text-base' : 'text-lg'}`}>
           by {item.song_artist || item.artist}
@@ -14634,6 +14645,8 @@ const OnStageInterface = () => {
                   onSkip={handleSkip}
                   showMoveButtons={false}
                   isUpNext={true}
+                  chartType={(songs.find(s => s.id === item.song_id) || {}).chart_type}
+                  chartUrl={(songs.find(s => s.id === item.song_id) || {}).chart_url}
                 />
               ))}
             </div>
@@ -14686,6 +14699,8 @@ const OnStageInterface = () => {
                     onSkip={handleSkip}
                     showMoveButtons={true}
                     isUpNext={false}
+                    chartType={(songs.find(s => s.id === item.song_id) || {}).chart_type}
+                    chartUrl={(songs.find(s => s.id === item.song_id) || {}).chart_url}
                   />
                 )
               ))}
