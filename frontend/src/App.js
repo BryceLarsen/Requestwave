@@ -14,6 +14,7 @@ import {
   Legend,
 } from 'recharts';
 import AdminPanel from './AdminPanel';
+import { ChordProParser, HtmlDivFormatter } from 'chordsheetjs';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -533,6 +534,75 @@ const formatTime = (timestamp) => {
   }
 };
 
+// Stage-legible ChordPro viewer. Parses the musician's pasted ChordPro text with
+// ChordSheetJS and renders it in a full-screen, high-contrast modal for on-stage reading.
+const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
+  const html = useMemo(() => {
+    try {
+      const song = new ChordProParser().parse(chordpro || '');
+      return new HtmlDivFormatter().format(song);
+    } catch (e) {
+      console.error('ChordPro parse error:', e);
+      return '<div class="chordpro-parse-error">Unable to render this chart.</div>';
+    }
+  }, [chordpro]);
+
+  return (
+    <div
+      data-testid="chordpro-viewer"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-2 sm:p-4"
+      onClick={onClose}
+    >
+      <style>{`
+        .chordpro-body { font-family: 'Courier New', Courier, monospace; }
+        .chordpro-body .title,
+        .chordpro-body .subtitle { display: none; }
+        .chordpro-body .chord-sheet .paragraph { margin: 0 0 1.25rem 0; }
+        .chordpro-body .chord-sheet .row { display: flex; flex-wrap: wrap; align-items: flex-end; }
+        .chordpro-body .chord-sheet .column { display: inline-flex; flex-direction: column; }
+        .chordpro-body .chord-sheet .chord {
+          color: #a855f7;
+          font-weight: 700;
+          font-size: 18px;
+          line-height: 1.4;
+          min-height: 1.4em;
+          white-space: pre;
+        }
+        .chordpro-body .chord-sheet .lyrics {
+          font-size: 18px;
+          line-height: 2;
+          white-space: pre;
+          min-height: 1em;
+        }
+        .chordpro-body .chord-sheet .lyrics:empty::after { content: '\\00a0'; }
+        .chordpro-parse-error { color: #f87171; font-size: 18px; }
+      `}</style>
+      <div
+        className="bg-gray-900 text-gray-100 rounded-xl w-full max-w-3xl h-[90vh] flex flex-col shadow-2xl border border-gray-700"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-700 shrink-0">
+          <h2 className="text-2xl font-bold text-gray-100 truncate pr-4">{songTitle}</h2>
+          <button
+            type="button"
+            data-testid="chordpro-viewer-close"
+            onClick={onClose}
+            className="shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-gray-300 hover:text-white hover:bg-gray-700 transition duration-200 text-3xl leading-none"
+            aria-label="Close chart"
+          >
+            ✕
+          </button>
+        </div>
+        {/* Scrolling chart body */}
+        <div className="chordpro-body flex-1 overflow-y-auto px-5 py-4">
+          <div dangerouslySetInnerHTML={{ __html: html }} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const MusicianDashboard = () => {
   const { musician, token, logout, setMusician } = useAuth();
   const [activeTab, setActiveTab] = useState('onstage');
@@ -579,6 +649,9 @@ const MusicianDashboard = () => {
   // Song editing state
   const [editingSong, setEditingSong] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false); // NEW: Modal state for editing songs
+
+  // TEMPORARY: ChordPro viewer test mount (throwaway — removed in next prompt once verified)
+  const [chordProTest, setChordProTest] = useState(null);
 
   // NEW: Genre and mood editing state for Add New functionality
   const [showAddGenre, setShowAddGenre] = useState(false);
@@ -4745,6 +4818,74 @@ const MusicianDashboard = () => {
             <div className="mb-6">
               {/* Header content removed - buttons moved above playlists */}
             </div>
+
+            {/* TEMPORARY ChordPro viewer test button (throwaway — removed next prompt) */}
+            <div className="mb-4">
+              <button
+                type="button"
+                data-testid="test-chordpro-open"
+                onClick={() => setChordProTest({
+                  title: 'Basket Case',
+                  chordpro: `{title:Basket Case}
+{subtitle:Green Day}
+No capo orig key Eb
+[F]Do you have the [C]time to [Dm]listen to me [Am]whine
+[Bb]About nothing and [F]everything all at [C]once
+I am one-a those
+Melodramatic fools
+Neurotic to the bone no doubt about it
+
+{soc}
+[Bb]Sometimes I [F]give myself the [C]creeps
+Sometimes my mind plays tricks on me
+It [Bb]all keeps [F]adding [C]up
+I [F]think I'm [F/E]cracking [Dm]up
+Am [Bb]I just para[C]noid?
+I'm just stoned
+{eoc}
+
+[F][C][D][C]x2
+
+I [F]went to a [C]shrink
+To [D]analyze my [Am]dreams
+She [Bb]says it's lack of [F]sex that's bringing me down
+I went to a whore
+He said my live's a bore
+And quit no whining cause it's bringing her [C]down
+
+{soc}
+[Bb]Sometimes I [F]give myself the [C]creeps
+Sometimes my mind plays tricks on me
+It [Bb]all keeps [F]adding [C]up
+I [F]think I'm [F/E]cracking [Dm]up
+Am [Bb]I just para[C]noid?
+Yayayaaaa[F][C][D][C]
+{eoc}
+
+[F][C][D][C]x4
+
+Grasping to control
+So you better hold on 
+Verse progression
+Chorus
+Outro:
+[F][Dm][Bb][F][C]
+[F][Dm][Bb][F][C]
+[F][Dm][Bb][F][C]
+[Bb][F][C]`
+                })}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition duration-200"
+              >
+                TEST ChordPro Viewer
+              </button>
+            </div>
+            {chordProTest && (
+              <ChordProViewer
+                songTitle={chordProTest.title}
+                chordpro={chordProTest.chordpro}
+                onClose={() => setChordProTest(null)}
+              />
+            )}
             
 
 
