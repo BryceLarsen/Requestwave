@@ -231,6 +231,7 @@ class Song(BaseModel):
     hidden: bool = False  # NEW: Hide song from audience view
     chart_type: Optional[str] = None  # Chart support: None, "link", or "pdf"
     chart_url: Optional[str] = ""  # Chart URL (link or hosted PDF URL)
+    chart_chordpro: Optional[str] = ""  # Raw ChordPro text stored in-app (separate from chart_url so link/pdf and chordpro coexist)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class SongCreate(BaseModel):
@@ -242,6 +243,7 @@ class SongCreate(BaseModel):
     notes: str = ""
     chart_type: Optional[str] = None  # Chart support: None, "link", or "pdf"
     chart_url: Optional[str] = ""  # Chart URL (link or hosted PDF URL)
+    chart_chordpro: Optional[str] = ""  # Raw ChordPro text stored in-app (separate from chart_url so link/pdf and chordpro coexist)
 
 class RequestCreate(BaseModel):
     song_id: str
@@ -4231,6 +4233,8 @@ async def update_song(song_id: str, song_data: SongCreate, musician_id: str = De
         update_data.pop("chart_type", None)
     if "chart_url" not in provided:
         update_data.pop("chart_url", None)
+    if "chart_chordpro" not in provided:
+        update_data.pop("chart_chordpro", None)
 
     await db.songs.update_one(
         {"id": song_id},
