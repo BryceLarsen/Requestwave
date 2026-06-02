@@ -557,10 +557,10 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
         .chordpro-body { font-family: 'Courier New', Courier, monospace; max-width: 100%; overflow-x: hidden; }
         .chordpro-body .title,
         .chordpro-body .subtitle { display: none; }
-        .chordpro-body .chord-sheet { max-width: 100%; }
-        .chordpro-body .chord-sheet .paragraph { margin: 0 0 1.25rem 0; }
-        .chordpro-body .chord-sheet .row { display: flex; flex-wrap: wrap; align-items: flex-end; max-width: 100%; }
-        .chordpro-body .chord-sheet .column { display: inline-flex; flex-direction: column; padding-right: 0.5em; }
+        .chordpro-body .chord-sheet { max-width: 100%; box-sizing: border-box; }
+        .chordpro-body .chord-sheet .paragraph { margin: 0 0 1.25rem 0; max-width: 100%; }
+        .chordpro-body .chord-sheet .row { display: flex; flex-wrap: wrap; align-items: flex-end; width: 100%; max-width: 100%; box-sizing: border-box; }
+        .chordpro-body .chord-sheet .column { display: inline-flex; flex-direction: column; padding-right: 0.5em; max-width: 100%; box-sizing: border-box; }
         .chordpro-body .chord-sheet .chord {
           color: #a855f7;
           font-weight: 700;
@@ -572,7 +572,10 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
         .chordpro-body .chord-sheet .lyrics {
           font-size: 18px;
           line-height: 2;
-          white-space: pre;
+          white-space: normal;
+          overflow-wrap: break-word;
+          word-break: break-word;
+          max-width: 100%;
           min-height: 1em;
         }
         .chordpro-body .chord-sheet .lyrics:empty::after { content: '\\00a0'; }
