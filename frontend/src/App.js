@@ -13851,6 +13851,22 @@ const RequestCard = ({ item, index, onAccept, onPlay, onSkip, onRestore, showMov
         <div className={`text-white mb-2 ${isUpNext || isCompleted ? 'text-lg font-bold' : 'text-2xl font-black'}`}>
           <span className="text-gray-300 font-semibold">From:</span> <span className="font-black text-yellow-300">{item.requester_name || 'Anonymous'}</span>
         </div>
+        {(item.requester_email || item.tip_clicked) && (
+          <div className="flex items-center gap-3 mb-2" data-testid="request-status-indicators">
+            {item.requester_email && (
+              <span className="inline-flex items-center gap-1 text-gray-300 text-xs" data-testid="request-email-indicator" title={item.requester_email}>
+                <span>✉️</span>
+                <span className="opacity-70">email</span>
+              </span>
+            )}
+            {item.tip_clicked && (
+              <span className="inline-flex items-center gap-1 text-gray-300 text-xs" data-testid="request-tip-indicator">
+                <span>💰</span>
+                <span className="opacity-70">tapped tip</span>
+              </span>
+            )}
+          </div>
+        )}
         {item.dedication && (
           <div className={`text-purple-200 italic font-bold ${isUpNext || isCompleted ? 'text-base' : 'text-xl'}`}>
             💌 "{item.dedication}"
