@@ -637,6 +637,13 @@ const MusicianDashboard = () => {
   const [showLstUpload, setShowLstUpload] = useState(false);
   const [lstAutoEnrich, setLstAutoEnrich] = useState(false);
 
+  // ChordPro ZIP Import (PREVIEW ONLY) state
+  const [chordproZipFile, setChordproZipFile] = useState(null);
+  const [chordproPreview, setChordproPreview] = useState(null);
+  const [chordproPreviewing, setChordproPreviewing] = useState(false);
+  const [chordproError, setChordproError] = useState('');
+  const [showChordproImport, setShowChordproImport] = useState(false);
+
   // Song form state
   const [songForm, setSongForm] = useState({
     title: '',
@@ -3947,6 +3954,38 @@ const MusicianDashboard = () => {
     }
   };
 
+  // ChordPro ZIP Import — PREVIEW ONLY (no DB writes; commit is a separate later step)
+  const handleChordproZipSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setChordproZipFile(file);
+      setChordproPreview(null);
+      setChordproError('');
+    }
+  };
+
+  const previewChordproImport = async () => {
+    if (!chordproZipFile) return;
+
+    setChordproPreviewing(true);
+    setChordproError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', chordproZipFile);
+
+      const response = await axios.post(`${API}/songs/chordpro-import/preview`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      setChordproPreview(response.data);
+    } catch (error) {
+      setChordproError(error.response?.data?.detail || 'Error previewing ChordPro ZIP');
+    } finally {
+      setChordproPreviewing(false);
+    }
+  };
+
   const uploadCsv = async () => {
     if (!csvFile) return;
     
@@ -5084,6 +5123,160 @@ const MusicianDashboard = () => {
               </div>
             )}
 
+            {/* ChordPro ZIP Import Section — PREVIEW ONLY (no DB writes) */}
+            {showChordproImport && (
+              <div className="bg-gray-800 rounded-xl p-6 mb-8" data-testid="chordpro-import-section">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold">Import ChordPro (zip)</h3>
+                  <button
+                    data-testid="close-chordpro-import-btn"
+                    onClick={() => setShowChordproImport(false)}
+                    className="text-gray-400 hover:text-white text-xl"
+                  >
+                    ×
+                  </button>
+                </div>
+                <p className="text-gray-300 mb-4 text-sm">
+                  Upload a ZIP of ChordPro files (.cho, .crd, .chopro, .chordpro, .pro, .txt). This is a
+                  <span className="text-purple-300 font-medium"> preview only</span> — nothing is saved yet.
+                </p>
+
+                <div className="space-y-4">
+                  <input
+                    data-testid="chordpro-zip-input"
+                    type="file"
+                    accept=".zip"
+                    onChange={handleChordproZipSelect}
+                    className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-purple-600 file:text-white hover:file:bg-purple-700"
+                  />
+
+                  {chordproZipFile && (
+                    <div className="bg-gray-700 rounded-lg p-4 flex justify-between items-center">
+                      <div>
+                        <p className="text-sm font-medium">{chordproZipFile.name}</p>
+                        <p className="text-xs text-gray-400">{(chordproZipFile.size / 1024).toFixed(1)} KB</p>
+                      </div>
+                      <button
+                        onClick={() => { setChordproZipFile(null); setChordproPreview(null); setChordproError(''); }}
+                        className="text-red-400 hover:text-red-300 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+
+                  {chordproZipFile && (
+                    <button
+                      data-testid="chordpro-preview-btn"
+                      onClick={previewChordproImport}
+                      disabled={chordproPreviewing}
+                      className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-bold transition duration-300 disabled:opacity-50"
+                    >
+                      {chordproPreviewing ? 'Processing...' : 'Preview Import'}
+                    </button>
+                  )}
+
+                  {chordproError && (
+                    <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-200" data-testid="chordpro-error">
+                      {chordproError}
+                    </div>
+                  )}
+
+                  {chordproPreview && (
+                    <div className="space-y-4" data-testid="chordpro-preview-results">
+                      {/* Will attach to existing */}
+                      <div className="bg-gray-700 rounded-lg p-4">
+                        <h4 className="font-bold text-green-300 mb-2" data-testid="chordpro-exact-heading">
+                          Will attach to existing ({chordproPreview.counts.exact})
+                        </h4>
+                        {chordproPreview.exact.length === 0 ? (
+                          <p className="text-gray-400 text-sm">None</p>
+                        ) : (
+                          <ul className="space-y-2">
+                            {chordproPreview.exact.map((e, idx) => (
+                              <li key={idx} className="text-sm border-b border-gray-600 pb-2">
+                                <span className="text-white font-medium">{e.parsed_title}</span>
+                                <span className="text-gray-400"> — {e.parsed_artist || '(no artist)'}</span>
+                                <span className="text-gray-500 text-xs ml-2">[{e.filename}]</span>
+                                <div className="text-green-300 text-xs">→ matches: {e.existing_title} — {e.existing_artist || '(no artist)'}</div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+
+                      {/* Needs review — possible matches */}
+                      <div className="bg-gray-700 rounded-lg p-4">
+                        <h4 className="font-bold text-yellow-300 mb-2" data-testid="chordpro-fuzzy-heading">
+                          Needs review — possible matches ({chordproPreview.counts.fuzzy})
+                        </h4>
+                        {chordproPreview.fuzzy.length === 0 ? (
+                          <p className="text-gray-400 text-sm">None</p>
+                        ) : (
+                          <ul className="space-y-2">
+                            {chordproPreview.fuzzy.map((f, idx) => (
+                              <li key={idx} className="text-sm border-b border-gray-600 pb-2">
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div>
+                                    <p className="text-gray-400 text-xs">From file [{f.filename}]:</p>
+                                    <p className="text-white font-medium">{f.parsed_title}</p>
+                                    <p className="text-gray-400">{f.parsed_artist || '(no artist)'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-gray-400 text-xs">Possible match:</p>
+                                    <p className="text-yellow-200 font-medium">{f.candidate_title}</p>
+                                    <p className="text-gray-400">{f.candidate_artist || '(no artist)'}</p>
+                                  </div>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+
+                      {/* Will create new */}
+                      <div className="bg-gray-700 rounded-lg p-4">
+                        <h4 className="font-bold text-blue-300 mb-2" data-testid="chordpro-new-heading">
+                          Will create new ({chordproPreview.counts.new})
+                        </h4>
+                        {chordproPreview.new.length === 0 ? (
+                          <p className="text-gray-400 text-sm">None</p>
+                        ) : (
+                          <ul className="space-y-2">
+                            {chordproPreview.new.map((n, idx) => (
+                              <li key={idx} className="text-sm border-b border-gray-600 pb-2">
+                                <span className="text-white font-medium">{n.parsed_title}</span>
+                                <span className="text-gray-400"> — {n.parsed_artist || '(no artist)'}</span>
+                                <span className="text-gray-500 text-xs ml-2">[{n.filename}]</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+
+                      {/* Couldn't parse */}
+                      <div className="bg-gray-700 rounded-lg p-4">
+                        <h4 className="font-bold text-red-300 mb-2" data-testid="chordpro-unparsed-heading">
+                          Couldn't parse ({chordproPreview.counts.could_not_parse})
+                        </h4>
+                        {chordproPreview.could_not_parse.length === 0 ? (
+                          <p className="text-gray-400 text-sm">None</p>
+                        ) : (
+                          <ul className="space-y-1">
+                            {chordproPreview.could_not_parse.map((c, idx) => (
+                              <li key={idx} className="text-sm text-red-200">
+                                {c.filename} — <span className="text-gray-400">{c.reason}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Playlist Import Section */}
             {showPlaylistImport && (
               <div className="bg-gray-800 rounded-xl p-6 mb-8">
@@ -5511,6 +5704,19 @@ const MusicianDashboard = () => {
                       >
                         <span className="text-lg">📝</span>
                         <span>Upload LST</span>
+                      </button>
+
+                      {/* Import ChordPro (zip) - PREVIEW ONLY */}
+                      <button
+                        data-testid="open-chordpro-import-btn"
+                        onClick={() => {
+                          setShowChordproImport(!showChordproImport);
+                          setShowSongManagementDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
+                      >
+                        <span className="text-lg">🎼</span>
+                        <span>Import ChordPro (zip)</span>
                       </button>
                       
                       {/* Auto-fill All - Fifth */}

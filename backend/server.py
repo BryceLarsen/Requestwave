@@ -17,6 +17,8 @@ import re
 from pymongo import ASCENDING, DESCENDING
 import csv
 import io
+import zipfile
+import difflib
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
 import base64
@@ -5987,6 +5989,171 @@ async def upload_csv_songs(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+
+# ============================================================================
+# ChordPro ZIP Import — PREVIEW (read-only)
+# ============================================================================
+
+# Recognized chord-file extensions inside the uploaded ZIP
+CHORDPRO_EXTENSIONS = (".cho", ".crd", ".chopro", ".chordpro", ".pro", ".txt")
+
+# Directive patterns: {title:..}/{t:..} and {subtitle:..}/{st:..}
+_CHORDPRO_TITLE_RE = re.compile(r"\{\s*(?:title|t)\s*:\s*(.*?)\s*\}", re.IGNORECASE)
+_CHORDPRO_SUBTITLE_RE = re.compile(r"\{\s*(?:subtitle|st)\s*:\s*(.*?)\s*\}", re.IGNORECASE)
+
+
+def _normalize_for_match(value: str) -> str:
+    """Lowercase, strip punctuation and collapse whitespace for fuzzy comparison."""
+    if not value:
+        return ""
+    lowered = value.lower().strip()
+    # Replace any non-alphanumeric char with a space, then collapse whitespace
+    cleaned = re.sub(r"[^a-z0-9]+", " ", lowered)
+    return re.sub(r"\s+", " ", cleaned).strip()
+
+
+def _parse_chordpro_directives(text: str):
+    """Extract (title, artist) from ChordPro directives. Returns (title|None, artist|'')."""
+    title_match = _CHORDPRO_TITLE_RE.search(text)
+    subtitle_match = _CHORDPRO_SUBTITLE_RE.search(text)
+    title = title_match.group(1).strip() if title_match else None
+    artist = subtitle_match.group(1).strip() if subtitle_match else ""
+    return title, artist
+
+
+@api_router.post("/songs/chordpro-import/preview")
+async def preview_chordpro_import(
+    file: UploadFile = File(...),
+    musician_id: str = Depends(get_current_musician)
+):
+    """
+    PREVIEW ONLY — Parse an uploaded ZIP of ChordPro files and report what an import
+    WOULD do, without performing ANY database write.
+
+    *** THIS HANDLER PERFORMS NO DATABASE WRITES OF ANY KIND. ***
+    It only reads the uploaded ZIP, parses {title}/{subtitle} directives, and matches
+    against the current musician's existing catalog (read-only db.songs query). The
+    actual commit/write is handled by a SEPARATE endpoint (later prompt).
+    """
+    if not file.filename or not file.filename.lower().endswith(".zip"):
+        raise HTTPException(status_code=400, detail="File must be a .zip file")
+
+    content = await file.read()
+    if len(content) > 25 * 1024 * 1024:  # 25MB limit
+        raise HTTPException(status_code=400, detail="File size must be less than 25MB")
+
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(content))
+    except zipfile.BadZipFile:
+        raise HTTPException(status_code=400, detail="Uploaded file is not a valid ZIP archive")
+
+    # Read-only: load this musician's existing catalog once
+    existing_songs = []
+    async for doc in db.songs.find({"musician_id": musician_id}):
+        existing_songs.append({
+            "id": doc.get("id"),
+            "title": doc.get("title", "") or "",
+            "artist": doc.get("artist", "") or "",
+            "norm_title": _normalize_for_match(doc.get("title", "") or ""),
+            "norm_artist": _normalize_for_match(doc.get("artist", "") or ""),
+        })
+
+    exact, fuzzy, new_entries, could_not_parse = [], [], [], []
+
+    for info in zf.infolist():
+        if info.is_dir():
+            continue
+        name = info.filename
+        base = name.split("/")[-1]
+        # Skip macOS junk and hidden files
+        if "__MACOSX" in name or base == ".DS_Store" or base.startswith("._"):
+            continue
+        if not base.lower().endswith(CHORDPRO_EXTENSIONS):
+            continue
+
+        try:
+            raw = zf.read(info)
+            text = raw.decode("utf-8", errors="replace")
+        except Exception as e:
+            could_not_parse.append({"filename": base, "reason": f"Could not read file: {str(e)}"})
+            continue
+
+        title, artist = _parse_chordpro_directives(text)
+        if not title:
+            could_not_parse.append({"filename": base, "reason": "No {title} directive found"})
+            continue
+
+        norm_title = _normalize_for_match(title)
+        norm_artist = _normalize_for_match(artist)
+
+        # 1) EXACT: both title and artist match case-insensitively (after trim/normalize)
+        exact_match = next(
+            (s for s in existing_songs
+             if s["norm_title"] == norm_title and s["norm_artist"] == norm_artist),
+            None
+        )
+        if exact_match:
+            exact.append({
+                "filename": base,
+                "parsed_title": title,
+                "parsed_artist": artist,
+                "existing_song_id": exact_match["id"],
+                "existing_title": exact_match["title"],
+                "existing_artist": exact_match["artist"],
+                "chart_chordpro": text,
+            })
+            continue
+
+        # 2) FUZZY: find a close candidate (normalized title match or high similarity)
+        best_candidate = None
+        best_ratio = 0.0
+        for s in existing_songs:
+            if not s["norm_title"]:
+                continue
+            if s["norm_title"] == norm_title:
+                # Same normalized title but artist differed (else it'd be exact) —
+                # rank above near-string title matches so the right song surfaces.
+                ratio = 0.99
+            else:
+                ratio = difflib.SequenceMatcher(None, norm_title, s["norm_title"]).ratio()
+            if ratio > best_ratio:
+                best_ratio = ratio
+                best_candidate = s
+
+        if best_candidate and best_ratio >= 0.82:
+            fuzzy.append({
+                "filename": base,
+                "parsed_title": title,
+                "parsed_artist": artist,
+                "candidate_song_id": best_candidate["id"],
+                "candidate_title": best_candidate["title"],
+                "candidate_artist": best_candidate["artist"],
+                "similarity": round(best_ratio, 3),
+                "chart_chordpro": text,
+            })
+            continue
+
+        # 3) NEW: no reasonable match
+        new_entries.append({
+            "filename": base,
+            "parsed_title": title,
+            "parsed_artist": artist,
+            "chart_chordpro": text,
+        })
+
+    return {
+        "counts": {
+            "exact": len(exact),
+            "fuzzy": len(fuzzy),
+            "new": len(new_entries),
+            "could_not_parse": len(could_not_parse),
+        },
+        "exact": exact,
+        "fuzzy": fuzzy,
+        "new": new_entries,
+        "could_not_parse": could_not_parse,
+    }
+
 
 # LST Upload endpoints  
 @api_router.post("/songs/lst/preview", response_model=LSTPreviewResponse)
