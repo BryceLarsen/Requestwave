@@ -554,12 +554,13 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
       onClick={onClose}
     >
       <style>{`
-        .chordpro-body { font-family: 'Courier New', Courier, monospace; }
+        .chordpro-body { font-family: 'Courier New', Courier, monospace; max-width: 100%; overflow-x: hidden; }
         .chordpro-body .title,
         .chordpro-body .subtitle { display: none; }
+        .chordpro-body .chord-sheet { max-width: 100%; }
         .chordpro-body .chord-sheet .paragraph { margin: 0 0 1.25rem 0; }
-        .chordpro-body .chord-sheet .row { display: flex; flex-wrap: wrap; align-items: flex-end; }
-        .chordpro-body .chord-sheet .column { display: inline-flex; flex-direction: column; }
+        .chordpro-body .chord-sheet .row { display: flex; flex-wrap: wrap; align-items: flex-end; max-width: 100%; }
+        .chordpro-body .chord-sheet .column { display: inline-flex; flex-direction: column; padding-right: 0.5em; }
         .chordpro-body .chord-sheet .chord {
           color: #a855f7;
           font-weight: 700;
