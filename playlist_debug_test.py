@@ -10,7 +10,7 @@ import os
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://show-analytics-hub.preview.emergentagent.com/api"
+BASE_URL = "https://multi-show-analytics.preview.emergentagent.com/api"
 
 # Pro account credentials
 PRO_MUSICIAN = {
