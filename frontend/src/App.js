@@ -654,8 +654,8 @@ const MusicianDashboard = () => {
   const [editingSong, setEditingSong] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false); // NEW: Modal state for editing songs
 
-  // TEMPORARY: ChordPro viewer test mount (throwaway — removed in next prompt once verified)
-  const [chordProTest, setChordProTest] = useState(null);
+  // ChordPro viewer state for the dashboard On Stage tab ({ chordpro, title } | null)
+  const [openChordpro, setOpenChordpro] = useState(null);
 
   // NEW: Genre and mood editing state for Add New functionality
   const [showAddGenre, setShowAddGenre] = useState(false);
@@ -4612,6 +4612,14 @@ const MusicianDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
+      {/* ChordPro chart viewer (On Stage tab) */}
+      {openChordpro && (
+        <ChordProViewer
+          chordpro={openChordpro.chordpro}
+          songTitle={openChordpro.title}
+          onClose={() => setOpenChordpro(null)}
+        />
+      )}
       {/* Error Toast */}
       {errorToast.show && (
         <div className="fixed top-4 right-4 z-50 animate-fade-in">
@@ -4822,74 +4830,6 @@ const MusicianDashboard = () => {
             <div className="mb-6">
               {/* Header content removed - buttons moved above playlists */}
             </div>
-
-            {/* TEMPORARY ChordPro viewer test button (throwaway — removed next prompt) */}
-            <div className="mb-4">
-              <button
-                type="button"
-                data-testid="test-chordpro-open"
-                onClick={() => setChordProTest({
-                  title: 'Basket Case',
-                  chordpro: `{title:Basket Case}
-{subtitle:Green Day}
-No capo orig key Eb
-[F]Do you have the [C]time to [Dm]listen to me [Am]whine
-[Bb]About nothing and [F]everything all at [C]once
-I am one-a those
-Melodramatic fools
-Neurotic to the bone no doubt about it
-
-{soc}
-[Bb]Sometimes I [F]give myself the [C]creeps
-Sometimes my mind plays tricks on me
-It [Bb]all keeps [F]adding [C]up
-I [F]think I'm [F/E]cracking [Dm]up
-Am [Bb]I just para[C]noid?
-I'm just stoned
-{eoc}
-
-[F][C][D][C]x2
-
-I [F]went to a [C]shrink
-To [D]analyze my [Am]dreams
-She [Bb]says it's lack of [F]sex that's bringing me down
-I went to a whore
-He said my live's a bore
-And quit no whining cause it's bringing her [C]down
-
-{soc}
-[Bb]Sometimes I [F]give myself the [C]creeps
-Sometimes my mind plays tricks on me
-It [Bb]all keeps [F]adding [C]up
-I [F]think I'm [F/E]cracking [Dm]up
-Am [Bb]I just para[C]noid?
-Yayayaaaa[F][C][D][C]
-{eoc}
-
-[F][C][D][C]x4
-
-Grasping to control
-So you better hold on 
-Verse progression
-Chorus
-Outro:
-[F][Dm][Bb][F][C]
-[F][Dm][Bb][F][C]
-[F][Dm][Bb][F][C]
-[Bb][F][C]`
-                })}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition duration-200"
-              >
-                TEST ChordPro Viewer
-              </button>
-            </div>
-            {chordProTest && (
-              <ChordProViewer
-                songTitle={chordProTest.title}
-                chordpro={chordProTest.chordpro}
-                onClose={() => setChordProTest(null)}
-              />
-            )}
             
 
 
@@ -7545,11 +7485,18 @@ Outro:
                             {renderLearnLaterBookmark({ songId: request.song_id, size: 18 })}
                             {(() => {
                               const chartSong = songs.find(s => s.id === request.song_id) || {};
-                              return (chartSong.chart_type === 'link' || chartSong.chart_type === 'pdf') && chartSong.chart_url ? (
+                              const hasChart = ((chartSong.chart_type === 'link' || chartSong.chart_type === 'pdf') && chartSong.chart_url) || (chartSong.chart_type === 'chordpro' && chartSong.chart_chordpro);
+                              return hasChart ? (
                                 <button
                                   type="button"
                                   data-testid="onstage-charts-button"
-                                  onClick={() => window.open(chartSong.chart_url, '_blank')}
+                                  onClick={() => {
+                                    if (chartSong.chart_type === 'chordpro') {
+                                      setOpenChordpro({ chordpro: chartSong.chart_chordpro, title: chartSong.song_title || chartSong.title || request.song_title });
+                                    } else {
+                                      window.open(chartSong.chart_url, '_blank');
+                                    }
+                                  }}
                                   className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs transition duration-300"
                                   title="Open chart"
                                 >
@@ -7708,11 +7655,18 @@ Outro:
                             {renderLearnLaterBookmark({ songId: item.song_id, size: 18 })}
                             {(() => {
                               const chartSong = songs.find(s => s.id === item.song_id) || {};
-                              return (chartSong.chart_type === 'link' || chartSong.chart_type === 'pdf') && chartSong.chart_url ? (
+                              const hasChart = ((chartSong.chart_type === 'link' || chartSong.chart_type === 'pdf') && chartSong.chart_url) || (chartSong.chart_type === 'chordpro' && chartSong.chart_chordpro);
+                              return hasChart ? (
                                 <button
                                   type="button"
                                   data-testid="onstage-charts-button"
-                                  onClick={() => window.open(chartSong.chart_url, '_blank')}
+                                  onClick={() => {
+                                    if (chartSong.chart_type === 'chordpro') {
+                                      setOpenChordpro({ chordpro: chartSong.chart_chordpro, title: chartSong.song_title || chartSong.title || item.song_title });
+                                    } else {
+                                      window.open(chartSong.chart_url, '_blank');
+                                    }
+                                  }}
                                   className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs transition duration-300"
                                   title="Open chart"
                                 >
@@ -14078,7 +14032,7 @@ const CompletedRequestItem = ({ request, onRestore, compact = false }) => {
 };
 
 // Request Card Component for On Stage Interface
-const RequestCard = ({ item, index, onAccept, onPlay, onSkip, onRestore, showMoveButtons, isUpNext, isCompleted, chartType, chartUrl }) => {
+const RequestCard = ({ item, index, onAccept, onPlay, onSkip, onRestore, showMoveButtons, isUpNext, isCompleted, chartType, chartUrl, chartChordpro, onOpenChordpro }) => {
   const isNewRequest = index === 0 && !isCompleted && !isUpNext;
   
   return (
@@ -14113,11 +14067,17 @@ const RequestCard = ({ item, index, onAccept, onPlay, onSkip, onRestore, showMov
       <div className="mb-4">
         <h3 className={`font-bold mb-2 flex items-center gap-2 ${isUpNext || isCompleted ? 'text-xl' : 'text-2xl'}`}>
           <span>{item.song_title || item.title}</span>
-          {(chartType === 'link' || chartType === 'pdf') && chartUrl && (
+          {(((chartType === 'link' || chartType === 'pdf') && chartUrl) || (chartType === 'chordpro' && chartChordpro)) && (
             <button
               type="button"
               data-testid="onstage-charts-button"
-              onClick={() => window.open(chartUrl, '_blank')}
+              onClick={() => {
+                if (chartType === 'chordpro') {
+                  onOpenChordpro(item.song_title || item.title, chartChordpro);
+                } else {
+                  window.open(chartUrl, '_blank');
+                }
+              }}
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs transition duration-300"
               title="Open chart"
             >
@@ -14234,6 +14194,8 @@ const OnStageInterface = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [completedSectionCollapsed, setCompletedSectionCollapsed] = useState(false);
   const [errorToast, setErrorToast] = useState({ show: false, message: '' });
+  // ChordPro viewer state for the standalone On Stage view ({ chordpro, title } | null)
+  const [openChordpro, setOpenChordpro] = useState(null);
   
   // Helper function to show error toast
   const showErrorToast = (message, error = null) => {
@@ -14711,6 +14673,14 @@ const OnStageInterface = () => {
   
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
+      {/* ChordPro chart viewer */}
+      {openChordpro && (
+        <ChordProViewer
+          chordpro={openChordpro.chordpro}
+          songTitle={openChordpro.title}
+          onClose={() => setOpenChordpro(null)}
+        />
+      )}
       {/* Error Toast */}
       {errorToast.show && (
         <div className="fixed top-4 right-4 z-50 animate-fade-in">
@@ -14873,6 +14843,8 @@ const OnStageInterface = () => {
                     isUpNext={false}
                     chartType={(songs.find(s => s.id === item.song_id) || {}).chart_type}
                     chartUrl={(songs.find(s => s.id === item.song_id) || {}).chart_url}
+                    chartChordpro={(songs.find(s => s.id === item.song_id) || {}).chart_chordpro}
+                    onOpenChordpro={(title, cp) => setOpenChordpro({ chordpro: cp, title })}
                   />
                 )
               ))}

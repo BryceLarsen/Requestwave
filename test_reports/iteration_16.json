@@ -1,0 +1,26 @@
+{
+  "summary": "Frontend-only verification of the new ChordProViewer in-app modal wired into the On Stage 'Charts' buttons. Authenticated as test@test.com via the API to seed localStorage token, then drove the real UI in both the dashboard On Stage tab (musician view at /dashboard) and the standalone audience view at /on-stage/test. Confirmed: (a) the existing seeded active request 'ChordPro Demo Song' (song_id 339e397b..., request bfed800e... pending) renders the '📄 Charts' button with data-testid='onstage-charts-button' in both views; (b) clicking that button opens an in-app modal with data-testid='chordpro-viewer' over the page (NOT a new tab — verified by listening to page.context.on('page') in both contexts → 0 new tabs); (c) modal header shows the song title 'ChordPro Demo Song' and the chord/lyric body is rendered (chords F C Dm Am, lyrics 'Do you have the time to listen to me whine / Neurotic to the bone no doubt about it', and Bb tail line all present); (d) closing via data-testid='chordpro-viewer-close' dismisses the modal in both contexts; (e) clicking the dark backdrop (the modal container element itself) also dismisses it in both contexts. Regression: /on-stage/test and /dashboard On Stage tab still render their request lists normally; no JS console errors from the chordpro flow. Pre-existing React Router v6→v7 future-flag warnings are unrelated.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "OnStageInterface.fetchUpdates (App.js ~14265) awaits BOTH /api/requests/updates/{id} (public) and /api/song-suggestions (auth-required) sequentially inside the SAME try-block. When the standalone /on-stage/:slug view is opened by an unauthenticated audience member, the song-suggestions call returns 403 BEFORE setRequests is reached, so requests state stays empty and the page shows 'Active Requests (0)' despite the public requests endpoint returning data. This is a pre-existing bug, NOT introduced by the chordpro feature, but it blocked initial audience-mode reproduction; only after I injected a musician token into localStorage did the seeded request render. Recommend wrapping the suggestions fetch in its own try/catch (or only firing it when a token exists) so the public on-stage list survives the 403.",
+    "OnStageInterface also fetches /api/songs in fetchMusician with optional bearer token; without auth this also 403s and leaves songs=[]. Even if the request list rendered, hasChart would be false for chordpro songs because chartChordpro would be undefined. Same recommendation — degrade gracefully or expose a public songs endpoint for the on-stage view.",
+    "ChordProViewer (App.js ~539) renders as a single root with data-testid='chordpro-viewer' that doubles as both the dark backdrop and the click-to-close handler. Confirmed click on the container dispatches onClose; the inner card stops propagation correctly so backdrop-only dismissal works as intended.",
+    "RequestCard hasChart predicate ((chart_type in [link,pdf] && chart_url) || (chart_type==='chordpro' && chart_chordpro)) matches the spec and is consistent across all three render sites (RequestCard branch + two inline On Stage dashboard sites at App.js 7488 and 7658).",
+    "Three Charts-button render sites all share data-testid='onstage-charts-button' (not unique IDs). For testing it's fine because we walked the DOM upward to find the parent card containing 'ChordPro Demo Song'; consider per-request testids (e.g. onstage-charts-button-<request_id>) for future selector stability."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "n/a (skipped per request)", "frontend": "100% (4/4 spec items verified)" },
+  "test_credentials": { "musician": { "email": "test@test.com", "password": "test", "slug": "test" } },
+  "seed_data_creation": "No new seed data created. Used the pre-seeded song 339e397b-8e7b-412b-a76a-455faa87eb25 (chart_type='chordpro', chart_chordpro populated) and the pre-seeded active request bfed800e-a73d-46aa-9d10-010211ac7e95 (status=pending, show_id=748b9b16-...).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "ChordPro modal wiring is complete and verified end-to-end. Note: the standalone /on-stage/:slug audience view currently requires a musician token in localStorage to render any requests because OnStageInterface.fetchUpdates awaits /api/song-suggestions (auth-required) in the same try-block as the public requests poll — pre-existing bug, surface to main agent if audience-mode (no-auth) usage matters for this feature.",
+  "rca of the issue": "N/A — no bugs in the chordpro feature itself. The pre-existing 403-on-/song-suggestions issue is detailed in critical_code_review_comments."
+}
