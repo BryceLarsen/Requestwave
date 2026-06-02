@@ -14651,8 +14651,11 @@ const OnStageInterface = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {activeRequests.map((item, index) => (
-                item.type === 'suggestion' ? (
+              {activeRequests.map((item, index) => {
+                if (item.type !== 'suggestion') {
+                  console.log('CHART DEBUG', { song_id: item.song_id, matchedSong: songs.find(s => s.id === item.song_id), chartType: (songs.find(s => s.id === item.song_id) || {}).chart_type, chartUrl: (songs.find(s => s.id === item.song_id) || {}).chart_url, songsCount: songs.length });
+                }
+                return item.type === 'suggestion' ? (
                   <SuggestionCard
                     key={item.id}
                     item={item}
@@ -14675,8 +14678,8 @@ const OnStageInterface = () => {
                     chartType={(songs.find(s => s.id === item.song_id) || {}).chart_type}
                     chartUrl={(songs.find(s => s.id === item.song_id) || {}).chart_url}
                   />
-                )
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
