@@ -570,7 +570,9 @@ const MusicianDashboard = () => {
     genres: [],
     moods: [],
     year: '',
-    notes: ''
+    notes: '',
+    chart_type: '',
+    chart_url: ''
   });
 
   // Song editing state
@@ -2028,7 +2030,9 @@ const MusicianDashboard = () => {
         genres: [],
         moods: [],
         year: '',
-        notes: ''
+        notes: '',
+        chart_type: '',
+        chart_url: ''
       });
       fetchSongs();
       fetchFilterOptions(); // Refresh filter options when songs change
@@ -2045,7 +2049,9 @@ const MusicianDashboard = () => {
       genres: song.genres,
       moods: song.moods,
       year: song.year ? song.year.toString() : '',
-      notes: song.notes
+      notes: song.notes,
+      chart_type: song.chart_type || '',
+      chart_url: song.chart_url || ''
     });
     setSongError('');
     setShowEditModal(true); // NEW: Open modal instead of scrolling to form
@@ -2072,7 +2078,9 @@ const MusicianDashboard = () => {
         genres: [],
         moods: [],
         year: '',
-        notes: ''
+        notes: '',
+        chart_type: '',
+        chart_url: ''
       });
       fetchSongs();
     } catch (error) {
@@ -2089,7 +2097,9 @@ const MusicianDashboard = () => {
       genres: [],
       moods: [],
       year: '',
-      notes: ''
+      notes: '',
+      chart_type: '',
+      chart_url: ''
     });
     setSongError('');
   };
@@ -5283,6 +5293,37 @@ const MusicianDashboard = () => {
                     onChange={(e) => setSongForm({...songForm, notes: e.target.value})}
                     className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 col-span-1 md:col-span-1"
                   />
+                  <div className="col-span-1 md:col-span-2 bg-gray-700/40 border border-gray-600 rounded-lg p-3">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Chart (optional)</label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {[{v: '', l: 'None'}, {v: 'link', l: 'Link'}, {v: 'pdf', l: 'PDF'}].map(opt => (
+                        <button
+                          key={opt.v || 'none'}
+                          type="button"
+                          data-testid={`add-chart-type-${opt.v || 'none'}`}
+                          onClick={() => setSongForm({...songForm, chart_type: opt.v})}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition duration-200 ${
+                            songForm.chart_type === opt.v
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                          }`}
+                        >
+                          {opt.l}
+                        </button>
+                      ))}
+                    </div>
+                    {(songForm.chart_type === 'link' || songForm.chart_type === 'pdf') && (
+                      <input
+                        type="text"
+                        data-testid="add-chart-url-input"
+                        placeholder="https://..."
+                        value={songForm.chart_url}
+                        onChange={(e) => setSongForm({...songForm, chart_url: e.target.value})}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                        aria-label={songForm.chart_type === 'pdf' ? 'PDF URL' : 'Chart link URL'}
+                      />
+                    )}
+                  </div>
                   <div className="col-span-1 md:col-span-2">
                     <button
                       type="submit"
@@ -10140,7 +10181,39 @@ const MusicianDashboard = () => {
                   onChange={(e) => setSongForm({...songForm, notes: e.target.value})}
                   className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
                 />
-                
+
+                <div className="md:col-span-2 bg-gray-700/40 border border-gray-600 rounded-lg p-3">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Chart (optional)</label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {[{v: '', l: 'None'}, {v: 'link', l: 'Link'}, {v: 'pdf', l: 'PDF'}].map(opt => (
+                      <button
+                        key={opt.v || 'none'}
+                        type="button"
+                        data-testid={`edit-chart-type-${opt.v || 'none'}`}
+                        onClick={() => setSongForm({...songForm, chart_type: opt.v})}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition duration-200 ${
+                          songForm.chart_type === opt.v
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                        }`}
+                      >
+                        {opt.l}
+                      </button>
+                    ))}
+                  </div>
+                  {(songForm.chart_type === 'link' || songForm.chart_type === 'pdf') && (
+                    <input
+                      type="text"
+                      data-testid="edit-chart-url-input"
+                      placeholder="https://..."
+                      value={songForm.chart_url}
+                      onChange={(e) => setSongForm({...songForm, chart_url: e.target.value})}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                      aria-label={songForm.chart_type === 'pdf' ? 'PDF URL' : 'Chart link URL'}
+                    />
+                  )}
+                </div>
+
                 <div className="md:col-span-2 flex space-x-4">
                   <button
                     type="submit"
@@ -13805,7 +13878,7 @@ const CompletedRequestItem = ({ request, onRestore, compact = false }) => {
 };
 
 // Request Card Component for On Stage Interface
-const RequestCard = ({ item, index, onAccept, onPlay, onSkip, onRestore, showMoveButtons, isUpNext, isCompleted }) => {
+const RequestCard = ({ item, index, onAccept, onPlay, onSkip, onRestore, showMoveButtons, isUpNext, isCompleted, chartType, chartUrl }) => {
   const isNewRequest = index === 0 && !isCompleted && !isUpNext;
   
   return (
@@ -13838,9 +13911,21 @@ const RequestCard = ({ item, index, onAccept, onPlay, onSkip, onRestore, showMov
       
       {/* Song Info - LARGER FONTS */}
       <div className="mb-4">
-        <h3 className={`font-bold mb-2 ${isUpNext || isCompleted ? 'text-xl' : 'text-2xl'}`}>
-          {item.song_title || item.title}
-        </h3>
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <h3 className={`font-bold ${isUpNext || isCompleted ? 'text-xl' : 'text-2xl'}`}>
+            {item.song_title || item.title}
+          </h3>
+          {(chartType === 'link' || chartType === 'pdf') && chartUrl && (
+            <button
+              type="button"
+              data-testid="onstage-charts-button"
+              onClick={() => window.open(chartUrl, '_blank')}
+              className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition duration-200 touch-manipulation"
+            >
+              📄 Charts
+            </button>
+          )}
+        </div>
         <p className={`text-gray-300 ${isUpNext || isCompleted ? 'text-base' : 'text-lg'}`}>
           by {item.song_artist || item.artist}
         </p>
@@ -14533,6 +14618,8 @@ const OnStageInterface = () => {
                   onSkip={handleSkip}
                   showMoveButtons={false}
                   isUpNext={true}
+                  chartType={(songs.find(s => s.id === item.song_id) || {}).chart_type}
+                  chartUrl={(songs.find(s => s.id === item.song_id) || {}).chart_url}
                 />
               ))}
             </div>
@@ -14585,6 +14672,8 @@ const OnStageInterface = () => {
                     onSkip={handleSkip}
                     showMoveButtons={true}
                     isUpNext={false}
+                    chartType={(songs.find(s => s.id === item.song_id) || {}).chart_type}
+                    chartUrl={(songs.find(s => s.id === item.song_id) || {}).chart_url}
                   />
                 )
               ))}

@@ -24,6 +24,8 @@ RequestWave is a multi-profile platform for live musicians to accept song reques
 - Null-safe `GET /api/requests/grouped` (skips missing `song_id`).
 - **2026-02 — Fix:** `GET /api/musicians/{slug}/songs` now respects the default profile's `active_playlist_ids` in all cases except an active show with `playlist_filter_mode="selected"` (which still wins). `__all__` → full catalog; specific IDs → union; `[]` → empty. `?playlist=` query param override preserved. Verified against the live preview for 5 scenarios.
 - **2026-02 — UX:** Audience page no longer flashes "Musician not found" before the initial fetch resolves. Loading spinner shows until the musician/profile/event fetch completes.
+- **2026-02 — On Stage indicators:** RequestCard now shows small read-only ✉️ email and 💰 "tapped tip" indicators (from `requester_email` / `tip_clicked`) below the "From:" line; existing `tip_amount` display untouched.
+- **2026-02 — Sprint 10 Charts:** Songs support one chart (`chart_type`: null/"link"/"pdf", `chart_url`). Backend: added to Song/SongCreate models, persisted in create_song & update_song (non-destructive — update only writes chart fields explicitly present in payload, so type-only changes never erase the URL). Frontend: chart section (None/Link/PDF + conditional URL input) in Add form & Edit modal, non-destructive type switching in state; `OnStageInterface` RequestCard shows a "Charts" button (opens chart_url) only when the request's song has a chart. No ChordPro.
 
 ## Roadmap
 ### P2
