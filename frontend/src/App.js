@@ -637,12 +637,17 @@ const MusicianDashboard = () => {
   const [showLstUpload, setShowLstUpload] = useState(false);
   const [lstAutoEnrich, setLstAutoEnrich] = useState(false);
 
-  // ChordPro ZIP Import (PREVIEW ONLY) state
+  // ChordPro ZIP Import state
   const [chordproZipFile, setChordproZipFile] = useState(null);
   const [chordproPreview, setChordproPreview] = useState(null);
   const [chordproPreviewing, setChordproPreviewing] = useState(false);
   const [chordproError, setChordproError] = useState('');
   const [showChordproImport, setShowChordproImport] = useState(false);
+  const [chordproResolutions, setChordproResolutions] = useState({}); // keyed by zip_path -> { action, target_song_id? }
+  const [chordproPolicy, setChordproPolicy] = useState('skip'); // 'skip' | 'replace'
+  const [chordproCollState, setChordproCollState] = useState({}); // existing_song_id -> { mode:'keep'|'separate', keepPath, editing }
+  const [chordproCommitting, setChordproCommitting] = useState(false);
+  const [chordproResult, setChordproResult] = useState(null);
 
   // Song form state
   const [songForm, setSongForm] = useState({
@@ -3979,12 +3984,206 @@ const MusicianDashboard = () => {
       });
 
       setChordproPreview(response.data);
+      // Seed resolutions from preview: exact -> attach to existing; fuzzy/new -> create (default)
+      const seed = {};
+      (response.data.exact || []).forEach((e) => {
+        seed[e.zip_path] = { action: 'attach', target_song_id: e.existing_song_id };
+      });
+      (response.data.fuzzy || []).forEach((f) => {
+        seed[f.zip_path] = { action: 'create' };
+      });
+      (response.data.new || []).forEach((n) => {
+        seed[n.zip_path] = { action: 'create' };
+      });
+      setChordproResolutions(seed);
+      setChordproCollState({});
+      setChordproPolicy('skip');
+      setChordproResult(null);
     } catch (error) {
       setChordproError(error.response?.data?.detail || 'Error previewing ChordPro ZIP');
     } finally {
       setChordproPreviewing(false);
     }
   };
+
+  // ChordPro commit handler (mirrors uploadCsv call + refresh pattern)
+  const commitChordproImport = async () => {
+    setChordproCommitting(true);
+    setChordproError('');
+    try {
+      const formData = new FormData();
+      formData.append('file', chordproZipFile);
+      formData.append('existing_chart_policy', chordproPolicy);
+      formData.append('resolutions', JSON.stringify(chordproResolutions));
+      const response = await axios.post(`${API}/songs/chordpro-import/commit`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setChordproResult(response.data);
+    } catch (error) {
+      setChordproError(error.response?.data?.detail || 'Error committing ChordPro import');
+    } finally {
+      setChordproCommitting(false);
+    }
+  };
+
+  // ChordPro fuzzy toggle: attach to candidate or create new
+  const setFuzzy = (zipPath, attach, candidateSongId) => {
+    setChordproResolutions((prev) => ({
+      ...prev,
+      [zipPath]: attach
+        ? { action: 'attach', target_song_id: candidateSongId }
+        : { action: 'create' }
+    }));
+  };
+
+  // ===== ChordPro import: derived values + collision helpers =====
+  let chordproCollisionGroups = [];
+  const chordproCollidingPaths = new Set();
+  const chordproChartedById = {};
+  if (chordproPreview) {
+    const groupMap = {};
+    (chordproPreview.exact || []).forEach((e) => {
+      if (!groupMap[e.existing_song_id]) groupMap[e.existing_song_id] = [];
+      groupMap[e.existing_song_id].push(e);
+      if (e.existing_has_chart) chordproChartedById[e.existing_song_id] = true;
+    });
+    (chordproPreview.fuzzy || []).forEach((f) => {
+      if (f.candidate_has_chart) chordproChartedById[f.candidate_song_id] = true;
+    });
+    Object.entries(groupMap).forEach(([target, items]) => {
+      if (items.length >= 2) {
+        chordproCollisionGroups.push({
+          target,
+          items,
+          label: items[0].existing_title + ' — ' + (items[0].existing_artist || '(no artist)')
+        });
+        items.forEach((it) => chordproCollidingPaths.add(it.zip_path));
+      }
+    });
+  }
+
+  const findChordproCollisionGroup = (target) =>
+    chordproCollisionGroups.find((g) => g.target === target);
+
+  const applyChordproKeep = (group, target, keepPath) => {
+    setChordproResolutions((prev) => {
+      const next = { ...prev };
+      group.items.forEach((it) => {
+        next[it.zip_path] =
+          it.zip_path === keepPath
+            ? { action: 'attach', target_song_id: target }
+            : { action: 'skip' };
+      });
+      return next;
+    });
+  };
+
+  const applyChordproSeparate = (group, target) => {
+    setChordproResolutions((prev) => {
+      const next = { ...prev };
+      group.items.forEach((it, i) => {
+        next[it.zip_path] =
+          i === 0
+            ? { action: 'attach', target_song_id: target }
+            : { action: 'create' };
+      });
+      return next;
+    });
+  };
+
+  const resolveCollision = (target, mode) => {
+    const group = findChordproCollisionGroup(target);
+    if (!group) return;
+    const keepPath =
+      (chordproCollState[target] && chordproCollState[target].keepPath) || group.items[0].zip_path;
+    setChordproCollState((prev) => ({
+      ...prev,
+      [target]: { ...(prev[target] || {}), mode, editing: true, keepPath }
+    }));
+    if (mode === 'keep') {
+      applyChordproKeep(group, target, keepPath);
+    } else if (mode === 'separate') {
+      applyChordproSeparate(group, target);
+    }
+  };
+
+  const setCollisionKeep = (target, zipPath) => {
+    const group = findChordproCollisionGroup(target);
+    if (!group) return;
+    setChordproCollState((prev) => ({
+      ...prev,
+      [target]: { ...(prev[target] || {}), keepPath: zipPath }
+    }));
+    applyChordproKeep(group, target, zipPath);
+  };
+
+  const doneCollision = (target) => {
+    setChordproCollState((prev) => ({
+      ...prev,
+      [target]: { ...(prev[target] || {}), editing: false }
+    }));
+  };
+
+  const editCollision = (target) => {
+    setChordproCollState((prev) => ({
+      ...prev,
+      [target]: { ...(prev[target] || {}), editing: true }
+    }));
+  };
+
+  // Status pill text for an attach/create resolution given whether target is charted
+  const chordproPillText = (action, charted) => {
+    if (action !== 'attach') return 'create';
+    if (charted && chordproPolicy === 'skip') return 'skip (already charted)';
+    if (charted && chordproPolicy === 'replace') return 'replace';
+    return 'attach';
+  };
+
+  // Count matched songs that already have a chart AND are currently set to attach
+  let chordproChartedAttachCount = 0;
+  // Summary counts derived from current resolutions + policy
+  let chordproSumAttach = 0;
+  let chordproSumReplace = 0;
+  let chordproSumCreate = 0;
+  let chordproSumSkip = 0;
+  if (chordproPreview) {
+    (chordproPreview.exact || []).forEach((e) => {
+      const r = chordproResolutions[e.zip_path];
+      if (e.existing_has_chart && r && r.action === 'attach') chordproChartedAttachCount++;
+    });
+    (chordproPreview.fuzzy || []).forEach((f) => {
+      const r = chordproResolutions[f.zip_path];
+      if (f.candidate_has_chart && r && r.action === 'attach') chordproChartedAttachCount++;
+    });
+    Object.values(chordproResolutions).forEach((r) => {
+      if (!r) return;
+      if (r.action === 'create') chordproSumCreate++;
+      else if (r.action === 'skip') chordproSumSkip++;
+      else if (r.action === 'attach') {
+        const charted = !!chordproChartedById[r.target_song_id];
+        if (charted && chordproPolicy === 'skip') chordproSumSkip++;
+        else if (charted && chordproPolicy === 'replace') chordproSumReplace++;
+        else chordproSumAttach++;
+      }
+    });
+  }
+
+  const chordproUnresolvedCollisions = chordproCollisionGroups.some(
+    (g) => !(chordproCollState[g.target] && chordproCollState[g.target].mode)
+  );
+  const chordproConfirmDisabled = chordproUnresolvedCollisions || chordproCommitting;
+
+  const closeChordproImport = () => {
+    setShowChordproImport(false);
+    setChordproZipFile(null);
+    setChordproPreview(null);
+    setChordproResolutions({});
+    setChordproCollState({});
+    setChordproResult(null);
+    setChordproError('');
+    fetchSongs();
+  };
+
 
   const uploadCsv = async () => {
     if (!csvFile) return;
@@ -5182,54 +5381,205 @@ const MusicianDashboard = () => {
                     </div>
                   )}
 
-                  {chordproPreview && (
-                    <div className="space-y-4" data-testid="chordpro-preview-results">
-                      {/* Will attach to existing */}
+                  {/* RESULT report */}
+                  {chordproResult && (
+                    <div className="space-y-4" data-testid="chordpro-commit-result">
                       <div className="bg-gray-700 rounded-lg p-4">
-                        <h4 className="font-bold text-green-300 mb-2" data-testid="chordpro-exact-heading">
-                          Will attach to existing ({chordproPreview.counts.exact})
-                        </h4>
-                        {chordproPreview.exact.length === 0 ? (
-                          <p className="text-gray-400 text-sm">None</p>
-                        ) : (
-                          <ul className="space-y-2">
-                            {chordproPreview.exact.map((e, idx) => (
-                              <li key={idx} className="text-sm border-b border-gray-600 pb-2">
-                                <span className="text-white font-medium">{e.parsed_title}</span>
-                                <span className="text-gray-400"> — {e.parsed_artist || '(no artist)'}</span>
-                                <span className="text-gray-500 text-xs ml-2">[{e.filename}]</span>
-                                <div className="text-green-300 text-xs">→ matches: {e.existing_title} — {e.existing_artist || '(no artist)'}</div>
-                              </li>
-                            ))}
-                          </ul>
+                        <h4 className="font-bold text-green-300 mb-2">Import complete</h4>
+                        <p className="text-sm text-gray-200">
+                          {chordproResult.counts.attached} attached · {chordproResult.counts.replaced} replaced · {chordproResult.counts.created} created · {chordproResult.counts.skipped} skipped · {chordproResult.counts.skipped_existing_chart} protected · {chordproResult.counts.failed} failed
+                        </p>
+                        {chordproResult.skipped_existing_chart && chordproResult.skipped_existing_chart.length > 0 && (
+                          <div className="mt-3">
+                            <p className="text-yellow-300 text-sm font-bold">Left untouched (already charted):</p>
+                            <ul className="space-y-1">
+                              {chordproResult.skipped_existing_chart.map((s, idx) => (
+                                <li key={idx} className="text-sm text-gray-300">
+                                  {s.title || s.target_song_id} <span className="text-gray-500 text-xs">[{s.zip_path}]</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {chordproResult.failed && chordproResult.failed.length > 0 && (
+                          <div className="mt-3">
+                            <p className="text-red-300 text-sm font-bold">Failed:</p>
+                            <ul className="space-y-1">
+                              {chordproResult.failed.map((s, idx) => (
+                                <li key={idx} className="text-sm text-red-200">
+                                  {s.zip_path} — <span className="text-gray-400">{s.error}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        data-testid="chordpro-done-btn"
+                        onClick={closeChordproImport}
+                        className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold transition duration-300"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  )}
+
+                  {/* REVIEW UI */}
+                  {chordproPreview && !chordproResult && (
+                    <div className="space-y-4" data-testid="chordpro-preview-results">
+                      {/* Skipped playlist files note */}
+                      {chordproPreview.counts.skipped_playlist > 0 && (
+                        <p className="text-xs text-gray-500">
+                          Skipped {chordproPreview.counts.skipped_playlist} playlist files (.lst). Playlist import is coming separately.
+                        </p>
+                      )}
+
+                      {/* Policy toggle */}
+                      <div className="bg-gray-700 rounded-lg p-4">
+                        <p className="text-sm font-medium text-gray-200 mb-2">When a song already has a chart</p>
+                        <div className="flex rounded-lg overflow-hidden w-max border border-gray-600">
+                          <button
+                            data-testid="chordpro-policy-skip"
+                            onClick={() => setChordproPolicy('skip')}
+                            className={`px-4 py-1.5 text-sm font-medium ${chordproPolicy === 'skip' ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-300'}`}
+                          >
+                            Skip
+                          </button>
+                          <button
+                            data-testid="chordpro-policy-replace"
+                            onClick={() => setChordproPolicy('replace')}
+                            className={`px-4 py-1.5 text-sm font-medium ${chordproPolicy === 'replace' ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-300'}`}
+                          >
+                            Replace
+                          </button>
+                        </div>
+                        {chordproChartedAttachCount > 0 && (
+                          <p className="text-sm text-yellow-200 mt-2">
+                            {chordproChartedAttachCount} matched song(s) already have a chart. Set to {chordproPolicy.toUpperCase()} ({chordproPolicy === 'skip' ? 'left untouched' : 'will be overwritten'}).
+                          </p>
                         )}
                       </div>
 
-                      {/* Needs review — possible matches */}
+                      {/* Collisions card */}
+                      {chordproCollisionGroups.length > 0 && (
+                        <div className="bg-gray-700 rounded-lg p-4" data-testid="chordpro-collision-card">
+                          <h4 className="font-bold text-red-300 mb-2">Conflicts ({chordproCollisionGroups.length})</h4>
+                          <div className="space-y-3">
+                            {chordproCollisionGroups.map((g) => {
+                              const cs = chordproCollState[g.target] || {};
+                              const resolved = cs.mode && !cs.editing;
+                              return (
+                                <div key={g.target} className="border border-gray-600 rounded-lg p-3">
+                                  <p className="text-sm text-white font-medium mb-1">{g.label}</p>
+                                  <p className="text-xs text-gray-400 mb-2">{g.items.length} files match this song</p>
+                                  {resolved ? (
+                                    <div className="flex justify-between items-center">
+                                      <p className="text-green-300 text-sm">
+                                        {cs.mode === 'keep'
+                                          ? `Keep one — attaching ${cs.keepPath}, discarding the rest`
+                                          : `Separate songs — ${g.items[0].zip_path} attaches, the others become new songs`}
+                                      </p>
+                                      <button onClick={() => editCollision(g.target)} className="text-purple-300 hover:text-purple-200 text-sm">Edit</button>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      <label className="flex items-start space-x-2 text-sm text-gray-200">
+                                        <input type="radio" name={`coll-${g.target}`} checked={cs.mode === 'keep'} onChange={() => resolveCollision(g.target, 'keep')} className="mt-1" />
+                                        <span>Same song, keep one chart</span>
+                                      </label>
+                                      {cs.mode === 'keep' && (
+                                        <div className="ml-6 space-y-1">
+                                          {g.items.map((it) => (
+                                            <label key={it.zip_path} className="flex items-center space-x-2 text-sm text-gray-300">
+                                              <input type="radio" name={`keep-${g.target}`} checked={(cs.keepPath || g.items[0].zip_path) === it.zip_path} onChange={() => setCollisionKeep(g.target, it.zip_path)} />
+                                              <span className="text-xs text-gray-400">{it.zip_path}</span>
+                                            </label>
+                                          ))}
+                                        </div>
+                                      )}
+                                      <label className="flex items-start space-x-2 text-sm text-gray-200">
+                                        <input type="radio" name={`coll-${g.target}`} checked={cs.mode === 'separate'} onChange={() => resolveCollision(g.target, 'separate')} className="mt-1" />
+                                        <span>Separate songs</span>
+                                      </label>
+                                      {cs.mode && (
+                                        <button onClick={() => doneCollision(g.target)} className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm font-bold">Done</button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Will attach to existing (non-colliding exacts) */}
+                      {(() => {
+                        const nonColliding = (chordproPreview.exact || []).filter((e) => !chordproCollidingPaths.has(e.zip_path));
+                        return (
+                          <div className="bg-gray-700 rounded-lg p-4">
+                            <h4 className="font-bold text-green-300 mb-2" data-testid="chordpro-exact-heading">
+                              Will attach to existing ({nonColliding.length})
+                            </h4>
+                            {nonColliding.length === 0 ? (
+                              <p className="text-gray-400 text-sm">None</p>
+                            ) : (
+                              <ul className="space-y-2">
+                                {nonColliding.map((e, idx) => {
+                                  const pill = chordproPillText('attach', !!e.existing_has_chart);
+                                  return (
+                                    <li key={idx} className="text-sm border-b border-gray-600 pb-2">
+                                      <span className="text-white font-medium">{e.parsed_title}</span>
+                                      <span className="text-gray-400"> — {e.parsed_artist || '(no artist)'}</span>
+                                      <span className="text-gray-500 text-xs ml-2">[{e.zip_path}]</span>
+                                      <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-200">{pill}</span>
+                                      {e.existing_has_chart && <span className="ml-2 text-xs text-yellow-300">already has a chart</span>}
+                                      <div className="text-green-300 text-xs">→ matches: {e.existing_title} — {e.existing_artist || '(no artist)'}</div>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            )}
+                          </div>
+                        );
+                      })()}
+
+                      {/* Possible matches — review each */}
                       <div className="bg-gray-700 rounded-lg p-4">
                         <h4 className="font-bold text-yellow-300 mb-2" data-testid="chordpro-fuzzy-heading">
-                          Needs review — possible matches ({chordproPreview.counts.fuzzy})
+                          Possible matches — review each ({chordproPreview.counts.fuzzy})
                         </h4>
                         {chordproPreview.fuzzy.length === 0 ? (
                           <p className="text-gray-400 text-sm">None</p>
                         ) : (
-                          <ul className="space-y-2">
-                            {chordproPreview.fuzzy.map((f, idx) => (
-                              <li key={idx} className="text-sm border-b border-gray-600 pb-2">
-                                <div className="grid grid-cols-2 gap-3">
-                                  <div>
-                                    <p className="text-gray-400 text-xs">From file [{f.filename}]:</p>
-                                    <p className="text-white font-medium">{f.parsed_title}</p>
-                                    <p className="text-gray-400">{f.parsed_artist || '(no artist)'}</p>
+                          <ul className="space-y-3">
+                            {chordproPreview.fuzzy.map((f, idx) => {
+                              const r = chordproResolutions[f.zip_path] || {};
+                              const attach = r.action === 'attach';
+                              const pill = chordproPillText(attach ? 'attach' : 'create', !!f.candidate_has_chart);
+                              return (
+                                <li key={idx} className="text-sm border-b border-gray-600 pb-3">
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                      <p className="text-white font-medium">{f.parsed_title}</p>
+                                      <p className="text-gray-400">{f.parsed_artist || '(no artist)'}</p>
+                                      <p className="text-gray-500 text-xs">[{f.zip_path}]</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-gray-400 text-xs">looks like: {f.candidate_title} — {f.candidate_artist || '(no artist)'} ({Math.round((f.similarity || 0) * 100)}%)</p>
+                                      {f.candidate_has_chart && <p className="text-yellow-300 text-xs">has chart</p>}
+                                    </div>
                                   </div>
-                                  <div>
-                                    <p className="text-gray-400 text-xs">Possible match:</p>
-                                    <p className="text-yellow-200 font-medium">{f.candidate_title}</p>
-                                    <p className="text-gray-400">{f.candidate_artist || '(no artist)'}</p>
+                                  <div className="flex items-center mt-2 space-x-2">
+                                    <div className="flex rounded-lg overflow-hidden border border-gray-600" data-testid={`chordpro-fuzzy-toggle-${idx}`}>
+                                      <button onClick={() => setFuzzy(f.zip_path, false, f.candidate_song_id)} className={`px-3 py-1 text-xs font-medium ${!attach ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-300'}`}>New</button>
+                                      <button onClick={() => setFuzzy(f.zip_path, true, f.candidate_song_id)} className={`px-3 py-1 text-xs font-medium ${attach ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-300'}`}>Attach</button>
+                                    </div>
+                                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-200">{pill}</span>
                                   </div>
-                                </div>
-                              </li>
-                            ))}
+                                </li>
+                              );
+                            })}
                           </ul>
                         )}
                       </div>
@@ -5247,7 +5597,7 @@ const MusicianDashboard = () => {
                               <li key={idx} className="text-sm border-b border-gray-600 pb-2">
                                 <span className="text-white font-medium">{n.parsed_title}</span>
                                 <span className="text-gray-400"> — {n.parsed_artist || '(no artist)'}</span>
-                                <span className="text-gray-500 text-xs ml-2">[{n.filename}]</span>
+                                <span className="text-gray-500 text-xs ml-2">[{n.zip_path}]</span>
                               </li>
                             ))}
                           </ul>
@@ -5270,6 +5620,26 @@ const MusicianDashboard = () => {
                             ))}
                           </ul>
                         )}
+                      </div>
+
+                      {/* Summary + Confirm */}
+                      <div className="bg-gray-700 rounded-lg p-4">
+                        <p className="text-sm text-gray-200 mb-3">
+                          {chordproSumAttach} attach · {chordproSumReplace} replace · {chordproSumCreate} create · {chordproSumSkip} skip
+                        </p>
+                        {chordproUnresolvedCollisions && (
+                          <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-200 text-sm mb-3">
+                            Resolve all conflicts above before importing.
+                          </div>
+                        )}
+                        <button
+                          data-testid="chordpro-confirm-btn"
+                          onClick={commitChordproImport}
+                          disabled={chordproConfirmDisabled}
+                          className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold transition duration-300 disabled:opacity-50"
+                        >
+                          {chordproCommitting ? 'Importing...' : 'Confirm & import'}
+                        </button>
                       </div>
                     </div>
                   )}
