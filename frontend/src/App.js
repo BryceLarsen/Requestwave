@@ -6801,6 +6801,21 @@ const MusicianDashboard = () => {
                             >
                               Edit
                             </button>
+                            {(((song.chart_type === 'link' || song.chart_type === 'pdf') && song.chart_url) || (song.chart_type === 'chordpro' && song.chart_chordpro)) && (
+                              <button
+                                onClick={() => {
+                                  if (song.chart_type === 'chordpro') {
+                                    setOpenChordpro({ chordpro: song.chart_chordpro, title: song.title });
+                                  } else {
+                                    window.open(song.chart_url, '_blank');
+                                  }
+                                }}
+                                className="bg-purple-600 hover:bg-purple-700 px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition duration-300 whitespace-nowrap"
+                                title="Open chart"
+                              >
+                                📄 Chart
+                              </button>
+                            )}
                             {renderLearnLaterBookmark({ song, size: 20 })}
                             {/* NEW: Hide/Show Button */}
                             <button
