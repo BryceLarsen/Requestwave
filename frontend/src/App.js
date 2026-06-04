@@ -4041,22 +4041,40 @@ const MusicianDashboard = () => {
   const chordproCollidingPaths = new Set();
   const chordproChartedById = {};
   if (chordproPreview) {
-    const groupMap = {};
+    const memberMap = {};
+    const labelMap = {};
     (chordproPreview.exact || []).forEach((e) => {
-      if (!groupMap[e.existing_song_id]) groupMap[e.existing_song_id] = [];
-      groupMap[e.existing_song_id].push(e);
+      if (!memberMap[e.existing_song_id]) memberMap[e.existing_song_id] = [];
+      memberMap[e.existing_song_id].push({
+        zip_path: e.zip_path,
+        origin: 'exact',
+        parsed_title: e.parsed_title,
+        parsed_artist: e.parsed_artist
+      });
+      labelMap[e.existing_song_id] = e.existing_title + ' — ' + (e.existing_artist || '(no artist)');
       if (e.existing_has_chart) chordproChartedById[e.existing_song_id] = true;
     });
     (chordproPreview.fuzzy || []).forEach((f) => {
+      if (!memberMap[f.candidate_song_id]) memberMap[f.candidate_song_id] = [];
+      memberMap[f.candidate_song_id].push({
+        zip_path: f.zip_path,
+        origin: 'fuzzy',
+        parsed_title: f.parsed_title,
+        parsed_artist: f.parsed_artist
+      });
+      if (labelMap[f.candidate_song_id] === undefined) {
+        labelMap[f.candidate_song_id] = f.candidate_title + ' — ' + (f.candidate_artist || '(no artist)');
+      }
       if (f.candidate_has_chart) chordproChartedById[f.candidate_song_id] = true;
     });
-    Object.entries(groupMap).forEach(([target, items]) => {
-      if (items.length >= 2) {
-        chordproCollisionGroups.push({
-          target,
-          items,
-          label: items[0].existing_title + ' — ' + (items[0].existing_artist || '(no artist)')
-        });
+    Object.entries(memberMap).forEach(([target, items]) => {
+      const activeAttach = items.filter((m) => {
+        const r = chordproResolutions[m.zip_path];
+        return r && r.action === 'attach' && r.target_song_id === target;
+      }).length;
+      const forced = chordproCollState[target] && chordproCollState[target].mode;
+      if (activeAttach >= 2 || forced) {
+        chordproCollisionGroups.push({ target, items, label: labelMap[target] });
         items.forEach((it) => chordproCollidingPaths.add(it.zip_path));
       }
     });
@@ -5545,44 +5563,49 @@ const MusicianDashboard = () => {
                       })()}
 
                       {/* Possible matches — review each */}
-                      <div className="bg-gray-700 rounded-lg p-4">
-                        <h4 className="font-bold text-yellow-300 mb-2" data-testid="chordpro-fuzzy-heading">
-                          Possible matches — review each ({chordproPreview.counts.fuzzy})
-                        </h4>
-                        {chordproPreview.fuzzy.length === 0 ? (
-                          <p className="text-gray-400 text-sm">None</p>
-                        ) : (
-                          <ul className="space-y-3">
-                            {chordproPreview.fuzzy.map((f, idx) => {
-                              const r = chordproResolutions[f.zip_path] || {};
-                              const attach = r.action === 'attach';
-                              const pill = chordproPillText(attach ? 'attach' : 'create', !!f.candidate_has_chart);
-                              return (
-                                <li key={idx} className="text-sm border-b border-gray-600 pb-3">
-                                  <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                      <p className="text-white font-medium">{f.parsed_title}</p>
-                                      <p className="text-gray-400">{f.parsed_artist || '(no artist)'}</p>
-                                      <p className="text-gray-500 text-xs">[{f.zip_path}]</p>
+                      {(() => {
+                        const nonCollidingFuzzy = (chordproPreview.fuzzy || []).filter((f) => !chordproCollidingPaths.has(f.zip_path));
+                        return (
+                        <div className="bg-gray-700 rounded-lg p-4">
+                          <h4 className="font-bold text-yellow-300 mb-2" data-testid="chordpro-fuzzy-heading">
+                            Possible matches — review each ({nonCollidingFuzzy.length})
+                          </h4>
+                          {nonCollidingFuzzy.length === 0 ? (
+                            <p className="text-gray-400 text-sm">None</p>
+                          ) : (
+                            <ul className="space-y-3">
+                              {nonCollidingFuzzy.map((f, idx) => {
+                                const r = chordproResolutions[f.zip_path] || {};
+                                const attach = r.action === 'attach';
+                                const pill = chordproPillText(attach ? 'attach' : 'create', !!f.candidate_has_chart);
+                                return (
+                                  <li key={idx} className="text-sm border-b border-gray-600 pb-3">
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div>
+                                        <p className="text-white font-medium">{f.parsed_title}</p>
+                                        <p className="text-gray-400">{f.parsed_artist || '(no artist)'}</p>
+                                        <p className="text-gray-500 text-xs">[{f.zip_path}]</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-gray-400 text-xs">looks like: {f.candidate_title} — {f.candidate_artist || '(no artist)'} ({Math.round((f.similarity || 0) * 100)}%)</p>
+                                        {f.candidate_has_chart && <p className="text-yellow-300 text-xs">has chart</p>}
+                                      </div>
                                     </div>
-                                    <div>
-                                      <p className="text-gray-400 text-xs">looks like: {f.candidate_title} — {f.candidate_artist || '(no artist)'} ({Math.round((f.similarity || 0) * 100)}%)</p>
-                                      {f.candidate_has_chart && <p className="text-yellow-300 text-xs">has chart</p>}
+                                    <div className="flex items-center mt-2 space-x-2">
+                                      <div className="flex rounded-lg overflow-hidden border border-gray-600" data-testid={`chordpro-fuzzy-toggle-${idx}`}>
+                                        <button onClick={() => setFuzzy(f.zip_path, false, f.candidate_song_id)} className={`px-3 py-1 text-xs font-medium ${!attach ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-300'}`}>New</button>
+                                        <button onClick={() => setFuzzy(f.zip_path, true, f.candidate_song_id)} className={`px-3 py-1 text-xs font-medium ${attach ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-300'}`}>Attach</button>
+                                      </div>
+                                      <span className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-200">{pill}</span>
                                     </div>
-                                  </div>
-                                  <div className="flex items-center mt-2 space-x-2">
-                                    <div className="flex rounded-lg overflow-hidden border border-gray-600" data-testid={`chordpro-fuzzy-toggle-${idx}`}>
-                                      <button onClick={() => setFuzzy(f.zip_path, false, f.candidate_song_id)} className={`px-3 py-1 text-xs font-medium ${!attach ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-300'}`}>New</button>
-                                      <button onClick={() => setFuzzy(f.zip_path, true, f.candidate_song_id)} className={`px-3 py-1 text-xs font-medium ${attach ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-300'}`}>Attach</button>
-                                    </div>
-                                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-200">{pill}</span>
-                                  </div>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        )}
-                      </div>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                        </div>
+                        );
+                      })()}
 
                       {/* Will create new */}
                       <div className="bg-gray-700 rounded-lg p-4">
