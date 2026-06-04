@@ -6060,6 +6060,7 @@ async def preview_chordpro_import(
         })
 
     exact, fuzzy, new_entries, could_not_parse = [], [], [], []
+    skipped_playlist = 0
 
     for info in zf.infolist():
         if info.is_dir():
@@ -6070,6 +6071,8 @@ async def preview_chordpro_import(
         if "__MACOSX" in name or base == ".DS_Store" or base.startswith("._"):
             continue
         if not base.lower().endswith(CHORDPRO_EXTENSIONS):
+            if base.lower().endswith(".lst"):
+                skipped_playlist += 1
             continue
 
         try:
@@ -6153,6 +6156,7 @@ async def preview_chordpro_import(
             "fuzzy": len(fuzzy),
             "new": len(new_entries),
             "could_not_parse": len(could_not_parse),
+            "skipped_playlist": skipped_playlist,
         },
         "exact": exact,
         "fuzzy": fuzzy,
