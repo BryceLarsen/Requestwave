@@ -22,7 +22,7 @@ from datetime import datetime
 import time
 
 # Configuration - Use external URL for testing
-BACKEND_URL = "https://multi-show-analytics.preview.emergentagent.com/api"
+BACKEND_URL = "https://bulk-charts.preview.emergentagent.com/api"
 TEST_MUSICIAN_ID = "a39296f0-20da-4516-85d1-56af59eb772f"  # Bryce Larsen
 TEST_SONG_ID = "4e23f254-db09-480a-93c2-17019e9fca0e"  # We Don't Talk About Bruno
 TEST_EMAIL = "brycelarsenmusic@gmail.com"

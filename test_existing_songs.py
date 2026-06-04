@@ -7,7 +7,7 @@ import requests
 import json
 
 # Configuration
-BASE_URL = "https://multi-show-analytics.preview.emergentagent.com/api"
+BASE_URL = "https://bulk-charts.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {

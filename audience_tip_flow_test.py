@@ -23,7 +23,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://multi-show-analytics.preview.emergentagent.com/api"
+BASE_URL = "https://bulk-charts.preview.emergentagent.com/api"
 
 # Test musician with complete payment and social media info
 TEST_MUSICIAN = {

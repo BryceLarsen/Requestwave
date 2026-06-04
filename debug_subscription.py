@@ -6,7 +6,7 @@ Quick test to check both subscription status functions for brycelarsenmusic@gmai
 import requests
 import json
 
-BASE_URL = "https://multi-show-analytics.preview.emergentagent.com/api"
+BASE_URL = "https://bulk-charts.preview.emergentagent.com/api"
 PRO_MUSICIAN = {
     "email": "brycelarsenmusic@gmail.com",
     "password": "RequestWave2024!"

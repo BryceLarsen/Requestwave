@@ -1,29 +1,29 @@
 <analysis>**original_problem_statement**: 
 **Sprint 1, 2, 3 & 10 Goals: Multi-Profile & Events System, Analytics Enhancements, Show-Scoped Features, Deployment Readiness, and Chart Support**
-The application requires a robust Multi-Profile system where one musician account can have multiple profiles. Recent focus is on per-show analytics dashboards, handling unassigned requests, adding Learn Later toggles, generating a standalone Admin panel, handling , and adding Song Chart support (Link or PDF).
-
-**PRODUCT REQUIREMENTS**
-- Add read-only  and  indicators to the On Stage interface.
-- Add  (link/pdf) and  fields to backend song models with non-destructive updates.
-- Update frontend song forms to support adding/editing charts (URL + Type).
-- Show a Charts button on active request cards (both in the dashboard tab and standalone On Stage view) when a song has a linked chart.
+The application requires a robust Multi-Profile system where one musician account can have multiple profiles. Recent focus is on per-show analytics dashboards, handling unassigned requests, adding Learn Later toggles, generating a standalone Admin panel, handling , and adding Song Chart support. 
+PRODUCT REQUIREMENTS: 
+- Add  (link/pdf/chordpro) and / fields to backend song models.
+- Update frontend song forms to support adding/editing charts (URL + Type + ChordPro Textarea).
+- Show a Charts button on active request cards when a song has a linked chart or chordpro.
+- Build an in-app  using  to parse and render ChordPro text.
 - Build a profile-scoped Show Analytics dashboard.
-- Create a quick data-audit endpoint to flag profiles/shows relying on legacy playlist filters.
+- Create a quick data-audit endpoint to flag legacy playlist filters.
+- Implement full Zip Import & Parse UI for bulk ChordPro files (.cho, .crd, etc.), with collision resolution (Exact/Fuzzy/New match buckets).
 
 **User's preferred language**: English (INSTRUCT next agent to respond in English only)
 
 **what currently exists?** 
-A monolithic React frontend (), a standalone admin UI (), and a FastAPI backend () with MongoDB. The system supports a complex Multi-Profile and Events hierarchy, dynamic per-show analytics, configurable email capture logic, robust routing, and now Song Charts (URLs/PDFs). The app relies on post-build HTML emission () to bypass Cloudflare bot protections. There are TWO environments: PREVIEW (dev) and PRODUCTION (live deployment).
+A monolithic React frontend (), a standalone admin UI (), and a FastAPI backend () with MongoDB. The system supports a Multi-Profile and Events hierarchy, dynamic per-show analytics, configurable email capture logic, and dynamic origin routing. Song Charts are now fully supported for URLs (Link/PDF) and ChordPro (parsed and rendered in-app). The app now fully supports bulk importing ChordPro files via ZIP uploads, including a backend commit endpoint with collision detection and a responsive frontend resolution UI. Post-build HTML emission () bypasses Cloudflare bot protections. PREVIEW and PRODUCTION environments exist.
 
 **Last working item**: 
-    - Last item agent was working: Re-adding the 📄 Charts button to the standalone  view (route ) inside the  component, after previously adding it to the  inline On Stage tab.
+    - Last item agent was working: Frontend UX fix for the ChordPro import commit UI. Added an unresolved conflict count, an anchor to smooth-scroll down to the conflicts card, replaced a static block-warning above the Confirm button with a clickable scroll button, and updated the conflicts card heading to reflect unresolved counts dynamically.
     - Status: USER VERIFICATION PENDING
     - Agent Testing Done: Y
-    - Which testing method agent to use? Screenshot tool 
+    - Which testing method agent to use? manual testing by curl/ python -c / screenshot tool
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:  
-*(None active. All recent UI adjustments and backend fixes were resolved.)*
+*(None active)*
 
 **In progress Task List**: 
 *(None active)*
@@ -39,14 +39,20 @@ A monolithic React frontend (), a standalone admin UI (), and a FastAPI backend 
     - Integration (P3): Integrate with Spotify Web API for song data enrichment.
 
 **Completed work in this session**
-- UI: Added email (✉️) and tapped tip (💰) read-only status indicators to the  component (DONE).
-- Backend (Sprint 10): Added  and  to  /  models, updated  &  to persist fields non-destructively (DONE).
-- Frontend (Sprint 10): Added Chart section (None/Link/PDF selector + URL input) to the Add Song form and Edit Song modal (DONE).
-- Frontend (Sprint 10): Added a small 📄 Charts button to  inline request cards (Live Requests and Up Next panels) (DONE).
-- Frontend (Sprint 10): Re-added the 📄 Charts button to the  component used in the standalone  view (DONE).
+- : Created  endpoint for parsing/bucketing ChordPro ZIP uploads (read-only) (DONE).
+- : Created  endpoint for executing bulk ChordPro inserts/updates with collision guard (DONE).
+- : Added metadata properties (, ,  counts) to preview responses and ensured  is explicitly set during commit (DONE).
+- : Built interactive UI for ChordPro ZIP import (resolutions state, collision mode logic, fuzzy toggles, policy overrides) (DONE).
+- : Fixed dynamic collision logic to appropriately group fuzzy+fuzzy and fuzzy+exact matches on the same target song (DONE).
+- : Added a 📄 Chart button directly to the song cards in the Songs tab (DONE).
+- : Improved the UX of the ChordPro collision resolution UI by adding dynamic scroll buttons and remaining conflict counts (DONE).
 
 **Earlier issues found/mentioned but not fixed**
-*(None)*
+   Issue 1: 
+   - Debug checklist: In  (standalone view), the auth-required  endpoint call shares a  block with the public requests poll.
+   - Why to solve this issue and what will be achieved with this? Unauthenticated audience members viewing the standalone stage link might fail to fetch updates if the 403 error on suggestions breaks the shared try-block. 
+   - Should Test frontend/backend/both after fix: Frontend
+   - Is recurring issue? N
 
 **Known issue recurrence from previous fork**
   - Issue recurrence in previous fork: N/A
@@ -57,56 +63,53 @@ A monolithic React frontend (), a standalone admin UI (), and a FastAPI backend 
 
 
 **Key Technical Concepts**
-- State-Driven Conditional UI (React state in a single component)
+- State-Driven Conditional UI (React state in a single giant component)
 - 3-tier Data Merging: Master Musician -> Profile -> Event
 - Dynamic Origin Routing: Audience URLs are generated at runtime using .
-- Post-build HTML emission:  contains a script to copy  to .
+- Post-build HTML emission () bypasses Cloudflare.
+-  parsing: Utilizes  and  for rendering lyrics/chords on the frontend.
+- Zip bulk processing in memory without writing temp files to disk.
 
 **key DB schema**
-  - :  (updated)
-  - : 
-  - : 
-  - : 
-  - : 
+  - :  
 
 **changes in tech stack**
-  - None in this session.
+  - No new libraries added in this session.
 
 **All files of reference** 
-  -  (Updated to handle new song chart fields)
-  -  (Updated state conditions, chart inputs, and On Stage UI rendering)
-  -  (updated)
-  - 
+  -  (Updated with new ChordPro import/commit endpoints)
+  -  (Updated with ChordPro import review UI, UX fixes, and Songs tab Chart button)
+  -  (Updated with ChordPro bulk import logic)
 
 **Areas that need refactoring**: 
-  -  (over 15,000 lines) and  (over 9,500 lines). Highly fragile. **DO NOT REFACTOR until explicitly asked by the user.**
+  -  (nearly 16,000 lines) and  (nearly 10,000 lines). Highly fragile. **DO NOT REFACTOR until explicitly asked by the user.**
 
 **key api endpoints**
   - , , 
   - 
-  -  & 
+  - 
+  - 
 
 **Critical Info for New Agent** 
-- **Production Environment Exists:** The user has a live deployment. If a bug is reported, clarify if it is in PREVIEW or PRODUCTION. You can only write code in PREVIEW. 
-- **Two On Stage Views:** 1.  has an inline On Stage tab which uses its own inline markup for requests. 2.  is a standalone view at  that uses the  component. Both must be kept in sync visually when adding features like the Charts button.
-- **Admin Routing:** The admin panel lives at  (not ).
-- **Monolithic State Warnings:** Changes inside  often bleed into other tabs. Rely on localized screenshots or curl checks.
+- **Production Environment Exists:** The user has a live deployment (). You can only write code in PREVIEW. If bugs are reported, strictly clarify which environment the user is looking at.
+- **Hibernating Servers Gate:** The frontend preview server may hibernate if inactive. e2e testing with a screenshot tool might hit a Wake up servers screen. Trust local linting and curl backend tests if frontend is completely asleep.
+- **Monolithic State Warnings:** Changes inside  often bleed into other tabs due to heavy file size. Make extremely precise edits.
+- DO NOT add a secondary  anywhere; always reuse the existing modal and its  state.
 
 **documents and test reports created in this job**
   - 
   - 
 
 **Last 10 User Messages and any pending HUMAN messages** 
- 1. **User**: Re-add Charts button to the standalone  view (route ). (Completed)
- 2. **User**: Remove Charts button from  and add it to  inline request markup (Live Requests & Up Next). (Completed)
- 3. **User**: The CHART DEBUG log never fires... Find the component that logs [On Stage] Fetching data scoped to show. Confirm which component is rendering. (Resolved/Clarified)
- 4. **User**: Add a temporary  console.log immediately before the  render in . (Completed)
- 5. **User**: Query the DB directly for the song document and tell me if  /  are populated and present in the  response. (Completed - Diagnostic provided)
- 6. **User**: Read-only check - show me the exact lines for  render sites and button render condition in . (Completed)
- 7. **User**: Sprint 10 Prompt 2: chart UI. Add chart UI section to forms, update state persistence, and add Charts button to . (Completed)
- 8. **User**: Sprint 10 Prompt 1: chart fields backend. Add  and  to  /  models, handle non-destructive updates. (Completed)
- 9. **User**: Add email and tapped tip small status indicators to each  in . (Completed)
- 10. **User**: Confirm the plan. (Completed)
+ 1. **User**: Backend + a minimal frontend upload UI for ChordPro ZIP Import *PREVIEW* step. (Completed)
+ 2. **User**: Backend additive change to  to attach  and . (Completed)
+ 3. **User**: Backend add  for actual DB write from ZIP files with resolutions payload. (Completed)
+ 4. **User**: Backend change to  to count skipped  files. (Completed)
+ 5. **User**: Frontend: Turn the read-only ChordPro preview into an interactive commit UI (resolutions state, collision grouping, etc). (Completed)
+ 6. **User**: Frontend UX fix: Make collision detection dynamic to cover fuzzy+fuzzy and fuzzy+exact matches on the same target. (Completed)
+ 7. **User**: Backend bug fix: Set  when attaching or creating charts in the import commit handler. (Completed)
+ 8. **User**: Frontend: Add 📄 Chart button directly onto song cards in the Songs tab. (Completed)
+ 9. **User**: Frontend UX fix: Add unresolved conflict count and clickable scroll-to-conflicts button to the import UI. (Completed)
  *(No pending messages)*
 
 **Project Health Check:**
@@ -121,10 +124,10 @@ A monolithic React frontend (), a standalone admin UI (), and a FastAPI backend 
   - Stripe (Payments) — requires User API Key
 
 **Testing status**
-  - Testing agent used after significant changes: NO (relied heavily on bash/curl validations & localized component screenshotting)
+  - Testing agent used after significant changes: NO (Due to preview server hibernation state, main agent self-tested logic locally using bash linting & curl verification).
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: None
-  - Known regressions: None
+  - Known regressions: None (Exception: pre-existing 403 bug on  without auth).
 
 **Credentials to test flow:**
   Check 
@@ -132,4 +135,4 @@ A monolithic React frontend (), a standalone admin UI (), and a FastAPI backend 
   - Admin Password:  (found in )
 
 **What agent forgot to execute**
-  - None. All Sprint 10 chart requirements and UI updates were properly applied to both dashboard and standalone views. Ensure the user's go-ahead for remaining P2 tasks (tip conversion analytics or data audit) before proceeding.</analysis>
+  - None. All backend and frontend tasks requested by the user regarding ChordPro ZIP bulk imports, parsing, collision management, and UX refinements were strictly executed. Verify with the user before picking up the P2 Analytics or Data Hygiene tasks.</analysis>

@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://multi-show-analytics.preview.emergentagent.com/api"
+BASE_URL = "https://bulk-charts.preview.emergentagent.com/api"
 
 class DemoAccountCreator:
     def __init__(self):
@@ -285,7 +285,7 @@ class DemoAccountCreator:
         print("=" * 60)
         print(f"📧 Email: {demo_musician['email']}")
         print(f"🔑 Password: {demo_musician['password']}")
-        print(f"🌐 Public URL: https://multi-show-analytics.preview.emergentagent.com/musician/{self.demo_slug}")
+        print(f"🌐 Public URL: https://bulk-charts.preview.emergentagent.com/musician/{self.demo_slug}")
         print(f"🎵 Musician Slug: {self.demo_slug}")
         print(f"🆔 Account ID: {self.demo_musician_id}")
         print("\n✨ PRO FEATURES ENABLED:")

@@ -11,8 +11,8 @@ import sys
 import time
 
 # Configuration
-PREVIEW_FRONTEND_URL = "https://multi-show-analytics.preview.emergentagent.com"
-PREVIEW_BACKEND_URL = "https://multi-show-analytics.preview.emergentagent.com/api"
+PREVIEW_FRONTEND_URL = "https://bulk-charts.preview.emergentagent.com"
+PREVIEW_BACKEND_URL = "https://bulk-charts.preview.emergentagent.com/api"
 TEST_MUSICIAN_SLUG = "bryce-larsen"
 
 def simulate_browser_request_flow():
