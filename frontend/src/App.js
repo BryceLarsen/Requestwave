@@ -4189,6 +4189,9 @@ const MusicianDashboard = () => {
   const chordproUnresolvedCollisions = chordproCollisionGroups.some(
     (g) => !(chordproCollState[g.target] && chordproCollState[g.target].mode)
   );
+  const chordproUnresolvedCount = chordproCollisionGroups.filter(
+    (g) => !(chordproCollState[g.target] && chordproCollState[g.target].mode)
+  ).length;
   const chordproConfirmDisabled = chordproUnresolvedCollisions || chordproCommitting;
 
   const closeChordproImport = () => {
@@ -5480,8 +5483,8 @@ const MusicianDashboard = () => {
 
                       {/* Collisions card */}
                       {chordproCollisionGroups.length > 0 && (
-                        <div className="bg-gray-700 rounded-lg p-4" data-testid="chordpro-collision-card">
-                          <h4 className="font-bold text-red-300 mb-2">Conflicts ({chordproCollisionGroups.length})</h4>
+                        <div id="chordpro-conflicts-anchor" className="bg-gray-700 rounded-lg p-4" data-testid="chordpro-collision-card">
+                          <h4 className="font-bold text-red-300 mb-2">Conflicts ({chordproUnresolvedCount} unresolved of {chordproCollisionGroups.length})</h4>
                           <div className="space-y-3">
                             {chordproCollisionGroups.map((g) => {
                               const cs = chordproCollState[g.target] || {};
@@ -5651,9 +5654,16 @@ const MusicianDashboard = () => {
                           {chordproSumAttach} attach · {chordproSumReplace} replace · {chordproSumCreate} create · {chordproSumSkip} skip
                         </p>
                         {chordproUnresolvedCollisions && (
-                          <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-200 text-sm mb-3">
-                            Resolve all conflicts above before importing.
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const el = document.getElementById('chordpro-conflicts-anchor');
+                              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }}
+                            className="w-full text-left bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-200 text-sm mb-3 hover:bg-red-500/30 transition duration-200"
+                          >
+                            {chordproUnresolvedCount} unresolved conflict{chordproUnresolvedCount === 1 ? '' : 's'} above — tap to review and resolve before importing.
+                          </button>
                         )}
                         <button
                           data-testid="chordpro-confirm-btn"
