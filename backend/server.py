@@ -6056,6 +6056,7 @@ async def preview_chordpro_import(
             "artist": doc.get("artist", "") or "",
             "norm_title": _normalize_for_match(doc.get("title", "") or ""),
             "norm_artist": _normalize_for_match(doc.get("artist", "") or ""),
+            "has_chart": bool((doc.get("chart_chordpro") or "").strip()),
         })
 
     exact, fuzzy, new_entries, could_not_parse = [], [], [], []
@@ -6100,6 +6101,8 @@ async def preview_chordpro_import(
                 "existing_song_id": exact_match["id"],
                 "existing_title": exact_match["title"],
                 "existing_artist": exact_match["artist"],
+                "existing_has_chart": exact_match["has_chart"],
+                "zip_path": name,
                 "chart_chordpro": text,
             })
             continue
@@ -6128,6 +6131,8 @@ async def preview_chordpro_import(
                 "candidate_song_id": best_candidate["id"],
                 "candidate_title": best_candidate["title"],
                 "candidate_artist": best_candidate["artist"],
+                "candidate_has_chart": best_candidate["has_chart"],
+                "zip_path": name,
                 "similarity": round(best_ratio, 3),
                 "chart_chordpro": text,
             })
@@ -6138,6 +6143,7 @@ async def preview_chordpro_import(
             "filename": base,
             "parsed_title": title,
             "parsed_artist": artist,
+            "zip_path": name,
             "chart_chordpro": text,
         })
 
