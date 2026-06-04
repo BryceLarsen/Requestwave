@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, UploadFile, File, Request as FastAPIRequest, Response, Query, Body
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, UploadFile, File, Form, Request as FastAPIRequest, Response, Query, Body
 from fastapi.routing import APIRoute
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
@@ -6159,6 +6159,164 @@ async def preview_chordpro_import(
         "new": new_entries,
         "could_not_parse": could_not_parse,
     }
+
+
+@api_router.post("/songs/chordpro-import/commit")
+async def commit_chordpro_import(
+    file: UploadFile = File(...),
+    resolutions: str = Form(...),
+    existing_chart_policy: str = Form("skip"),
+    musician_id: str = Depends(get_current_musician)
+):
+    """
+    COMMIT counterpart to /songs/chordpro-import/preview.
+
+    Applies user-chosen resolutions (keyed by the in-zip `zip_path`) to attach a parsed
+    ChordPro chart to an existing song, create a new song, or skip. All validation
+    (including the collision guard) runs BEFORE any database write.
+    """
+    # ---- STEP 1: VALIDATE (before ANY write) ----
+    # a) resolutions must be a valid JSON object
+    try:
+        parsed_resolutions = json.loads(resolutions)
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=400, detail="Invalid resolutions payload")
+    if not isinstance(parsed_resolutions, dict):
+        raise HTTPException(status_code=400, detail="Invalid resolutions payload")
+
+    # b) policy must be valid
+    if existing_chart_policy not in ("skip", "replace"):
+        raise HTTPException(status_code=400, detail="existing_chart_policy must be 'skip' or 'replace'")
+
+    # c) COLLISION GUARD: no target_song_id may be referenced by more than one attach entry
+    attach_targets = []
+    for res in parsed_resolutions.values():
+        if isinstance(res, dict) and res.get("action") == "attach":
+            tid = res.get("target_song_id")
+            if tid:
+                attach_targets.append(tid)
+    seen = set()
+    for tid in attach_targets:
+        if tid in seen:
+            raise HTTPException(
+                status_code=400,
+                detail="Conflict: multiple files target the same song. Resolve collisions before committing."
+            )
+        seen.add(tid)
+
+    # ---- STEP 2: RE-PARSE THE ZIP (mirror preview exactly so zip_path values match) ----
+    content = await file.read()
+    if len(content) > 25 * 1024 * 1024:  # 25MB limit
+        raise HTTPException(status_code=400, detail="File size must be less than 25MB")
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(content))
+    except zipfile.BadZipFile:
+        raise HTTPException(status_code=400, detail="Uploaded file is not a valid ZIP archive")
+
+    # ---- STEP 3: EXECUTE per file (best-effort) ----
+    attached = 0
+    replaced = 0
+    created = 0
+    skipped = 0
+    skipped_existing_chart = []
+    failed = []
+
+    for info in zf.infolist():
+        if info.is_dir():
+            continue
+        name = info.filename
+        base = name.split("/")[-1]
+        if "__MACOSX" in name or base == ".DS_Store" or base.startswith("._"):
+            continue
+        if not base.lower().endswith(CHORDPRO_EXTENSIONS):
+            continue
+
+        res = parsed_resolutions.get(name)
+        action = res.get("action") if isinstance(res, dict) else None
+
+        try:
+            raw = zf.read(info)
+            text = raw.decode("utf-8", errors="replace")
+            title, artist = _parse_chordpro_directives(text)
+            if not title:
+                # cannot be acted on
+                continue
+
+            if res is None or action == "skip":
+                skipped += 1
+                continue
+
+            if action == "attach":
+                target_id = res.get("target_song_id")
+                if not target_id:
+                    failed.append({"zip_path": name, "action": "attach", "error": "target_song_id missing"})
+                    continue
+                song = await db.songs.find_one({"id": target_id, "musician_id": musician_id})
+                if not song:
+                    failed.append({"zip_path": name, "action": "attach", "error": "target song not found or not owned"})
+                    continue
+                existing = (song.get("chart_chordpro") or "").strip()
+                if existing and existing_chart_policy == "skip":
+                    skipped_existing_chart.append({
+                        "zip_path": name,
+                        "target_song_id": target_id,
+                        "title": song.get("title", ""),
+                    })
+                    continue
+                await db.songs.update_one(
+                    {"id": target_id, "musician_id": musician_id},
+                    {"$set": {"chart_chordpro": text}}
+                )
+                if existing and existing_chart_policy == "replace":
+                    replaced += 1
+                else:
+                    attached += 1
+                continue
+
+            if action == "create":
+                genre_mood_data = assign_genre_and_mood(title, artist)
+                song_dict = {
+                    "id": str(uuid.uuid4()),
+                    "musician_id": musician_id,
+                    "title": title,
+                    "artist": artist,
+                    "genres": [genre_mood_data["genre"]],
+                    "moods": [genre_mood_data["mood"]],
+                    "year": None,
+                    "decade": None,
+                    "notes": "",
+                    "request_count": 0,
+                    "hidden": False,
+                    "chart_type": None,
+                    "chart_url": "",
+                    "chart_chordpro": text,
+                    "created_at": datetime.now(timezone.utc),
+                }
+                await db.songs.insert_one(song_dict)
+                created += 1
+                continue
+
+            # Unknown action -> treat as skip (no resolution match for known actions)
+            skipped += 1
+        except Exception as e:
+            failed.append({"zip_path": name, "action": action if action else "unknown", "error": str(e)})
+            continue
+
+    # ---- STEP 4: RETURN ----
+    return {
+        "counts": {
+            "attached": attached,
+            "replaced": replaced,
+            "created": created,
+            "skipped": skipped,
+            "skipped_existing_chart": len(skipped_existing_chart),
+            "failed": len(failed),
+        },
+        "skipped_existing_chart": skipped_existing_chart,
+        "failed": failed,
+    }
+
+
 
 
 # LST Upload endpoints  
