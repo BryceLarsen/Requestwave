@@ -6269,7 +6269,7 @@ async def commit_chordpro_import(
                     continue
                 await db.songs.update_one(
                     {"id": target_id, "musician_id": musician_id},
-                    {"$set": {"chart_chordpro": text}}
+                    {"$set": {"chart_chordpro": text, "chart_type": "chordpro"}}
                 )
                 if existing and existing_chart_policy == "replace":
                     replaced += 1
@@ -6291,7 +6291,7 @@ async def commit_chordpro_import(
                     "notes": "",
                     "request_count": 0,
                     "hidden": False,
-                    "chart_type": None,
+                    "chart_type": "chordpro",
                     "chart_url": "",
                     "chart_chordpro": text,
                     "created_at": datetime.now(timezone.utc),
