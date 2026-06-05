@@ -560,7 +560,8 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
         .chordpro-body .chord-sheet { max-width: 100%; box-sizing: border-box; }
         .chordpro-body .chord-sheet .paragraph { margin: 0 0 1.25rem 0; max-width: 100%; }
         .chordpro-body .chord-sheet .row { display: flex; flex-wrap: wrap; align-items: flex-end; width: 100%; max-width: 100%; box-sizing: border-box; }
-        .chordpro-body .chord-sheet .column { display: inline-flex; flex-direction: column; padding-right: 0.5em; max-width: 100%; box-sizing: border-box; }
+        .chordpro-body .chord-sheet .column { display: inline-flex; flex-direction: column; padding-right: 0; max-width: 100%; box-sizing: border-box; }
+        .chordpro-body .chord-sheet .column:has(.lyrics:empty) { padding-right: 0.5em; }
         .chordpro-body .chord-sheet .chord {
           color: #a855f7;
           font-weight: 700;
