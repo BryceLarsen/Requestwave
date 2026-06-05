@@ -570,24 +570,26 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
       onClick={onClose}
     >
       <style>{`
-        .chordpro-body { font-family: 'Courier New', Courier, monospace; max-width: 100%; overflow-x: hidden; }
-        .chordpro-body .title,
-        .chordpro-body .subtitle { display: none; }
+        .chordpro-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; max-width: 100%; overflow-x: hidden; }
+        .chordpro-body .title { display: none; }
+        .chordpro-body .subtitle { display: block; font-size: 13px; font-style: italic; opacity: .7; margin: 0 0 14px; }
         .chordpro-body .chord-sheet { max-width: 100%; box-sizing: border-box; }
         .chordpro-body .chord-sheet .paragraph { margin: 0 0 1.25rem 0; max-width: 100%; }
         .chordpro-body .chord-sheet .row { display: flex; flex-wrap: wrap; align-items: flex-end; width: 100%; max-width: 100%; box-sizing: border-box; }
         .chordpro-body .chord-sheet .column { display: inline-flex; flex-direction: column; padding-right: 0; max-width: 100%; box-sizing: border-box; }
         .chordpro-body .chord-sheet .chord {
           color: #a855f7;
-          font-weight: 700;
+          font-weight: 800;
           font-size: 18px;
-          line-height: 1.4;
-          min-height: 1.4em;
+          line-height: 1;
+          min-height: 1em;
+          margin-bottom: 2px;
           white-space: pre;
         }
         .chordpro-body .chord-sheet .lyrics {
           font-size: 18px;
-          line-height: 2;
+          line-height: 1.35;
+          font-weight: 600;
           white-space: normal;
           overflow-wrap: break-word;
           word-break: break-word;
@@ -595,6 +597,9 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
           min-height: 1em;
         }
         .chordpro-body .chord-sheet .lyrics:empty::after { content: '\\00a0'; }
+        .chordpro-body .chord-sheet .paragraph.chorus { border-left: 4px solid rgba(255,255,255,.5); padding-left: 14px; margin-left: 2px; }
+        .chordpro-body .chord-sheet .comment { display: inline-block; background: rgba(251,191,36,.20); color: #fde68a; font-weight: 700; padding: 3px 12px; border-radius: 5px; margin: 4px 0 8px; }
+        .chordpro-body .chord-sheet .paragraph.tab .literal { font-family: 'Courier New', Courier, monospace; white-space: pre; display: block; overflow-x: auto; line-height: 1.35; }
         .chordpro-parse-error { color: #f87171; font-size: 18px; }
       `}</style>
       <div
@@ -603,7 +608,6 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
       >
         {/* Top bar */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-700 shrink-0">
-          <h2 className="text-2xl font-bold text-gray-100 truncate pr-4">{songTitle}</h2>
           <button
             type="button"
             data-testid="chordpro-viewer-close"
@@ -616,6 +620,7 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
         </div>
         {/* Scrolling chart body */}
         <div className="chordpro-body flex-1 overflow-y-auto px-5 py-4">
+          <h2 style={{ color: '#a855f7', fontWeight: 800, fontSize: '24px', lineHeight: 1.15, marginBottom: '2px' }}>{songTitle}</h2>
           <div dangerouslySetInnerHTML={{ __html: html }} />
         </div>
       </div>
