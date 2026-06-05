@@ -536,10 +536,14 @@ const formatTime = (timestamp) => {
 
 // Stage-legible ChordPro viewer. Parses the musician's pasted ChordPro text with
 // ChordSheetJS and renders it in a full-screen, high-contrast modal for on-stage reading.
-const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
+const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose = 0 }) => {
+  const [transpose, setTranspose] = useState(initialTranspose || 0);
+  const [savedTranspose, setSavedTranspose] = useState(initialTranspose || 0);
+  const [savingKey, setSavingKey] = useState(false);
   const html = useMemo(() => {
     try {
-      const song = new ChordProParser().parse(chordpro || '');
+      let song = new ChordProParser().parse(chordpro || '');
+      if (transpose !== 0) song = song.transpose(transpose); // transpose returns a NEW song; must reassign
       const formatted = new HtmlDivFormatter().format(song);
       const doc = new DOMParser().parseFromString('<div id="cp-root">' + formatted + '</div>', 'text/html');
       const root = doc.getElementById('cp-root');
@@ -561,7 +565,20 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
       console.error('ChordPro parse error:', e);
       return '<div class="chordpro-parse-error">Unable to render this chart.</div>';
     }
-  }, [chordpro]);
+  }, [chordpro, transpose]);
+
+  const saveKey = async () => {
+    if (!songId) return;
+    setSavingKey(true);
+    try {
+      await axios.put(`${API}/songs/${songId}/transpose`, { transpose });
+      setSavedTranspose(transpose);
+    } catch (e) {
+      console.error('Save transpose failed', e);
+    } finally {
+      setSavingKey(false);
+    }
+  };
 
   const [showSettings, setShowSettings] = useState(false);
   const [textSize, setTextSize] = useState(() => {
@@ -622,7 +639,17 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top bar */}
-        <div className={`relative flex items-center justify-end gap-1 px-5 py-4 border-b ${isLight ? 'border-gray-200' : 'border-gray-700'} shrink-0`}>
+        <div className={`relative flex items-center justify-between gap-1 px-5 py-4 border-b ${isLight ? 'border-gray-200' : 'border-gray-700'} shrink-0`}>
+          <div className="flex items-center gap-2">
+            <span className={isLight ? 'text-xs uppercase tracking-wide text-gray-500 font-semibold' : 'text-xs uppercase tracking-wide text-gray-400 font-semibold'}>Key</span>
+            <button type="button" onClick={() => setTranspose((t) => Math.max(-11, t - 1))} className={`w-8 h-8 rounded text-lg leading-none ${isLight ? 'bg-gray-200 text-gray-800' : 'bg-gray-700 text-gray-100'}`}>−</button>
+            <span className="tabular-nums w-7 text-center">{transpose > 0 ? `+${transpose}` : transpose}</span>
+            <button type="button" onClick={() => setTranspose((t) => Math.min(11, t + 1))} className={`w-8 h-8 rounded text-lg leading-none ${isLight ? 'bg-gray-200 text-gray-800' : 'bg-gray-700 text-gray-100'}`}>+</button>
+            {songId && transpose !== savedTranspose && (
+              <button type="button" onClick={saveKey} disabled={savingKey} className="ml-1 px-3 h-8 rounded bg-purple-600 hover:bg-purple-700 text-white text-sm disabled:opacity-60">{savingKey ? 'Saving…' : 'Save key'}</button>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => setShowSettings((s) => !s)}
@@ -640,6 +667,7 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
           >
             ✕
           </button>
+          </div>
           {showSettings && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowSettings(false)} />
@@ -4941,6 +4969,8 @@ const MusicianDashboard = () => {
           chordpro={openChordpro.chordpro}
           songTitle={openChordpro.title}
           onClose={() => setOpenChordpro(null)}
+          songId={openChordpro.id}
+          initialTranspose={openChordpro.transpose || 0}
         />
       )}
       {/* Error Toast */}
@@ -6879,7 +6909,7 @@ const MusicianDashboard = () => {
                               <button
                                 onClick={() => {
                                   if (song.chart_type === 'chordpro') {
-                                    setOpenChordpro({ chordpro: song.chart_chordpro, title: song.title });
+                                    setOpenChordpro({ chordpro: song.chart_chordpro, title: song.title, id: song.id, transpose: song.transpose || 0 });
                                   } else {
                                     window.open(song.chart_url, '_blank');
                                   }
@@ -15367,6 +15397,8 @@ const OnStageInterface = () => {
           chordpro={openChordpro.chordpro}
           songTitle={openChordpro.title}
           onClose={() => setOpenChordpro(null)}
+          songId={openChordpro.id}
+          initialTranspose={openChordpro.transpose || 0}
         />
       )}
       {/* Error Toast */}
