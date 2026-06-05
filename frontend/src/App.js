@@ -563,6 +563,13 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
     }
   }, [chordpro]);
 
+  const [showSettings, setShowSettings] = useState(false);
+  const [textSize, setTextSize] = useState(() => {
+    const v = parseInt(localStorage.getItem('cpViewerTextSize'), 10);
+    return Number.isFinite(v) ? v : 18;
+  });
+  useEffect(() => { localStorage.setItem('cpViewerTextSize', String(textSize)); }, [textSize]);
+
   return (
     <div
       data-testid="chordpro-viewer"
@@ -602,12 +609,21 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
         .chordpro-body .chord-sheet .paragraph.tab .literal { font-family: 'Courier New', Courier, monospace; white-space: pre; display: block; overflow-x: auto; line-height: 1.35; }
         .chordpro-parse-error { color: #f87171; font-size: 18px; }
       `}</style>
+      <style>{`.chordpro-body .chord-sheet .chord, .chordpro-body .chord-sheet .lyrics { font-size: ${textSize}px; }`}</style>
       <div
         className="bg-gray-900 text-gray-100 rounded-xl w-full max-w-3xl h-[90vh] flex flex-col shadow-2xl border border-gray-700"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top bar */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-700 shrink-0">
+        <div className="relative flex items-center justify-end gap-1 px-5 py-4 border-b border-gray-700 shrink-0">
+          <button
+            type="button"
+            onClick={() => setShowSettings((s) => !s)}
+            className="shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-gray-300 hover:text-white hover:bg-gray-700 transition duration-200 text-2xl leading-none"
+            aria-label="Settings"
+          >
+            ⚙
+          </button>
           <button
             type="button"
             data-testid="chordpro-viewer-close"
@@ -617,10 +633,26 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
           >
             ✕
           </button>
+          {showSettings && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setShowSettings(false)} />
+              <div className="absolute top-full right-2 mt-1 z-20 bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-4 min-w-[200px]">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs uppercase tracking-wide text-gray-400 font-semibold">Text size</span>
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => setTextSize((s) => Math.max(12, s - 2))} className="w-8 h-8 rounded bg-gray-700 text-gray-100 text-lg leading-none">−</button>
+                    <span className="text-gray-100 tabular-nums w-6 text-center">{textSize}</span>
+                    <button type="button" onClick={() => setTextSize((s) => Math.min(34, s + 2))} className="w-8 h-8 rounded bg-gray-700 text-gray-100 text-lg leading-none">+</button>
+                  </div>
+                </div>
+                <div className="text-[11px] text-gray-500 mt-3 pt-3 border-t border-gray-700">Global. Applies to every song.</div>
+              </div>
+            </>
+          )}
         </div>
         {/* Scrolling chart body */}
         <div className="chordpro-body flex-1 overflow-y-auto px-5 py-4">
-          <h2 style={{ color: '#a855f7', fontWeight: 800, fontSize: '24px', lineHeight: 1.15, marginBottom: '2px' }}>{songTitle}</h2>
+          <h2 style={{ color: '#fbbf24', fontWeight: 800, fontSize: (textSize + 6) + 'px', lineHeight: 1.15, marginBottom: '2px' }}>{songTitle}</h2>
           <div dangerouslySetInnerHTML={{ __html: html }} />
         </div>
       </div>
