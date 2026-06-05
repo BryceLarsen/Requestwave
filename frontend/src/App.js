@@ -570,6 +570,10 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
   });
   useEffect(() => { localStorage.setItem('cpViewerTextSize', String(textSize)); }, [textSize]);
 
+  const [theme, setTheme] = useState(() => localStorage.getItem('cpViewerTheme') || 'dark');
+  useEffect(() => { localStorage.setItem('cpViewerTheme', theme); }, [theme]);
+  const isLight = theme === 'light';
+
   return (
     <div
       data-testid="chordpro-viewer"
@@ -607,19 +611,22 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
         .chordpro-body .chord-sheet .paragraph.chorus { border-left: 4px solid rgba(255,255,255,.5); padding-left: 14px; margin-left: 2px; }
         .chordpro-body .chord-sheet .comment { display: inline-block; background: rgba(251,191,36,.20); color: #fde68a; font-weight: 700; padding: 3px 12px; border-radius: 5px; margin: 4px 0 8px; }
         .chordpro-body .chord-sheet .paragraph.tab .literal { font-family: 'Courier New', Courier, monospace; white-space: pre; display: block; overflow-x: auto; line-height: 1.35; }
+        .chordpro-body.cp-light .chord-sheet .chord { color: #7c3aed; }
+        .chordpro-body.cp-light .chord-sheet .paragraph.chorus { border-left-color: #1a1a1a; }
+        .chordpro-body.cp-light .chord-sheet .comment { background: #fef3c7; color: #92400e; }
         .chordpro-parse-error { color: #f87171; font-size: 18px; }
       `}</style>
       <style>{`.chordpro-body .chord-sheet .chord, .chordpro-body .chord-sheet .lyrics { font-size: ${textSize}px; }`}</style>
       <div
-        className="bg-gray-900 text-gray-100 rounded-xl w-full max-w-3xl h-[90vh] flex flex-col shadow-2xl border border-gray-700"
+        className={`${isLight ? 'bg-white text-gray-900 border-gray-300' : 'bg-gray-900 text-gray-100 border-gray-700'} rounded-xl w-full max-w-3xl h-[90vh] flex flex-col shadow-2xl border`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top bar */}
-        <div className="relative flex items-center justify-end gap-1 px-5 py-4 border-b border-gray-700 shrink-0">
+        <div className={`relative flex items-center justify-end gap-1 px-5 py-4 border-b ${isLight ? 'border-gray-200' : 'border-gray-700'} shrink-0`}>
           <button
             type="button"
             onClick={() => setShowSettings((s) => !s)}
-            className="shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-gray-300 hover:text-white hover:bg-gray-700 transition duration-200 text-2xl leading-none"
+            className={`shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg ${isLight ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-200' : 'text-gray-300 hover:text-white hover:bg-gray-700'} transition duration-200 text-2xl leading-none`}
             aria-label="Settings"
           >
             ⚙
@@ -628,7 +635,7 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
             type="button"
             data-testid="chordpro-viewer-close"
             onClick={onClose}
-            className="shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-gray-300 hover:text-white hover:bg-gray-700 transition duration-200 text-3xl leading-none"
+            className={`shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg ${isLight ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-200' : 'text-gray-300 hover:text-white hover:bg-gray-700'} transition duration-200 text-3xl leading-none`}
             aria-label="Close chart"
           >
             ✕
@@ -645,14 +652,18 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
                     <button type="button" onClick={() => setTextSize((s) => Math.min(34, s + 2))} className="w-8 h-8 rounded bg-gray-700 text-gray-100 text-lg leading-none">+</button>
                   </div>
                 </div>
+                <div className="flex items-center justify-between gap-3 mt-3">
+                  <span className="text-xs uppercase tracking-wide text-gray-400 font-semibold">Theme</span>
+                  <button type="button" onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))} className="px-3 h-8 rounded bg-gray-700 text-gray-100 text-sm">{isLight ? 'Light' : 'Dark'}</button>
+                </div>
                 <div className="text-[11px] text-gray-500 mt-3 pt-3 border-t border-gray-700">Global. Applies to every song.</div>
               </div>
             </>
           )}
         </div>
         {/* Scrolling chart body */}
-        <div className="chordpro-body flex-1 overflow-y-auto px-5 py-4">
-          <h2 style={{ color: '#fbbf24', fontWeight: 800, fontSize: (textSize + 6) + 'px', lineHeight: 1.15, marginBottom: '2px' }}>{songTitle}</h2>
+        <div className={`chordpro-body flex-1 overflow-y-auto px-5 py-4 ${isLight ? 'cp-light' : ''}`}>
+          <h2 style={{ color: isLight ? '#b45309' : '#fbbf24', fontWeight: 800, fontSize: (textSize + 6) + 'px', lineHeight: 1.15, marginBottom: '2px' }}>{songTitle}</h2>
           <div dangerouslySetInnerHTML={{ __html: html }} />
         </div>
       </div>
