@@ -540,7 +540,23 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
   const html = useMemo(() => {
     try {
       const song = new ChordProParser().parse(chordpro || '');
-      return new HtmlDivFormatter().format(song);
+      const formatted = new HtmlDivFormatter().format(song);
+      const doc = new DOMParser().parseFromString('<div id="cp-root">' + formatted + '</div>', 'text/html');
+      const root = doc.getElementById('cp-root');
+      root.querySelectorAll('.chord-sheet .column').forEach((col) => {
+        const lyr = col.querySelector('.lyrics');
+        if (!lyr) return;
+        const text = lyr.textContent.replace(/\u00a0/g, ' ');
+        if (text.trim() === '') {
+          col.style.paddingRight = '0.5em';            // chord-only / instrumental column
+        } else if (/\s$/.test(text)) {
+          col.style.paddingRight = '0.3em';            // real word boundary
+          lyr.textContent = text.replace(/\s+$/, '');  // remove the space that would hang at the column edge
+        } else {
+          col.style.paddingRight = '0';                // mid-word split: keep the word glued
+        }
+      });
+      return root.innerHTML;
     } catch (e) {
       console.error('ChordPro parse error:', e);
       return '<div class="chordpro-parse-error">Unable to render this chart.</div>';
@@ -560,7 +576,7 @@ const ChordProViewer = ({ chordpro, songTitle, onClose }) => {
         .chordpro-body .chord-sheet { max-width: 100%; box-sizing: border-box; }
         .chordpro-body .chord-sheet .paragraph { margin: 0 0 1.25rem 0; max-width: 100%; }
         .chordpro-body .chord-sheet .row { display: flex; flex-wrap: wrap; align-items: flex-end; width: 100%; max-width: 100%; box-sizing: border-box; }
-        .chordpro-body .chord-sheet .column { display: inline-flex; flex-direction: column; padding-right: 0.5em; max-width: 100%; box-sizing: border-box; }
+        .chordpro-body .chord-sheet .column { display: inline-flex; flex-direction: column; padding-right: 0; max-width: 100%; box-sizing: border-box; }
         .chordpro-body .chord-sheet .chord {
           color: #a855f7;
           font-weight: 700;
