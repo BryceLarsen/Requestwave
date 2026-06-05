@@ -234,6 +234,7 @@ class Song(BaseModel):
     chart_type: Optional[str] = None  # Chart support: None, "link", or "pdf"
     chart_url: Optional[str] = ""  # Chart URL (link or hosted PDF URL)
     chart_chordpro: Optional[str] = ""  # Raw ChordPro text stored in-app (separate from chart_url so link/pdf and chordpro coexist)
+    transpose: int = 0  # Saved semitone offset for the viewer (non-destructive; original chart_chordpro is never changed)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class SongCreate(BaseModel):
@@ -246,6 +247,9 @@ class SongCreate(BaseModel):
     chart_type: Optional[str] = None  # Chart support: None, "link", or "pdf"
     chart_url: Optional[str] = ""  # Chart URL (link or hosted PDF URL)
     chart_chordpro: Optional[str] = ""  # Raw ChordPro text stored in-app (separate from chart_url so link/pdf and chordpro coexist)
+
+class SongTranspose(BaseModel):
+    transpose: int = 0
 
 class RequestCreate(BaseModel):
     song_id: str
@@ -4301,6 +4305,18 @@ async def toggle_song_visibility(
     except Exception as e:
         logger.error(f"Error toggling song visibility: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error toggling song visibility: {str(e)}")
+
+
+@api_router.put("/songs/{song_id}/transpose")
+async def update_song_transpose(song_id: str, body: SongTranspose, musician_id: str = Depends(get_current_musician)):
+    semis = max(-11, min(11, body.transpose))
+    result = await db.songs.update_one(
+        {"id": song_id, "musician_id": musician_id},
+        {"$set": {"transpose": semis}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Song not found")
+    return {"id": song_id, "transpose": semis}
 
 
 @api_router.post("/songs/{song_id}/learn-later")
