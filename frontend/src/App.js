@@ -633,6 +633,9 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
         .chordpro-body.cp-light .chord-sheet .paragraph.chorus { border-left-color: #1a1a1a; }
         .chordpro-body.cp-light .chord-sheet .comment { background: #fef3c7; color: #92400e; }
         .chordpro-parse-error { color: #f87171; font-size: 18px; }
+        .chordpro-body .chordpro-fallback-note { font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; background: rgba(251,191,36,.15); color: #fcd34d; border: 1px solid rgba(251,191,36,.35); }
+        .chordpro-body.cp-light .chordpro-fallback-note { background: #fef3c7; color: #92400e; border-color: #fdba74; }
+        .chordpro-body .chordpro-fallback-raw { font-family: 'Courier New', Courier, monospace; white-space: pre-wrap; word-break: break-word; line-height: 1.5; margin: 0; }
       `}</style>
       <style>{`.chordpro-body .chord-sheet .chord, .chordpro-body .chord-sheet .lyrics { font-size: ${textSize}px; }`}</style>
       <div
