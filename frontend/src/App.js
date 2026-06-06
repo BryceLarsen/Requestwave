@@ -536,7 +536,7 @@ const formatTime = (timestamp) => {
 
 // Stage-legible ChordPro viewer. Parses the musician's pasted ChordPro text with
 // ChordSheetJS and renders it in a full-screen, high-contrast modal for on-stage reading.
-const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose = 0 }) => {
+const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose = 0, onTransposeSaved }) => {
   const [transpose, setTranspose] = useState(initialTranspose || 0);
   const [savedTranspose, setSavedTranspose] = useState(initialTranspose || 0);
   const [savingKey, setSavingKey] = useState(false);
@@ -573,6 +573,7 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
     try {
       await axios.put(`${API}/songs/${songId}/transpose`, { transpose });
       setSavedTranspose(transpose);
+      if (onTransposeSaved) onTransposeSaved(songId, transpose);
     } catch (e) {
       console.error('Save transpose failed', e);
     } finally {
@@ -4971,6 +4972,7 @@ const MusicianDashboard = () => {
           onClose={() => setOpenChordpro(null)}
           songId={openChordpro.id}
           initialTranspose={openChordpro.transpose || 0}
+          onTransposeSaved={(id, t) => setSongs((prev) => prev.map((s) => (s.id === id ? { ...s, transpose: t } : s)))}
         />
       )}
       {/* Error Toast */}
@@ -15399,6 +15401,7 @@ const OnStageInterface = () => {
           onClose={() => setOpenChordpro(null)}
           songId={openChordpro.id}
           initialTranspose={openChordpro.transpose || 0}
+          onTransposeSaved={(id, t) => setSongs((prev) => prev.map((s) => (s.id === id ? { ...s, transpose: t } : s)))}
         />
       )}
       {/* Error Toast */}
