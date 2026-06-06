@@ -19,7 +19,7 @@ import time
 from typing import Dict, Any
 
 # Configuration
-BASE_URL = "https://bulk-charts.preview.emergentagent.com/api"
+BASE_URL = "https://show-analytics-1.preview.emergentagent.com/api"
 
 # Target user credentials
 USER_CREDENTIALS = {

@@ -12,8 +12,8 @@ from datetime import datetime
 import time
 
 # Configuration
-PREVIEW_BACKEND_URL = "https://bulk-charts.preview.emergentagent.com/api"
-PREVIEW_FRONTEND_URL = "https://bulk-charts.preview.emergentagent.com"
+PREVIEW_BACKEND_URL = "https://show-analytics-1.preview.emergentagent.com/api"
+PREVIEW_FRONTEND_URL = "https://show-analytics-1.preview.emergentagent.com"
 TEST_MUSICIAN_SLUG = "bryce-larsen"
 
 class DetailedFrontendFlowTester:

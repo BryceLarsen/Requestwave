@@ -20,7 +20,7 @@ from datetime import datetime
 
 class FinalURLVerification:
     def __init__(self):
-        self.backend_url = "https://bulk-charts.preview.emergentagent.com"
+        self.backend_url = "https://show-analytics-1.preview.emergentagent.com"
         self.api_url = f"{self.backend_url}/api"
         
         self.session = requests.Session()
