@@ -563,7 +563,14 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
       return root.innerHTML;
     } catch (e) {
       console.error('ChordPro parse error:', e);
-      return '<div class="chordpro-parse-error">Unable to render this chart.</div>';
+      const safe = (chordpro || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      return (
+        '<div class="chordpro-fallback-note">This chart has a formatting error and could not be laid out. Showing the raw text so it stays readable. Fix the chart later to restore chord positioning.</div>' +
+        '<pre class="chordpro-fallback-raw">' + safe + '</pre>'
+      );
     }
   }, [chordpro, transpose]);
 
