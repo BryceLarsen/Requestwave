@@ -8212,7 +8212,7 @@ const MusicianDashboard = () => {
                                   data-testid="onstage-charts-button"
                                   onClick={() => {
                                     if (chartSong.chart_type === 'chordpro') {
-                                      setOpenChordpro({ chordpro: chartSong.chart_chordpro, title: chartSong.song_title || chartSong.title || request.song_title });
+                                      setOpenChordpro({ chordpro: chartSong.chart_chordpro, title: chartSong.song_title || chartSong.title || request.song_title, id: chartSong.id, transpose: chartSong.transpose || 0 });
                                     } else {
                                       window.open(chartSong.chart_url, '_blank');
                                     }
@@ -8382,7 +8382,7 @@ const MusicianDashboard = () => {
                                   data-testid="onstage-charts-button"
                                   onClick={() => {
                                     if (chartSong.chart_type === 'chordpro') {
-                                      setOpenChordpro({ chordpro: chartSong.chart_chordpro, title: chartSong.song_title || chartSong.title || item.song_title });
+                                      setOpenChordpro({ chordpro: chartSong.chart_chordpro, title: chartSong.song_title || chartSong.title || item.song_title, id: chartSong.id, transpose: chartSong.transpose || 0 });
                                     } else {
                                       window.open(chartSong.chart_url, '_blank');
                                     }
@@ -15567,7 +15567,7 @@ const OnStageInterface = () => {
                     chartType={(songs.find(s => s.id === item.song_id) || {}).chart_type}
                     chartUrl={(songs.find(s => s.id === item.song_id) || {}).chart_url}
                     chartChordpro={(songs.find(s => s.id === item.song_id) || {}).chart_chordpro}
-                    onOpenChordpro={(title, cp) => setOpenChordpro({ chordpro: cp, title })}
+                    onOpenChordpro={(title, cp) => { const s = songs.find((x) => x.id === item.song_id) || {}; setOpenChordpro({ chordpro: cp, title, id: item.song_id, transpose: s.transpose || 0 }); }}
                   />
                 )
               ))}
