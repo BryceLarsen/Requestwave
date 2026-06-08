@@ -980,6 +980,7 @@ const MusicianDashboard = () => {
   const [accountEmailMsg, setAccountEmailMsg] = useState({ type: '', text: '' });
   const [accountSlugMsg, setAccountSlugMsg] = useState({ type: '', text: '' });
   const [profileFilterId, setProfileFilterId] = useState(''); // For requests tab filter
+  const [profilesLoaded, setProfilesLoaded] = useState(false); // Guard: profiles fetched at least once
 
   // On-Stage profile/event selector (Sprint 2 Prompt 4)
   const [onstageSelection, setOnstageSelection] = useState(() => {
@@ -1333,6 +1334,10 @@ const MusicianDashboard = () => {
 
 
   const handleStartShow = async () => {
+    if (!profilesLoaded) {
+      showErrorToast('Profiles are still loading, please try again in a moment');
+      return;
+    }
     if (!newShowName.trim()) {
       showErrorToast('Please enter a show name');
       return;
@@ -1355,10 +1360,28 @@ const MusicianDashboard = () => {
         playlist_filter_mode: showPlaylistFilterMode,
         enabled_playlist_ids: showPlaylistFilterMode === 'selected' ? showEnabledPlaylistIds : []
       };
-      if (onstageSelection) {
+      // Determine the show's profile/event context based on the active tab.
+      // On the Requests tab, the Requests profile filter drives the show context
+      // so the show you start matches the requests you're looking at.
+      let startedContext = null;
+      if (activeTab === 'requests') {
+        if (profileFilterId && profileFilterId !== 'main') {
+          startPayload.profile_id = profileFilterId;
+          startedContext = { kind: 'profile', id: profileFilterId };
+        } else if (profileFilterId === 'main') {
+          // Main context — send no profile_id
+        } else {
+          // '' (All Profiles) → attach to the default profile
+          const defId = profiles.find(p => p.is_default)?.id;
+          if (defId) {
+            startPayload.profile_id = defId;
+            startedContext = { kind: 'profile', id: defId };
+          }
+        }
+      } else if (onstageSelection) {
         const [kind, id] = onstageSelection.split(':');
-        if (kind === 'profile') startPayload.profile_id = id;
-        if (kind === 'event') startPayload.event_id = id;
+        if (kind === 'profile') { startPayload.profile_id = id; startedContext = { kind: 'profile', id }; }
+        if (kind === 'event') { startPayload.event_id = id; startedContext = { kind: 'event', id }; }
       }
       
       const response = await axios.post(`${API}/shows/start`, startPayload, {
@@ -1390,6 +1413,10 @@ const MusicianDashboard = () => {
       // Refresh per-profile / per-event current_show pointers so On-Stage selector reflects the new show
       fetchProfiles();
       fetchEvents();
+      // Point On Stage at the same context so the show you start is the show you see
+      if (startedContext) {
+        setOnstageSelection(`${startedContext.kind}:${startedContext.id}`);
+      }
     } catch (error) {
       console.error('Error starting show:', error);
       showErrorToast(error.response?.data?.detail || 'Error starting show. Please try again.', error);
@@ -2385,6 +2412,7 @@ const MusicianDashboard = () => {
     try {
       const response = await axios.get(`${API}/profiles`);
       setProfiles(response.data);
+      setProfilesLoaded(true);
     } catch (error) {
       console.error('Error fetching profiles:', error);
     }
@@ -4968,6 +4996,10 @@ const MusicianDashboard = () => {
   // Use centralized audience URL helper
   const audienceUrl = getAudienceUrl(musician.slug);
 
+  // Pending request count scoped to the active Requests profile filter so the
+  // tab badge matches the filtered list the user actually sees.
+  const filteredPendingCount = requests.filter(r => r.status === 'pending' && (!profileFilterId || (profileFilterId === 'main' ? !r.profile_id : r.profile_id === profileFilterId))).length;
+
   if (loading) {
     return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Loading...</div>;
   }
@@ -5094,9 +5126,9 @@ const MusicianDashboard = () => {
                tab === 'profile' ? 'Profiles' :
                tab === 'events' ? 'Events' :
                tab.charAt(0).toUpperCase() + tab.slice(1)}
-              {tab === 'requests' && requests.filter(r => r.status === 'pending').length > 0 && (
+              {tab === 'requests' && filteredPendingCount > 0 && (
                 <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-xs">
-                  {requests.filter(r => r.status === 'pending').length}
+                  {filteredPendingCount}
                 </span>
               )}
             </button>
@@ -5128,9 +5160,9 @@ const MusicianDashboard = () => {
                    activeTab === 'events' ? 'Events' :
                    activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
                 </span>
-                {activeTab === 'requests' && requests.filter(r => r.status === 'pending').length > 0 && (
+                {activeTab === 'requests' && filteredPendingCount > 0 && (
                   <span className="bg-red-500 text-white rounded-full px-2 py-1 text-xs">
-                    {requests.filter(r => r.status === 'pending').length}
+                    {filteredPendingCount}
                   </span>
                 )}
               </div>
@@ -5163,9 +5195,9 @@ const MusicianDashboard = () => {
                          tab === 'events' ? 'Events' :
                          tab.charAt(0).toUpperCase() + tab.slice(1)}
                       </span>
-                      {tab === 'requests' && requests.filter(r => r.status === 'pending').length > 0 && (
+                      {tab === 'requests' && filteredPendingCount > 0 && (
                         <span className="bg-red-500 text-white rounded-full px-2 py-1 text-xs">
-                          {requests.filter(r => r.status === 'pending').length}
+                          {filteredPendingCount}
                         </span>
                       )}
                     </button>
@@ -7756,6 +7788,22 @@ const MusicianDashboard = () => {
             <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
               <h3 className="text-xl font-bold text-white mb-4">🎭 Start a New Show</h3>
               <div className="space-y-4">
+                <div className="text-sm text-gray-400" data-testid="start-show-target">
+                  Starting show for:{' '}
+                  <span className="text-white font-semibold">{(() => {
+                    if (activeTab === 'requests') {
+                      if (profileFilterId === 'main') return 'Main (no profile)';
+                      const pid = profileFilterId || profiles.find(p => p.is_default)?.id;
+                      return profiles.find(p => p.id === pid)?.name || 'Main (no profile)';
+                    }
+                    if (onstageSelection) {
+                      const [kind, id] = onstageSelection.split(':');
+                      if (kind === 'profile') return profiles.find(p => p.id === id)?.name || 'Profile';
+                      if (kind === 'event') return events.find(ev => ev.id === id)?.name || 'Event';
+                    }
+                    return 'Main (no profile)';
+                  })()}</span>
+                </div>
                 <div>
                   <label className="block text-gray-300 text-sm font-bold mb-2">Show Name</label>
                   <input
