@@ -203,7 +203,7 @@ const AuthForm = ({ mode, onSwitch }) => {
     
     // Get current preview URL for redirect
     const currentUrl = window.location.origin;
-    const redirectUrl = `${currentUrl}/profile`;
+    const redirectUrl = `${currentUrl}/`;
     
     // Redirect to Emergent OAuth
     const emergentOAuthUrl = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
