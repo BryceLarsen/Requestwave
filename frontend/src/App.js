@@ -7193,6 +7193,14 @@ const MusicianDashboard = () => {
                         <div className="flex flex-col gap-2">
                           <div className="break-words">
                             📁 {show.name} ({show.date || 'No date'})
+                            {requests.filter(r => r.show_id === show.id && r.status === 'pending').length > 0 && (
+                              <span
+                                data-testid={`show-open-badge-${show.id}`}
+                                className="ml-2 inline-block bg-yellow-600/20 text-yellow-400 text-xs font-semibold px-2 py-0.5 rounded-full"
+                              >
+                                {requests.filter(r => r.show_id === show.id && r.status === 'pending').length} open
+                              </span>
+                            )}
                           </div>
                           <div className="flex justify-between items-center gap-3">
                             <span className="text-gray-400 text-sm">
