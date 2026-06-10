@@ -8873,7 +8873,7 @@ const MusicianDashboard = () => {
                       <div>
                         <label className="block text-gray-300 text-sm font-bold mb-1">Custom Link Name</label>
                         <div className="flex items-stretch bg-gray-700 border border-gray-600 rounded-lg overflow-hidden">
-                          <span className="bg-gray-800 text-gray-400 text-sm px-2 flex items-center">{AUDIENCE_BASE_URL}/musician/{musician.slug}/</span>
+                          <span className="bg-gray-800 text-gray-400 text-sm px-2 flex items-center whitespace-nowrap truncate max-w-[55%] shrink-0">.../{musician.slug}/</span>
                           <input data-testid="profile-slug-input" type="text" value={profileForm.slug}
                             onChange={(e) => setProfileForm({...profileForm, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')})}
                             className="flex-1 min-w-0 bg-transparent px-2 py-1.5 text-white text-sm placeholder-gray-500 focus:outline-none" />
