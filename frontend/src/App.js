@@ -8850,13 +8850,20 @@ const MusicianDashboard = () => {
                         }}
                         placeholder="e.g. Smith Wedding, Friday Night Jazz" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white" />
                     </div>
-                    <div>
-                      <label className="block text-gray-300 text-sm font-bold mb-1">URL Slug</label>
-                      <input data-testid="profile-slug-input" type="text" value={profileForm.slug}
-                        onChange={(e) => setProfileForm({...profileForm, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')})}
-                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white" />
-                      <p className="text-gray-400 text-xs mt-1">URL: {AUDIENCE_BASE_URL}/musician/{musician.slug}/{profileForm.slug || '...'}</p>
-                    </div>
+                    {editingProfile?.is_default === true ? (
+                      <div>
+                        <label className="block text-gray-300 text-sm font-bold mb-1">Your link:</label>
+                        <p data-testid="profile-default-link" className="text-gray-300 text-sm break-all">{AUDIENCE_BASE_URL}/musician/{musician.slug}</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-gray-300 text-sm font-bold mb-1">URL Slug</label>
+                        <input data-testid="profile-slug-input" type="text" value={profileForm.slug}
+                          onChange={(e) => setProfileForm({...profileForm, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')})}
+                          className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white" />
+                        <p className="text-gray-400 text-xs mt-1">This profile's link: {AUDIENCE_BASE_URL}/musician/{musician.slug}/{profileForm.slug || '...'}</p>
+                      </div>
+                    )}
 
                     {/* Display Name Override */}
                     <div>
