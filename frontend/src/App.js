@@ -2577,6 +2577,7 @@ const MusicianDashboard = () => {
   };
 
   const openProfileEditor = (profileToEdit = null) => {
+    const dp = profiles.find(p => p.is_default);
     if (profileToEdit) {
       setEditingProfile(profileToEdit);
       setProfileForm({
@@ -2586,18 +2587,18 @@ const MusicianDashboard = () => {
         show_tips_in_success_screen: profileToEdit.show_tips_in_success_screen !== false,
         show_tips_in_orientation: profileToEdit.show_tips_in_orientation !== false,
         email_capture_mode: profileToEdit.email_capture_mode || 'optional',
-        paypal_username: profileToEdit.paypal_username || '',
-        venmo_username: profileToEdit.venmo_username || '',
-        cashapp_username: profileToEdit.cashapp_username || '',
-        zelle_info: profileToEdit.zelle_info || '',
-        instagram_username: profileToEdit.instagram_username || '',
-        tiktok_username: profileToEdit.tiktok_username || '',
-        facebook_url: profileToEdit.facebook_url || '',
-        spotify_url: profileToEdit.spotify_url || '',
-        apple_music_url: profileToEdit.apple_music_url || '',
-        website: profileToEdit.website || '',
-        bio: profileToEdit.bio || '',
-        musician_name: profileToEdit.musician_name || '',
+        paypal_username: profileToEdit.paypal_username || (dp?.paypal_username) || '',
+        venmo_username: profileToEdit.venmo_username || (dp?.venmo_username) || '',
+        cashapp_username: profileToEdit.cashapp_username || (dp?.cashapp_username) || '',
+        zelle_info: profileToEdit.zelle_info || (dp?.zelle_info) || '',
+        instagram_username: profileToEdit.instagram_username || (dp?.instagram_username) || '',
+        tiktok_username: profileToEdit.tiktok_username || (dp?.tiktok_username) || '',
+        facebook_url: profileToEdit.facebook_url || (dp?.facebook_url) || '',
+        spotify_url: profileToEdit.spotify_url || (dp?.spotify_url) || '',
+        apple_music_url: profileToEdit.apple_music_url || (dp?.apple_music_url) || '',
+        website: profileToEdit.website || (dp?.website) || '',
+        bio: profileToEdit.bio || (dp?.bio) || '',
+        musician_name: profileToEdit.musician_name || (dp?.musician_name) || '',
         design_color_scheme: profileToEdit.design_color_scheme || '',
         design_artist_photo: profileToEdit.design_artist_photo || '',
         design_show_year: profileToEdit.design_show_year !== false,
@@ -2605,7 +2606,7 @@ const MusicianDashboard = () => {
       });
     } else {
       setEditingProfile(null);
-      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, email_capture_mode: 'optional', paypal_username: '', venmo_username: '', cashapp_username: '', zelle_info: '', instagram_username: '', tiktok_username: '', facebook_url: '', spotify_url: '', apple_music_url: '', website: '', bio: '', musician_name: '', design_color_scheme: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
+      setProfileForm({ name: '', slug: '', active_playlist_ids: ['__all__'], show_tips_in_success_screen: true, show_tips_in_orientation: true, email_capture_mode: 'optional', paypal_username: dp?.paypal_username || '', venmo_username: dp?.venmo_username || '', cashapp_username: dp?.cashapp_username || '', zelle_info: dp?.zelle_info || '', instagram_username: dp?.instagram_username || '', tiktok_username: dp?.tiktok_username || '', facebook_url: dp?.facebook_url || '', spotify_url: dp?.spotify_url || '', apple_music_url: dp?.apple_music_url || '', website: dp?.website || '', bio: dp?.bio || '', musician_name: dp?.musician_name || '', design_color_scheme: '', design_artist_photo: '', design_show_year: true, design_show_notes: true });
     }
     setShowProfileEditor(true);
   };
