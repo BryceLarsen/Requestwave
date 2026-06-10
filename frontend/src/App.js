@@ -8969,61 +8969,106 @@ const MusicianDashboard = () => {
 
                     {/* Tip Platform Overrides */}
                     <div className="border-t border-gray-600 pt-4">
-                      <h3 className="text-sm font-bold text-gray-300 mb-2">Tip Platform Overrides</h3>
-                      <p className="text-gray-400 text-xs mb-3">Leave blank to use master account values</p>
+                      <h3 className="text-sm font-bold text-gray-300 mb-2">{editingProfile?.is_default === true ? 'Tip accounts' : 'Tip Platform Overrides'}</h3>
+                      <p className="text-gray-400 text-xs mb-3">{editingProfile?.is_default === true ? 'Just your username. We build the rest.' : 'Leave blank to use master account values'}</p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="block text-gray-400 text-xs mb-1">Venmo Username</label>
-                          <input type="text" value={profileForm.venmo_username || ''} onChange={(e) => setProfileForm({...profileForm, venmo_username: e.target.value})}
-                            placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                          {editingProfile?.is_default === true ? (
+                            <div className="flex items-stretch bg-gray-700 border border-gray-600 rounded-lg overflow-hidden">
+                              <span className="bg-gray-800 text-gray-400 text-sm px-2 flex items-center">@</span>
+                              <input type="text" value={profileForm.venmo_username || ''} onChange={(e) => setProfileForm({...profileForm, venmo_username: e.target.value})}
+                                placeholder="username" className="flex-1 min-w-0 bg-transparent px-2 py-1.5 text-white text-sm placeholder-gray-500 focus:outline-none" />
+                            </div>
+                          ) : (
+                            <input type="text" value={profileForm.venmo_username || ''} onChange={(e) => setProfileForm({...profileForm, venmo_username: e.target.value})}
+                              placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                          )}
                         </div>
                         <div>
                           <label className="block text-gray-400 text-xs mb-1">PayPal Username</label>
-                          <input type="text" value={profileForm.paypal_username || ''} onChange={(e) => setProfileForm({...profileForm, paypal_username: e.target.value})}
-                            placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                          {editingProfile?.is_default === true ? (
+                            <div className="flex items-stretch bg-gray-700 border border-gray-600 rounded-lg overflow-hidden">
+                              <span className="bg-gray-800 text-gray-400 text-sm px-2 flex items-center">paypal.me/</span>
+                              <input type="text" value={profileForm.paypal_username || ''} onChange={(e) => setProfileForm({...profileForm, paypal_username: e.target.value})}
+                                placeholder="username" className="flex-1 min-w-0 bg-transparent px-2 py-1.5 text-white text-sm placeholder-gray-500 focus:outline-none" />
+                            </div>
+                          ) : (
+                            <input type="text" value={profileForm.paypal_username || ''} onChange={(e) => setProfileForm({...profileForm, paypal_username: e.target.value})}
+                              placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                          )}
                         </div>
                         <div>
                           <label className="block text-gray-400 text-xs mb-1">Cash App Username</label>
-                          <input type="text" value={profileForm.cashapp_username || ''} onChange={(e) => setProfileForm({...profileForm, cashapp_username: e.target.value})}
-                            placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                          {editingProfile?.is_default === true ? (
+                            <div className="flex items-stretch bg-gray-700 border border-gray-600 rounded-lg overflow-hidden">
+                              <span className="bg-gray-800 text-gray-400 text-sm px-2 flex items-center">$</span>
+                              <input type="text" value={profileForm.cashapp_username || ''} onChange={(e) => setProfileForm({...profileForm, cashapp_username: e.target.value})}
+                                placeholder="cashtag" className="flex-1 min-w-0 bg-transparent px-2 py-1.5 text-white text-sm placeholder-gray-500 focus:outline-none" />
+                            </div>
+                          ) : (
+                            <input type="text" value={profileForm.cashapp_username || ''} onChange={(e) => setProfileForm({...profileForm, cashapp_username: e.target.value})}
+                              placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                          )}
                         </div>
                         <div>
                           <label className="block text-gray-400 text-xs mb-1">Zelle Info (email or phone)</label>
                           <input type="text" value={profileForm.zelle_info || ''} onChange={(e) => setProfileForm({...profileForm, zelle_info: e.target.value})}
-                            placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                            placeholder={editingProfile?.is_default === true ? 'email or phone' : 'Master default'} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                          {editingProfile?.is_default === true && (
+                            <p className="text-gray-400 text-xs mt-1">Audience gets directions to open their bank app and send to this.</p>
+                          )}
                         </div>
                       </div>
                     </div>
 
                     {/* Social Link Overrides */}
                     <div className="border-t border-gray-600 pt-4">
-                      <h3 className="text-sm font-bold text-gray-300 mb-2">Social Link Overrides</h3>
-                      <p className="text-gray-400 text-xs mb-3">Leave blank to use master account values</p>
+                      <h3 className="text-sm font-bold text-gray-300 mb-2">{editingProfile?.is_default === true ? 'Social links' : 'Social Link Overrides'}</h3>
+                      {editingProfile?.is_default !== true && (
+                        <p className="text-gray-400 text-xs mb-3">Leave blank to use master account values</p>
+                      )}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="block text-gray-400 text-xs mb-1">Instagram</label>
-                          <input type="text" value={profileForm.instagram_username || ''} onChange={(e) => setProfileForm({...profileForm, instagram_username: e.target.value})}
-                            placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                          {editingProfile?.is_default === true ? (
+                            <div className="flex items-stretch bg-gray-700 border border-gray-600 rounded-lg overflow-hidden">
+                              <span className="bg-gray-800 text-gray-400 text-sm px-2 flex items-center">instagram.com/</span>
+                              <input type="text" value={profileForm.instagram_username || ''} onChange={(e) => setProfileForm({...profileForm, instagram_username: e.target.value})}
+                                placeholder="username" className="flex-1 min-w-0 bg-transparent px-2 py-1.5 text-white text-sm placeholder-gray-500 focus:outline-none" />
+                            </div>
+                          ) : (
+                            <input type="text" value={profileForm.instagram_username || ''} onChange={(e) => setProfileForm({...profileForm, instagram_username: e.target.value})}
+                              placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                          )}
                         </div>
                         <div>
                           <label className="block text-gray-400 text-xs mb-1">TikTok</label>
-                          <input type="text" value={profileForm.tiktok_username || ''} onChange={(e) => setProfileForm({...profileForm, tiktok_username: e.target.value})}
-                            placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                          {editingProfile?.is_default === true ? (
+                            <div className="flex items-stretch bg-gray-700 border border-gray-600 rounded-lg overflow-hidden">
+                              <span className="bg-gray-800 text-gray-400 text-sm px-2 flex items-center">tiktok.com/@</span>
+                              <input type="text" value={profileForm.tiktok_username || ''} onChange={(e) => setProfileForm({...profileForm, tiktok_username: e.target.value})}
+                                placeholder="username" className="flex-1 min-w-0 bg-transparent px-2 py-1.5 text-white text-sm placeholder-gray-500 focus:outline-none" />
+                            </div>
+                          ) : (
+                            <input type="text" value={profileForm.tiktok_username || ''} onChange={(e) => setProfileForm({...profileForm, tiktok_username: e.target.value})}
+                              placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                          )}
                         </div>
                         <div>
                           <label className="block text-gray-400 text-xs mb-1">Facebook URL</label>
                           <input type="text" value={profileForm.facebook_url || ''} onChange={(e) => setProfileForm({...profileForm, facebook_url: e.target.value})}
-                            placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                            placeholder={editingProfile?.is_default === true ? 'Paste your full Facebook page link' : 'Master default'} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
                         </div>
                         <div>
                           <label className="block text-gray-400 text-xs mb-1">Spotify URL</label>
                           <input type="text" value={profileForm.spotify_url || ''} onChange={(e) => setProfileForm({...profileForm, spotify_url: e.target.value})}
-                            placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                            placeholder={editingProfile?.is_default === true ? 'Paste your Spotify artist link' : 'Master default'} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
                         </div>
                         <div className="sm:col-span-2">
                           <label className="block text-gray-400 text-xs mb-1">Apple Music URL</label>
                           <input type="text" value={profileForm.apple_music_url || ''} onChange={(e) => setProfileForm({...profileForm, apple_music_url: e.target.value})}
-                            placeholder="Master default" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
+                            placeholder={editingProfile?.is_default === true ? 'Paste your Apple Music artist link' : 'Master default'} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500" />
                         </div>
                       </div>
                     </div>
