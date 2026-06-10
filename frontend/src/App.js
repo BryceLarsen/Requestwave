@@ -12514,6 +12514,7 @@ const AudienceInterface = () => {
 
   // NEW: Shuffle function for audience random sort
   const handleAudienceShuffle = () => {
+    if (sortOption !== 'random') setSortOption('random');
     setRandomSeed(Date.now());
   };
 
@@ -13266,6 +13267,24 @@ const AudienceInterface = () => {
           </div>
         )}
 
+        {/* "Not you? Clear" - only show if there's saved identity */}
+        {(localStorage.getItem('requestwave_requester_name') || localStorage.getItem('requestwave_requester_email')) && (
+          <div className="text-center mb-3">
+            <button
+              onClick={() => {
+                localStorage.removeItem('requestwave_requester_name');
+                localStorage.removeItem('requestwave_requester_email');
+                setRequestForm(prev => ({ ...prev, requester_name: '' }));
+                setShowOrientation(false);
+              }}
+              className="text-gray-500 hover:text-gray-400 text-xs underline transition"
+              data-testid="clear-identity-btn"
+            >
+              Not you? Clear saved info
+            </button>
+          </div>
+        )}
+
         {/* Search Bar - De-emphasized styling */}
         <div className="bg-gray-800/50 rounded-xl p-3 md:p-4 mb-3 md:mb-4">
           <div className="flex flex-col space-y-2">
@@ -13302,7 +13321,7 @@ const AudienceInterface = () => {
                 <option value="newest">Newest</option>
                 <option value="random">Random</option>
               </select>
-              {sortOption === 'random' && (
+              {(
                 <button
                   onClick={handleAudienceShuffle}
                   className="text-gray-400 hover:text-white px-2 py-1.5 rounded-lg text-xs flex items-center space-x-1 transition duration-300"
@@ -14115,7 +14134,10 @@ const AudienceInterface = () => {
                 {/* Post-request thanks line (only in post_request mode) */}
                 {orientationMode === 'post_request' && (
                   <p className="text-center text-green-400 text-sm mb-2 px-4" data-testid="orientation-thanks-line">
-                    Thanks, your request was sent.
+                    {(() => {
+                      const name = requestForm.requester_name || localStorage.getItem('requestwave_requester_name');
+                      return name ? `Thanks, ${name}, your request was sent.` : 'Thanks, your request was sent.';
+                    })()}
                   </p>
                 )}
                 
@@ -14423,24 +14445,6 @@ const AudienceInterface = () => {
                       <span>🌐</span>
                       <span>Visit Website</span>
                     </a>
-                  </div>
-                )}
-                
-                {/* "Not you? Clear" - only show if there's saved identity */}
-                {(localStorage.getItem('requestwave_requester_name') || localStorage.getItem('requestwave_requester_email')) && (
-                  <div className="text-center pt-2">
-                    <button
-                      onClick={() => {
-                        localStorage.removeItem('requestwave_requester_name');
-                        localStorage.removeItem('requestwave_requester_email');
-                        setRequestForm(prev => ({ ...prev, requester_name: '' }));
-                        setShowOrientation(false);
-                      }}
-                      className="text-gray-500 hover:text-gray-400 text-xs underline transition"
-                      data-testid="clear-identity-btn"
-                    >
-                      Not you? Clear saved info
-                    </button>
                   </div>
                 )}
                 
