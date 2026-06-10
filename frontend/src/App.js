@@ -12590,13 +12590,17 @@ const AudienceInterface = () => {
         if (captureMode === 'off') {
           // Email capture disabled - never show the followup step
           goStraightToSuccessTip();
+        } else if (savedEmail) {
+          // A previously captured email exists -> attach it to this request and skip
+          // the followup step (applies to both 'optional' and 'required' modes).
+          try {
+            await axios.post(`${API}/requests/${submittedRequest.id}/email`, { email: savedEmail, audience_id: audienceId });
+          } catch (e) { console.error('Background email attach failed', e); }
+          goStraightToSuccessTip();
         } else if (captureMode === 'required') {
-          // Email is required - always show the followup step regardless of localStorage
+          // Email is required and none saved yet - show the followup step
           setRequestStep('followup');
           setFollowUpEmail('');
-        } else if (savedEmail) {
-          // 'optional' + previously captured email -> skip followup
-          goStraightToSuccessTip();
         } else {
           // 'optional' + no saved email -> show followup step
           setRequestStep('followup');
