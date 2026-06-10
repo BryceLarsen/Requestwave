@@ -8806,6 +8806,7 @@ const MusicianDashboard = () => {
                 <div data-testid="profile-editor-modal" className="bg-gray-800 rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
                   <h2 className="text-xl font-bold mb-4">{editingProfile ? 'Edit Profile' : 'Create New Profile'}</h2>
                   {/* Copy from Default Profile button */}
+                  {editingProfile?.is_default !== true && (
                   <button
                     data-testid="copy-from-default-btn"
                     type="button"
@@ -8839,20 +8840,33 @@ const MusicianDashboard = () => {
                   >
                     Copy from Default Profile
                   </button>
+                  )}
                   <div className="space-y-4">
                     {/* Name & Slug */}
                     <div>
-                      <label className="block text-gray-300 text-sm font-bold mb-1">Profile Name</label>
-                      <input data-testid="profile-name-input" type="text" value={profileForm.name}
-                        onChange={(e) => {
-                          const name = e.target.value;
-                          setProfileForm(prev => ({ ...prev, name, slug: editingProfile ? prev.slug : generateSlugFromName(name) }));
-                        }}
-                        placeholder="e.g. Smith Wedding, Friday Night Jazz" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white" />
+                      {editingProfile?.is_default === true ? (
+                        <>
+                          <label className="block text-gray-300 text-sm font-bold mb-1">Performer name</label>
+                          <input data-testid="profile-name-input" type="text" value={profileForm.name}
+                            onChange={(e) => setProfileForm(prev => ({ ...prev, name: e.target.value, musician_name: e.target.value }))}
+                            placeholder="The name your audience sees" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white" />
+                          <p className="text-gray-400 text-xs mt-1">The name your audience sees. This is also your account name.</p>
+                        </>
+                      ) : (
+                        <>
+                          <label className="block text-gray-300 text-sm font-bold mb-1">Profile Name</label>
+                          <input data-testid="profile-name-input" type="text" value={profileForm.name}
+                            onChange={(e) => {
+                              const name = e.target.value;
+                              setProfileForm(prev => ({ ...prev, name, slug: editingProfile ? prev.slug : generateSlugFromName(name) }));
+                            }}
+                            placeholder="e.g. Smith Wedding, Friday Night Jazz" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white" />
+                        </>
+                      )}
                     </div>
                     {editingProfile?.is_default === true ? (
                       <div>
-                        <label className="block text-gray-300 text-sm font-bold mb-1">Your link:</label>
+                        <label className="block text-gray-300 text-sm font-bold mb-1">Your audience link</label>
                         <p data-testid="profile-default-link" className="text-gray-300 text-sm break-all">{AUDIENCE_BASE_URL}/musician/{musician.slug}</p>
                       </div>
                     ) : (
@@ -8866,25 +8880,27 @@ const MusicianDashboard = () => {
                     )}
 
                     {/* Display Name Override */}
+                    {editingProfile?.is_default !== true && (
                     <div>
                       <label className="block text-gray-300 text-sm font-bold mb-1">Display Name (override)</label>
                       <input type="text" value={profileForm.musician_name || ''} onChange={(e) => setProfileForm({...profileForm, musician_name: e.target.value})}
                         placeholder={musician.name + ' (master default)'} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500" />
                       <p className="text-gray-400 text-xs mt-1">Leave blank to use master account name</p>
                     </div>
+                    )}
 
                     {/* Bio Override */}
                     <div>
-                      <label className="block text-gray-300 text-sm font-bold mb-1">Bio (override)</label>
+                      <label className="block text-gray-300 text-sm font-bold mb-1">{editingProfile?.is_default === true ? 'Bio' : 'Bio (override)'}</label>
                       <textarea value={profileForm.bio || ''} onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})}
-                        placeholder="Leave blank to use master bio" rows="2" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500" />
+                        placeholder={editingProfile?.is_default === true ? 'A short intro your audience sees' : 'Leave blank to use master bio'} rows="2" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500" />
                     </div>
 
                     {/* Website Override */}
                     <div>
-                      <label className="block text-gray-300 text-sm font-bold mb-1">Website (override)</label>
+                      <label className="block text-gray-300 text-sm font-bold mb-1">{editingProfile?.is_default === true ? 'Website' : 'Website (override)'}</label>
                       <input type="url" value={profileForm.website || ''} onChange={(e) => setProfileForm({...profileForm, website: e.target.value})}
-                        placeholder="Leave blank to use master website" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500" />
+                        placeholder={editingProfile?.is_default === true ? 'yoursite.com' : 'Leave blank to use master website'} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500" />
                     </div>
 
                     {/* Active Playlists */}
