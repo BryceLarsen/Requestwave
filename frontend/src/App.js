@@ -13314,33 +13314,35 @@ const AudienceInterface = () => {
             
             {/* Sort and Filter Controls - Compact row */}
             <div className="flex items-center justify-between gap-2">
-              <select
-                value={sortOption}
-                onChange={(e) => setSortOption(e.target.value)}
-                className="bg-gray-700 border border-gray-600 focus:border-blue-500 rounded-lg px-2 py-1.5 text-gray-300 text-xs focus:outline-none transition-all duration-300"
-                aria-label="Sort by"
-              >
-                <option value="most-popular">Most Popular</option>
-                <option value="alphabetical">A→Z</option>
-                <option value="newest">Newest</option>
-                <option value="random">Random</option>
-              </select>
-              {(
-                <button
-                  onClick={handleAudienceShuffle}
-                  className="text-gray-400 hover:text-white px-2 py-1.5 rounded-lg text-xs flex items-center space-x-1 transition duration-300"
-                  title="Shuffle"
-                  aria-label="Shuffle songs"
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400 whitespace-nowrap">Sort by</span>
+                <select
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value)}
+                  className="bg-gray-700 border border-gray-600 focus:border-blue-500 rounded-lg px-2 py-1.5 text-gray-300 text-xs focus:outline-none transition-all duration-300"
+                  aria-label="Sort by"
                 >
-                  <span>🔀</span>
-                  <span className="hidden sm:inline">Shuffle</span>
-                </button>
-              )}
+                  <option value="most-popular">Most Popular</option>
+                  <option value="alphabetical">A→Z</option>
+                  <option value="newest">Newest</option>
+                  <option value="random">Random</option>
+                </select>
+              </div>
+              <button
+                onClick={handleAudienceShuffle}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-4 py-2 text-sm flex items-center space-x-1 transition duration-300"
+                title="Shuffle"
+                aria-label="Shuffle songs"
+              >
+                <span>🎲</span>
+                <span>Shuffle</span>
+              </button>
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="text-gray-400 hover:text-white px-2 py-1.5 rounded-lg text-xs transition duration-300"
+                className="border border-gray-600 bg-gray-800 text-gray-300 hover:text-white rounded-lg px-3 py-2 text-xs flex items-center space-x-1 transition duration-300"
               >
-                {showFilters ? 'Hide Filters' : 'Browse / Filter'}
+                <span>⚙</span>
+                <span>{showFilters ? 'Hide Filters' : 'Filters'}</span>
               </button>
             </div>
             {searchQuery && (
@@ -13435,18 +13437,6 @@ const AudienceInterface = () => {
             {filteredSongs.length} song{filteredSongs.length !== 1 ? 's' : ''}
             {(selectedFilters.genre || selectedFilters.playlist || selectedFilters.mood || selectedFilters.year || selectedFilters.decade || searchQuery) && ' matching'}
           </p>
-          
-          {/* Surprise Me Button */}
-          {filteredSongs.length > 0 && musician?.requests_enabled !== false && (
-            <button
-              onClick={handleRandomSong}
-              data-testid="surprise-me-btn"
-              className="text-gray-400 hover:text-white px-3 py-1.5 rounded-lg text-sm transition duration-300 flex items-center space-x-2 border border-gray-700 hover:border-gray-500"
-            >
-              <span>🎲</span>
-              <span>Surprise Me</span>
-            </button>
-          )}
         </div>
 
         {/* Songs List */}
