@@ -536,6 +536,26 @@ const formatTime = (timestamp) => {
 
 // Stage-legible ChordPro viewer. Parses the musician's pasted ChordPro text with
 // ChordSheetJS and renders it in a full-screen, high-contrast modal for on-stage reading.
+const useWakeLock = (active) => {
+  useEffect(() => {
+    if (!active) return;
+    let sentinel = null;
+    let released = false;
+    const request = async () => {
+      try { if ('wakeLock' in navigator) sentinel = await navigator.wakeLock.request('screen'); }
+      catch (e) { /* not focused / unsupported: ignore */ }
+    };
+    const onVisible = () => { if (document.visibilityState === 'visible' && !released) request(); };
+    request();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      released = true;
+      document.removeEventListener('visibilitychange', onVisible);
+      if (sentinel) { sentinel.release().catch(() => {}); sentinel = null; }
+    };
+  }, [active]);
+};
+
 const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose = 0, onTransposeSaved }) => {
   const [transpose, setTranspose] = useState(initialTranspose || 0);
   const [savedTranspose, setSavedTranspose] = useState(initialTranspose || 0);
@@ -744,6 +764,7 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
 const MusicianDashboard = () => {
   const { musician, token, logout, setMusician } = useAuth();
   const [activeTab, setActiveTab] = useState('onstage');
+  useWakeLock(activeTab === 'onstage');
   
   // Debug activeTab changes
   useEffect(() => {
@@ -15039,6 +15060,7 @@ const RequestCard = ({ item, index, onAccept, onPlay, onSkip, onRestore, showMov
 // NEW: On Stage Interface Component for Live Performances
 const OnStageInterface = () => {
   const { slug } = useParams();
+  useWakeLock(true);
   const [musician, setMusician] = useState(null);
   const [requests, setRequests] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
