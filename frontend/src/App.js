@@ -556,7 +556,7 @@ const useWakeLock = (active) => {
   }, [active]);
 };
 
-const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose = 0, onTransposeSaved }) => {
+const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose = 0, onTransposeSaved, onEditSong }) => {
   const [transpose, setTranspose] = useState(initialTranspose || 0);
   const [savedTranspose, setSavedTranspose] = useState(initialTranspose || 0);
   const [savingKey, setSavingKey] = useState(false);
@@ -734,6 +734,15 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowSettings(false)} />
               <div className="absolute top-full right-2 mt-1 z-20 bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-4 min-w-[200px]">
+                {onEditSong && (
+                  <button
+                    type="button"
+                    onClick={() => { setShowSettings(false); onEditSong(); }}
+                    className="w-full mb-3 pb-3 border-b border-gray-700 text-left flex items-center gap-2 text-sm text-gray-100 hover:text-white"
+                  >
+                    <span>✏️</span><span>Edit song</span>
+                  </button>
+                )}
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs uppercase tracking-wide text-gray-400 font-semibold">Text size</span>
                   <div className="flex items-center gap-2">
@@ -5068,6 +5077,11 @@ const MusicianDashboard = () => {
           songId={openChordpro.id}
           initialTranspose={openChordpro.transpose || 0}
           onTransposeSaved={(id, t) => setSongs((prev) => prev.map((s) => (s.id === id ? { ...s, transpose: t } : s)))}
+          onEditSong={() => {
+            const song = songs.find((s) => s.id === openChordpro.id);
+            setOpenChordpro(null);
+            if (song) handleEditSong(song);
+          }}
         />
       )}
       {/* Error Toast */}
