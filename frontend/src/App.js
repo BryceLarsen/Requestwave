@@ -599,6 +599,37 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
   useEffect(() => { localStorage.setItem('cpViewerTheme', theme); }, [theme]);
   const isLight = theme === 'light';
 
+  // Keep the screen awake while a chart is open on stage (Screen Wake Lock API).
+  useEffect(() => {
+    let wakeSentinel = null;
+    let released = false;
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeSentinel = await navigator.wakeLock.request('screen');
+        }
+      } catch (e) {
+        // wake lock can fail if the document isn't focused or isn't supported; ignore silently
+      }
+    };
+    const handleVisibility = () => {
+      // the OS releases the lock when the tab is backgrounded; re-acquire when it returns to the foreground
+      if (document.visibilityState === 'visible' && !released) {
+        requestWakeLock();
+      }
+    };
+    requestWakeLock();
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      released = true;
+      document.removeEventListener('visibilitychange', handleVisibility);
+      if (wakeSentinel) {
+        wakeSentinel.release().catch(() => {});
+        wakeSentinel = null;
+      }
+    };
+  }, []);
+
   return (
     <div
       data-testid="chordpro-viewer"
