@@ -6016,6 +6016,7 @@ CHORDPRO_EXTENSIONS = (".cho", ".crd", ".chopro", ".chordpro", ".pro", ".txt")
 # Directive patterns: {title:..}/{t:..} and {subtitle:..}/{st:..}
 _CHORDPRO_TITLE_RE = re.compile(r"\{\s*(?:title|t)\s*:\s*(.*?)\s*\}", re.IGNORECASE)
 _CHORDPRO_SUBTITLE_RE = re.compile(r"\{\s*(?:subtitle|st)\s*:\s*(.*?)\s*\}", re.IGNORECASE)
+_CHORDPRO_ARTIST_RE = re.compile(r"\{\s*(?:artist|a)\b\s*:\s*(.*?)\s*\}", re.IGNORECASE)
 
 
 def _normalize_for_match(value: str) -> str:
@@ -6031,9 +6032,13 @@ def _normalize_for_match(value: str) -> str:
 def _parse_chordpro_directives(text: str):
     """Extract (title, artist) from ChordPro directives. Returns (title|None, artist|'')."""
     title_match = _CHORDPRO_TITLE_RE.search(text)
+    artist_match = _CHORDPRO_ARTIST_RE.search(text)
     subtitle_match = _CHORDPRO_SUBTITLE_RE.search(text)
     title = title_match.group(1).strip() if title_match else None
-    artist = subtitle_match.group(1).strip() if subtitle_match else ""
+    artist_value = artist_match.group(1).strip() if artist_match else ""
+    subtitle_value = subtitle_match.group(1).strip() if subtitle_match else ""
+    # Artist precedence: {artist:}/{a:} wins, else fall back to {subtitle:}/{st:}
+    artist = artist_value if artist_value else subtitle_value
     return title, artist
 
 
