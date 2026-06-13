@@ -7,7 +7,7 @@ import requests
 import json
 from datetime import datetime, timedelta
 
-BASE_URL = "https://show-analytics-1.preview.emergentagent.com/api"
+BASE_URL = "https://profile-events-hub.preview.emergentagent.com/api"
 PRO_MUSICIAN = {
     "email": "brycelarsenmusic@gmail.com",
     "password": "RequestWave2024!"

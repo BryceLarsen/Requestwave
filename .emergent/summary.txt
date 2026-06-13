@@ -9,17 +9,18 @@ PRODUCT REQUIREMENTS:
 - Build a profile-scoped Show Analytics dashboard.
 - Create a quick data-audit endpoint to flag legacy playlist filters.
 - Implement full Zip Import & Parse UI for bulk ChordPro files (.cho, .crd, etc.), with collision resolution (Exact/Fuzzy/New match buckets).
+- Polish the Multi-Profile UI to treat the default profile as the primary identity (inheriting contact/tip/social handles elegantly) and enforce On-Stage screen wake locks.
 
 **User's preferred language**: English (INSTRUCT next agent to respond in English only)
 
 **what currently exists?** 
-A monolithic React frontend (), a standalone admin UI (), and a FastAPI backend () with MongoDB. The system supports a Multi-Profile and Events hierarchy, dynamic per-show analytics, configurable email capture logic, and dynamic origin routing. Song Charts are now fully supported for URLs (Link/PDF) and ChordPro (parsed and rendered in-app). The app now fully supports bulk importing ChordPro files via ZIP uploads, including a backend commit endpoint with collision detection and a responsive frontend resolution UI. Post-build HTML emission () bypasses Cloudflare bot protections. PREVIEW and PRODUCTION environments exist.
+A monolithic React frontend (), a standalone admin UI (), and a FastAPI backend () with MongoDB. The system supports a Multi-Profile and Events hierarchy, dynamic per-show analytics, configurable email capture logic, dynamic origin routing, and full bulk importing for ChordPro files via ZIP uploads. The in-app  supports dynamic spacing, global styling, transpose capabilities, graceful text fallbacks, and screen wake locks. The Multi-Profile editor cleanly differentiates primary default profiles from secondary override profiles. 
 
 **Last working item**: 
-    - Last item agent was working: Frontend UX fix for the ChordPro import commit UI. Added an unresolved conflict count, an anchor to smooth-scroll down to the conflicts card, replaced a static block-warning above the Confirm button with a clickable scroll button, and updated the conflicts card heading to reflect unresolved counts dynamically.
+    - Last item agent was working: Added an Edit song action to the  gear menu (via an optional  prop), wired specifically to the Musician Dashboard's instantiation so users can jump straight to editing the song.
     - Status: USER VERIFICATION PENDING
     - Agent Testing Done: Y
-    - Which testing method agent to use? manual testing by curl/ python -c / screenshot tool
+    - Which testing method agent to use? manual testing by curl/ python -c / screenshot tool / webpack compile
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:  
@@ -39,13 +40,16 @@ A monolithic React frontend (), a standalone admin UI (), and a FastAPI backend 
     - Integration (P3): Integrate with Spotify Web API for song data enrichment.
 
 **Completed work in this session**
-- : Created  endpoint for parsing/bucketing ChordPro ZIP uploads (read-only) (DONE).
-- : Created  endpoint for executing bulk ChordPro inserts/updates with collision guard (DONE).
-- : Added metadata properties (, ,  counts) to preview responses and ensured  is explicitly set during commit (DONE).
-- : Built interactive UI for ChordPro ZIP import (resolutions state, collision mode logic, fuzzy toggles, policy overrides) (DONE).
-- : Fixed dynamic collision logic to appropriately group fuzzy+fuzzy and fuzzy+exact matches on the same target song (DONE).
-- : Added a 📄 Chart button directly to the song cards in the Songs tab (DONE).
-- : Improved the UX of the ChordPro collision resolution UI by adding dynamic scroll buttons and remaining conflict counts (DONE).
+- : Fixed Emergent OAuth redirect returning 404 (changed  to ).
+- : Updated  with tab-aware context (Requests tab filters automatically map to the started show profile).
+- : Added pending requests pill badges to individual show cards.
+- : Added  call inside  polling block to refresh the shows list live when new requests arrive.
+- : Audience interface UI improvements: personalized thanks text, moved Not you? Clear saved info to the top, refined filter/shuffle row styling, and removed Surprise Me button.
+- : Audience email capture short-circuits if an email is already saved in , attaching it seamlessly to new requests without prompting.
+- : Major UX overhaul of the Multi-Profile editor form. The default profile is now treated as the primary identity (clean labels, handle prefixes like , , ). Secondary profiles match this clean layout but utilize specific exceptions (custom link inputs, display name overrides).
+- : Creating a new profile now automatically prefills contact/tip/social handles using the default profile's data.
+- : Implemented the browser  via a reusable  hook, applying it to , the Dashboard's On Stage tab, and the standalone .
+- : Added Edit song to  settings.
 
 **Earlier issues found/mentioned but not fixed**
    Issue 1: 
@@ -65,51 +69,46 @@ A monolithic React frontend (), a standalone admin UI (), and a FastAPI backend 
 **Key Technical Concepts**
 - State-Driven Conditional UI (React state in a single giant component)
 - 3-tier Data Merging: Master Musician -> Profile -> Event
-- Dynamic Origin Routing: Audience URLs are generated at runtime using .
 - Post-build HTML emission () bypasses Cloudflare.
--  parsing: Utilizes  and  for rendering lyrics/chords on the frontend.
-- Zip bulk processing in memory without writing temp files to disk.
+-  parsing for ChordPro rendering.
+-  used to prevent device screens from dimming during live stage performances.
 
 **key DB schema**
   - :  
 
 **changes in tech stack**
-  - No new libraries added in this session.
+  - No new libraries added. Introduced usage of native browser API .
 
 **All files of reference** 
-  -  (Updated with new ChordPro import/commit endpoints)
-  -  (Updated with ChordPro import review UI, UX fixes, and Songs tab Chart button)
-  -  (Updated with ChordPro bulk import logic)
+  -  (Heavily modified with logic for Wake Locks, Audience Interface UX, Profile Editor form fields UX, and Request polling)
 
 **Areas that need refactoring**: 
-  -  (nearly 16,000 lines) and  (nearly 10,000 lines). Highly fragile. **DO NOT REFACTOR until explicitly asked by the user.**
+  -  (over 16,000 lines) and  (nearly 10,000 lines). Highly fragile. **DO NOT REFACTOR until explicitly asked by the user.**
 
 **key api endpoints**
-  - , , 
   - 
   - 
   - 
 
 **Critical Info for New Agent** 
-- **Production Environment Exists:** The user has a live deployment (). You can only write code in PREVIEW. If bugs are reported, strictly clarify which environment the user is looking at.
-- **Hibernating Servers Gate:** The frontend preview server may hibernate if inactive. e2e testing with a screenshot tool might hit a Wake up servers screen. Trust local linting and curl backend tests if frontend is completely asleep.
-- **Monolithic State Warnings:** Changes inside  often bleed into other tabs due to heavy file size. Make extremely precise edits.
-- DO NOT add a secondary  anywhere; always reuse the existing modal and its  state.
+- **Production vs Preview Environments:** The user has a live deployment (). You can only write code in PREVIEW. If bugs are reported, strictly clarify which environment the user is looking at.
+- **Hibernating Servers Gate:** The frontend preview server may hibernate if inactive. e2e testing with a screenshot tool might hit a Wake up servers screen. Trust local linting and bash commands.
+- **Monolithic State Warnings:**  is massive. Always use line anchors, accurate  commands, and verify your  edits with a follow-up  to ensure modifications apply correctly.
 
 **documents and test reports created in this job**
-  - 
-  - 
+  - None created.
 
 **Last 10 User Messages and any pending HUMAN messages** 
- 1. **User**: Backend + a minimal frontend upload UI for ChordPro ZIP Import *PREVIEW* step. (Completed)
- 2. **User**: Backend additive change to  to attach  and . (Completed)
- 3. **User**: Backend add  for actual DB write from ZIP files with resolutions payload. (Completed)
- 4. **User**: Backend change to  to count skipped  files. (Completed)
- 5. **User**: Frontend: Turn the read-only ChordPro preview into an interactive commit UI (resolutions state, collision grouping, etc). (Completed)
- 6. **User**: Frontend UX fix: Make collision detection dynamic to cover fuzzy+fuzzy and fuzzy+exact matches on the same target. (Completed)
- 7. **User**: Backend bug fix: Set  when attaching or creating charts in the import commit handler. (Completed)
- 8. **User**: Frontend: Add 📄 Chart button directly onto song cards in the Songs tab. (Completed)
- 9. **User**: Frontend UX fix: Add unresolved conflict count and clickable scroll-to-conflicts button to the import UI. (Completed)
+ 1. **User**: Bug Fix: Change OAuth redirect target to site root. (Completed)
+ 2. **User**: Feature: Make  tab-aware and align On Stage context. (Completed)
+ 3. **User**: Feature: Add pending requests pill badge to show cards. (Completed)
+ 4. **User**: Feature: Hide default profile's URL slug block in profile editor. (Completed)
+ 5. **User**: Bug Fix: Call  within  polling block to refresh newly active shows. (Completed)
+ 6. **User**: Feature: Audience Interface - personalize thanks, move Not you? button, always show Shuffle button. (Completed)
+ 7. **User**: Feature: Audience Interface - short-circuit email capture if email is in  and auto-attach to request. (Completed)
+ 8. **User**: Feature: Audience Interface - redesign sort/filter/shuffle control row. (Completed)
+ 9. **User**: Feature: Profile Editor - transform default profile identity/tip/social inputs into primary display fields. (Completed)
+ 10. **User**: Feature: Screen Wake Lock API integration () &  gear menu Edit song. (Completed)
  *(No pending messages)*
 
 **Project Health Check:**
@@ -124,7 +123,7 @@ A monolithic React frontend (), a standalone admin UI (), and a FastAPI backend 
   - Stripe (Payments) — requires User API Key
 
 **Testing status**
-  - Testing agent used after significant changes: NO (Due to preview server hibernation state, main agent self-tested logic locally using bash linting & curl verification).
+  - Testing agent used after significant changes: NO (Relied on strict webpack compilation and bash verification).
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: None
   - Known regressions: None (Exception: pre-existing 403 bug on  without auth).
@@ -135,4 +134,4 @@ A monolithic React frontend (), a standalone admin UI (), and a FastAPI backend 
   - Admin Password:  (found in )
 
 **What agent forgot to execute**
-  - None. All backend and frontend tasks requested by the user regarding ChordPro ZIP bulk imports, parsing, collision management, and UX refinements were strictly executed. Verify with the user before picking up the P2 Analytics or Data Hygiene tasks.</analysis>
+  - None. All micro-tasks were successfully implemented exactly as specified.</analysis>
