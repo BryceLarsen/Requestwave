@@ -562,7 +562,26 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
   const [savingKey, setSavingKey] = useState(false);
   const html = useMemo(() => {
     try {
-      let song = new ChordProParser().parse(chordpro || '');
+      const normalizedLines = (chordpro || '')
+        .split('\n')
+        .map(line => {
+          if (/^\s+$/.test(line)) return '';                                  // whitespace-only line -> truly empty
+          if (/^\s*\{[^}]*\}\s*$/.test(line)) return line.replace(/^\s+/, ''); // directive-only line -> strip leading whitespace
+          return line;                                                         // everything else untouched
+        });
+
+      const collapsed = [];
+      let prevBlank = false;
+      for (const l of normalizedLines) {
+        const blank = (l === '');
+        if (blank && prevBlank) continue;   // skip a 2nd+ consecutive blank line
+        collapsed.push(l);
+        prevBlank = blank;
+      }
+
+      const normalizedChordpro = collapsed.join('\n');
+
+      let song = new ChordProParser().parse(normalizedChordpro);
       if (transpose !== 0) song = song.transpose(transpose); // transpose returns a NEW song; must reassign
       const formatted = new HtmlDivFormatter().format(song);
       const doc = new DOMParser().parseFromString('<div id="cp-root">' + formatted + '</div>', 'text/html');
