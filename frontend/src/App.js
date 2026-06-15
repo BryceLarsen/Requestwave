@@ -16,6 +16,7 @@ import {
 import AdminPanel from './AdminPanel';
 import { ChordProParser, HtmlDivFormatter } from 'chordsheetjs';
 import { cpRenderSong, cpDetectKey, cpCollectChords, cpKeyLabel } from './chordProRenderer';
+import { useCockpit, UpNextTrigger, UpNextPanel, DedicationBox, PlayedButton, buildSongRequests, buildOpenQueue } from './cockpitOverlay';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -557,11 +558,13 @@ const useWakeLock = (active) => {
   }, [active]);
 };
 
-const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose = 0, onTransposeSaved, onEditSong }) => {
+const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose = 0, onTransposeSaved, onEditSong, cockpit = null }) => {
   const [transpose, setTranspose] = useState(initialTranspose || 0);
   const [accidental, setAccidental] = useState(null); // null = auto (use detected key), 'sharp', or 'flat'
   const [savedTranspose, setSavedTranspose] = useState(initialTranspose || 0);
   const [savingKey, setSavingKey] = useState(false);
+  const cockpitScrollRef = useRef(null);
+  const { faded, recover, hide, panelOpen, setPanelOpen } = useCockpit(cockpitScrollRef);
   const html = useMemo(() => {
     try {
       const normalizedLines = (chordpro || '')
@@ -745,7 +748,14 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
       >
         {/* Top bar */}
         <div className={`relative flex items-center justify-between gap-1 px-5 py-4 border-b ${isLight ? 'border-gray-200' : 'border-gray-700'} shrink-0`}>
-          <div className="flex items-center gap-2 min-w-0 flex-1" />
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            {cockpit?.isOnStage && (
+              <>
+                <UpNextTrigger isOnStage={cockpit.isOnStage} isLight={isLight} count={cockpit.queue.filter(q => !q.isCurrent).length} onToggle={() => setPanelOpen(o => !o)} />
+                <UpNextPanel open={panelOpen} queue={cockpit.queue} onClose={() => setPanelOpen(false)} onOpenSong={cockpit.onOpenSong} />
+              </>
+            )}
+          </div>
           <div className="flex items-center gap-1">
           <button
             type="button"
@@ -814,9 +824,17 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
           )}
         </div>
         {/* Scrolling chart body */}
-        <div className={`chordpro-body flex-1 overflow-y-auto px-5 py-4 ${isLight ? 'cp-light' : ''}`}>
-          <h2 style={{ color: isLight ? '#b45309' : '#fbbf24', fontWeight: 800, fontSize: (textSize + 6) + 'px', lineHeight: 1.15, marginBottom: '2px' }}>{songTitle}</h2>
-          <div dangerouslySetInnerHTML={{ __html: html }} />
+        <div className="relative flex-1 flex flex-col min-h-0">
+          {cockpit?.isOnStage && (
+            <DedicationBox requests={cockpit.requests} songTitle={songTitle} faded={faded} onRecover={recover} onHide={hide} />
+          )}
+          <div ref={cockpitScrollRef} className={`chordpro-body flex-1 overflow-y-auto px-5 py-4 ${isLight ? 'cp-light' : ''}`}>
+            <h2 style={{ color: isLight ? '#b45309' : '#fbbf24', fontWeight: 800, fontSize: (textSize + 6) + 'px', lineHeight: 1.15, marginBottom: '2px' }}>{songTitle}</h2>
+            <div dangerouslySetInnerHTML={{ __html: html }} />
+          </div>
+          {cockpit?.isOnStage && (
+            <PlayedButton isOnStage={cockpit.isOnStage} onPlayed={cockpit.onPlayed} />
+          )}
         </div>
       </div>
     </div>
@@ -5135,6 +5153,31 @@ const MusicianDashboard = () => {
             setOpenChordpro(null);
             if (song) handleEditSong(song);
           }}
+          cockpit={(() => {
+            const showId = currentShow?.id;
+            const songId = openChordpro.id;
+            if (!showId || !songId) return null;
+            const songReqs = buildSongRequests(requests, songId, showId);
+            if (songReqs.length === 0) return null;
+            return {
+              isOnStage: true,
+              requests: songReqs,
+              queue: buildOpenQueue(requests, songs, songId, showId),
+              onPlayed: async () => {
+                const ids = requests
+                  .filter(r => r.song_id === songId && r.show_id === showId && ['pending','up_next','accepted'].includes(r.status))
+                  .map(r => r.id);
+                await Promise.all(ids.map(id => updateRequestStatus(id, 'played')));
+                setOpenChordpro(null);
+              },
+              onOpenSong: (sid) => {
+                const s = songs.find(x => x.id === sid);
+                if (s && s.chart_type === 'chordpro' && s.chart_chordpro) {
+                  setOpenChordpro({ chordpro: s.chart_chordpro, title: s.title || s.song_title, id: s.id, transpose: s.transpose || 0 });
+                }
+              },
+            };
+          })()}
         />
       )}
       {/* Error Toast */}
