@@ -73,7 +73,7 @@ export function buildOpenQueue(requests, songs, currentSongId, showId) {
       song_id: g.song_id,
       title: g.title,
       count: g.count,
-      hasChart: song.chart_type === 'chordpro' && !!song.chart_chordpro,
+      hasChart: (song.chart_type === 'chordpro' && !!song.chart_chordpro) || ((song.chart_type === 'link' || song.chart_type === 'pdf') && !!song.chart_url),
       isCurrent: g.song_id === currentSongId,
       subtitle: g.count > 1 ? `${g.count} people` : (g.firstRequester || 'Anonymous'),
       earliest: g.earliest,
@@ -155,7 +155,7 @@ export function UpNextPanel({ queue = [], open, onClose, onOpenSong }) {
           Open requests · oldest first
         </div>
         {queue.map((q, i) => {
-          const tappable = q.hasChart && !q.isCurrent;
+          const tappable = !q.isCurrent;
           return (
             <button
               type="button"

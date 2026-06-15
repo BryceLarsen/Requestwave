@@ -5174,6 +5174,11 @@ const MusicianDashboard = () => {
                 const s = songs.find(x => x.id === sid);
                 if (s && s.chart_type === 'chordpro' && s.chart_chordpro) {
                   setOpenChordpro({ chordpro: s.chart_chordpro, title: s.title || s.song_title, id: s.id, transpose: s.transpose || 0 });
+                } else if (s && (s.chart_type === 'link' || s.chart_type === 'pdf') && s.chart_url) {
+                  window.open(s.chart_url, '_blank');
+                  setOpenChordpro(null);
+                } else {
+                  setOpenChordpro(null);
                 }
               },
             };
