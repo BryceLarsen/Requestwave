@@ -15,7 +15,7 @@ import {
 } from 'recharts';
 import AdminPanel from './AdminPanel';
 import { ChordProParser, HtmlDivFormatter } from 'chordsheetjs';
-import { cpRenderSong } from './chordProRenderer';
+import { cpRenderSong, cpDetectKey, cpCollectChords } from './chordProRenderer';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -559,6 +559,7 @@ const useWakeLock = (active) => {
 
 const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose = 0, onTransposeSaved, onEditSong }) => {
   const [transpose, setTranspose] = useState(initialTranspose || 0);
+  const [accidental, setAccidental] = useState(null); // null = auto (use detected key), 'sharp', or 'flat'
   const [savedTranspose, setSavedTranspose] = useState(initialTranspose || 0);
   const [savingKey, setSavingKey] = useState(false);
   const html = useMemo(() => {
@@ -584,7 +585,9 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
 
       let song = new ChordProParser().parse(normalizedChordpro);
       if (transpose !== 0) song = song.transpose(transpose);
-      return cpRenderSong(song, 'sharp');
+      const detected = cpDetectKey(cpCollectChords(song));
+      const prefer = accidental || detected.prefer;
+      return cpRenderSong(song, prefer);
     } catch (e) {
       console.error('ChordPro parse error:', e);
       const safe = (chordpro || '')
@@ -596,7 +599,7 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
         '<pre class="chordpro-fallback-raw">' + safe + '</pre>'
       );
     }
-  }, [chordpro, transpose]);
+  }, [chordpro, transpose, accidental]);
 
   const saveKey = async () => {
     if (!songId) return;
@@ -734,6 +737,14 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
               <button type="button" onClick={saveKey} disabled={savingKey} className="ml-1 px-3 h-8 rounded bg-purple-600 hover:bg-purple-700 text-white text-sm disabled:opacity-60">{savingKey ? 'Saving…' : 'Save key'}</button>
             )}
           </div>
+          <div className="flex items-center gap-1 mt-2">
+              <span className="text-xs uppercase tracking-wide text-gray-400 font-semibold mr-2">Spelling</span>
+              <div className={`inline-flex rounded overflow-hidden ${isLight ? 'bg-gray-200' : 'bg-gray-700'}`}>
+                <button type="button" onClick={() => setAccidental(null)} className={`px-2 h-7 text-xs ${accidental === null ? 'bg-purple-600 text-white' : (isLight ? 'text-gray-700' : 'text-gray-200')}`}>Auto</button>
+                <button type="button" onClick={() => setAccidental('flat')} className={`px-2 h-7 text-sm ${accidental === 'flat' ? 'bg-purple-600 text-white' : (isLight ? 'text-gray-700' : 'text-gray-200')}`}>♭</button>
+                <button type="button" onClick={() => setAccidental('sharp')} className={`px-2 h-7 text-sm ${accidental === 'sharp' ? 'bg-purple-600 text-white' : (isLight ? 'text-gray-700' : 'text-gray-200')}`}>♯</button>
+              </div>
+            </div>
           <div className="flex items-center gap-1">
           <button
             type="button"
