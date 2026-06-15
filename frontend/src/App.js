@@ -15,7 +15,7 @@ import {
 } from 'recharts';
 import AdminPanel from './AdminPanel';
 import { ChordProParser, HtmlDivFormatter } from 'chordsheetjs';
-import { cpRenderSong, cpDetectKey, cpCollectChords } from './chordProRenderer';
+import { cpRenderSong, cpDetectKey, cpCollectChords, cpKeyLabel } from './chordProRenderer';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -601,6 +601,23 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
     }
   }, [chordpro, transpose, accidental]);
 
+  const detectedKey = useMemo(() => {
+    try {
+      const lines = (chordpro || '').split('\n').map((line) => {
+        if (/^\s+$/.test(line)) return '';
+        if (/^\s*\{[^}]*\}\s*$/.test(line)) return line.replace(/^\s+/, '');
+        return line;
+      });
+      const collapsed = [];
+      let prevBlank = false;
+      for (const l of lines) { const b = l === ''; if (b && prevBlank) continue; collapsed.push(l); prevBlank = b; }
+      const song = new ChordProParser().parse(collapsed.join('\n'));
+      return cpDetectKey(cpCollectChords(song));
+    } catch (e) {
+      return { tonicIdx: 0, prefer: 'sharp' };
+    }
+  }, [chordpro]);
+
   const saveKey = async () => {
     if (!songId) return;
     setSavingKey(true);
@@ -756,7 +773,7 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
                   <span className="text-xs uppercase tracking-wide text-gray-400 font-semibold">Key</span>
                   <div className="flex items-center gap-2">
                     <button type="button" onClick={() => setTranspose((t) => Math.max(-11, t - 1))} className="w-8 h-8 rounded bg-gray-700 text-gray-100 text-lg leading-none">−</button>
-                    <span className="text-gray-100 tabular-nums w-7 text-center">{transpose > 0 ? `+${transpose}` : transpose}</span>
+                    <span className="text-gray-100 tabular-nums w-10 text-center">{cpKeyLabel(detectedKey.tonicIdx, transpose, accidental || detectedKey.prefer)}</span>
                     <button type="button" onClick={() => setTranspose((t) => Math.min(11, t + 1))} className="w-8 h-8 rounded bg-gray-700 text-gray-100 text-lg leading-none">+</button>
                   </div>
                 </div>
