@@ -728,23 +728,7 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
       >
         {/* Top bar */}
         <div className={`relative flex items-center justify-between gap-1 px-5 py-4 border-b ${isLight ? 'border-gray-200' : 'border-gray-700'} shrink-0`}>
-          <div className="flex items-center gap-2">
-            <span className={isLight ? 'text-xs uppercase tracking-wide text-gray-500 font-semibold' : 'text-xs uppercase tracking-wide text-gray-400 font-semibold'}>Key</span>
-            <button type="button" onClick={() => setTranspose((t) => Math.max(-11, t - 1))} className={`w-8 h-8 rounded text-lg leading-none ${isLight ? 'bg-gray-200 text-gray-800' : 'bg-gray-700 text-gray-100'}`}>−</button>
-            <span className="tabular-nums w-7 text-center">{transpose > 0 ? `+${transpose}` : transpose}</span>
-            <button type="button" onClick={() => setTranspose((t) => Math.min(11, t + 1))} className={`w-8 h-8 rounded text-lg leading-none ${isLight ? 'bg-gray-200 text-gray-800' : 'bg-gray-700 text-gray-100'}`}>+</button>
-            {songId && transpose !== savedTranspose && (
-              <button type="button" onClick={saveKey} disabled={savingKey} className="ml-1 px-3 h-8 rounded bg-purple-600 hover:bg-purple-700 text-white text-sm disabled:opacity-60">{savingKey ? 'Saving…' : 'Save key'}</button>
-            )}
-          </div>
-          <div className="flex items-center gap-1 mt-2">
-              <span className="text-xs uppercase tracking-wide text-gray-400 font-semibold mr-2">Spelling</span>
-              <div className={`inline-flex rounded overflow-hidden ${isLight ? 'bg-gray-200' : 'bg-gray-700'}`}>
-                <button type="button" onClick={() => setAccidental(null)} className={`px-2 h-7 text-xs ${accidental === null ? 'bg-purple-600 text-white' : (isLight ? 'text-gray-700' : 'text-gray-200')}`}>Auto</button>
-                <button type="button" onClick={() => setAccidental('flat')} className={`px-2 h-7 text-sm ${accidental === 'flat' ? 'bg-purple-600 text-white' : (isLight ? 'text-gray-700' : 'text-gray-200')}`}>♭</button>
-                <button type="button" onClick={() => setAccidental('sharp')} className={`px-2 h-7 text-sm ${accidental === 'sharp' ? 'bg-purple-600 text-white' : (isLight ? 'text-gray-700' : 'text-gray-200')}`}>♯</button>
-              </div>
-            </div>
+          <div className="flex items-center gap-2 min-w-0 flex-1" />
           <div className="flex items-center gap-1">
           <button
             type="button"
@@ -768,15 +752,25 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowSettings(false)} />
               <div className="absolute top-full right-2 mt-1 z-20 bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-4 min-w-[200px]">
-                {onEditSong && (
-                  <button
-                    type="button"
-                    onClick={() => { setShowSettings(false); onEditSong(); }}
-                    className="w-full mb-3 pb-3 border-b border-gray-700 text-left flex items-center gap-2 text-sm text-gray-100 hover:text-white"
-                  >
-                    <span>✏️</span><span>Edit song</span>
-                  </button>
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <span className="text-xs uppercase tracking-wide text-gray-400 font-semibold">Key</span>
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => setTranspose((t) => Math.max(-11, t - 1))} className="w-8 h-8 rounded bg-gray-700 text-gray-100 text-lg leading-none">−</button>
+                    <span className="text-gray-100 tabular-nums w-7 text-center">{transpose > 0 ? `+${transpose}` : transpose}</span>
+                    <button type="button" onClick={() => setTranspose((t) => Math.min(11, t + 1))} className="w-8 h-8 rounded bg-gray-700 text-gray-100 text-lg leading-none">+</button>
+                  </div>
+                </div>
+                {songId && transpose !== savedTranspose && (
+                  <button type="button" onClick={saveKey} disabled={savingKey} className="w-full mb-3 px-3 h-8 rounded bg-purple-600 hover:bg-purple-700 text-white text-sm disabled:opacity-60">{savingKey ? 'Saving…' : 'Save key'}</button>
                 )}
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <span className="text-xs uppercase tracking-wide text-gray-400 font-semibold">Spelling</span>
+                  <div className={`inline-flex rounded overflow-hidden ${isLight ? 'bg-gray-200' : 'bg-gray-700'}`}>
+                    <button type="button" onClick={() => setAccidental(null)} className={`px-2 h-7 text-xs ${accidental === null ? 'bg-purple-600 text-white' : (isLight ? 'text-gray-700' : 'text-gray-200')}`}>Auto</button>
+                    <button type="button" onClick={() => setAccidental('flat')} className={`px-2 h-7 text-sm ${accidental === 'flat' ? 'bg-purple-600 text-white' : (isLight ? 'text-gray-700' : 'text-gray-200')}`}>♭</button>
+                    <button type="button" onClick={() => setAccidental('sharp')} className={`px-2 h-7 text-sm ${accidental === 'sharp' ? 'bg-purple-600 text-white' : (isLight ? 'text-gray-700' : 'text-gray-200')}`}>♯</button>
+                  </div>
+                </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs uppercase tracking-wide text-gray-400 font-semibold">Text size</span>
                   <div className="flex items-center gap-2">
@@ -789,7 +783,15 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
                   <span className="text-xs uppercase tracking-wide text-gray-400 font-semibold">Theme</span>
                   <button type="button" onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))} className="px-3 h-8 rounded bg-gray-700 text-gray-100 text-sm">{isLight ? 'Light' : 'Dark'}</button>
                 </div>
-                <div className="text-[11px] text-gray-500 mt-3 pt-3 border-t border-gray-700">Global. Applies to every song.</div>
+                {onEditSong && (
+                  <button
+                    type="button"
+                    onClick={() => { setShowSettings(false); onEditSong(); }}
+                    className="w-full mt-3 pt-3 border-t border-gray-700 text-left flex items-center gap-2 text-sm text-gray-100 hover:text-white"
+                  >
+                    <span>✏️</span><span>Edit song</span>
+                  </button>
+                )}
               </div>
             </>
           )}
