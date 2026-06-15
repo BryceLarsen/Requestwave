@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 import AdminPanel from './AdminPanel';
 import { ChordProParser, HtmlDivFormatter } from 'chordsheetjs';
+import { cpRenderSong } from './chordProRenderer';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -582,24 +583,8 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
       const normalizedChordpro = collapsed.join('\n');
 
       let song = new ChordProParser().parse(normalizedChordpro);
-      if (transpose !== 0) song = song.transpose(transpose); // transpose returns a NEW song; must reassign
-      const formatted = new HtmlDivFormatter().format(song);
-      const doc = new DOMParser().parseFromString('<div id="cp-root">' + formatted + '</div>', 'text/html');
-      const root = doc.getElementById('cp-root');
-      root.querySelectorAll('.chord-sheet .column').forEach((col) => {
-        const lyr = col.querySelector('.lyrics');
-        if (!lyr) return;
-        const text = lyr.textContent.replace(/\u00a0/g, ' ');
-        if (text.trim() === '') {
-          col.style.paddingRight = '0.5em';            // chord-only / instrumental column
-        } else if (/\s$/.test(text)) {
-          col.style.paddingRight = '0.3em';            // real word boundary
-          lyr.textContent = text.replace(/\s+$/, '');  // remove the space that would hang at the column edge
-        } else {
-          col.style.paddingRight = '0';                // mid-word split: keep the word glued
-        }
-      });
-      return root.innerHTML;
+      if (transpose !== 0) song = song.transpose(transpose);
+      return cpRenderSong(song, 'sharp');
     } catch (e) {
       console.error('ChordPro parse error:', e);
       const safe = (chordpro || '')
@@ -713,8 +698,27 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
         .chordpro-body .chordpro-fallback-note { font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; background: rgba(251,191,36,.15); color: #fcd34d; border: 1px solid rgba(251,191,36,.35); }
         .chordpro-body.cp-light .chordpro-fallback-note { background: #fef3c7; color: #92400e; border-color: #fdba74; }
         .chordpro-body .chordpro-fallback-raw { font-family: 'Courier New', Courier, monospace; white-space: pre-wrap; word-break: break-word; line-height: 1.5; margin: 0; }
+        .chordpro-body .cp-sheet { max-width: 100%; }
+        .chordpro-body .cp-sub { color: #94a3b8; font-style: italic; margin: 0 0 14px; font-size: 15px; }
+        .chordpro-body .cp-line { margin: 0 0 6px; line-height: 1; }
+        .chordpro-body .cp-word { display: inline-block; vertical-align: bottom; position: relative; }
+        .chordpro-body .cp-crow { display: block; position: relative; height: 1.02em; }
+        .chordpro-body .cp-c { position: absolute; bottom: -.08em; color: #a855f7; font-weight: 800; font-size: .72em; line-height: 1; white-space: nowrap; }
+        .chordpro-body .cp-lrow { display: block; font-weight: 600; line-height: 1.15; white-space: pre; }
+        .chordpro-body .cp-sp { display: inline-block; }
+        .chordpro-body .cp-chordline { margin: 2px 0 8px; }
+        .chordpro-body .cp-conly { display: inline-block; color: #a855f7; font-weight: 800; margin-right: .9em; }
+        .chordpro-body .cp-plain { font-weight: 600; line-height: 1.5; opacity: .92; margin: 2px 0; }
+        .chordpro-body .cp-comment { display: inline-block; background: rgba(251,191,36,.20); color: #fde68a; font-weight: 700; padding: 3px 12px; border-radius: 5px; margin: 8px 0; }
+        .chordpro-body .cp-tab { font-family: 'Courier New', Courier, monospace; white-space: pre; overflow-x: auto; font-size: 12px; line-height: 1.3; margin: 1px 0; color: #cbd5e1; }
+        .chordpro-body .cp-blank { height: .5em; }
+        .chordpro-body .cp-chorus { border-left: 4px solid rgba(168,85,247,.6); padding-left: 14px; margin: 6px 0; }
+        .chordpro-body.cp-light .cp-c, .chordpro-body.cp-light .cp-conly { color: #7c3aed; }
+        .chordpro-body.cp-light .cp-chorus { border-left-color: #1a1a1a; }
+        .chordpro-body.cp-light .cp-comment { background: #fef3c7; color: #92400e; }
+        .chordpro-body.cp-light .cp-tab { color: #475569; }
       `}</style>
-      <style>{`.chordpro-body .chord-sheet .chord, .chordpro-body .chord-sheet .lyrics { font-size: ${textSize}px; }`}</style>
+      <style>{`.chordpro-body .cp-lrow, .chordpro-body .cp-plain { font-size: ${textSize}px; } .chordpro-body .cp-conly { font-size: ${textSize * 0.72}px; }`}</style>
       <div
         className={`${isLight ? 'bg-white text-gray-900 border-gray-300' : 'bg-gray-900 text-gray-100 border-gray-700'} rounded-xl w-full max-w-3xl h-[90vh] flex flex-col shadow-2xl border`}
         onClick={(e) => e.stopPropagation()}
