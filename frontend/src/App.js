@@ -12707,6 +12707,25 @@ const AudienceInterface = () => {
           const seedB = (b.id.charCodeAt(0) + randomSeed) % 1000;
           return seededRandom(seedA) - seededRandom(seedB);
         });
+      case 'artist': {
+        return sorted.sort((a, b) => {
+          const aa = (a.artist || '').trim();
+          const ba = (b.artist || '').trim();
+          if (!aa && ba) return 1;
+          if (aa && !ba) return -1;
+          return aa.localeCompare(ba) || (a.title || '').localeCompare(b.title || '');
+        });
+      }
+      case 'year': {
+        return sorted.sort((a, b) => {
+          const ay = (a.year === null || a.year === undefined || a.year === '') ? null : Number(a.year);
+          const by = (b.year === null || b.year === undefined || b.year === '') ? null : Number(b.year);
+          if (ay === null && by !== null) return 1;
+          if (ay !== null && by === null) return -1;
+          if (ay === null && by === null) return (a.title || '').localeCompare(b.title || '');
+          return (by - ay) || (a.title || '').localeCompare(b.title || '');
+        });
+      }
       default:
         return sorted;
     }
@@ -13523,7 +13542,9 @@ const AudienceInterface = () => {
                   aria-label="Sort by"
                 >
                   <option value="most-popular">Most Popular</option>
-                  <option value="alphabetical">A→Z</option>
+                  <option value="alphabetical">Song A-Z</option>
+                  <option value="artist">Artist A-Z</option>
+                  <option value="year">Year</option>
                   <option value="newest">Newest</option>
                   <option value="random">Random</option>
                 </select>
