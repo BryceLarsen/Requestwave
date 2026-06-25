@@ -12894,6 +12894,7 @@ const AudienceInterface = () => {
     
     const currentAmount = parseFloat(tipAmount);
     const currentPlatform = tipPlatform;
+    const tipRequestId = submittedRequestId;
     
     // Record tip attempt first
     try {
@@ -12903,6 +12904,12 @@ const AudienceInterface = () => {
         tipper_name: requestForm.requester_name || 'Anonymous',
         message: tipMessage
       });
+      if (tipRequestId) {
+        await axios.post(`${API}/requests/${tipRequestId}/track-click`, {
+          type: 'tip',
+          platform: currentPlatform
+        });
+      }
     } catch (error) {
       console.log('Tip tracking failed:', error);
     }
