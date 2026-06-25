@@ -3,24 +3,22 @@
 The application requires a robust Multi-Profile system where one musician account can have multiple profiles. Recent focus is on per-show analytics dashboards, handling unassigned requests, adding Learn Later toggles, generating a standalone Admin panel, handling , and adding Song Chart support. 
 PRODUCT REQUIREMENTS: 
 - Add  (link/pdf/chordpro) and / fields to backend song models.
-- Update frontend song forms to support adding/editing charts (URL + Type + ChordPro Textarea).
-- Show a Charts button on active request cards when a song has a linked chart or chordpro.
-- Build an in-app  using  to parse and render ChordPro text.
+- Update frontend song forms to support adding/editing charts.
+- Build an in-app  to parse and render ChordPro text, including custom rendering engines, key detection, spelling/accidental overrides, and an on-stage interactive Cockpit overlay (Up Next, Dedication Box, Played Button).
 - Build a profile-scoped Show Analytics dashboard.
 - Create a quick data-audit endpoint to flag legacy playlist filters.
-- Implement full Zip Import & Parse UI for bulk ChordPro files (.cho, .crd, etc.), with collision resolution (Exact/Fuzzy/New match buckets).
-- Polish the Multi-Profile UI to treat the default profile as the primary identity (inheriting contact/tip/social handles elegantly) and enforce On-Stage screen wake locks.
+- Polish the Multi-Profile UI and enforce On-Stage screen wake locks.
 
 **User's preferred language**: English (INSTRUCT next agent to respond in English only)
 
 **what currently exists?** 
-A monolithic React frontend (), a standalone admin UI (), and a FastAPI backend () with MongoDB. The system supports a Multi-Profile and Events hierarchy, dynamic per-show analytics, configurable email capture logic, dynamic origin routing, and full bulk importing for ChordPro files via ZIP uploads. The in-app  supports dynamic spacing, global styling, transpose capabilities, graceful text fallbacks, and screen wake locks. The Multi-Profile editor cleanly differentiates primary default profiles from secondary override profiles. 
+A monolithic React frontend () supplemented by new rendering/overlay modules (, ), a standalone admin UI (), and a FastAPI backend () with MongoDB. The system supports a Multi-Profile and Events hierarchy, dynamic origin routing, and full bulk importing for ChordPro files. The in-app  uses a custom rendering engine handling whitespace normalization, dynamic key detection, accidental spelling (flat/sharp), and an interactive on-stage Cockpit overlay. The audience view supports complex sorting (Most Popular, Song A-Z, Artist A-Z, Year, Newest, Random).
 
 **Last working item**: 
-    - Last item agent was working: Added an Edit song action to the  gear menu (via an optional  prop), wired specifically to the Musician Dashboard's instantiation so users can jump straight to editing the song.
+    - Last item agent was working: Added Artist and Year sorting options to the audience request page sort dropdown and implemented their logic in the comparator switch inside .
     - Status: USER VERIFICATION PENDING
     - Agent Testing Done: Y
-    - Which testing method agent to use? manual testing by curl/ python -c / screenshot tool / webpack compile
+    - Which testing method agent to use? manual testing by webpack compile
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:  
@@ -40,16 +38,16 @@ A monolithic React frontend (), a standalone admin UI (), and a FastAPI backend 
     - Integration (P3): Integrate with Spotify Web API for song data enrichment.
 
 **Completed work in this session**
-- : Fixed Emergent OAuth redirect returning 404 (changed  to ).
-- : Updated  with tab-aware context (Requests tab filters automatically map to the started show profile).
-- : Added pending requests pill badges to individual show cards.
-- : Added  call inside  polling block to refresh the shows list live when new requests arrive.
-- : Audience interface UI improvements: personalized thanks text, moved Not you? Clear saved info to the top, refined filter/shuffle row styling, and removed Surprise Me button.
-- : Audience email capture short-circuits if an email is already saved in , attaching it seamlessly to new requests without prompting.
-- : Major UX overhaul of the Multi-Profile editor form. The default profile is now treated as the primary identity (clean labels, handle prefixes like , , ). Secondary profiles match this clean layout but utilize specific exceptions (custom link inputs, display name overrides).
-- : Creating a new profile now automatically prefills contact/tip/social handles using the default profile's data.
-- : Implemented the browser  via a reusable  hook, applying it to , the Dashboard's On Stage tab, and the standalone .
-- : Added Edit song to  settings.
+- : Added  regex and refactored  to correctly parse  tags in ChordPro files.
+- : Fixed whitespace parsing bugs in  to prevent blank lines from breaking chord rendering.
+-  (NEW): Added custom rendering engine file from user artifact.
+- : Replaced  formatting with  from  and added 19 new custom  CSS classes.
+- : Integrated key detection () and added a Spelling state (Auto/♭/♯) toggle. 
+- : Reorganized  UI, moving Key and Spelling controls into the gear settings panel and swapping transpose numbers for actual Key names ().
+-  (NEW): Added On-Stage cockpit components from user artifact.
+- : Wired  into the Musician Dashboard  to show an Up Next list, Dedication Box, and Played button when open requests exist for the song.
+-  & : Handled Link/PDF charts alongside ChordPro within the cockpit flow, enabling them to open in a new tab.
+- : Added Artist A-Z and Year options to the Audience Request sorting dropdown and implemented their logic.
 
 **Earlier issues found/mentioned but not fixed**
    Issue 1: 
@@ -67,20 +65,23 @@ A monolithic React frontend (), a standalone admin UI (), and a FastAPI backend 
 
 
 **Key Technical Concepts**
-- State-Driven Conditional UI (React state in a single giant component)
-- 3-tier Data Merging: Master Musician -> Profile -> Event
+- State-Driven Conditional UI in a monolith React component ()
+-  parsing combined with custom  HTML generation
+- Dynamic Key Detection and Accidental spelling (♭/♯) processing
+- Interactive Overlays () positioned over standard DOM elements
 - Post-build HTML emission () bypasses Cloudflare.
--  parsing for ChordPro rendering.
--  used to prevent device screens from dimming during live stage performances.
 
 **key DB schema**
   - :  
 
 **changes in tech stack**
-  - No new libraries added. Introduced usage of native browser API .
+  - Introduced  and  to augment standard views.
 
 **All files of reference** 
-  -  (Heavily modified with logic for Wake Locks, Audience Interface UX, Profile Editor form fields UX, and Request polling)
+  -  (Heavily modified with ChordPro rendering, settings UI, cockpit overlay, and sorting logic)
+  -  (Modified for ChordPro  parsing)
+  -  (Created in this session)
+  -  (Created in this session)
 
 **Areas that need refactoring**: 
   -  (over 16,000 lines) and  (nearly 10,000 lines). Highly fragile. **DO NOT REFACTOR until explicitly asked by the user.**
@@ -88,27 +89,26 @@ A monolithic React frontend (), a standalone admin UI (), and a FastAPI backend 
 **key api endpoints**
   - 
   - 
-  - 
 
 **Critical Info for New Agent** 
-- **Production vs Preview Environments:** The user has a live deployment (). You can only write code in PREVIEW. If bugs are reported, strictly clarify which environment the user is looking at.
-- **Hibernating Servers Gate:** The frontend preview server may hibernate if inactive. e2e testing with a screenshot tool might hit a Wake up servers screen. Trust local linting and bash commands.
+- **Production vs Preview Environments:** The user has a live production deployment. You can only write code in PREVIEW. If bugs are reported, strictly clarify which environment the user is looking at. Do not deploy to production.
 - **Monolithic State Warnings:**  is massive. Always use line anchors, accurate  commands, and verify your  edits with a follow-up  to ensure modifications apply correctly.
+- **Do Not Touch:** Standalone  filters and  logic should remain untouched unless explicitly requested.
 
 **documents and test reports created in this job**
   - None created.
 
 **Last 10 User Messages and any pending HUMAN messages** 
- 1. **User**: Bug Fix: Change OAuth redirect target to site root. (Completed)
- 2. **User**: Feature: Make  tab-aware and align On Stage context. (Completed)
- 3. **User**: Feature: Add pending requests pill badge to show cards. (Completed)
- 4. **User**: Feature: Hide default profile's URL slug block in profile editor. (Completed)
- 5. **User**: Bug Fix: Call  within  polling block to refresh newly active shows. (Completed)
- 6. **User**: Feature: Audience Interface - personalize thanks, move Not you? button, always show Shuffle button. (Completed)
- 7. **User**: Feature: Audience Interface - short-circuit email capture if email is in  and auto-attach to request. (Completed)
- 8. **User**: Feature: Audience Interface - redesign sort/filter/shuffle control row. (Completed)
- 9. **User**: Feature: Profile Editor - transform default profile identity/tip/social inputs into primary display fields. (Completed)
- 10. **User**: Feature: Screen Wake Lock API integration () &  gear menu Edit song. (Completed)
+ 1. **User**: Backend Bug: Update  in  to parse . (Completed)
+ 2. **User**: Frontend Bug: Normalize invisible/standalone whitespace in  in . (Completed)
+ 3. **User**: Artifact Upload: Create . (Completed)
+ 4. **User**: Wire  into  in . (Completed)
+ 5. **User**: Add Accidental (Spelling) state, Key detection, and Auto/♭/♯ segmented control to viewer. (Completed)
+ 6. **User**: Reorganize  top bar; move Key/Spelling into settings panel. (Completed)
+ 7. **User**: Replace Key control transpose number display with actual Key Name (). (Completed)
+ 8. **User**: Artifact Upload: Create . (Completed)
+ 9. **User**: Wire  into  to show Up Next/Dedication/Played. (Completed)
+ 10. **User**: Update / to support Link/PDF charts, and add Artist / Year sorting to the Audience request page. (Completed)
  *(No pending messages)*
 
 **Project Health Check:**
@@ -134,4 +134,4 @@ A monolithic React frontend (), a standalone admin UI (), and a FastAPI backend 
   - Admin Password:  (found in )
 
 **What agent forgot to execute**
-  - None. All micro-tasks were successfully implemented exactly as specified.</analysis>
+  - None. All steps perfectly followed including character-for-character artifact replication and strict UI placements.</analysis>
