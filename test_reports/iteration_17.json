@@ -1,0 +1,36 @@
+{
+  "summary": "Backend-only verification of payment-handle sigil cleaning (@ for PayPal/Venmo, $ for Cash App). Covered all 6 scenarios in the request: PUT /profiles save-side + public read cleaning, internal-character preservation, empty-after-strip => null, POST /profiles, POST /events, PUT /events. Also verified that already-stored dirty values in the DB get cleaned on the fly by the public endpoints (direct Motor write of dirty data, then GET /api/musicians/{slug}/{profile_slug} and GET /api/musicians/{slug} both return clean handles).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_payment_handle_cleaning.py",
+    "/app/test_reports/pytest/payment_handle_cleaning.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "_clean_handle uses value.strip().lstrip('@$').strip() which strips ALL leading @ and $ chars (e.g. '@@john' -> 'john'). Spec only explicitly mentions stripping a single leading sigil; current implementation is more aggressive. Consider whether stripping repeated sigils is desired. Not flagged as a bug since it still satisfies the stated requirement (no leading sigil) and never touches internal chars.",
+    "_normalize_payment_handles converts empty-after-strip to None. The save-side editor (_profile_doc_to_response) thus returns None for sigil-only inputs, which matches spec.",
+    "Public response cleans the merged value AFTER falling back from profile to musician master account. So even if the master-level paypal_username column carries a sigil, the audience page is safe.",
+    "Out of scope but worth noting: PUT /api/profile (singular) does NOT call _normalize_payment_handles. Confirmed by the request body as 'intentionally left unchanged'. If a musician edits payment handles via this older endpoint, the value will be saved dirty - but the READ-side cleaning on the public endpoint still protects the tip link."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_payment_handle_cleaning.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "N/A (skipped per request)"
+  },
+  "test_credentials": "test@test.com / test (musician slug: test). Default profile slug discovered dynamically from GET /api/profiles (was 'default-test-2-1ea077bc' in this env, NOT 'main-stage' as the review request stated).",
+  "seed_data_creation": "Test creates a transient profile (TEST_Clean_*) and event (TEST_Event_*) per run; teardown fixture deletes them via API. Direct-Motor dirty-data simulation was reverted after verification.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 5 pytest cases in /app/backend/tests/test_payment_handle_cleaning.py pass. The default profile slug for test@test.com is NOT 'main-stage' in this environment; the test discovers it dynamically via GET /api/profiles (is_default==true). If you re-run, use the same dynamic discovery pattern. READ-side cleaning of already-stored dirty data was also independently verified by writing dirty values directly to MongoDB (mongodb://localhost:27017, db test_database, collection profiles) and confirming the public endpoint returns cleaned values.",
+  "rca of the issue": "N/A - this was a verification of an applied fix, not a bug investigation. Fix is correctly implemented: _clean_handle strips surrounding whitespace and leading @/$ sigils, _normalize_payment_handles runs on POST /profiles, PUT /profiles/{id}, POST /events, PUT /events/{id}, and _build_profile_public_response wraps the three handle outputs in _clean_handle for read-side defense-in-depth."
+}

@@ -8913,6 +8913,19 @@ def _event_doc_to_response(e: dict) -> "EventResponse":
     )
 
 
+def _clean_handle(value):
+    """Strip surrounding whitespace and a leading @ or $ sigil from a payment handle. Internal characters are left untouched."""
+    if not isinstance(value, str):
+        return value
+    return value.strip().lstrip('@$').strip()
+
+def _normalize_payment_handles(d: dict) -> None:
+    """In place: clean paypal/venmo/cashapp handles on a doc before saving."""
+    for k in ("paypal_username", "venmo_username", "cashapp_username"):
+        if k in d and isinstance(d[k], str):
+            cleaned = _clean_handle(d[k])
+            d[k] = cleaned if cleaned else None
+
 def _build_profile_public_response(musician, profile, songs_list):
     """Build the merged public response for a profile audience page.
     Profile fields override master account values when set."""
@@ -8930,9 +8943,9 @@ def _build_profile_public_response(musician, profile, songs_list):
         "email_capture_mode": profile.get("email_capture_mode", "optional"),
         "is_default": profile.get("is_default", False),
         # Payment info - profile overrides master
-        "paypal_username": profile.get("paypal_username") or musician.get("paypal_username"),
-        "venmo_username": profile.get("venmo_username") or musician.get("venmo_username"),
-        "cash_app_username": profile.get("cashapp_username") or musician.get("cash_app_username"),
+        "paypal_username": _clean_handle(profile.get("paypal_username") or musician.get("paypal_username")),
+        "venmo_username": _clean_handle(profile.get("venmo_username") or musician.get("venmo_username")),
+        "cash_app_username": _clean_handle(profile.get("cashapp_username") or musician.get("cash_app_username")),
         "zelle_info": profile.get("zelle_info"),
         "zelle_email": musician.get("zelle_email") if not profile.get("zelle_info") else None,
         "zelle_phone": musician.get("zelle_phone") if not profile.get("zelle_info") else None,
@@ -9017,6 +9030,7 @@ async def create_profile(profile_data: ProfileCreate, musician_id: str = Depends
         "current_show_name": profile_data.current_show_name,
     }
     
+    _normalize_payment_handles(profile_dict)
     await db.profiles.insert_one(profile_dict)
     del profile_dict["_id"]
     
@@ -9081,6 +9095,7 @@ async def update_profile_by_id(profile_id: str, update_data: ProfileUpdateModel,
         if val is not None:
             update_fields[bool_field] = val
     
+    _normalize_payment_handles(update_fields)
     if update_fields:
         await db.profiles.update_one({"id": profile_id}, {"$set": update_fields})
     
@@ -9206,6 +9221,7 @@ async def create_event(event_data: EventCreate, musician_id: str = Depends(get_c
         if event_dict["active_playlist_ids"] == ["__all__"] and seed.get("active_playlist_ids"):
             event_dict["active_playlist_ids"] = seed["active_playlist_ids"]
     
+    _normalize_payment_handles(event_dict)
     await db.events.insert_one(event_dict)
     event_dict.pop("_id", None)
     return _event_doc_to_response(event_dict)
@@ -9267,6 +9283,7 @@ async def update_event(event_id: str, update_data: EventUpdateModel, musician_id
         if val is not None:
             update_fields[f] = val if val != "" else None
     
+    _normalize_payment_handles(update_fields)
     if update_fields:
         await db.events.update_one({"id": event_id}, {"$set": update_fields})
     
