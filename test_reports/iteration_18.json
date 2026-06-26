@@ -1,0 +1,47 @@
+{
+  "summary": "Verified Zelle derivation fix in _build_profile_public_response (server.py ~8916). Profile-level zelle_info is now correctly fanned out to zelle_email vs zelle_phone (by '@' presence) on both public endpoints, with master-level fallback when empty and whitespace stripping. 5/5 new tests pass; payment-handle regression suite remains green.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_zelle_public_derivation.py",
+    "/app/test_reports/pytest/pytest_zelle_public_derivation.xml"
+  ],
+  "tests_run": [
+    "TestZelleDerivation::test_zelle_info_email (pay@zelle.com -> zelle_email set, zelle_phone null) PASS",
+    "TestZelleDerivation::test_zelle_info_phone (555-123-4567 -> zelle_phone set, zelle_email null) PASS",
+    "TestZelleDerivation::test_zelle_info_whitespace_stripped ('  pay@zelle.com  ' stripped) PASS",
+    "TestZelleDerivation::test_zelle_info_empty_falls_back_to_master (null zelle_info -> master.zelle_email/zelle_phone) PASS",
+    "TestZelleDerivation::test_other_payment_handles_intact (paypal/venmo/cashapp + enable flags + public response shape unchanged) PASS",
+    "Regression: test_payment_handle_cleaning.py 5/5 PASS"
+  ],
+  "endpoints_exercised": [
+    "POST /api/auth/login",
+    "GET /api/profiles (dynamic default-profile discovery)",
+    "PUT /api/profiles/{profile_id} (zelle_info updates)",
+    "GET /api/musicians/{master_slug}/{profile_slug} (named-profile public)",
+    "GET /api/musicians/{master_slug} (default-profile public)",
+    "GET /api/profile (read master musician for fallback expectation)"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is 9904 lines — exceeds the 700-line guideline; should eventually be modularized (profiles, events, songs, requests, billing).",
+    "_build_profile_public_response correctly handles zelle_info derivation. Edge-case worth noting (not a bug, but documenting): non-stripped 'whitespace-only' inputs to PUT are coerced to None by the PUT endpoint (val=='' branch), so they cannot reach the serializer as a non-empty whitespace string; safe.",
+    "Master-fallback path uses musician.get('zelle_email')/('zelle_phone') directly (no sigil/whitespace cleaning), which is consistent with prior behavior for those legacy master fields."
+  ],
+  "updated_files": [],
+  "files_created": ["/app/backend/tests/test_zelle_public_derivation.py"],
+  "success_rate": {"backend": "100%", "frontend": "not tested (backend-only request)"},
+  "test_credentials": "test@test.com / test  (master slug: test). Default profile slug discovered dynamically via GET /api/profiles.",
+  "seed_data_creation": "No new seed data created. Test cleans up by resetting the default profile's zelle_info to empty after the module run.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Zelle derivation in _build_profile_public_response is verified working on both /api/musicians/{master}/{profile} and /api/musicians/{master} default-profile endpoints. New regression file: /app/backend/tests/test_zelle_public_derivation.py. The test_payment_handle_cleaning suite is still passing.",
+  "rca of the issue": "Previously the serializer set zelle_email/zelle_phone=None whenever profile.zelle_info was set, so a profile-level Zelle never reached the audience tip UI. Fix derives zelle_email vs zelle_phone from zelle_info by '@' presence, with strip() to normalize whitespace; empty zelle_info falls back to musician-level fields."
+}

@@ -8931,6 +8931,16 @@ def _build_profile_public_response(musician, profile, songs_list):
     Profile fields override master account values when set."""
     # Get global design settings for fallback
     global_design = musician.get("design_settings", {})    
+    # Zelle: profile stores a single zelle_info string (email or phone). Derive the
+    # legacy email/phone fields the audience reads, detecting type by "@".
+    _zelle_info = (profile.get("zelle_info") or "").strip()
+    if _zelle_info:
+        _zelle_is_email = "@" in _zelle_info
+        _zelle_email_out = _zelle_info if _zelle_is_email else None
+        _zelle_phone_out = None if _zelle_is_email else _zelle_info
+    else:
+        _zelle_email_out = musician.get("zelle_email")
+        _zelle_phone_out = musician.get("zelle_phone")
     return {
         "id": musician["id"],
         "name": profile.get("musician_name") or musician["name"],
@@ -8946,9 +8956,9 @@ def _build_profile_public_response(musician, profile, songs_list):
         "paypal_username": _clean_handle(profile.get("paypal_username") or musician.get("paypal_username")),
         "venmo_username": _clean_handle(profile.get("venmo_username") or musician.get("venmo_username")),
         "cash_app_username": _clean_handle(profile.get("cashapp_username") or musician.get("cash_app_username")),
-        "zelle_info": profile.get("zelle_info"),
-        "zelle_email": musician.get("zelle_email") if not profile.get("zelle_info") else None,
-        "zelle_phone": musician.get("zelle_phone") if not profile.get("zelle_info") else None,
+        "zelle_info": _zelle_info or None,
+        "zelle_email": _zelle_email_out,
+        "zelle_phone": _zelle_phone_out,
         "paypal_enabled": musician.get("paypal_enabled", True),
         "venmo_enabled": musician.get("venmo_enabled", True),
         "cash_app_enabled": musician.get("cash_app_enabled", True),
