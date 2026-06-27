@@ -16161,6 +16161,76 @@ const ShortUrlRedirect = () => {
   );
 };
 
+// Auto update check (musician surfaces only): watches the hashed main.js entry
+// in /asset-manifest.json to detect a new deployed build. Prompt only, never
+// auto-reloads, and never runs on audience request pages.
+const UpdateBanner = () => {
+  const [updateReady, setUpdateReady] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const baselineRef = useRef(null);
+
+  const isAudienceRoute = () => window.location.pathname.startsWith('/musician/');
+
+  useEffect(() => {
+    if (isAudienceRoute()) return;
+    let cancelled = false;
+
+    const readVersion = async () => {
+      try {
+        const res = await fetch(`/asset-manifest.json?t=${Date.now()}`, { cache: 'no-store' });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return (data && data.files && data.files['main.js']) || null;
+      } catch (e) {
+        return null;
+      }
+    };
+
+    const check = async () => {
+      const v = await readVersion();
+      if (cancelled || !v) return;
+      if (baselineRef.current === null) {
+        baselineRef.current = v;
+        return;
+      }
+      if (v !== baselineRef.current) setUpdateReady(true);
+    };
+
+    check();
+    const onVisible = () => { if (document.visibilityState === 'visible') check(); };
+    document.addEventListener('visibilitychange', onVisible);
+    const interval = setInterval(check, 5 * 60 * 1000);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisible);
+      clearInterval(interval);
+    };
+  }, []);
+
+  if (isAudienceRoute() || !updateReady || dismissed) return null;
+
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
+      background: '#8B5CF6', color: '#ffffff',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
+      padding: '8px 14px', fontSize: '14px', fontWeight: 600,
+      boxShadow: '0 1px 4px rgba(0,0,0,0.3)'
+    }}>
+      <span>A new version is available.</span>
+      <button onClick={() => window.location.reload()} style={{
+        background: '#ffffff', color: '#6D28D9', border: 'none',
+        borderRadius: '6px', padding: '4px 12px', fontWeight: 700, cursor: 'pointer'
+      }}>Update</button>
+      <button onClick={() => setDismissed(true)} aria-label="Dismiss" style={{
+        background: 'transparent', color: '#ffffff', border: 'none',
+        fontSize: '18px', lineHeight: 1, cursor: 'pointer', padding: '0 4px'
+      }}>&times;</button>
+    </div>
+  );
+};
+
 const App = () => {
   const { musician, login } = useAuth();
 
@@ -16235,6 +16305,7 @@ const App = () => {
 
   return (
     <Router>
+      <UpdateBanner />
       <Routes>
         <Route path="/" element={musician ? <Navigate to="/dashboard" /> : <LandingPage />} />
         <Route path="/rw-ops" element={<AdminPanel />} />
