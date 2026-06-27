@@ -8643,6 +8643,11 @@ const MusicianDashboard = () => {
                               💰 ${item.tip_amount} tip
                             </div>
                           )}
+                          {item.tip_clicked && (
+                            <div className="text-sm text-green-400 mt-1 font-medium">
+                              💰 tapped tip
+                            </div>
+                          )}
                           
                           <div className="flex space-x-2 mt-3">
                             <button
