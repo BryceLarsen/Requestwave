@@ -741,7 +741,7 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
         .chordpro-body.cp-light .cp-comment { background: #fef3c7; color: #92400e; }
         .chordpro-body.cp-light .cp-tab { color: #475569; }
       `}</style>
-      <style>{`.chordpro-body .cp-lrow, .chordpro-body .cp-plain { font-size: ${textSize}px; } .chordpro-body .cp-conly { font-size: ${textSize * 0.72}px; }`}</style>
+      <style>{`.chordpro-body .cp-lrow, .chordpro-body .cp-plain { font-size: ${textSize}px; } .chordpro-body .cp-conly { font-size: ${textSize * 0.72}px; } .chordpro-body .cp-c { font-size: ${textSize * 0.72}px; }`}</style>
       <div
         className={`${isLight ? 'bg-white text-gray-900 border-gray-300' : 'bg-gray-900 text-gray-100 border-gray-700'} rounded-xl w-full max-w-3xl h-[90vh] flex flex-col shadow-2xl border`}
         onClick={(e) => e.stopPropagation()}
