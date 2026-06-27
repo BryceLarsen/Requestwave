@@ -6,7 +6,7 @@ Test to understand why check_pro_access is allowing access when it shouldn't
 import requests
 import json
 
-BASE_URL = "https://chord-pro-stage.preview.emergentagent.com/api"
+BASE_URL = "https://chordpro-stage.preview.emergentagent.com/api"
 PRO_MUSICIAN = {
     "email": "brycelarsenmusic@gmail.com",
     "password": "RequestWave2024!"

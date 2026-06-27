@@ -23,7 +23,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://chord-pro-stage.preview.emergentagent.com/api"
+BASE_URL = "https://chordpro-stage.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
     "name": "Toggle Test Musician",
     "email": "toggle.test@requestwave.com", 

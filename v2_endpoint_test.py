@@ -16,7 +16,7 @@ import os
 from typing import Dict, Any
 
 # Configuration - Use the deployed URL from frontend/.env
-BASE_URL = "https://chord-pro-stage.preview.emergentagent.com/api"
+BASE_URL = "https://chordpro-stage.preview.emergentagent.com/api"
 
 # Pro account credentials
 PRO_MUSICIAN = {

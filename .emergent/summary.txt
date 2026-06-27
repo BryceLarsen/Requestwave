@@ -12,10 +12,10 @@ PRODUCT REQUIREMENTS:
 **User's preferred language**: English (INSTRUCT next agent to respond in English only)
 
 **what currently exists?** 
-A monolithic React frontend () supplemented by new rendering/overlay modules (, ), a standalone admin UI (), and a FastAPI backend () with MongoDB. The system supports a Multi-Profile and Events hierarchy, dynamic origin routing, and full bulk importing for ChordPro files. The in-app  uses a custom rendering engine handling whitespace normalization, dynamic key detection, accidental spelling (flat/sharp), and an interactive on-stage Cockpit overlay. The audience view supports complex sorting (Most Popular, Song A-Z, Artist A-Z, Year, Newest, Random).
+A monolithic React frontend () supplemented by rendering/overlay modules (, ), a standalone admin UI (), and a FastAPI backend () with MongoDB. The system supports a Multi-Profile and Events hierarchy, dynamic origin routing, and full bulk importing for ChordPro files. The in-app  uses a custom rendering engine handling whitespace normalization, dynamic key detection, accidental spelling (flat/sharp), and an interactive on-stage Cockpit overlay. The audience view supports complex sorting. It includes deep links to Venmo, PayPal, Cash App, and Zelle for tips.
 
 **Last working item**: 
-    - Last item agent was working: Added Artist and Year sorting options to the audience request page sort dropdown and implemented their logic in the comparator switch inside .
+    - Last item agent was working: Implemented an  component in  that periodically polls  for new frontend builds and shows a dismissible update banner for musicians.
     - Status: USER VERIFICATION PENDING
     - Agent Testing Done: Y
     - Which testing method agent to use? manual testing by webpack compile
@@ -38,16 +38,13 @@ A monolithic React frontend () supplemented by new rendering/overlay modules (, 
     - Integration (P3): Integrate with Spotify Web API for song data enrichment.
 
 **Completed work in this session**
-- : Added  regex and refactored  to correctly parse  tags in ChordPro files.
-- : Fixed whitespace parsing bugs in  to prevent blank lines from breaking chord rendering.
--  (NEW): Added custom rendering engine file from user artifact.
-- : Replaced  formatting with  from  and added 19 new custom  CSS classes.
-- : Integrated key detection () and added a Spelling state (Auto/♭/♯) toggle. 
-- : Reorganized  UI, moving Key and Spelling controls into the gear settings panel and swapping transpose numbers for actual Key names ().
--  (NEW): Added On-Stage cockpit components from user artifact.
-- : Wired  into the Musician Dashboard  to show an Up Next list, Dedication Box, and Played button when open requests exist for the song.
--  & : Handled Link/PDF charts alongside ChordPro within the cockpit flow, enabling them to open in a new tab.
-- : Added Artist A-Z and Year options to the Audience Request sorting dropdown and implemented their logic.
+- : Cleaned Venmo/PayPal/Cash App payment handles by stripping , , and whitespace during read () and write (, , , ) routes (DONE)
+- : Added frontend tip click indicator tracking () inside  before routing to payment apps (DONE)
+- : Derived  and  correctly from unified  field based on  string presence during audience view rendering (DONE)
+- : Added standard Apple mobile web app capable meta tags for iOS standalone full-screen support (DONE)
+- : Updated ChordPro viewer dynamic CSS string to appropriately scale  inline chords alongside  (DONE)
+- : Displayed 💰 tapped tip in the Dashboard On Stage tab for requests where  is true but no dollar value is captured (DONE)
+- : Created a polling  for musicians to auto-detect frontend deployment updates from the CRA asset manifest (DONE)
 
 **Earlier issues found/mentioned but not fixed**
    Issue 1: 
@@ -67,21 +64,21 @@ A monolithic React frontend () supplemented by new rendering/overlay modules (, 
 **Key Technical Concepts**
 - State-Driven Conditional UI in a monolith React component ()
 -  parsing combined with custom  HTML generation
-- Dynamic Key Detection and Accidental spelling (♭/♯) processing
 - Interactive Overlays () positioned over standard DOM elements
-- Post-build HTML emission () bypasses Cloudflare.
+- Dynamic layout styling (e.g., lyric scaling, ChordPro class handling) via React template strings
+- Interval-based metadata polling () for frontend caching/updates.
 
 **key DB schema**
   - :  
+  - : 
 
 **changes in tech stack**
-  - Introduced  and  to augment standard views.
+  - Included CRA  polling mechanism for detecting live deployments dynamically via .
 
 **All files of reference** 
-  -  (Heavily modified with ChordPro rendering, settings UI, cockpit overlay, and sorting logic)
-  -  (Modified for ChordPro  parsing)
-  -  (Created in this session)
-  -  (Created in this session)
+  -  (Heavily modified for tips tracking, , ChordPro styles)
+  -  (Modified for Payment sigil parsing and Zelle metadata parsing)
+  -  (Meta tags updated)
 
 **Areas that need refactoring**: 
   -  (over 16,000 lines) and  (nearly 10,000 lines). Highly fragile. **DO NOT REFACTOR until explicitly asked by the user.**
@@ -89,26 +86,29 @@ A monolithic React frontend () supplemented by new rendering/overlay modules (, 
 **key api endpoints**
   - 
   - 
+  -  & 
+  - 
 
 **Critical Info for New Agent** 
 - **Production vs Preview Environments:** The user has a live production deployment. You can only write code in PREVIEW. If bugs are reported, strictly clarify which environment the user is looking at. Do not deploy to production.
-- **Monolithic State Warnings:**  is massive. Always use line anchors, accurate  commands, and verify your  edits with a follow-up  to ensure modifications apply correctly.
-- **Do Not Touch:** Standalone  filters and  logic should remain untouched unless explicitly requested.
+- **Monolithic State Warnings:**  and  are massive. Always use line anchors, accurate  commands, and verify your  edits with a follow-up  to ensure modifications apply correctly.
+- **Strict Adherence:** The user demands highly mechanical, verbatim code changes. Do not reformat, refactor, or invent variables outside their instructions unless asked. Run without extended thinking for straightforward snippets.
+- **Testing protocol**: If the user submits a bug report and asks for a fix, always run the testing agent on the reported flow even if the user explicitly outlines the code lines for the fix.
 
 **documents and test reports created in this job**
-  - None created.
+  -  (Backend payment handler test)
+  -  (Zelle info parsing test)
+  -  (Frontend dashboard tip test)
 
 **Last 10 User Messages and any pending HUMAN messages** 
- 1. **User**: Backend Bug: Update  in  to parse . (Completed)
- 2. **User**: Frontend Bug: Normalize invisible/standalone whitespace in  in . (Completed)
- 3. **User**: Artifact Upload: Create . (Completed)
- 4. **User**: Wire  into  in . (Completed)
- 5. **User**: Add Accidental (Spelling) state, Key detection, and Auto/♭/♯ segmented control to viewer. (Completed)
- 6. **User**: Reorganize  top bar; move Key/Spelling into settings panel. (Completed)
- 7. **User**: Replace Key control transpose number display with actual Key Name (). (Completed)
- 8. **User**: Artifact Upload: Create . (Completed)
- 9. **User**: Wire  into  to show Up Next/Dedication/Played. (Completed)
- 10. **User**: Update / to support Link/PDF charts, and add Artist / Year sorting to the Audience request page. (Completed)
+ 1. **User**: Bug report: Strip  and  sigils from payment handles in  to fix broken tip URLs. (Completed, Tested)
+ 2. **User**: Reminder: Must call testing agent for bugs. (Acknowledged)
+ 3. **User**: Frontend Fix: Add  track-click in  inside . (Completed)
+ 4. **User**: Backend Fix: Derive  /  from  using  detection in . (Completed, Tested)
+ 5. **User**: Frontend static HTML: Add iOS full-screen meta tags in . (Completed)
+ 6. **User**: Frontend Fix: Add dynamic scaling for  inline chords in  CSS block. (Completed)
+ 7. **User**: Frontend Fix: Add 💰 tapped tip indicator for tip-tracked requests with no specific monetary amount in  On Stage tab. (Completed, Tested)
+ 8. **User**: Frontend Feature: Create  component in  to poll  and detect deployment releases automatically. (Completed)
  *(No pending messages)*
 
 **Project Health Check:**
@@ -119,13 +119,14 @@ A monolithic React frontend () supplemented by new rendering/overlay modules (, 
   - Venmo (Deep links) — requires User Config
   - PayPal (Links) — requires User Config
   - Cash App (Deep links) — requires User Config
+  - Zelle (Details) — requires User Config
   - Spotify / Apple Music (Social URLs) — requires User Config
   - Stripe (Payments) — requires User API Key
 
 **Testing status**
-  - Testing agent used after significant changes: NO (Relied on strict webpack compilation and bash verification).
+  - Testing agent used after significant changes: YES (iterations 17, 18, 19).
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: None
+  - Test files created: , , 
   - Known regressions: None (Exception: pre-existing 403 bug on  without auth).
 
 **Credentials to test flow:**
@@ -134,4 +135,4 @@ A monolithic React frontend () supplemented by new rendering/overlay modules (, 
   - Admin Password:  (found in )
 
 **What agent forgot to execute**
-  - None. All steps perfectly followed including character-for-character artifact replication and strict UI placements.</analysis>
+  - None. All tasks strictly executed verbatim.</analysis>

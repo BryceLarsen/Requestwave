@@ -15,7 +15,7 @@
     "Card C: TEST_RegSong_166220 (tip_amount=5, tip_clicked=false) → shows ONLY '💰 $5 tip' (no tapped-tip line) — regression preserved PASS",
     "Layout regression: each card still renders header (📧 + song title + bookmark + Charts button), requester, dedication, and the three action buttons (↗ Up Next, ✓ Played, ✗ Skip). No layout breakage observed in screenshot. PASS"
   ],
-  "seed_data_creation": "Used backend endpoints + direct MongoDB writes (test_database.requests) to set up three requests under the active show (current_show_id=748b9b16-fa0d-43de-8efa-daea7aec56f1 on default profile 'Default Test 2'): bfed800e (tip_clicked-only via POST /api/requests/{id}/track-click {type:'tip',platform:'venmo'}), bad5715a (tip_amount=5 only), b975b015 (tip_amount=10 + tip_clicked=true). All three reverted to tip_amount=0 / tip_clicked=false after testing — no residual seed data.",
+  "seed_data_creation": "Used backend endpoints + direct MongoDB writes (test_database.requests) to set up three requests under the active show (current_show_id=chordpro-stage on default profile 'Default Test 2'): bfed800e (tip_clicked-only via POST /api/requests/{id}/track-click {type:'tip',platform:'venmo'}), bad5715a (tip_amount=5 only), b975b015 (tip_amount=10 + tip_clicked=true). All three reverted to tip_amount=0 / tip_clicked=false after testing — no residual seed data.",
   "evidence": [
     "Playwright body markers: {ChordPro Demo Song:true, TEST_RegSong_166220:true, tapped tip:true, $5 tip:true, $10 tip:true}",
     "Indicator counts: '💰 tapped tip'=2, '💰 $5 tip'=1, '💰 $10 tip'=1 (matches expected 2 tapped, 1 dollar-only-$5, 1 both-$10+tapped)",
@@ -36,7 +36,7 @@
   "updated_files": [],
   "files_created": ["/app/test_reports/iteration_19.json"],
   "success_rate": {"backend": "not tested (frontend-only request)", "frontend": "100% (all 3 indicator scenarios + layout regression PASS)"},
-  "test_credentials": "test@test.com / test (master slug: test). Default profile: Default Test 2 (610f7fd4-...), current_show_id=748b9b16-fa0d-43de-8efa-daea7aec56f1.",
+  "test_credentials": "test@test.com / test (master slug: test). Default profile: Default Test 2 (610f7fd4-...), current_show_id=chordpro-stage.",
   "retest_needed": false,
   "should_main_agent_self_test": false,
   "context_for_next_testing_agent": "The dashboard On Stage tab 'tapped tip' indicator (App.js:8646-8650) is verified working. No data-testid on either tip indicator yet; selectors must rely on the '💰 tapped tip' or '💰 ${amount} tip' text. Seed data was cleaned up — the three requests bfed800e / bad5715a / b975b015 under show 748b9b16 are back to tip_amount=0 / tip_clicked=false."

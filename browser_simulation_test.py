@@ -11,8 +11,8 @@ import sys
 import time
 
 # Configuration
-PREVIEW_FRONTEND_URL = "https://chord-pro-stage.preview.emergentagent.com"
-PREVIEW_BACKEND_URL = "https://chord-pro-stage.preview.emergentagent.com/api"
+PREVIEW_FRONTEND_URL = "https://chordpro-stage.preview.emergentagent.com"
+PREVIEW_BACKEND_URL = "https://chordpro-stage.preview.emergentagent.com/api"
 TEST_MUSICIAN_SLUG = "bryce-larsen"
 
 def simulate_browser_request_flow():

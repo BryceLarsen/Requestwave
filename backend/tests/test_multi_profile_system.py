@@ -7,7 +7,7 @@ import requests
 import os
 import uuid
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://chord-pro-stage.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://chordpro-stage.preview.emergentagent.com')
 
 # Test credentials
 TEST_EMAIL = "test@test.com"

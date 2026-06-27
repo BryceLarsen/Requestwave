@@ -7,7 +7,7 @@ import requests
 import json
 
 # Configuration
-BASE_URL = "https://chord-pro-stage.preview.emergentagent.com/api"
+BASE_URL = "https://chordpro-stage.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {

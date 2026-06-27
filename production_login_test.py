@@ -21,7 +21,7 @@ import time
 import os
 
 # Configuration from environment variables
-EXTERNAL_API_URL = "https://chord-pro-stage.preview.emergentagent.com/api"
+EXTERNAL_API_URL = "https://chordpro-stage.preview.emergentagent.com/api"
 INTERNAL_API_URL = "http://localhost:8001/api"  # For internal testing if needed
 TEST_EMAIL = "brycelarsenmusic@gmail.com"
 TEST_PASSWORD = "RequestWave2024!"
