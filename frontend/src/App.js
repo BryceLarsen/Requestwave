@@ -1510,10 +1510,18 @@ const MusicianDashboard = () => {
             startedContext = { kind: 'profile', id: defId };
           }
         }
-      } else if (onstageSelection) {
-        const [kind, id] = onstageSelection.split(':');
-        if (kind === 'profile') { startPayload.profile_id = id; startedContext = { kind: 'profile', id }; }
-        if (kind === 'event') { startPayload.event_id = id; startedContext = { kind: 'event', id }; }
+      } else {
+        // On-Stage tab: use the selected context, but fall back to the default
+        // profile if the selection is empty or no longer resolves.
+        const [kind, id] = onstageSelection ? onstageSelection.split(':') : [];
+        if (kind === 'profile' && profiles.some(p => p.id === id)) {
+          startPayload.profile_id = id; startedContext = { kind: 'profile', id };
+        } else if (kind === 'event' && events.some(ev => ev.id === id)) {
+          startPayload.event_id = id; startedContext = { kind: 'event', id };
+        } else {
+          const defId = profiles.find(p => p.is_default)?.id || profiles[0]?.id;
+          if (defId) { startPayload.profile_id = defId; startedContext = { kind: 'profile', id: defId }; }
+        }
       }
       
       const response = await axios.post(`${API}/shows/start`, startPayload, {
@@ -2159,13 +2167,20 @@ const MusicianDashboard = () => {
     try { localStorage.setItem('onstage_selector_expanded', String(onstageSelectorExpanded)); } catch {}
   }, [onstageSelectorExpanded]);
 
-  // Initialize selection to default profile on first On-Stage activation
+  // Ensure the On-Stage selection always points at a real context.
+  // Homes to the default profile when the selection is empty OR when a stored
+  // selection no longer resolves to a current profile or event.
   useEffect(() => {
     if (activeTab !== 'onstage') return;
-    if (onstageSelection) return;
-    const dp = profiles.find(p => p.is_default);
+    if (profiles.length === 0) return; // wait until profiles are loaded
+    const [kind, id] = onstageSelection ? onstageSelection.split(':') : [];
+    const resolves =
+      (kind === 'profile' && profiles.some(p => p.id === id)) ||
+      (kind === 'event' && events.some(ev => ev.id === id));
+    if (resolves) return;
+    const dp = profiles.find(p => p.is_default) || profiles[0];
     if (dp) setOnstageSelection(`profile:${dp.id}`);
-  }, [activeTab, profiles, onstageSelection]);
+  }, [activeTab, profiles, events, onstageSelection]);
 
   // When selection changes, point currentShow at the selected context's show
   useEffect(() => {
@@ -8355,7 +8370,6 @@ const MusicianDashboard = () => {
                           onChange={(e) => setOnstageSelection(e.target.value)}
                           className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm flex-1 min-w-[260px]"
                         >
-                          <option value="">— choose context —</option>
                           {profiles.length > 0 && (
                             <optgroup label="Profiles">
                               {profiles.map(p => (

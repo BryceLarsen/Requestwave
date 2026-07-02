@@ -1,0 +1,23 @@
+{
+  "summary": "Frontend-only regression testing of On Stage 'Performing as' stale-selection bug fix. Login as test@test.com, verified: (1) fresh selector auto-resolves to default profile 'Default Test 2 (Default)', never shows 'Choose context'; (2) dropdown contains only non-empty options (2 options: profile + event, both with real value attributes, no placeholder); (3) stale localStorage 'onstage_selection'='profile:bogus-stale-999' auto-corrects to default profile on load; (4) Start Show from On Stage with stale value succeeds — /api/shows/start returned 200 and modal correctly shows 'Starting show for: Default Test 2'; (5) Requests-tab Start Show flow unchanged and works (existing show was active and Stop Show functional).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "App.js is ~16346 lines — should be split into smaller focused modules for maintainability.",
+    "React Router future flag warnings (v7_startTransition, v7_relativeSplatPath) should be opted-in to reduce console noise."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "test_credentials": "test@test.com / test",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Bug fix verified end-to-end. Key localStorage key is 'onstage_selection' (format 'profile:<id>' or 'event:<id>'). Selector summary testid: 'onstage-selector-summary'. Start button testid: 'start-show-btn'. Show start modal opens instead of a browser confirm — its Start Show submit button is inside div.fixed and may need force=True click.",
+  "rca of the issue": "Original: selection-init effect only fired when selection was empty; a stale localStorage entry (leftover profile/event id no longer in current account) bypassed initialization, causing summary to show 'Choose context' and Start Show to POST bogus profile_id, yielding 'Profile not found' 400. Fix in App.js (~line 2173) now checks whether the persisted selection resolves against current profiles/events and re-homes to default profile if not. handleStartShow (~line 1516) also falls back to default profile when unresolved. Empty placeholder <option> removed from dropdown."
+}
