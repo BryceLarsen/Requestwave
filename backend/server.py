@@ -2141,7 +2141,7 @@ async def register_musician(musician_data: MusicianRegister):
         "musician_id": musician_dict["id"],
         "name": musician_data.name,
         "slug": profile_slug,
-        "active_playlist_ids": [],
+        "active_playlist_ids": ["__all__"],
         "show_tips_in_success_screen": True,
         "show_tips_in_orientation": True,
         "email_capture_mode": "optional",
@@ -4491,12 +4491,9 @@ async def get_musician_songs(
         else:
             # Read playlist selection from the default profile document.
             active_ids = (default_profile or {}).get("active_playlist_ids", [])
-            if "__all__" in active_ids:
-                # No playlist restriction - show all non-hidden songs
+            if "__all__" in active_ids or not active_ids:
+                # No playlist restriction (explicit __all__, or empty/uninitialized) - show all non-hidden songs
                 pass
-            elif not active_ids:
-                # No playlists selected on the profile - return empty
-                return []
             else:
                 # Union of song_ids across the selected playlists (exclude deleted)
                 union_song_ids = set()
@@ -8784,16 +8781,13 @@ async def _get_profile_songs(profile, musician):
     '__all__' means return full song library."""
     active_ids = profile.get("active_playlist_ids", [])
     
-    if "__all__" in active_ids:
-        # Return all non-hidden songs for this musician
+    if "__all__" in active_ids or not active_ids:
+        # Return all non-hidden songs (explicit __all__, or empty/uninitialized)
         songs = await db.songs.find(
             {"musician_id": musician["id"], "hidden": {"$ne": True}},
             {"_id": 0}
         ).to_list(5000)
         return songs
-    
-    if not active_ids:
-        return []
     
     # Get songs from specific playlists
     all_song_ids = set()
