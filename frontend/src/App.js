@@ -2762,18 +2762,64 @@ const MusicianDashboard = () => {
     return name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
   };
 
-  const handleProfilePhotoUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert('Image size must be less than 2MB');
+  // Downscales an image File to a max long edge and re-encodes as JPEG.
+  // Returns a base64 data URL. Uses createImageBitmap with EXIF orientation
+  // so phone photos are not rotated sideways, and falls back to Image on older browsers.
+  const resizeImageForUpload = (file, maxEdge = 1600, quality = 0.85) =>
+    new Promise((resolve, reject) => {
+      if (!file || !file.type || !file.type.startsWith('image/')) {
+        reject(new Error('Not an image file'));
         return;
       }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setProfileForm(prev => ({ ...prev, design_artist_photo: event.target.result }));
+      const drawToDataUrl = (source, width, height) => {
+        let w = width;
+        let h = height;
+        if (w > h && w > maxEdge) { h = Math.round(h * (maxEdge / w)); w = maxEdge; }
+        else if (h >= w && h > maxEdge) { w = Math.round(w * (maxEdge / h)); h = maxEdge; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(source, 0, 0, w, h);
+        return canvas.toDataURL('image/jpeg', quality);
       };
-      reader.readAsDataURL(file);
+      function fallbackImagePath() {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            try { resolve(drawToDataUrl(img, img.naturalWidth, img.naturalHeight)); }
+            catch (err) { reject(err); }
+          };
+          img.onerror = () => reject(new Error('Image decode failed'));
+          img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error('File read failed'));
+        reader.readAsDataURL(file);
+      }
+      if (typeof createImageBitmap === 'function') {
+        createImageBitmap(file, { imageOrientation: 'from-image' })
+          .then((bitmap) => {
+            try {
+              const url = drawToDataUrl(bitmap, bitmap.width, bitmap.height);
+              if (bitmap.close) bitmap.close();
+              resolve(url);
+            } catch (err) { reject(err); }
+          })
+          .catch(() => fallbackImagePath());
+      } else {
+        fallbackImagePath();
+      }
+    });
+
+  const handleProfilePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const dataUrl = await resizeImageForUpload(file);
+      setProfileForm(prev => ({ ...prev, design_artist_photo: dataUrl }));
+    } catch (err) {
+      alert('Could not process that image. Please try a different photo.');
     }
   };
 
@@ -3675,26 +3721,16 @@ const MusicianDashboard = () => {
     }
   };
 
-  const handleArtistPhotoUpload = (e) => {
+  const handleArtistPhotoUpload = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
-        setDesignError('Image size must be less than 2MB');
-        return;
-      }
-      
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setDesignSettings({
-          ...designSettings,
-          artist_photo: event.target.result
-        });
-        
-        // Show success message and auto-save
-        setDesignError('');
-        alert('Photo uploaded successfully! Click "Save Changes" to apply.');
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    try {
+      const dataUrl = await resizeImageForUpload(file);
+      setDesignSettings({ ...designSettings, artist_photo: dataUrl });
+      setDesignError('');
+      alert('Photo uploaded successfully! Click "Save Changes" to apply.');
+    } catch (err) {
+      setDesignError('Could not process that image. Please try a different photo.');
     }
   };
 
