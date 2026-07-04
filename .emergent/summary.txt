@@ -4,7 +4,7 @@ The application requires a robust Multi-Profile system where one musician accoun
 PRODUCT REQUIREMENTS: 
 - Add  (link/pdf/chordpro) and / fields to backend song models.
 - Update frontend song forms to support adding/editing charts.
-- Build an in-app  to parse and render ChordPro text, including custom rendering engines, key detection, spelling/accidental overrides, and an on-stage interactive Cockpit overlay (Up Next, Dedication Box, Played Button).
+- Build an in-app  to parse and render ChordPro text, including custom rendering engines, key detection, spelling/accidental overrides, and an on-stage interactive Cockpit overlay.
 - Build a profile-scoped Show Analytics dashboard.
 - Create a quick data-audit endpoint to flag legacy playlist filters.
 - Polish the Multi-Profile UI and enforce On-Stage screen wake locks.
@@ -12,13 +12,13 @@ PRODUCT REQUIREMENTS:
 **User's preferred language**: English (INSTRUCT next agent to respond in English only)
 
 **what currently exists?** 
-A monolithic React frontend () supplemented by rendering/overlay modules (, ), a standalone admin UI (), and a FastAPI backend () with MongoDB. The system supports a Multi-Profile and Events hierarchy, dynamic origin routing, and full bulk importing for ChordPro files. The in-app  uses a custom rendering engine handling whitespace normalization, dynamic key detection, accidental spelling (flat/sharp), and an interactive on-stage Cockpit overlay. The audience view supports complex sorting. It includes deep links to Venmo, PayPal, Cash App, and Zelle for tips.
+A monolithic React frontend () supplemented by rendering/overlay modules, a standalone admin UI, and a FastAPI backend () with MongoDB. The system supports a Multi-Profile and Events hierarchy, dynamic origin routing, full bulk importing for ChordPro files, and complex sorting. It includes deep links to Venmo, PayPal, Cash App, and Zelle for tips, and an in-app client-side image downscaling utility for handling large photo uploads. 
 
 **Last working item**: 
-    - Last item agent was working: Implemented an  component in  that periodically polls  for new frontend builds and shows a dismissible update banner for musicians.
+    - Last item agent was working: Implemented client-side image downscaling () via HTML5 Canvas in  to process and accept profile/artist photo uploads over 2MB without throwing size limit errors.
     - Status: USER VERIFICATION PENDING
     - Agent Testing Done: Y
-    - Which testing method agent to use? manual testing by webpack compile
+    - Which testing method agent to use? testing agent
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:  
@@ -38,13 +38,9 @@ A monolithic React frontend () supplemented by rendering/overlay modules (, ), a
     - Integration (P3): Integrate with Spotify Web API for song data enrichment.
 
 **Completed work in this session**
-- : Cleaned Venmo/PayPal/Cash App payment handles by stripping , , and whitespace during read () and write (, , , ) routes (DONE)
-- : Added frontend tip click indicator tracking () inside  before routing to payment apps (DONE)
-- : Derived  and  correctly from unified  field based on  string presence during audience view rendering (DONE)
-- : Added standard Apple mobile web app capable meta tags for iOS standalone full-screen support (DONE)
-- : Updated ChordPro viewer dynamic CSS string to appropriately scale  inline chords alongside  (DONE)
-- : Displayed 💰 tapped tip in the Dashboard On Stage tab for requests where  is true but no dollar value is captured (DONE)
-- : Created a polling  for musicians to auto-detect frontend deployment updates from the CRA asset manifest (DONE)
+- : Fixed an issue where new musician accounts with an empty  array displayed zero songs to the audience. Treat empty arrays exactly like  in  and , and seeded new account creation with  (DONE).
+- : Fixed the On Stage Performing as dropdown holding stale, unresolvable selections from localStorage. Auto-resolves to the default profile and removes the empty placeholder option (DONE).
+- : Removed the 2MB upload limit for profile and artist photos, replacing it with the  helper that downscales client-side using  before uploading the base64 string (DONE).
 
 **Earlier issues found/mentioned but not fixed**
    Issue 1: 
@@ -64,8 +60,8 @@ A monolithic React frontend () supplemented by rendering/overlay modules (, ), a
 **Key Technical Concepts**
 - State-Driven Conditional UI in a monolith React component ()
 -  parsing combined with custom  HTML generation
-- Interactive Overlays () positioned over standard DOM elements
-- Dynamic layout styling (e.g., lyric scaling, ChordPro class handling) via React template strings
+- HTML5 Canvas and  APIs for client-side image compression
+- Dynamic layout styling via React template strings
 - Interval-based metadata polling () for frontend caching/updates.
 
 **key DB schema**
@@ -73,12 +69,11 @@ A monolithic React frontend () supplemented by rendering/overlay modules (, ), a
   - : 
 
 **changes in tech stack**
-  - Included CRA  polling mechanism for detecting live deployments dynamically via .
+  - None
 
 **All files of reference** 
-  -  (Heavily modified for tips tracking, , ChordPro styles)
-  -  (Modified for Payment sigil parsing and Zelle metadata parsing)
-  -  (Meta tags updated)
+  -  (Modified to fix  array behavior)
+  -  (Modified for On Stage local storage fixes and photo upload client-side compression)
 
 **Areas that need refactoring**: 
   -  (over 16,000 lines) and  (nearly 10,000 lines). Highly fragile. **DO NOT REFACTOR until explicitly asked by the user.**
@@ -87,33 +82,28 @@ A monolithic React frontend () supplemented by rendering/overlay modules (, ), a
   - 
   - 
   -  & 
-  - 
 
 **Critical Info for New Agent** 
 - **Production vs Preview Environments:** The user has a live production deployment. You can only write code in PREVIEW. If bugs are reported, strictly clarify which environment the user is looking at. Do not deploy to production.
 - **Monolithic State Warnings:**  and  are massive. Always use line anchors, accurate  commands, and verify your  edits with a follow-up  to ensure modifications apply correctly.
-- **Strict Adherence:** The user demands highly mechanical, verbatim code changes. Do not reformat, refactor, or invent variables outside their instructions unless asked. Run without extended thinking for straightforward snippets.
-- **Testing protocol**: If the user submits a bug report and asks for a fix, always run the testing agent on the reported flow even if the user explicitly outlines the code lines for the fix.
+- **Strict Adherence:** The user demands highly mechanical, verbatim code changes. Do not reformat, refactor, or invent variables outside their instructions unless asked. 
 
 **documents and test reports created in this job**
-  -  (Backend payment handler test)
-  -  (Zelle info parsing test)
-  -  (Frontend dashboard tip test)
+  -  (Backend audience song-visibility test)
+  -  (Frontend stale local storage context fix)
+  -  (Frontend image compression verification)
 
 **Last 10 User Messages and any pending HUMAN messages** 
- 1. **User**: Bug report: Strip  and  sigils from payment handles in  to fix broken tip URLs. (Completed, Tested)
+ 1. **User**: Backend Bug: Empty  on new profiles causes audience page to show zero songs. Fix in . (Completed, Tested)
  2. **User**: Reminder: Must call testing agent for bugs. (Acknowledged)
- 3. **User**: Frontend Fix: Add  track-click in  inside . (Completed)
- 4. **User**: Backend Fix: Derive  /  from  using  detection in . (Completed, Tested)
- 5. **User**: Frontend static HTML: Add iOS full-screen meta tags in . (Completed)
- 6. **User**: Frontend Fix: Add dynamic scaling for  inline chords in  CSS block. (Completed)
- 7. **User**: Frontend Fix: Add 💰 tapped tip indicator for tip-tracked requests with no specific monetary amount in  On Stage tab. (Completed, Tested)
- 8. **User**: Frontend Feature: Create  component in  to poll  and detect deployment releases automatically. (Completed)
+ 3. **User**: Frontend Bug: Performing as dropdown fails if holding stale localStorage profile. Fix resolution and fallback in . (Completed, Tested)
+ 4. **User**: Reminder: Must call testing agent for bugs. (Acknowledged)
+ 5. **User**: Frontend Feature: Remove 2MB upload limit on images; add  canvas helper to process/compress client-side in . (Completed, Tested)
  *(No pending messages)*
 
 **Project Health Check:**
-  - Broken: None. 
-  - Mocked: None.
+  - Broken: None
+  - Mocked: None
 
 **3rd Party Integrations** 
   - Venmo (Deep links) — requires User Config
@@ -124,10 +114,10 @@ A monolithic React frontend () supplemented by rendering/overlay modules (, ), a
   - Stripe (Payments) — requires User API Key
 
 **Testing status**
-  - Testing agent used after significant changes: YES (iterations 17, 18, 19).
+  - Testing agent used after significant changes: YES (iterations 20, 21, 22).
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: , , 
-  - Known regressions: None (Exception: pre-existing 403 bug on  without auth).
+  - Known regressions: None (Pre-existing 403 bug on  without auth).
 
 **Credentials to test flow:**
   Check 

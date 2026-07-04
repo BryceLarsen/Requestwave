@@ -25,7 +25,7 @@ import io
 from typing import Dict, Any, Optional, List
 
 # Configuration
-BASE_URL = "https://chordpro-stage.preview.emergentagent.com/api"
+BASE_URL = "https://profile-events-1.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {

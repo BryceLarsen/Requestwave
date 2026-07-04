@@ -12,8 +12,8 @@ from datetime import datetime
 import time
 
 # Configuration
-PREVIEW_BACKEND_URL = "https://chordpro-stage.preview.emergentagent.com/api"
-PREVIEW_FRONTEND_URL = "https://chordpro-stage.preview.emergentagent.com"
+PREVIEW_BACKEND_URL = "https://profile-events-1.preview.emergentagent.com/api"
+PREVIEW_FRONTEND_URL = "https://profile-events-1.preview.emergentagent.com"
 TEST_MUSICIAN_SLUG = "bryce-larsen"
 
 class DetailedFrontendFlowTester:
