@@ -5442,6 +5442,24 @@ const MusicianDashboard = () => {
         {/* Songs Tab */}
         {activeTab === 'songs' && (
           <div>
+            {/* First-time empty-state hero: shows only when the library is empty and no form is open */}
+            {songs.length === 0 && !showAddSong && !showPlaylistImport && (
+              <div className="text-center py-12 px-4">
+                <div className="text-5xl mb-3">🎤</div>
+                <h2 className="text-2xl font-bold mb-2">Add your first songs</h2>
+                <p className="text-gray-400 mb-6 max-w-md mx-auto">Build the list your audience picks from. Add one at a time, or import a whole playlist.</p>
+                <button
+                  onClick={() => setShowAddSong(true)}
+                  className="bg-purple-600 hover:bg-purple-700 px-8 py-4 rounded-xl text-lg font-bold transition duration-300"
+                >
+                  ＋ Add a Song
+                </button>
+                <div className="text-sm text-gray-400 mt-4">
+                  already have a list?{' '}
+                  <button onClick={() => setShowPlaylistImport(true)} className="text-purple-300 hover:text-purple-200 underline">Import a playlist</button>
+                </div>
+              </div>
+            )}
             {/* Streamlined Header - No Title */}
             <div className="mb-6">
               {/* Header content removed - buttons moved above playlists */}
@@ -7227,12 +7245,6 @@ const MusicianDashboard = () => {
                   >
                     Clear all filters
                   </button>
-                </div>
-              )}
-
-              {songs.length === 0 && (
-                <div className="text-center py-8 text-gray-400">
-                  <p>No songs yet. Add your first song above or upload a CSV file.</p>
                 </div>
               )}
             </div>
