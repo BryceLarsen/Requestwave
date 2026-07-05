@@ -11106,6 +11106,48 @@ const MusicianDashboard = () => {
                   className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
                   required
                 />
+                <div className="md:col-span-2 bg-gray-700/40 border border-gray-600 rounded-lg p-3">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Chart (optional)</label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {[{v: '', l: 'None'}, {v: 'link', l: 'Link'}, {v: 'pdf', l: 'PDF'}, {v: 'chordpro', l: 'ChordPro'}].map(opt => (
+                      <button
+                        key={opt.v || 'none'}
+                        type="button"
+                        data-testid={`edit-chart-type-${opt.v || 'none'}`}
+                        onClick={() => setSongForm({...songForm, chart_type: opt.v})}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition duration-200 ${
+                          songForm.chart_type === opt.v
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                        }`}
+                      >
+                        {opt.l}
+                      </button>
+                    ))}
+                  </div>
+                  {(songForm.chart_type === 'link' || songForm.chart_type === 'pdf') && (
+                    <input
+                      type="text"
+                      data-testid="edit-chart-url-input"
+                      placeholder="https://..."
+                      value={songForm.chart_url}
+                      onChange={(e) => setSongForm({...songForm, chart_url: e.target.value})}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+                      aria-label={songForm.chart_type === 'pdf' ? 'PDF URL' : 'Chart link URL'}
+                    />
+                  )}
+                  {songForm.chart_type === 'chordpro' && (
+                    <textarea
+                      data-testid="edit-chart-chordpro-input"
+                      placeholder="Paste ChordPro text here, e.g. [G]Amazing [C]grace"
+                      value={songForm.chart_chordpro}
+                      onChange={(e) => setSongForm({...songForm, chart_chordpro: e.target.value})}
+                      rows={10}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 font-mono"
+                      aria-label="ChordPro chart text"
+                    />
+                  )}
+                </div>
                 
                 {/* Auto-fill Metadata Button */}
                 <div className="md:col-span-2 mb-4">
@@ -11316,49 +11358,22 @@ const MusicianDashboard = () => {
                   className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
                 />
 
-                <div className="md:col-span-2 bg-gray-700/40 border border-gray-600 rounded-lg p-3">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Chart (optional)</label>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {[{v: '', l: 'None'}, {v: 'link', l: 'Link'}, {v: 'pdf', l: 'PDF'}, {v: 'chordpro', l: 'ChordPro'}].map(opt => (
-                      <button
-                        key={opt.v || 'none'}
-                        type="button"
-                        data-testid={`edit-chart-type-${opt.v || 'none'}`}
-                        onClick={() => setSongForm({...songForm, chart_type: opt.v})}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition duration-200 ${
-                          songForm.chart_type === opt.v
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
-                        }`}
-                      >
-                        {opt.l}
-                      </button>
-                    ))}
-                  </div>
-                  {(songForm.chart_type === 'link' || songForm.chart_type === 'pdf') && (
-                    <input
-                      type="text"
-                      data-testid="edit-chart-url-input"
-                      placeholder="https://..."
-                      value={songForm.chart_url}
-                      onChange={(e) => setSongForm({...songForm, chart_url: e.target.value})}
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400"
-                      aria-label={songForm.chart_type === 'pdf' ? 'PDF URL' : 'Chart link URL'}
-                    />
-                  )}
-                  {songForm.chart_type === 'chordpro' && (
-                    <textarea
-                      data-testid="edit-chart-chordpro-input"
-                      placeholder="Paste ChordPro text here, e.g. [G]Amazing [C]grace"
-                      value={songForm.chart_chordpro}
-                      onChange={(e) => setSongForm({...songForm, chart_chordpro: e.target.value})}
-                      rows={10}
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 font-mono"
-                      aria-label="ChordPro chart text"
-                    />
-                  )}
+                <div className="md:col-span-2 border-t border-gray-700 pt-4 mt-2 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleSongVisibility(editingSong.id)}
+                    className="flex-1 border border-yellow-600 text-yellow-500 hover:bg-yellow-600/10 py-2 rounded-lg text-sm font-bold transition duration-300"
+                  >
+                    {editingSong?.hidden ? 'Show to audience' : 'Hide from audience'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { handleDeleteSong(editingSong.id); setShowEditModal(false); }}
+                    className="flex-1 border border-red-600 text-red-400 hover:bg-red-600/10 py-2 rounded-lg text-sm font-bold transition duration-300"
+                  >
+                    Delete song
+                  </button>
                 </div>
-
                 <div className="md:col-span-2 flex space-x-4">
                   <button
                     type="submit"
