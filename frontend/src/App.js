@@ -7116,116 +7116,47 @@ const MusicianDashboard = () => {
               </div>
 
               <div className="space-y-4">
-                {filteredSongs.map((song) => (
-                  <div key={song.id} className={`rounded-lg p-4 ${
-                    song.hidden 
-                      ? 'bg-gray-800 border-2 border-dashed border-gray-600 opacity-75' 
-                      : 'bg-gray-700'
-                  }`}>
-                    <div className="flex items-center space-x-3">
-                      {/* Checkbox for selection */}
-                      <input
-                        type="checkbox"
-                        checked={selectedSongs.has(song.id)}
-                        onChange={() => handleSelectSong(song.id)}
-                        className="rounded bg-gray-600 border-gray-500 text-purple-600 focus:ring-purple-500"
-                      />
-                      
-                      <div className="flex-1">
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
-                          <div className="flex-1">
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-1">
-                              <h3 className={`font-bold text-base sm:text-lg ${song.hidden ? 'text-gray-400' : 'text-white'} break-words`}>
-                                {song.title}
-                              </h3>
-                              {song.hidden && (
-                                <span className="bg-gray-600 text-gray-300 text-xs px-2 py-1 rounded-full font-medium self-start mt-1 sm:mt-0">
-                                  👁️‍🗨️ Hidden
-                                </span>
-                              )}
-                            </div>
-                            <p className={`text-sm sm:text-base ${song.hidden ? 'text-gray-500' : 'text-gray-300'} break-words`}>
-                              by {song.artist}
-                            </p>
-                            <div className="flex flex-wrap gap-1 sm:gap-2 mt-2">
-                              {song.genres.map((genre, index) => (
-                                <span key={index} className="bg-purple-600 text-xs px-2 py-1 rounded-full whitespace-nowrap">
-                                  {genre}
-                                </span>
-                              ))}
-                              {song.moods.map((mood, index) => (
-                                <span key={index} className="bg-blue-600 text-xs px-2 py-1 rounded-full whitespace-nowrap">
-                                  {mood}
-                                </span>
-                              ))}
-                              {song.year && (
-                                <span className="bg-green-600 text-xs px-2 py-1 rounded-full whitespace-nowrap">
-                                  {song.year}
-                                </span>
-                              )}
-                              {/* Request Count Badge: show-scoped, hidden when zero */}
-                              {(song.requests_this_show || 0) > 0 && (
-                                <span
-                                  data-testid={`song-tonight-badge-${song.id}`}
-                                  className="bg-orange-600 text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap"
-                                >
-                                  🔥 {song.requests_this_show} tonight
-                                </span>
-                              )}
-                            </div>
-                            {song.notes && (
-                              <p className={`text-sm mt-1 ${song.hidden ? 'text-gray-500' : 'text-gray-400'}`}>
-                                {song.notes}
-                              </p>
+                {filteredSongs.map((song) => {
+                  const hasChart = ((song.chart_type === 'link' || song.chart_type === 'pdf') && song.chart_url) || (song.chart_type === 'chordpro' && song.chart_chordpro);
+                  const openChartOrEdit = () => {
+                    if (!hasChart) { handleEditSong(song); return; }
+                    if (song.chart_type === 'chordpro') {
+                      setOpenChordpro({ chordpro: song.chart_chordpro, title: song.title, id: song.id, transpose: song.transpose || 0 });
+                    } else {
+                      window.open(song.chart_url, '_blank');
+                    }
+                  };
+                  return (
+                    <div key={song.id} className={`rounded-lg p-4 ${song.hidden ? 'bg-gray-800 border-2 border-dashed border-gray-600 opacity-75' : 'bg-gray-700'}`}>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedSongs.has(song.id)}
+                          onChange={() => handleSelectSong(song.id)}
+                          className="rounded bg-gray-600 border-gray-500 text-purple-600 focus:ring-purple-500 flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0 cursor-pointer" onClick={openChartOrEdit}>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className={`font-bold text-base sm:text-lg break-words ${song.hidden ? 'text-gray-400' : 'text-white'} underline decoration-gray-600 underline-offset-2`}>
+                              {song.title}
+                            </h3>
+                            {song.hidden && (
+                              <span className="bg-gray-600 text-gray-300 text-xs px-2 py-1 rounded-full font-medium">👁️‍🗨️ Hidden</span>
+                            )}
+                            {(song.requests_this_show || 0) > 0 && (
+                              <span data-testid={`song-tonight-badge-${song.id}`} className="bg-orange-600 text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap">🔥 {song.requests_this_show} tonight</span>
                             )}
                           </div>
-                          <div className="flex flex-wrap gap-1 sm:gap-2 ml-2 sm:ml-4 mt-2 sm:mt-0">
-                            <button
-                              onClick={() => handleEditSong(song)}
-                              className="bg-blue-600 hover:bg-blue-700 px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition duration-300 whitespace-nowrap"
-                            >
-                              Edit
-                            </button>
-                            {(((song.chart_type === 'link' || song.chart_type === 'pdf') && song.chart_url) || (song.chart_type === 'chordpro' && song.chart_chordpro)) && (
-                              <button
-                                onClick={() => {
-                                  if (song.chart_type === 'chordpro') {
-                                    setOpenChordpro({ chordpro: song.chart_chordpro, title: song.title, id: song.id, transpose: song.transpose || 0 });
-                                  } else {
-                                    window.open(song.chart_url, '_blank');
-                                  }
-                                }}
-                                className="bg-purple-600 hover:bg-purple-700 px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition duration-300 whitespace-nowrap"
-                                title="Open chart"
-                              >
-                                📄 Chart
-                              </button>
-                            )}
-                            {renderLearnLaterBookmark({ song, size: 20 })}
-                            {/* NEW: Hide/Show Button */}
-                            <button
-                              onClick={() => handleToggleSongVisibility(song.id)}
-                              className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition duration-300 whitespace-nowrap ${
-                                song.hidden 
-                                  ? 'bg-green-600 hover:bg-green-700' 
-                                  : 'bg-yellow-600 hover:bg-yellow-700'
-                              }`}
-                              title={song.hidden ? 'Show to audience' : 'Hide from audience'}
-                            >
-                              {song.hidden ? 'Show' : 'Hide'}
-                            </button>
-                            <button
-                              onClick={() => handleDeleteSong(song.id)}
-                              className="bg-red-600 hover:bg-red-700 px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition duration-300 whitespace-nowrap"
-                            >
-                              Delete
-                            </button>
-                          </div>
+                          <p className={`text-sm sm:text-base break-words ${song.hidden ? 'text-gray-500' : 'text-gray-300'}`}>by {song.artist}</p>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <button onClick={() => handleEditSong(song)} title="Edit" className="text-gray-400 hover:text-white text-lg">✏️</button>
+                          {renderLearnLaterBookmark({ song, size: 20 })}
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {filteredSongs.length === 0 && songs.length > 0 && (
