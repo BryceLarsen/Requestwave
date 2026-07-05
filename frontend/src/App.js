@@ -6119,8 +6119,12 @@ const MusicianDashboard = () => {
 
             {/* Add Song Form */}
             {showAddSong && (
-              <div className="bg-gray-800 rounded-xl p-6 mb-8">
-                <h2 className="text-xl font-bold mb-4">Add New Song</h2>
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-gray-800 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Add New Song</h2>
+                <button type="button" onClick={() => setShowAddSong(false)} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+                </div>
                 
                 {songError && !editingSong && (
                   <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200">
@@ -6405,6 +6409,7 @@ const MusicianDashboard = () => {
                     </button>
                   </div>
                 </form>
+              </div>
               </div>
             )}
 
