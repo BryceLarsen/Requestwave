@@ -3122,9 +3122,14 @@ const MusicianDashboard = () => {
   const filterSongs = () => {
     let filtered = songs.filter(song => {
       // Text search across title and artist
+      const songQuery = songFilter.toLowerCase();
       const searchMatch = songFilter === '' || 
-        song.title.toLowerCase().includes(songFilter.toLowerCase()) ||
-        song.artist.toLowerCase().includes(songFilter.toLowerCase());
+        song.title.toLowerCase().includes(songQuery) ||
+        song.artist.toLowerCase().includes(songQuery) ||
+        (song.genres && song.genres.some(g => g && g.toLowerCase().includes(songQuery))) ||
+        (song.moods && song.moods.some(m => m && m.toLowerCase().includes(songQuery))) ||
+        (song.year && song.year.toString().toLowerCase().includes(songQuery)) ||
+        (song.notes && song.notes.toLowerCase().includes(songQuery));
       
       // Genre filter - including special "No Genre" option
       const genreMatch = genreFilter === '' || 
@@ -6786,7 +6791,7 @@ const MusicianDashboard = () => {
                   <div className="flex space-x-2">
                     <input
                       type="text"
-                      placeholder="Search Song Title or Artist"
+                      placeholder="Search songs, tags, notes..."
                       value={songFilter}
                       onChange={(e) => setSongFilter(e.target.value)}
                       className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
