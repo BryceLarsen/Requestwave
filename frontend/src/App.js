@@ -940,7 +940,6 @@ const MusicianDashboard = () => {
   const [sortOption, setSortOption] = useState('most-popular'); // 'most-popular', 'alphabetical', 'newest', 'random'
   const [randomSeed, setRandomSeed] = useState(Date.now());
   const [decadeFilter, setDecadeFilter] = useState('');  // NEW: Add decade filter
-  const [notesFilter, setNotesFilter] = useState('');  // NEW: Add notes filter
   const [filteredSongs, setFilteredSongs] = useState([]);
   const [songError, setSongError] = useState('');
   const [filterOptions, setFilterOptions] = useState({  // NEW: Filter options for dropdowns
@@ -3162,11 +3161,7 @@ const MusicianDashboard = () => {
       const decadeMatch = decadeFilter === '' || 
         (song.decade && song.decade === decadeFilter);
       
-      // NEW: Notes filter
-      const notesMatch = notesFilter === '' ||
-        (song.notes && song.notes.toLowerCase().includes(notesFilter.toLowerCase()));
-      
-      return searchMatch && genreMatch && playlistMatch && moodMatch && yearMatch && decadeMatch && notesMatch;
+      return searchMatch && genreMatch && playlistMatch && moodMatch && yearMatch && decadeMatch;
     });
     
     // NEW: Apply sorting
@@ -3409,7 +3404,7 @@ const MusicianDashboard = () => {
   // Update filtered songs when songs or filters change
   React.useEffect(() => {
     filterSongs();
-  }, [songs, songFilter, genreFilter, playlistFilter, playlistFilterMode, moodFilter, yearFilter, decadeFilter, notesFilter, sortOption, randomSeed]);
+  }, [songs, songFilter, genreFilter, playlistFilter, playlistFilterMode, moodFilter, yearFilter, decadeFilter, sortOption, randomSeed]);
 
   // Reset playlist filter mode to 'in' whenever the selected playlist changes
   React.useEffect(() => {
@@ -6803,7 +6798,6 @@ const MusicianDashboard = () => {
                         setMoodFilter('');
                         setYearFilter('');
                         setDecadeFilter('');
-                        setNotesFilter('');
                         setPlaylistFilter('');
                       }}
                       className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg text-white text-sm font-medium transition duration-300"
@@ -6920,15 +6914,6 @@ const MusicianDashboard = () => {
                       ))}
                     </select>
                   </div>
-                  
-                  {/* Notes Search - Full Width */}
-                  <input
-                    type="text"
-                    placeholder="Search notes..."
-                    value={notesFilter}
-                    onChange={(e) => setNotesFilter(e.target.value)}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm"
-                  />
                 </div>
 
                 {/* Learn Later Toggle and Section */}
@@ -7196,7 +7181,6 @@ const MusicianDashboard = () => {
                       setMoodFilter('');
                       setYearFilter('');
                       setDecadeFilter('');
-                      setNotesFilter('');
                     }}
                     className="mt-2 text-purple-400 hover:text-purple-300 underline"
                   >
