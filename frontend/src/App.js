@@ -932,6 +932,10 @@ const MusicianDashboard = () => {
   const [playlistFilter, setPlaylistFilter] = useState('');
   // Songs tab: 'in' shows songs IN the selected playlist (default), 'not_in' shows songs NOT in it
   const [playlistFilterMode, setPlaylistFilterMode] = useState('in');
+  const [swipedPlaylistId, setSwipedPlaylistId] = useState(null);
+  const touchStartXRef = React.useRef(0);
+  const touchStartYRef = React.useRef(0);
+  const swipeHandledRef = React.useRef(false);
   const [moodFilter, setMoodFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
   const [showLearnLater, setShowLearnLater] = useState(false);  // NEW: Learn Later filter toggle
@@ -11304,93 +11308,123 @@ const MusicianDashboard = () => {
                   <p className="text-gray-400 text-center py-8">No playlists created yet. Select some songs and click "Add to Playlist" to create your first playlist!</p>
                 ) : (
                   playlists.filter(p => p.id !== 'all_songs').map(playlist => (
-                    <div
-                      key={playlist.id}
-                      className={`rounded-lg p-4 ${
-                        playlistFilter === playlist.id
-                          ? 'bg-purple-900 bg-opacity-40 border border-purple-500'
-                          : 'bg-gray-700'
-                      }`}
-                    >
-                      {editingPlaylist === playlist.id ? (
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="text"
-                            value={editingPlaylistName}
-                            onChange={(e) => setEditingPlaylistName(e.target.value)}
-                            className="bg-gray-600 border border-gray-500 rounded px-3 py-1 text-white flex-1"
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter') {
-                                savePlaylistName(playlist.id);
-                              } else if (e.key === 'Escape') {
-                                cancelEditingPlaylistName();
-                              }
-                            }}
-                            onBlur={() => savePlaylistName(playlist.id)}
-                            autoFocus
-                          />
-                          <button
-                            onClick={() => savePlaylistName(playlist.id)}
-                            className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={cancelEditingPlaylistName}
-                            className="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-sm"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-between">
-                          {/* Tap name area to filter the song list to this playlist, then close the modal */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPlaylistFilter(playlist.id);
-                              setShowManagePlaylistsModal(false);
-                            }}
-                            className="flex-1 min-w-0 mr-2 text-left"
-                          >
-                            <div className="flex items-center space-x-2">
-                              <h3 className="font-medium break-words">{playlist.name}</h3>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-                                playlist.is_public
-                                  ? 'bg-blue-500 text-white'
-                                  : 'bg-gray-500 text-white'
-                              }`}>
-                                {playlist.is_public ? 'Public' : 'Private'}
-                              </span>
-                            </div>
-                            <p className="text-gray-400 text-sm mt-1">
-                              {playlist.song_count} songs{playlistFilter === playlist.id ? ' · filtering now' : ''}
-                            </p>
-                          </button>
-                          <div className="flex items-center space-x-2 flex-shrink-0">
-                            {/* Public/Private Toggle */}
+                    <div key={playlist.id} className="relative rounded-lg overflow-hidden">
+                      {/* Red delete panel revealed on swipe-left. 3a: tapping it only closes the swipe. Confirm wiring comes next step. */}
+                      <div
+                        className="absolute inset-y-0 right-0 w-24 bg-red-600 flex items-center justify-center text-white font-bold text-sm select-none"
+                        onClick={() => setSwipedPlaylistId(null)}
+                      >
+                        Delete
+                      </div>
+                      {/* Front content slides left to reveal the panel */}
+                      <div
+                        className={`relative rounded-lg p-4 transition-transform duration-200 ${
+                          playlistFilter === playlist.id
+                            ? 'bg-purple-900 bg-opacity-40 border border-purple-500'
+                            : 'bg-gray-700'
+                        }`}
+                        style={{ transform: swipedPlaylistId === playlist.id ? 'translateX(-6rem)' : 'translateX(0)' }}
+                        onTouchStart={(e) => {
+                          touchStartXRef.current = e.changedTouches[0].clientX;
+                          touchStartYRef.current = e.changedTouches[0].clientY;
+                          swipeHandledRef.current = false;
+                        }}
+                        onTouchEnd={(e) => {
+                          const dx = e.changedTouches[0].clientX - touchStartXRef.current;
+                          const dy = e.changedTouches[0].clientY - touchStartYRef.current;
+                          if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
+                            swipeHandledRef.current = true;
+                            setSwipedPlaylistId(dx < 0 ? playlist.id : null);
+                          }
+                        }}
+                      >
+                        {editingPlaylist === playlist.id ? (
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="text"
+                              value={editingPlaylistName}
+                              onChange={(e) => setEditingPlaylistName(e.target.value)}
+                              className="bg-gray-600 border border-gray-500 rounded px-3 py-1 text-white flex-1"
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  savePlaylistName(playlist.id);
+                                } else if (e.key === 'Escape') {
+                                  cancelEditingPlaylistName();
+                                }
+                              }}
+                              onBlur={() => savePlaylistName(playlist.id)}
+                              autoFocus
+                            />
                             <button
-                              onClick={() => togglePlaylistVisibility(playlist.id, playlist.is_public)}
-                              className={`px-3 py-1 rounded text-sm font-medium transition duration-300 ${
-                                playlist.is_public
-                                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                                  : 'bg-gray-600 hover:bg-gray-700 text-white'
-                              }`}
-                              title={playlist.is_public ? 'Make Private' : 'Make Public'}
+                              onClick={() => savePlaylistName(playlist.id)}
+                              className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm"
                             >
-                              {playlist.is_public ? '🌐' : '🔒'}
+                              Save
                             </button>
-                            {/* Rename Button */}
                             <button
-                              onClick={() => startEditingPlaylistName(playlist.id, playlist.name)}
-                              className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm text-white font-medium transition duration-300"
-                              title="Rename playlist"
+                              onClick={cancelEditingPlaylistName}
+                              className="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-sm"
                             >
-                              ✏️
+                              Cancel
                             </button>
                           </div>
-                        </div>
-                      )}
+                        ) : (
+                          <div className="flex items-center justify-between">
+                            {/* Tap name area to filter, unless the gesture was a swipe */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (swipeHandledRef.current) { swipeHandledRef.current = false; return; }
+                                setPlaylistFilter(playlist.id);
+                                setShowManagePlaylistsModal(false);
+                              }}
+                              className="flex-1 min-w-0 mr-2 text-left"
+                            >
+                              <div className="flex items-center space-x-2">
+                                <h3 className="font-medium break-words">{playlist.name}</h3>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
+                                  playlist.is_public
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-gray-500 text-white'
+                                }`}>
+                                  {playlist.is_public ? 'Public' : 'Private'}
+                                </span>
+                              </div>
+                              <p className="text-gray-400 text-sm mt-1">
+                                {playlist.song_count} songs{playlistFilter === playlist.id ? ' · filtering now' : ''}
+                              </p>
+                            </button>
+                            <div className="flex items-center space-x-2 flex-shrink-0">
+                              {/* Public/Private Toggle */}
+                              <button
+                                onClick={() => {
+                                  if (swipeHandledRef.current) { swipeHandledRef.current = false; return; }
+                                  togglePlaylistVisibility(playlist.id, playlist.is_public);
+                                }}
+                                className={`px-3 py-1 rounded text-sm font-medium transition duration-300 ${
+                                  playlist.is_public
+                                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                    : 'bg-gray-600 hover:bg-gray-700 text-white'
+                                }`}
+                                title={playlist.is_public ? 'Make Private' : 'Make Public'}
+                              >
+                                {playlist.is_public ? '🌐' : '🔒'}
+                              </button>
+                              {/* Rename Button */}
+                              <button
+                                onClick={() => {
+                                  if (swipeHandledRef.current) { swipeHandledRef.current = false; return; }
+                                  startEditingPlaylistName(playlist.id, playlist.name);
+                                }}
+                                className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm text-white font-medium transition duration-300"
+                                title="Rename playlist"
+                              >
+                                ✏️
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))
                 )}
