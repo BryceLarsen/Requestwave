@@ -6717,72 +6717,120 @@ const MusicianDashboard = () => {
                   <button
                     onClick={() => setShowLearnLater(!showLearnLater)}
                     className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition duration-300 ${
-                      showLearnLater 
-                        ? 'bg-yellow-600 text-white' 
+                      showLearnLater
+                        ? 'bg-yellow-600 text-white'
                         : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                     }`}
                   >
                     <span>📚</span>
                     <span>Learn Later</span>
-                    {songSuggestions.filter(s => s.status === 'learn_later').length > 0 && (
+                    {(songs.filter(s => s.in_learn_later).length + songSuggestions.filter(s => s.status === 'learn_later').length) > 0 && (
                       <span className="bg-yellow-500 text-white text-xs px-2 py-0.5 rounded-full ml-1">
-                        {songSuggestions.filter(s => s.status === 'learn_later').length}
+                        {songs.filter(s => s.in_learn_later).length + songSuggestions.filter(s => s.status === 'learn_later').length}
                       </span>
                     )}
                   </button>
                 </div>
-
-                {/* Learn Later Content */}
+                {/* Learn Later Content: unified flat list of bookmarked library songs + suggestions tagged learn_later, alphabetical by title */}
                 {showLearnLater && (
                   <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 mb-6">
                     <h3 className="text-lg font-bold text-yellow-400 mb-3">📚 Songs to Learn Later</h3>
-                    {songSuggestions.filter(s => s.status === 'learn_later').length === 0 ? (
-                      <p className="text-gray-400 text-sm">
-                        No songs marked as "Learn Later" yet. Use the Learn Later action on suggestions to add songs here.
-                      </p>
-                    ) : (
-                      <div className="space-y-2">
-                        {songSuggestions.filter(s => s.status === 'learn_later').map((suggestion) => (
-                          <div key={suggestion.id} className="bg-gray-700 p-3 rounded-lg flex items-center justify-between">
-                            <div>
-                              <div className="flex items-center space-x-2">
-                                <span className="font-medium text-yellow-400">{suggestion.suggested_title}</span>
-                                <span className="text-gray-400">by {suggestion.suggested_artist}</span>
+                    {(() => {
+                      const llSongs = songs.filter(s => s.in_learn_later).map(s => ({ rowType: 'song', sortTitle: (s.title || '').toLowerCase(), data: s }));
+                      const llSuggestions = songSuggestions.filter(s => s.status === 'learn_later').map(s => ({ rowType: 'suggestion', sortTitle: (s.suggested_title || '').toLowerCase(), data: s }));
+                      const items = [...llSongs, ...llSuggestions].sort((a, b) => a.sortTitle.localeCompare(b.sortTitle));
+                      if (items.length === 0) {
+                        return (
+                          <p className="text-gray-400 text-sm">
+                            Nothing in Learn Later yet. Bookmark a song with the ribbon icon, or mark an audience suggestion to learn.
+                          </p>
+                        );
+                      }
+                      return (
+                        <div className="space-y-2">
+                          {items.map((item) => {
+                            if (item.rowType === 'song') {
+                              const song = item.data;
+                              const hasChart = ((song.chart_type === 'link' || song.chart_type === 'pdf') && song.chart_url) || (song.chart_type === 'chordpro' && song.chart_chordpro);
+                              const openChartOrEdit = () => {
+                                if (!hasChart) { handleEditSong(song); return; }
+                                if (song.chart_type === 'chordpro') {
+                                  setOpenChordpro({ chordpro: song.chart_chordpro, title: song.title, id: song.id, transpose: song.transpose || 0 });
+                                } else {
+                                  window.open(song.chart_url, '_blank');
+                                }
+                              };
+                              return (
+                                <div key={`ll-song-${song.id}`} className={`rounded-lg p-3 flex items-center gap-3 ${song.hidden ? 'bg-gray-800 border-2 border-dashed border-gray-600 opacity-75' : 'bg-gray-700'}`}>
+                                  <span className="text-base flex-shrink-0" title="In your library">🎵</span>
+                                  <div className="flex-1 min-w-0 cursor-pointer" onClick={openChartOrEdit}>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className={`font-bold text-base break-words ${song.hidden ? 'text-gray-400' : 'text-white'} underline decoration-gray-600 underline-offset-2`}>{song.title}</span>
+                                      {song.hidden && (
+                                        <span className="bg-gray-600 text-gray-300 text-xs px-2 py-1 rounded-full font-medium">👁️‍🗨️ Hidden</span>
+                                      )}
+                                      {(song.requests_this_show || 0) > 0 && (
+                                        <span className="bg-orange-600 text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap">🔥 {song.requests_this_show} tonight</span>
+                                      )}
+                                    </div>
+                                    <p className={`text-sm break-words ${song.hidden ? 'text-gray-500' : 'text-gray-300'}`}>by {song.artist}</p>
+                                  </div>
+                                  <div className="flex items-center flex-shrink-0">
+                                    {renderLearnLaterBookmark({ song, size: 20 })}
+                                  </div>
+                                </div>
+                              );
+                            }
+                            const suggestion = item.data;
+                            return (
+                              <div key={`ll-sugg-${suggestion.id}`} className="bg-gray-700 rounded-lg p-3 flex items-center gap-3">
+                                <span className="text-base flex-shrink-0" title="Audience suggestion">💡</span>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-bold text-base text-white break-words">{suggestion.suggested_title}</span>
+                                  </div>
+                                  {suggestion.suggested_artist
+                                    ? <p className="text-sm text-gray-300 break-words">by {suggestion.suggested_artist}</p>
+                                    : <p className="text-sm text-gray-500 italic">artist not given</p>}
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    Suggested by {suggestion.requester_name}
+                                    {suggestion.message && <span className="italic ml-1">- "{suggestion.message}"</span>}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  <button
+                                    onClick={() => setMatchingSuggestion(suggestion)}
+                                    className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
+                                    title="Match to existing song in your library"
+                                  >
+                                    Match
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      try {
+                                        await axios.put(`${API}/song-suggestions/${suggestion.id}/status`, { status: 'pending' });
+                                        fetchSongSuggestions();
+                                      } catch (error) {
+                                        showErrorToast(error.response?.data?.detail || 'Failed to remove from Learn Later', error);
+                                      }
+                                    }}
+                                    className="inline-flex items-center justify-center rounded p-0.5 text-yellow-400 hover:text-yellow-300 transition-colors duration-150"
+                                    title="Remove from Learn Later"
+                                    aria-label="Remove from Learn Later"
+                                  >
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                                      <text x="12" y="13" textAnchor="middle" fontSize="7" fontWeight="700" fill="#1f2937" stroke="none" fontFamily="ui-sans-serif, system-ui, -apple-system, sans-serif">LL</text>
+                                    </svg>
+                                  </button>
+                                </div>
                               </div>
-                              <p className="text-xs text-gray-400 mt-1">
-                                Suggested by {suggestion.requester_name}
-                                {suggestion.message && <span className="italic ml-1">- "{suggestion.message}"</span>}
-                              </p>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <button
-                                onClick={() => setMatchingSuggestion(suggestion)}
-                                className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
-                                title="Match to existing song in your library"
-                              >
-                                Match
-                              </button>
-                              <button
-                                onClick={() => handleSuggestionAction(suggestion.id, 'added', suggestion.suggested_title)}
-                                className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 rounded"
-                                title="Add as new song"
-                              >
-                                Add
-                              </button>
-                              <button
-                                onClick={() => handleDeleteSuggestion(suggestion.id, suggestion.suggested_title)}
-                                className="bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
-                                title="Delete permanently"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
 
