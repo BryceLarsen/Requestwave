@@ -6,7 +6,7 @@ Edge case testing for search functionality
 import requests
 import json
 
-BASE_URL = "https://profile-events-1.preview.emergentagent.com/api"
+BASE_URL = "https://chord-pro-viewer.preview.emergentagent.com/api"
 
 def test_search_edge_cases():
     """Test search functionality edge cases"""

@@ -1,35 +1,35 @@
 <analysis>**original_problem_statement**: 
 **Sprint 1, 2, 3 & 10 Goals: Multi-Profile & Events System, Analytics Enhancements, Show-Scoped Features, Deployment Readiness, and Chart Support**
-The application requires a robust Multi-Profile system where one musician account can have multiple profiles. Recent focus is on per-show analytics dashboards, handling unassigned requests, adding Learn Later toggles, generating a standalone Admin panel, handling , and adding Song Chart support. 
+The application requires a robust Multi-Profile system where one musician account can have multiple profiles. Recent focus has been on per-show analytics dashboards, handling unassigned requests, adding Learn Later toggles, generating a standalone Admin panel, handling , adding Song Chart support, and executing highly-specific, verbatim UI refinements on the monolithic frontend component.
 PRODUCT REQUIREMENTS: 
 - Add  (link/pdf/chordpro) and / fields to backend song models.
 - Update frontend song forms to support adding/editing charts.
-- Build an in-app  to parse and render ChordPro text, including custom rendering engines, key detection, spelling/accidental overrides, and an on-stage interactive Cockpit overlay.
+- Build an in-app  to parse and render ChordPro text.
 - Build a profile-scoped Show Analytics dashboard.
-- Create a quick data-audit endpoint to flag legacy playlist filters.
 - Polish the Multi-Profile UI and enforce On-Stage screen wake locks.
+- Streamline the UI components (empty states, search functions, modal wrappers, compact lists) strictly as guided by user.
 
 **User's preferred language**: English (INSTRUCT next agent to respond in English only)
 
 **what currently exists?** 
-A monolithic React frontend () supplemented by rendering/overlay modules, a standalone admin UI, and a FastAPI backend () with MongoDB. The system supports a Multi-Profile and Events hierarchy, dynamic origin routing, full bulk importing for ChordPro files, and complex sorting. It includes deep links to Venmo, PayPal, Cash App, and Zelle for tips, and an in-app client-side image downscaling utility for handling large photo uploads. 
+A monolithic React frontend () supplemented by rendering/overlay modules, a standalone admin UI, and a FastAPI backend () with MongoDB. The system supports a Multi-Profile and Events hierarchy, complex sorting, ChordPro rendering, client-side image downscaling for uploads, and deep links to payment platforms. The UI has recently been heavily streamlined to include modal-based forms, compact song cards, widened search capabilities, and precise playlist management controls featuring swipe-to-delete gestures.
 
 **Last working item**: 
-    - Last item agent was working: Implemented client-side image downscaling () via HTML5 Canvas in  to process and accept profile/artist photo uploads over 2MB without throwing size limit errors.
+    - Last item agent was working: Wiring the playlist swipe-to-delete confirmation flow and adding a desktop-only trash button to the Manage Playlists modal row in .
     - Status: USER VERIFICATION PENDING
-    - Agent Testing Done: Y
-    - Which testing method agent to use? testing agent
+    - Agent Testing Done: Y (Webpack compilation verified).
+    - Which testing method agent to use? screenshot tool / testing agent (User has been requesting rapid, frontend-only changes without extended thinking. Use screenshot/testing agent on the next significant feature break).
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:  
-*(None active)*
+*(None active at the moment. See Earlier issues below for a pre-existing unassigned bug.)*
 
 **In progress Task List**: 
-*(None active)*
+*(None active at the moment)*
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
-    - Analytics (P2): Implement analytics for tip conversion.
+    - Analytics (P2): Implement analytics for tip conversion (CTR / per-show conversion).
     - Data Hygiene (P2): Create a quick data-audit endpoint to flag profiles/shows still relying on legacy  or .
     
     Future Tasks:
@@ -38,9 +38,12 @@ A monolithic React frontend () supplemented by rendering/overlay modules, a stan
     - Integration (P3): Integrate with Spotify Web API for song data enrichment.
 
 **Completed work in this session**
-- : Fixed an issue where new musician accounts with an empty  array displayed zero songs to the audience. Treat empty arrays exactly like  in  and , and seeded new account creation with  (DONE).
-- : Fixed the On Stage Performing as dropdown holding stale, unresolvable selections from localStorage. Auto-resolves to the default profile and removes the empty placeholder option (DONE).
-- : Removed the 2MB upload limit for profile and artist photos, replacing it with the  helper that downscales client-side using  before uploading the base64 string (DONE).
+- : Replaced the full-width playlist select with a playlist filter pill that opens the Manage Playlists modal (DONE).
+- : Deleted the legacy Compact Playlists card wrapper (DONE).
+- : Modified the logged-in musician's  route to sort playlists alphabetically by name (case-insensitive) instead of newest-first. Preserved audience endpoint sorting (DONE).
+- : Rebuilt the Manage Playlists modal row to filter songs and close the modal upon tapping, and removed the old vestigial Activate button and Active badge (DONE).
+- : Introduced swipe-to-delete state handling (with touch refs) and wrapped the modal playlist row in a slide-left reveal UI element (DONE).
+- : Wired the swipe-to-delete red reveal panel to trigger the existing  dialog and added a desktop-only trash button (DONE).
 
 **Earlier issues found/mentioned but not fixed**
    Issue 1: 
@@ -62,18 +65,20 @@ A monolithic React frontend () supplemented by rendering/overlay modules, a stan
 -  parsing combined with custom  HTML generation
 - HTML5 Canvas and  APIs for client-side image compression
 - Dynamic layout styling via React template strings
-- Interval-based metadata polling () for frontend caching/updates.
+- Interval-based metadata polling () for frontend caching/updates
+- Touch event tracking (/) combined with React refs for swipe gestures
 
 **key DB schema**
   - :  
+  - : 
   - : 
 
 **changes in tech stack**
   - None
 
 **All files of reference** 
-  -  (Modified to fix  array behavior)
-  -  (Modified for On Stage local storage fixes and photo upload client-side compression)
+  -  (Heavily modified for UI/UX streamlining, modal setups, and touch-based gesture controls).
+  -  (Modified playlist sorting logic).
 
 **Areas that need refactoring**: 
   -  (over 16,000 lines) and  (nearly 10,000 lines). Highly fragile. **DO NOT REFACTOR until explicitly asked by the user.**
@@ -81,24 +86,23 @@ A monolithic React frontend () supplemented by rendering/overlay modules, a stan
 **key api endpoints**
   - 
   - 
+  - 
   -  & 
 
 **Critical Info for New Agent** 
-- **Production vs Preview Environments:** The user has a live production deployment. You can only write code in PREVIEW. If bugs are reported, strictly clarify which environment the user is looking at. Do not deploy to production.
-- **Monolithic State Warnings:**  and  are massive. Always use line anchors, accurate  commands, and verify your  edits with a follow-up  to ensure modifications apply correctly.
-- **Strict Adherence:** The user demands highly mechanical, verbatim code changes. Do not reformat, refactor, or invent variables outside their instructions unless asked. 
+- **User Iteration Style**: The user provides highly specific, verbatim block-replacement instructions (often accompanied by the constraint Run without extended thinking). You must follow these instructions *exactly* using  and refrain from autonomous refactoring. Do not remove things unless explicitly asked.
+- **Production vs Preview Environments:** The user has a live production deployment. You can only write code in PREVIEW. If bugs are reported, strictly clarify which environment the user is looking at.
+- **Monolithic State Warnings:**  and  are massive. Always use line anchors, accurate  commands, and verify your  edits with a follow-up  compilation check.
 
 **documents and test reports created in this job**
-  -  (Backend audience song-visibility test)
-  -  (Frontend stale local storage context fix)
-  -  (Frontend image compression verification)
+  -  (Maintained from prior history)
 
 **Last 10 User Messages and any pending HUMAN messages** 
- 1. **User**: Backend Bug: Empty  on new profiles causes audience page to show zero songs. Fix in . (Completed, Tested)
- 2. **User**: Reminder: Must call testing agent for bugs. (Acknowledged)
- 3. **User**: Frontend Bug: Performing as dropdown fails if holding stale localStorage profile. Fix resolution and fallback in . (Completed, Tested)
- 4. **User**: Reminder: Must call testing agent for bugs. (Acknowledged)
- 5. **User**: Frontend Feature: Remove 2MB upload limit on images; add  canvas helper to process/compress client-side in . (Completed, Tested)
+ 1. **User**: Frontend-only: Remove the Playlists card and turn the playlist filter into a pill that opens the manage modal. (Completed, Tested via compilation).
+ 2. **User**: Backend-only: Change the musician's own playlist list to return alphabetical by name instead of newest-first. (Completed, Tested via curl/execution).
+ 3. **User**: Frontend-only: Rebuild the Manage Playlists modal row so tapping a playlist filters the song list and closes the modal, cutting vestigial buttons. (Completed, Tested via compilation).
+ 4. **User**: Frontend-only: Step 3a of swipe-to-delete: add the swipe-left reveal to Manage Playlists modal rows. Non-destructive layout additions only. (Completed, Tested via compilation).
+ 5. **User**: Frontend-only: Wire playlist delete: the swipe panel fires the existing confirm dialog (3b), and add a desktop-only trash button (3c). (Completed, Tested via compilation).
  *(No pending messages)*
 
 **Project Health Check:**
@@ -114,10 +118,10 @@ A monolithic React frontend () supplemented by rendering/overlay modules, a stan
   - Stripe (Payments) — requires User API Key
 
 **Testing status**
-  - Testing agent used after significant changes: YES (iterations 20, 21, 22).
+  - Testing agent used after significant changes: NO (User supplied sequence of exact verbatim UI patches; validated purely via webpack build success/curl per user instruction flow).
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: , , 
-  - Known regressions: None (Pre-existing 403 bug on  without auth).
+  - Test files created: None this session.
+  - Known regressions: Pre-existing 403 bug on  without auth.
 
 **Credentials to test flow:**
   Check 
@@ -125,4 +129,4 @@ A monolithic React frontend () supplemented by rendering/overlay modules, a stan
   - Admin Password:  (found in )
 
 **What agent forgot to execute**
-  - None. All tasks strictly executed verbatim.</analysis>
+  - Nothing. All 5 specific request sets were successfully implemented exactly as asked.</analysis>
