@@ -11312,7 +11312,7 @@ const MusicianDashboard = () => {
                       {/* Red delete panel revealed on swipe-left. 3a: tapping it only closes the swipe. Confirm wiring comes next step. */}
                       <div
                         className="absolute inset-y-0 right-0 w-24 bg-red-600 flex items-center justify-center text-white font-bold text-sm select-none"
-                        onClick={() => setSwipedPlaylistId(null)}
+                        onClick={() => { confirmDeletePlaylist(playlist); setSwipedPlaylistId(null); }}
                       >
                         Delete
                       </div>
@@ -11420,6 +11420,14 @@ const MusicianDashboard = () => {
                                 title="Rename playlist"
                               >
                                 ✏️
+                              </button>
+                              {/* Desktop-only delete: swipe is touch-only, this gives wide screens a click target */}
+                              <button
+                                onClick={() => confirmDeletePlaylist(playlist)}
+                                className="hidden md:inline-flex items-center justify-center bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm text-white font-medium transition duration-300"
+                                title="Delete playlist"
+                              >
+                                🗑️
                               </button>
                             </div>
                           </div>
