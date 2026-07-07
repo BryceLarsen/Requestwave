@@ -3835,6 +3835,47 @@ async def match_suggestion_to_song(
         logger.error(f"Error matching suggestion to song: {str(e)}")
         raise HTTPException(status_code=500, detail="Error matching suggestion to song")
 
+@api_router.put("/song-suggestions/{suggestion_id}/link")
+async def link_suggestion_to_song(
+    suggestion_id: str,
+    link_data: dict,  # {"song_id": "uuid"}
+    musician_id: str = Depends(get_current_musician)
+):
+    """Link a suggestion to a song that was just created from it, without any of match's side effects"""
+    try:
+        # Verify suggestion belongs to musician
+        suggestion = await db.song_suggestions.find_one({"id": suggestion_id, "musician_id": musician_id})
+        if not suggestion:
+            raise HTTPException(status_code=404, detail="Song suggestion not found")
+
+        song_id = link_data.get("song_id")
+        if not song_id:
+            raise HTTPException(status_code=400, detail="song_id is required")
+
+        # Verify song exists and belongs to musician
+        song = await db.songs.find_one({"id": song_id, "musician_id": musician_id})
+        if not song:
+            raise HTTPException(status_code=404, detail="Song not found")
+
+        # Update suggestion fields only (no side effects)
+        await db.song_suggestions.update_one(
+            {"id": suggestion_id},
+            {"$set": {
+                "status": "added",
+                "matched_song_id": song_id,
+                "learn_later": False
+            }}
+        )
+
+        return {"success": True, "message": "Suggestion linked to song successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error linking suggestion to song: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error linking suggestion to song")
+
+
 @api_router.put("/song-suggestions/{suggestion_id}/learn-later")
 async def mark_suggestion_learn_later(
     suggestion_id: str,
