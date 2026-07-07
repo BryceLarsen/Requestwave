@@ -869,6 +869,7 @@ const MusicianDashboard = () => {
   const [csvError, setCsvError] = useState('');
   const [showCsvUpload, setShowCsvUpload] = useState(false);
   const [showAddSong, setShowAddSong] = useState(false); // NEW: Control Add Song form visibility
+  const [pendingSuggestionId, setPendingSuggestionId] = useState(null); // set when Add Song was opened from a Learn Later suggestion, so a successful save converts that suggestion in place
   const [csvAutoEnrich, setCsvAutoEnrich] = useState(false);  // NEW: Auto-enrichment option
 
   // LST Upload state
@@ -2409,7 +2410,8 @@ const MusicianDashboard = () => {
         year: songForm.year ? parseInt(songForm.year) : null
       };
       
-      await axios.post(`${API}/songs`, songData);
+      const res = await axios.post(`${API}/songs`, songData);
+      const newSongId = res?.data?.id;
       setSongForm({
         title: '',
         artist: '',
@@ -2421,6 +2423,27 @@ const MusicianDashboard = () => {
         chart_url: '',
         chart_chordpro: ''
       });
+      // If this Add was launched from a Learn Later suggestion, convert it in place:
+      // add the new song to Learn Later, link the suggestion to it, then close the modal.
+      if (pendingSuggestionId && newSongId) {
+        try {
+          await axios.post(
+            `${API}/songs/${newSongId}/learn-later`,
+            {},
+            { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+          );
+          await axios.put(
+            `${API}/song-suggestions/${pendingSuggestionId}/link`,
+            { song_id: newSongId },
+            { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+          );
+        } catch (linkErr) {
+          console.error('Error linking suggestion to new song:', linkErr);
+        }
+        setPendingSuggestionId(null);
+        setShowAddSong(false);
+        fetchSongSuggestions();
+      }
       fetchSongs();
       fetchFilterOptions(); // Refresh filter options when songs change
     } catch (error) {
@@ -2428,6 +2451,24 @@ const MusicianDashboard = () => {
     }
   };
 
+  // Open the Add Song modal prefilled from a Learn Later suggestion. On a successful save,
+  // handleAddSong converts the suggestion in place (see the pendingSuggestionId branch).
+  const handleAddFromSuggestion = (suggestion) => {
+    setSongForm({
+      title: suggestion.suggested_title || '',
+      artist: suggestion.suggested_artist || '',
+      genres: [],
+      moods: [],
+      year: '',
+      notes: '',
+      chart_type: '',
+      chart_url: '',
+      chart_chordpro: ''
+    });
+    setPendingSuggestionId(suggestion.id);
+    setSongError('');
+    setShowAddSong(true);
+  };
   const handleEditSong = (song) => {
     setEditingSong(song);
     setSongForm({
@@ -6143,7 +6184,7 @@ const MusicianDashboard = () => {
                 <div className="bg-gray-800 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">Add New Song</h2>
-                <button type="button" onClick={() => setShowAddSong(false)} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+                <button type="button" onClick={() => { setShowAddSong(false); setPendingSuggestionId(null); }} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
                 </div>
                 
                 {songError && !editingSong && (
@@ -6785,7 +6826,7 @@ const MusicianDashboard = () => {
                             return (
                               <div key={`ll-sugg-${suggestion.id}`} className="bg-gray-700 rounded-lg p-3 flex items-center gap-3">
                                 <span className="text-base flex-shrink-0" title="Audience suggestion">💡</span>
-                                <div className="flex-1 min-w-0">
+                                <div className="flex-1 min-w-0 cursor-pointer" onClick={() => handleAddFromSuggestion(suggestion)}>
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <span className="font-bold text-base text-white break-words">{suggestion.suggested_title}</span>
                                   </div>
