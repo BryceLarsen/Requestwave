@@ -14942,8 +14942,11 @@ const SuggestionCard = ({ item, index, onMatchToSong, onLearnLater, onSkip, song
         </button>
         <button
           onClick={() => onLearnLater(item.id)}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 py-2 px-3 rounded-lg font-bold text-white text-sm"
+          className="flex-1 bg-yellow-600 hover:bg-yellow-700 py-2 px-3 rounded-lg font-bold text-white text-sm inline-flex items-center justify-center gap-1.5"
         >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+          </svg>
           Learn it later
         </button>
         <button
