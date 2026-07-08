@@ -870,6 +870,7 @@ const MusicianDashboard = () => {
   const [showCsvUpload, setShowCsvUpload] = useState(false);
   const [showAddSong, setShowAddSong] = useState(false); // NEW: Control Add Song form visibility
   const [pendingSuggestionId, setPendingSuggestionId] = useState(null); // set when Add Song was opened from a Learn Later suggestion, so a successful save converts that suggestion in place
+  const [duplicateExistingSong, setDuplicateExistingSong] = useState(null); // when an add from a suggestion is blocked as a duplicate, holds the existing song so the banner can offer Match
   const [csvAutoEnrich, setCsvAutoEnrich] = useState(false);  // NEW: Auto-enrichment option
 
   // LST Upload state
@@ -1147,6 +1148,11 @@ const MusicianDashboard = () => {
   
   // Error toast state for request operations
   const [errorToast, setErrorToast] = useState({ show: false, message: '' });
+  const [successToast, setSuccessToast] = useState({ show: false, message: '' });
+  const showSuccessToast = (message) => {
+    setSuccessToast({ show: true, message });
+    setTimeout(() => setSuccessToast({ show: false, message: '' }), 3000);
+  };
   
   // Helper function to show error toast
   const showErrorToast = (message, error = null) => {
@@ -2401,6 +2407,7 @@ const MusicianDashboard = () => {
   const handleAddSong = async (e) => {
     e.preventDefault();
     setSongError('');
+    setDuplicateExistingSong(null);
     
     try {
       const songData = {
@@ -2441,13 +2448,25 @@ const MusicianDashboard = () => {
           console.error('Error linking suggestion to new song:', linkErr);
         }
         setPendingSuggestionId(null);
-        setShowAddSong(false);
         fetchSongSuggestions();
       }
+      // Success: close the modal for every add (normal or suggestion-originated) and confirm with a toast.
+      setShowAddSong(false);
+      showSuccessToast(`${songData.title} added`);
       fetchSongs();
       fetchFilterOptions(); // Refresh filter options when songs change
     } catch (error) {
-      setSongError(error.response?.data?.detail || 'Error adding song');
+      const detail = error.response?.data?.detail || 'Error adding song';
+      setSongError(detail);
+      // If this add came from a Learn Later suggestion and was blocked because the song
+      // already exists (title AND artist match), find that song so the banner can offer Match.
+      if (pendingSuggestionId && typeof detail === 'string' && detail.toLowerCase().includes('already exists')) {
+        const existing = songs.find(
+          (s) => (s.title || '').trim().toLowerCase() === (songData.title || '').trim().toLowerCase()
+            && (s.artist || '').trim().toLowerCase() === (songData.artist || '').trim().toLowerCase()
+        );
+        if (existing) setDuplicateExistingSong(existing);
+      }
     }
   };
 
@@ -2467,6 +2486,7 @@ const MusicianDashboard = () => {
     });
     setPendingSuggestionId(suggestion.id);
     setSongError('');
+    setDuplicateExistingSong(null);
     setShowAddSong(true);
   };
   const handleEditSong = (song) => {
@@ -5317,6 +5337,25 @@ const MusicianDashboard = () => {
           </div>
         </div>
       )}
+      {/* Success Toast */}
+      {successToast.show && (
+        <div className="fixed top-4 right-4 z-50 animate-fade-in">
+          <div className="bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg max-w-md">
+            <div className="flex items-start">
+              <span className="text-xl mr-3">✅</span>
+              <div className="flex-1">
+                <p className="font-medium">{successToast.message}</p>
+              </div>
+              <button
+                onClick={() => setSuccessToast({ show: false, message: '' })}
+                className="ml-4 text-white hover:text-gray-200"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Header */}
       <header className="bg-gray-800 shadow-lg">
@@ -6184,12 +6223,38 @@ const MusicianDashboard = () => {
                 <div className="bg-gray-800 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">Add New Song</h2>
-                <button type="button" onClick={() => { setShowAddSong(false); setPendingSuggestionId(null); }} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+                <button type="button" onClick={() => { setShowAddSong(false); setPendingSuggestionId(null); setDuplicateExistingSong(null); }} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
                 </div>
                 
                 {songError && !editingSong && (
                   <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200">
-                    {songError}
+                    <div>{songError}</div>
+                    {duplicateExistingSong && pendingSuggestionId && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            await axios.put(
+                              `${API}/song-suggestions/${pendingSuggestionId}/link`,
+                              { song_id: duplicateExistingSong.id },
+                              { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+                            );
+                            const matchedTitle = duplicateExistingSong.title;
+                            setDuplicateExistingSong(null);
+                            setPendingSuggestionId(null);
+                            setSongError('');
+                            setShowAddSong(false);
+                            fetchSongSuggestions();
+                            showSuccessToast(`Matched to ${matchedTitle}`);
+                          } catch (err) {
+                            showErrorToast(err.response?.data?.detail || 'Could not match the suggestion', err);
+                          }
+                        }}
+                        className="mt-2 inline-flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white text-sm font-bold px-3 py-1.5 rounded"
+                      >
+                        Match this suggestion to "{duplicateExistingSong.title}"
+                      </button>
+                    )}
                   </div>
                 )}
                 
