@@ -17,7 +17,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://chord-pro-viewer.preview.emergentagent.com/api"
+BASE_URL = "https://learn-later-hub.preview.emergentagent.com/api"
 TEST_EMAIL = "brycelarsenmusic@gmail.com"
 TEST_PASSWORD = "RequestWave2024!"
 

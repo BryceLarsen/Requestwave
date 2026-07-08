@@ -13,7 +13,7 @@ import os
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://chord-pro-viewer.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://learn-later-hub.preview.emergentagent.com").rstrip("/")
 API = f"{BASE_URL}/api"
 
 TEST_EMAIL = "test@test.com"

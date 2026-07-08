@@ -16,7 +16,7 @@ import pytest
 import requests
 from datetime import datetime
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://chord-pro-viewer.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://learn-later-hub.preview.emergentagent.com').rstrip('/')
 
 TEST_EMAIL = "test@test.com"
 TEST_PASSWORD = "test"

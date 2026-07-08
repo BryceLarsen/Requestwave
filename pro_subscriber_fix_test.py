@@ -31,7 +31,7 @@ import pymongo
 from pymongo import MongoClient
 
 # Configuration
-BASE_URL = "https://chord-pro-viewer.preview.emergentagent.com/api"
+BASE_URL = "https://learn-later-hub.preview.emergentagent.com/api"
 
 # Existing Pro account credentials
 EXISTING_PRO_ACCOUNT = {

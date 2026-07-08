@@ -11,7 +11,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://chord-pro-viewer.preview.emergentagent.com/api"
+BASE_URL = "https://learn-later-hub.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
     "name": "Song Suggestion Tester",
     "email": "suggestion.tester@requestwave.com",

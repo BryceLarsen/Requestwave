@@ -8,7 +8,7 @@ import json
 import uuid
 
 # Configuration
-BASE_URL = "https://chord-pro-viewer.preview.emergentagent.com/api"
+BASE_URL = "https://learn-later-hub.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {
