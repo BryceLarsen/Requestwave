@@ -7,7 +7,7 @@ import requests
 import json
 
 # Configuration
-BASE_URL = "https://learn-later-hub.preview.emergentagent.com/api"
+BASE_URL = "https://chord-analytics.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {

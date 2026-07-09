@@ -19,7 +19,7 @@ import time
 from typing import Dict, Any
 
 # Configuration
-BASE_URL = "https://learn-later-hub.preview.emergentagent.com/api"
+BASE_URL = "https://chord-analytics.preview.emergentagent.com/api"
 
 # Target user credentials
 USER_CREDENTIALS = {

@@ -15,7 +15,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://learn-later-hub.preview.emergentagent.com/api"
+BASE_URL = "https://chord-analytics.preview.emergentagent.com/api"
 
 # Test musician with complete payment and social media info
 TEST_MUSICIAN = {

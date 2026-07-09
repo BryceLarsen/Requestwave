@@ -25,7 +25,7 @@ from typing import Dict, Any, Optional
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://learn-later-hub.preview.emergentagent.com/api"
+BASE_URL = "https://chord-analytics.preview.emergentagent.com/api"
 
 # Bryce's credentials
 BRYCE_CREDENTIALS = {

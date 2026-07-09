@@ -24,7 +24,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://learn-later-hub.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://chord-analytics.preview.emergentagent.com')
 BASE_URL = f"{BACKEND_URL}/api"
 
 # Test credentials from review request

@@ -15,7 +15,7 @@ def test_frontend_environment_detection():
     print("=" * 60)
     
     # From frontend/.env
-    REACT_APP_BACKEND_URL = "https://learn-later-hub.preview.emergentagent.com"
+    REACT_APP_BACKEND_URL = "https://chord-analytics.preview.emergentagent.com"
     
     # Simulate the frontend's environment detection logic
     # The frontend checks:
