@@ -17,6 +17,7 @@ import AdminPanel from './AdminPanel';
 import { ChordProParser, HtmlDivFormatter } from 'chordsheetjs';
 import { cpRenderSong, cpDetectKey, cpCollectChords, cpKeyLabel } from './chordProRenderer';
 import { useCockpit, UpNextTrigger, UpNextPanel, DedicationBox, PlayedButton, buildSongRequests, buildOpenQueue } from './cockpitOverlay';
+import { buildMailto, DEFAULT_TEMPLATE } from './mailtoLink';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -8095,12 +8096,46 @@ My list:
                   <div className="text-xs uppercase tracking-wide text-gray-500 mb-0.5">Requester</div>
                   <div className="text-white">{singleRequestModal.requester_name || 'Anonymous'}</div>
                 </div>
-                {singleRequestModal.requester_email && (
-                  <div>
-                    <div className="text-xs uppercase tracking-wide text-gray-500 mb-0.5">Email</div>
-                    <div className="text-gray-200 break-all">{singleRequestModal.requester_email}</div>
-                  </div>
-                )}
+                {singleRequestModal.requester_email && (() => {
+                  const savedSubject = localStorage.getItem('rwEmailSubject');
+                  const savedBody = localStorage.getItem('rwEmailBody');
+                  const template = (savedSubject && savedBody) ? { subject: savedSubject, body: savedBody } : DEFAULT_TEMPLATE;
+                  const mailto = buildMailto({
+                    email: singleRequestModal.requester_email,
+                    requesterName: singleRequestModal.requester_name,
+                    songTitle: singleRequestModal.song_title,
+                    showName: singleRequestModal.show_name,
+                    venue: shows.find(s => s.id === singleRequestModal.show_id)?.venue,
+                    template,
+                  });
+                  if (!mailto) {
+                    return (
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-gray-500 mb-0.5">Email</div>
+                        <div className="text-gray-200 break-all">{singleRequestModal.requester_email}</div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-gray-500 mb-0.5">Email</div>
+                      <div
+                        className="text-blue-400 underline break-all cursor-pointer"
+                        data-testid="single-request-email-mailto"
+                        onClick={() => {
+                          if (mailto.tooLong) {
+                            navigator.clipboard.writeText(mailto.body);
+                            showSuccessToast('Message copied — paste it into a new email to ' + singleRequestModal.requester_email);
+                          } else {
+                            window.location.href = mailto.href;
+                          }
+                        }}
+                      >
+                        {singleRequestModal.requester_email}
+                      </div>
+                    </div>
+                  );
+                })()}
                 {singleRequestModal.dedication && (
                   <div>
                     <div className="text-xs uppercase tracking-wide text-gray-500 mb-0.5">Dedication</div>
