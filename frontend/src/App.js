@@ -7951,7 +7951,7 @@ My list:
                         className="flex-1 min-w-0 flex items-center justify-between gap-3 text-left"
                       >
                         <div className="min-w-0">
-                          <div className="font-medium text-blue-400 truncate">{request.song_title}</div>
+                          <div className="font-medium text-blue-400 truncate">{request.requester_email && <span className="text-gray-400 mr-1" title="Has email on file">&#128231;</span>}{request.song_title}</div>
                           <div className="text-sm text-gray-300 truncate">
                             From: <span className="text-white">{request.requester_name}</span>
                           </div>
