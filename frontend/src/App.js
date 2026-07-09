@@ -2079,6 +2079,15 @@ const MusicianDashboard = () => {
   const [importingPlaylist, setImportingPlaylist] = useState(false);
   const [playlistError, setPlaylistError] = useState('');
   const [showPlaylistImport, setShowPlaylistImport] = useState(false); // NEW: Control visibility
+  const [showPlaylistFileImport, setShowPlaylistFileImport] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importClassifying, setImportClassifying] = useState(false);
+  const [importCommitting, setImportCommitting] = useState(false);
+  const [importResults, setImportResults] = useState(null); // {playlist_name, playlist_exists, total, results:[]}
+  const [importName, setImportName] = useState('');
+  const [importDecisions, setImportDecisions] = useState({}); // rowIndex -> {action, song_id, title, artist}
+  const [showImportHelp, setShowImportHelp] = useState(false);
+  const [editingImportRow, setEditingImportRow] = useState(null);
 
   useEffect(() => {
     // Refresh musician profile from backend to ensure state integrity (prevents stale localStorage)
@@ -3885,6 +3894,97 @@ const MusicianDashboard = () => {
       console.error('Error printing flyer:', error);
       alert('Error generating flyer for printing');
     }
+  };
+
+  // ---- Build a playlist from a file (import) ----
+  const importNormalize = (s) => {
+    if (!s) return '';
+    let x = String(s)
+      .replace(/[\u2019\u2018]/g, "'")
+      .replace(/[\u201c\u201d]/g, '"')
+      .toLowerCase().trim();
+    x = x.replace(/\s*\b(19|20)\d{2}\b\s*$/, '');
+    x = x.replace(/&/g, ' and ');
+    x = x.replace(/\bfeat\.?\b.*$/, '');
+    x = x.replace(/\bfeaturing\b.*$/, '');
+    x = x.replace(/[()[\]]/g, ' ');
+    x = x.replace(/'/g, '');
+    x = x.replace(/[^\w\s]/g, ' ');
+    x = x.replace(/\s+/g, ' ').trim();
+    x = x.replace(/^(the |a |an )/, '');
+    return x.replace(/\s+/g, ' ').trim();
+  };
+
+  const handleClassifyImport = async () => {
+    if (!importFile) return;
+    setImportClassifying(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', importFile);
+      const res = await axios.post(`${API}/playlists/import/classify`, fd, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'multipart/form-data' }
+      });
+      const data = res.data;
+      setImportResults(data);
+      setImportName(data.playlist_name || '');
+      const seeded = {};
+      data.results.forEach((r, i) => {
+        if (r.bucket === 'exact') seeded[i] = { action: 'link', song_id: r.song_id };
+        else if (r.bucket === 'none') seeded[i] = { action: 'add', title: r.csv_title, artist: r.csv_artist };
+      });
+      setImportDecisions(seeded);
+    } catch (err) {
+      showErrorToast(err.response?.data?.detail || 'Could not read that file', err);
+    }
+    setImportClassifying(false);
+  };
+
+  const handleCommitImport = async () => {
+    if (!importName.trim()) { showErrorToast('Give the playlist a name'); return; }
+    setImportCommitting(true);
+    try {
+      const decisions = Object.values(importDecisions);
+      const link_song_ids = decisions.filter(d => d.action === 'link').map(d => d.song_id);
+      const add_songs = decisions.filter(d => d.action === 'add').map(d => ({ title: d.title, artist: d.artist }));
+      const res = await axios.post(`${API}/playlists/import/commit`,
+        { playlist_name: importName.trim(), link_song_ids, add_songs },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      const d = res.data;
+      showSuccessToast(`${d.playlist_name}: ${d.total_in_playlist} songs`);
+      setShowPlaylistFileImport(false);
+      setImportFile(null); setImportResults(null); setImportDecisions({}); setImportName(''); setEditingImportRow(null);
+      fetchSongs();
+      fetchPlaylists();
+    } catch (err) {
+      showErrorToast(err.response?.data?.detail || 'Could not build the playlist', err);
+    }
+    setImportCommitting(false);
+  };
+
+  // Re-check the edited row against the already-loaded library. If title AND artist
+  // both match a song, link it; otherwise keep it as an add with the corrected text.
+  const handleSaveImportEditedRow = (idx) => {
+    const d = importDecisions[idx] || {};
+    const t = (d.title || '').trim();
+    const a = (d.artist || '').trim();
+    const nt = importNormalize(t);
+    const na = importNormalize(a);
+    const match = t ? songs.find(s => importNormalize(s.title) === nt && importNormalize(s.artist) === na) : null;
+    if (match) {
+      setImportDecisions(prev => ({
+        ...prev,
+        [idx]: { action: 'link', song_id: match.id, edited_matched: true, orig_title: t, orig_artist: a }
+      }));
+    } else {
+      setImportDecisions(prev => ({ ...prev, [idx]: { action: 'add', title: t, artist: a } }));
+    }
+    setEditingImportRow(null);
+  };
+
+  const closePlaylistFileImport = () => {
+    setShowPlaylistFileImport(false);
+    setImportFile(null); setImportResults(null); setImportDecisions({});
+    setImportName(''); setEditingImportRow(null); setShowImportHelp(false);
   };
 
   const handlePlaylistImport = async (e) => {
@@ -6217,6 +6317,220 @@ const MusicianDashboard = () => {
               </div>
             )}
 
+            {/* Build a playlist from a file */}
+            {showPlaylistFileImport && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" data-testid="playlist-file-import-modal">
+                <div className="bg-gray-800 rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold">Build a playlist from a file</h2>
+                    <button type="button" onClick={closePlaylistFileImport} className="text-gray-400 hover:text-white text-2xl leading-none" data-testid="playlist-file-import-close">×</button>
+                  </div>
+
+                  {/* Step 1: upload */}
+                  {!importResults && (
+                    <div className="space-y-4">
+                      <p className="text-gray-300 text-sm">Upload a Songbook Pro <span className="font-mono">.lst</span> or a <span className="font-mono">.csv</span> (columns <span className="font-mono">title,artist</span>). We'll match it against your library before anything is saved.</p>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="file"
+                          accept=".lst,.csv"
+                          data-testid="playlist-file-import-input"
+                          onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                          className="flex-1 text-sm text-gray-300 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-gray-700 file:text-white hover:file:bg-gray-600"
+                        />
+                        <button
+                          type="button"
+                          data-testid="playlist-file-import-help-toggle"
+                          onClick={() => setShowImportHelp(!showImportHelp)}
+                          title="How do I make a CSV?"
+                          className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-500 text-gray-300 hover:bg-gray-700 shrink-0"
+                        >
+                          ⓘ
+                        </button>
+                      </div>
+
+                      {showImportHelp && (
+                        <div className="border border-gray-600 rounded-lg p-4 bg-gray-900" data-testid="playlist-file-import-help">
+                          <p className="text-gray-300 text-sm mb-2">No CSV yet? Paste this into any AI assistant along with your list:</p>
+                          <pre className="bg-black/40 text-gray-200 text-xs rounded p-3 whitespace-pre-wrap font-mono">{`Convert this song list into CSV with exactly two columns, title and artist, one song per row. The first row must be the header: title,artist
+No numbering, no extra columns, no commentary. If a line has no artist, leave that cell blank.
+My list:
+[paste your list here]`}</pre>
+                          <button
+                            type="button"
+                            data-testid="playlist-file-import-help-copy"
+                            onClick={() => navigator.clipboard.writeText(`Convert this song list into CSV with exactly two columns, title and artist, one song per row. The first row must be the header: title,artist
+No numbering, no extra columns, no commentary. If a line has no artist, leave that cell blank.
+My list:
+[paste your list here]`)}
+                            className="mt-2 bg-gray-700 hover:bg-gray-600 text-white text-sm px-3 py-1.5 rounded"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="flex justify-end gap-2">
+                        <button type="button" onClick={closePlaylistFileImport} className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">Cancel</button>
+                        <button
+                          type="button"
+                          data-testid="playlist-file-import-read-btn"
+                          onClick={handleClassifyImport}
+                          disabled={!importFile || importClassifying}
+                          className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2 rounded-lg disabled:opacity-50"
+                        >
+                          {importClassifying ? 'Reading...' : 'Read file'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 2: resolve */}
+                  {importResults && (() => {
+                    const results = importResults.results || [];
+                    const decVals = Object.values(importDecisions);
+                    const linkedCount = decVals.filter(d => d.action === 'link').length;
+                    const addingCount = decVals.filter(d => d.action === 'add').length;
+                    const resolvedCount = Object.keys(importDecisions).length;
+                    const needsCall = importResults.total - resolvedCount;
+                    const N = linkedCount + addingCount;
+                    const groupA = results.map((r, i) => ({ r, i })).filter(({ i }) => !importDecisions[i]);
+                    const groupB = results.map((r, i) => ({ r, i })).filter(({ i }) => {
+                      const d = importDecisions[i];
+                      return d && (d.action === 'add' || (d.action === 'skip' && results[i].bucket === 'none'));
+                    });
+                    const groupC = results.map((r, i) => ({ r, i })).filter(({ i }) => importDecisions[i]?.action === 'link');
+                    return (
+                      <div className="space-y-5" data-testid="playlist-file-import-resolve">
+                        <div>
+                          <label className="block text-gray-300 text-sm font-bold mb-1">Playlist name</label>
+                          <input
+                            type="text"
+                            data-testid="playlist-file-import-name"
+                            value={importName}
+                            onChange={(e) => setImportName(e.target.value)}
+                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                          />
+                          {importResults.playlist_exists && (
+                            <p className="text-amber-300 text-xs mt-1">A playlist with this name already exists, so it will be updated, not duplicated.</p>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                          <div className="bg-gray-900 rounded-lg py-2" data-testid="import-count-linked"><div className="text-lg font-bold text-green-400">{linkedCount}</div><div className="text-xs text-gray-400">in your library</div></div>
+                          <div className="bg-gray-900 rounded-lg py-2" data-testid="import-count-adding"><div className="text-lg font-bold text-blue-400">{addingCount}</div><div className="text-xs text-gray-400">will be added</div></div>
+                          <div className="bg-gray-900 rounded-lg py-2" data-testid="import-count-needs"><div className="text-lg font-bold text-amber-400">{needsCall}</div><div className="text-xs text-gray-400">needs your call</div></div>
+                        </div>
+
+                        {/* Group A: needs your call */}
+                        {groupA.length > 0 && (
+                          <div className="space-y-2">
+                            <h3 className="text-sm font-bold text-amber-300">Needs your call</h3>
+                            {groupA.map(({ r, i }) => (
+                              <div key={i} className="bg-gray-800 border-l-4 border-amber-500 rounded-r-lg p-3" data-testid={`import-needs-row-${i}`}>
+                                <div className="font-medium">{r.csv_title}{r.csv_artist ? <span className="text-gray-400"> — {r.csv_artist}</span> : null}</div>
+                                {r.bucket === 'likely' && r.matched && (
+                                  <div className="mt-2">
+                                    <div className="text-sm text-gray-300">Closest match: <span className="text-white">{r.matched.title}</span>{r.matched.artist ? ` — ${r.matched.artist}` : ''} <span className="text-amber-300">({Math.round(r.score * 100)}% match)</span></div>
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                      <button type="button" data-testid={`import-likely-use-${i}`} onClick={() => setImportDecisions(prev => ({ ...prev, [i]: { action: 'link', song_id: r.matched.id } }))} className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1.5 rounded">Same song, use it</button>
+                                      <button type="button" data-testid={`import-likely-add-${i}`} onClick={() => setImportDecisions(prev => ({ ...prev, [i]: { action: 'add', title: r.csv_title, artist: r.csv_artist } }))} className="bg-purple-600 hover:bg-purple-700 text-white text-sm px-3 py-1.5 rounded">Add as new song</button>
+                                      <button type="button" data-testid={`import-likely-skip-${i}`} onClick={() => setImportDecisions(prev => ({ ...prev, [i]: { action: 'skip' } }))} className="bg-gray-700 hover:bg-gray-600 text-white text-sm px-3 py-1.5 rounded">Skip</button>
+                                    </div>
+                                  </div>
+                                )}
+                                {r.bucket === 'ambiguous' && (
+                                  <div className="mt-2 space-y-1">
+                                    <div className="text-sm text-gray-400">Which one is it?</div>
+                                    {(r.candidates || []).map((c, ci) => (
+                                      <div key={ci} className="flex items-center justify-between bg-gray-900 rounded px-3 py-1.5">
+                                        <span className="text-sm">{c.song.title}{c.song.artist ? ` — ${c.song.artist}` : ''} <span className="text-amber-300">({Math.round(c.score * 100)}%)</span></span>
+                                        <button type="button" data-testid={`import-amb-use-${i}-${ci}`} onClick={() => setImportDecisions(prev => ({ ...prev, [i]: { action: 'link', song_id: c.song.id } }))} className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 rounded">Use</button>
+                                      </div>
+                                    ))}
+                                    <button type="button" data-testid={`import-amb-skip-${i}`} onClick={() => setImportDecisions(prev => ({ ...prev, [i]: { action: 'skip' } }))} className="bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-1 rounded mt-1">Skip this song</button>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Group B: will be added */}
+                        {groupB.length > 0 && (
+                          <div className="space-y-2">
+                            <h3 className="text-sm font-bold text-blue-300">Not in your library, will be added</h3>
+                            {groupB.map(({ r, i }) => {
+                              const d = importDecisions[i];
+                              return (
+                                <div key={i} className="bg-gray-800 border-l-4 border-blue-500 rounded-r-lg p-3" data-testid={`import-add-row-${i}`}>
+                                  {editingImportRow === i ? (
+                                    <div className="space-y-2">
+                                      <input type="text" value={d.title || ''} data-testid={`import-edit-title-${i}`} onChange={(e) => setImportDecisions(prev => ({ ...prev, [i]: { ...prev[i], title: e.target.value } }))} placeholder="Title" className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-1.5 text-white text-sm" />
+                                      <input type="text" value={d.artist || ''} data-testid={`import-edit-artist-${i}`} onChange={(e) => setImportDecisions(prev => ({ ...prev, [i]: { ...prev[i], artist: e.target.value } }))} placeholder="Artist" className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-1.5 text-white text-sm" />
+                                      <p className="text-xs text-gray-400">Saving re-checks your library. If the corrected song turns out to already exist, it will be linked instead of added.</p>
+                                      <div className="flex gap-2">
+                                        <button type="button" data-testid={`import-edit-save-${i}`} onClick={() => handleSaveImportEditedRow(i)} className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1.5 rounded">Save</button>
+                                        <button type="button" data-testid={`import-edit-cancel-${i}`} onClick={() => setEditingImportRow(null)} className="bg-gray-700 hover:bg-gray-600 text-white text-sm px-3 py-1.5 rounded">Cancel</button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center justify-between gap-2">
+                                      <label className="flex items-center gap-2 cursor-pointer flex-1">
+                                        <input type="checkbox" data-testid={`import-add-check-${i}`} checked={d.action === 'add'} onChange={(e) => setImportDecisions(prev => ({ ...prev, [i]: e.target.checked ? { action: 'add', title: d.title, artist: d.artist } : { action: 'skip', title: d.title, artist: d.artist } }))} className="w-4 h-4" />
+                                        <span className={d.action === 'add' ? '' : 'text-gray-500 line-through'}>{d.title}{d.artist ? <span className="text-gray-400"> — {d.artist}</span> : null}</span>
+                                      </label>
+                                      <button type="button" data-testid={`import-add-edit-${i}`} onClick={() => setEditingImportRow(i)} className="bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-1 rounded">Edit</button>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Group C: already in library (collapsed) */}
+                        {groupC.length > 0 && (
+                          <details className="bg-gray-800 border-l-4 border-green-500 rounded-r-lg">
+                            <summary className="cursor-pointer px-3 py-2 text-sm font-bold text-green-300" data-testid="import-linked-summary">Already in your library ({groupC.length})</summary>
+                            <div className="px-3 pb-3 space-y-1">
+                              {groupC.map(({ r, i }) => {
+                                const d = importDecisions[i];
+                                return (
+                                  <div key={i} className="py-1" data-testid={`import-linked-row-${i}`}>
+                                    <div className="text-sm">{r.csv_title}{r.csv_artist ? <span className="text-gray-400"> — {r.csv_artist}</span> : null}</div>
+                                    {d.edited_matched && (
+                                      <div className="text-xs text-green-300">
+                                        you edited this, and it matched a song already in your library
+                                        <button type="button" data-testid={`import-linked-undo-${i}`} onClick={() => setImportDecisions(prev => ({ ...prev, [i]: { action: 'add', title: d.orig_title, artist: d.orig_artist } }))} className="ml-2 underline hover:text-green-200">Undo</button>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </details>
+                        )}
+
+                        <div className="flex justify-end gap-2 pt-2">
+                          <button type="button" onClick={closePlaylistFileImport} className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg" data-testid="import-cancel-btn">Cancel</button>
+                          <button
+                            type="button"
+                            data-testid="playlist-file-import-commit-btn"
+                            onClick={handleCommitImport}
+                            disabled={importCommitting || N === 0}
+                            className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2 rounded-lg disabled:opacity-50"
+                          >
+                            {importCommitting ? 'Creating...' : `Create playlist with ${N} songs`}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
+
             {/* Add Song Form */}
             {showAddSong && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -6589,6 +6903,19 @@ const MusicianDashboard = () => {
                       >
                         <span className="text-lg">🎵</span>
                         <span>Import Playlist</span>
+                      </button>
+
+                      {/* Build playlist from a file */}
+                      <button
+                        data-testid="open-playlist-file-import-btn"
+                        onClick={() => {
+                          setShowPlaylistFileImport(true);
+                          setShowSongManagementDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
+                      >
+                        <span className="text-lg">🗂️</span>
+                        <span>Build playlist from a file</span>
                       </button>
                       
                       {/* Upload CSV - Third */}
