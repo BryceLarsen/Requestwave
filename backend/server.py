@@ -29,6 +29,7 @@ import asyncio
 import json
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
+from playlist_match import parse_lst, parse_csv_rows, classify
 
 # Load environment variables first
 ROOT_DIR = Path(__file__).parent
@@ -5855,6 +5856,163 @@ async def preview_csv_upload(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+
+@api_router.post("/playlists/import/classify")
+async def classify_playlist_import(
+    file: UploadFile = File(...),
+    musician_id: str = Depends(get_current_musician)
+):
+    """Classify an uploaded .lst/.csv file against the musician's library. Saves nothing."""
+    fname = (file.filename or "").lower()
+    if not (fname.endswith(".lst") or fname.endswith(".csv")):
+        raise HTTPException(status_code=400, detail="File must be a .lst or .csv file")
+
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File size must be less than 10MB")
+
+    text = content.decode("utf-8", errors="replace")
+
+    if fname.endswith(".lst"):
+        playlist_name, rows = parse_lst(text)
+    else:
+        reader = csv.DictReader(io.StringIO(text))
+        if not reader.fieldnames or not any((f or "").lower().strip() == "title" for f in reader.fieldnames):
+            raise HTTPException(status_code=400, detail="CSV must contain a 'title' column")
+        dict_rows = list(reader)
+        rows = parse_csv_rows(dict_rows)
+        playlist_name = ""
+
+    if not rows:
+        raise HTTPException(status_code=400, detail="No songs found in file")
+
+    cursor = db.songs.find({"musician_id": musician_id})
+    library = [
+        {"id": s["id"], "title": s.get("title", ""), "artist": s.get("artist", "")}
+        async for s in cursor
+    ]
+
+    results = classify(rows, library)
+
+    playlist_exists = False
+    if playlist_name:
+        existing = await db.playlists.find_one({
+            "musician_id": musician_id,
+            "name": {"$regex": f"^{re.escape(playlist_name)}$", "$options": "i"},
+            "is_deleted": {"$ne": True},
+        })
+        playlist_exists = existing is not None
+
+    return {
+        "success": True,
+        "playlist_name": playlist_name,
+        "playlist_exists": playlist_exists,
+        "total": len(results),
+        "results": results
+    }
+
+@api_router.post("/playlists/import/commit")
+async def commit_playlist_import(
+    payload: dict = Body(...),
+    musician_id: str = Depends(get_current_musician)
+):
+    """Commit the user's resolved import decisions and build/update the playlist."""
+    playlist_name = (payload.get("playlist_name") or "").strip()
+    if not playlist_name:
+        raise HTTPException(status_code=400, detail="Playlist name is required")
+
+    link_song_ids = payload.get("link_song_ids") or []
+    add_songs = payload.get("add_songs") or []
+
+    added_ids = []
+    songs_added = 0
+    for entry in add_songs:
+        title = (entry.get("title") or "").strip()
+        if not title:
+            continue
+        artist = (entry.get("artist") or "").strip()
+        existing = await db.songs.find_one({
+            "musician_id": musician_id,
+            "title": {"$regex": f"^{re.escape(title)}$", "$options": "i"},
+            "artist": {"$regex": f"^{re.escape(artist)}$", "$options": "i"},
+        })
+        if existing:
+            added_ids.append(existing["id"])
+            continue
+        new_song = {
+            "id": str(uuid.uuid4()),
+            "musician_id": musician_id,
+            "title": title,
+            "artist": artist,
+            "genres": [],
+            "moods": [],
+            "year": None,
+            "notes": "",
+            "chart_type": "",
+            "chart_url": "",
+            "chart_chordpro": "",
+            "hidden": False,
+            "request_count": 0,
+            "created_at": datetime.now(timezone.utc),
+        }
+        await db.songs.insert_one(new_song)
+        added_ids.append(new_song["id"])
+        songs_added += 1
+
+    final_song_ids = []
+    seen = set()
+    for sid in list(link_song_ids) + added_ids:
+        if sid not in seen:
+            seen.add(sid)
+            final_song_ids.append(sid)
+
+    existing_playlist = await db.playlists.find_one({
+        "musician_id": musician_id,
+        "name": {"$regex": f"^{re.escape(playlist_name)}$", "$options": "i"},
+        "is_deleted": {"$ne": True},
+    })
+
+    if existing_playlist:
+        await db.playlists.update_one(
+            {"id": existing_playlist["id"]},
+            {
+                "$addToSet": {"song_ids": {"$each": final_song_ids}},
+                "$set": {"updated_at": datetime.now(timezone.utc)},
+            },
+        )
+        updated = await db.playlists.find_one({"id": existing_playlist["id"]}, {"_id": 0, "song_ids": 1})
+        return {
+            "success": True,
+            "playlist_id": existing_playlist["id"],
+            "playlist_name": playlist_name,
+            "created": False,
+            "songs_linked": len(link_song_ids),
+            "songs_added": songs_added,
+            "total_in_playlist": len(updated.get("song_ids") or []),
+        }
+
+    now = datetime.now(timezone.utc)
+    new_playlist = {
+        "id": str(uuid.uuid4()),
+        "musician_id": musician_id,
+        "name": playlist_name,
+        "song_ids": final_song_ids,
+        "created_at": now,
+        "updated_at": now,
+        "is_public": False,
+        "is_deleted": False,
+    }
+    await db.playlists.insert_one(new_playlist)
+    return {
+        "success": True,
+        "playlist_id": new_playlist["id"],
+        "playlist_name": playlist_name,
+        "created": True,
+        "songs_linked": len(link_song_ids),
+        "songs_added": songs_added,
+        "total_in_playlist": len(final_song_ids),
+    }
+
 
 @api_router.post("/songs/csv/upload", response_model=CSVUploadResponse)
 async def upload_csv_songs(
