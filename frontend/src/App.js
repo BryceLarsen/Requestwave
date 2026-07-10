@@ -931,6 +931,7 @@ const MusicianDashboard = () => {
     notes: ''  // NEW: Add notes to batch edit form
   });
   const [songFilter, setSongFilter] = useState('');
+  const [songsVisibleCount, setSongsVisibleCount] = useState(100);
   const [genreFilter, setGenreFilter] = useState('');
   const [playlistFilter, setPlaylistFilter] = useState('');
   // Songs tab: 'in' shows songs IN the selected playlist (default), 'not_in' shows songs NOT in it
@@ -3479,6 +3480,7 @@ const MusicianDashboard = () => {
   // Update filtered songs when songs or filters change
   React.useEffect(() => {
     filterSongs();
+    setSongsVisibleCount(100);
   }, [songs, songFilter, genreFilter, playlistFilter, playlistFilterMode, moodFilter, yearFilter, decadeFilter, sortOption, randomSeed]);
 
   // Reset playlist filter mode to 'in' whenever the selected playlist changes
@@ -7448,6 +7450,15 @@ My list:
                 })}
               </div>
 
+              {filteredSongs.length > songsVisibleCount && (
+                <button
+                  onClick={() => setSongsVisibleCount((c) => c + 100)}
+                  className="w-full mt-4 py-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-purple-300 font-medium"
+                  data-testid="songs-show-more"
+                >
+                  Show next 100 (showing {Math.min(songsVisibleCount, filteredSongs.length)} of {filteredSongs.length})
+                </button>
+              )}
               {filteredSongs.length === 0 && songs.length > 0 && (
                 <div className="text-center py-8 text-gray-400">
                   <p>No songs match your current filters.</p>
