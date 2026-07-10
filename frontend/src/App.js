@@ -7407,7 +7407,7 @@ My list:
               </div>
 
               <div className="space-y-4">
-                {filteredSongs.map((song) => {
+                {filteredSongs.slice(0, songsVisibleCount).map((song) => {
                   const hasChart = ((song.chart_type === 'link' || song.chart_type === 'pdf') && song.chart_url) || (song.chart_type === 'chordpro' && song.chart_chordpro);
                   const openChartOrEdit = () => {
                     if (!hasChart) { handleEditSong(song); return; }
