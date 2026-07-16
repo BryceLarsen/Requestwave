@@ -8,7 +8,7 @@ import json
 import uuid
 
 # Configuration
-BASE_URL = "https://multi-profile-events-1.preview.emergentagent.com/api"
+BASE_URL = "https://requests-mailto-flow.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {

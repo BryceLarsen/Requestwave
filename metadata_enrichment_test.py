@@ -11,7 +11,7 @@ import io
 from typing import Dict, Any, List
 
 # Configuration
-BASE_URL = "https://multi-profile-events-1.preview.emergentagent.com/api"
+BASE_URL = "https://requests-mailto-flow.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
     "name": "Metadata Test Musician",
     "email": "metadata.test@requestwave.com", 

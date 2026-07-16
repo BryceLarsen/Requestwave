@@ -39,7 +39,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://multi-profile-events-1.preview.emergentagent.com/api"
+BASE_URL = "https://requests-mailto-flow.preview.emergentagent.com/api"
 
 # Pro account for playlist testing
 PRO_MUSICIAN = {
