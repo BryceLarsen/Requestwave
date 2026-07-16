@@ -1,0 +1,22 @@
+{
+  "summary": "Verified bug fix for orphaned playlist song_ids after song deletion. Created dedicated pytest suite covering all 5 scenarios in the review request. All 5/5 tests pass against the public REACT_APP_BACKEND_URL.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_song_delete_playlist_cleanup.py",
+    "/app/test_reports/pytest/song_delete_cleanup.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "delete_song correctly runs $pull scoped by musician_id after successful delete — matches fix described in review request.",
+    "PUT /api/playlists/{id}/songs validates via count_documents with hidden!=True filter; consider: if a still-existing song is hidden, PUT would reject it as 'invalid'. Not related to this fix, but worth noting."
+  ],
+  "updated_files": ["/app/backend/tests/test_song_delete_playlist_cleanup.py"],
+  "success_rate": {"backend": "100%", "frontend": "not tested (backend-only request)"},
+  "test_credentials": "test@test.com / test",
+  "seed_data_creation": "Each test creates and deletes its own TEST_DelCleanup_* songs and TEST_pl_* playlists; leftover playlists are DELETE'd on cleanup.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Fix confirmed working. Tests: 1) delete removes id from single playlist, 2) PUT succeeds with remaining ids after delete (the main regression), 3) delete cleans up ALL playlists referencing the song, 4) deleting song not in any playlist -> 200, 5) deleting non-existent song -> 404.",
+  "rca of the issue": "Root cause fixed: delete_song in server.py:4297-4316 now calls db.playlists.update_many({musician_id}, {$pull: {song_ids: song_id}}) after db.songs.delete_one, ensuring no orphaned song_ids remain. This unblocks PUT /api/playlists/{id}/songs whose validation (server.py:8088) previously failed because deleted-song ids no longer exist in db.songs."
+}

@@ -4301,6 +4301,13 @@ async def delete_song(song_id: str, musician_id: str = Depends(get_current_music
         if result.deleted_count == 0:
             raise HTTPException(status_code=404, detail="Song not found")
         
+        # Remove this song id from every playlist owned by this musician so that
+        # deleting a song never leaves an orphaned reference behind.
+        await db.playlists.update_many(
+            {"musician_id": musician_id},
+            {"$pull": {"song_ids": song_id}}
+        )
+        
         return {"message": "Song deleted successfully"}
     except HTTPException:
         raise
