@@ -20,8 +20,8 @@ import time
 import uuid
 
 # Configuration - Using preview environment URLs from .env files
-PREVIEW_BACKEND_URL = "https://chord-analytics.preview.emergentagent.com/api"
-PREVIEW_FRONTEND_URL = "https://chord-analytics.preview.emergentagent.com"
+PREVIEW_BACKEND_URL = "https://multi-profile-events-1.preview.emergentagent.com/api"
+PREVIEW_FRONTEND_URL = "https://multi-profile-events-1.preview.emergentagent.com"
 INTERNAL_BACKEND_URL = "http://localhost:8001/api"
 
 # Test musician data (Bryce Larsen)
@@ -366,7 +366,7 @@ class FrontendBackendFlowTester:
         print("\n=== Testing Frontend Environment Configuration ===")
         
         # Check if the frontend is calling the correct backend URL
-        expected_backend_url = "https://chord-analytics.preview.emergentagent.com"
+        expected_backend_url = "https://multi-profile-events-1.preview.emergentagent.com"
         
         # Test a simple endpoint to verify the backend URL is accessible
         try:

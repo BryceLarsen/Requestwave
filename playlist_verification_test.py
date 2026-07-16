@@ -19,7 +19,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://chord-analytics.preview.emergentagent.com/api"
+BASE_URL = "https://multi-profile-events-1.preview.emergentagent.com/api"
 
 # Pro account credentials for testing
 PRO_MUSICIAN = {
