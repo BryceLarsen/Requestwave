@@ -18,6 +18,7 @@ import { ChordProParser, HtmlDivFormatter } from 'chordsheetjs';
 import { cpRenderSong, cpDetectKey, cpCollectChords, cpKeyLabel } from './chordProRenderer';
 import { useCockpit, UpNextTrigger, UpNextPanel, DedicationBox, PlayedButton, buildSongRequests, buildOpenQueue } from './cockpitOverlay';
 import { buildMailto, DEFAULT_TEMPLATE } from './mailtoLink';
+import EmailTemplateEditor from './emailTemplateEditor';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -8108,8 +8109,8 @@ My list:
                   <div className="text-white">{singleRequestModal.requester_name || 'Anonymous'}</div>
                 </div>
                 {singleRequestModal.requester_email && (() => {
-                  const savedSubject = localStorage.getItem('rwEmailSubject');
-                  const savedBody = localStorage.getItem('rwEmailBody');
+                  const savedSubject = profile?.email_template_subject;
+                  const savedBody = profile?.email_template_body;
                   const template = (savedSubject && savedBody) ? { subject: savedSubject, body: savedBody } : DEFAULT_TEMPLATE;
                   const mailto = buildMailto({
                     email: singleRequestModal.requester_email,
@@ -9705,6 +9706,7 @@ My list:
                       </p>
                     )}
                   </div>
+                  <EmailTemplateEditor profile={profile} onSaved={setProfile} />
                   {/* Change Password */}
                   <div className="border-t border-gray-600 pt-4">
                     <h3 className="text-sm font-bold text-gray-300 mb-3">Change Password</h3>
