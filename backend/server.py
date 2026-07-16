@@ -215,6 +215,9 @@ class Musician(BaseModel):
     subscription_status: Optional[str] = None  # active, canceled, incomplete_expired, etc.
     subscription_current_period_end: Optional[datetime] = None
     payment_grace_period_end: Optional[datetime] = None
+    # Per-musician email template for the Requests-tab mailto flow
+    email_template_subject: Optional[str] = None
+    email_template_body: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Song(BaseModel):
@@ -428,6 +431,9 @@ class MusicianProfile(BaseModel):
     tiktok_username: Optional[str] = ""
     spotify_artist_url: Optional[str] = ""
     apple_music_artist_url: Optional[str] = ""
+    # Per-musician email template for the Requests-tab mailto flow
+    email_template_subject: Optional[str] = ""
+    email_template_body: Optional[str] = ""
     # Active show fields (source of truth for frontend)
     current_show_id: Optional[str] = None
     current_show_name: Optional[str] = None
@@ -456,6 +462,9 @@ class ProfileUpdate(BaseModel):
     tiktok_username: Optional[str] = None
     spotify_artist_url: Optional[str] = None
     apple_music_artist_url: Optional[str] = None
+    # Per-musician email template for the Requests-tab mailto flow
+    email_template_subject: Optional[str] = None
+    email_template_body: Optional[str] = None
 
 class BatchEditRequest(BaseModel):
     song_ids: List[str]
@@ -2464,6 +2473,9 @@ async def get_profile(musician_id: str = Depends(get_current_musician)):
         tiktok_username=musician.get("tiktok_username", ""),
         spotify_artist_url=musician.get("spotify_artist_url", ""),
         apple_music_artist_url=musician.get("apple_music_artist_url", ""),
+        # Per-musician email template
+        email_template_subject=musician.get("email_template_subject", "") or "",
+        email_template_body=musician.get("email_template_body", "") or "",
         # Active show fields (sourced from default profile post-migration)
         current_show_id=cs_id,
         current_show_name=cs_name
@@ -2562,6 +2574,12 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
     if profile_data.apple_music_artist_url is not None:
         update_data["apple_music_artist_url"] = profile_data.apple_music_artist_url.strip()
     
+    # Per-musician email template. Empty string is allowed and means "reset to default".
+    if profile_data.email_template_subject is not None:
+        update_data["email_template_subject"] = profile_data.email_template_subject
+    if profile_data.email_template_body is not None:
+        update_data["email_template_body"] = profile_data.email_template_body
+    
     if update_data:
         await db.musicians.update_one(
             {"id": musician_id},
@@ -2598,7 +2616,9 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
         facebook_username=updated_musician.get("facebook_username", ""),
         tiktok_username=updated_musician.get("tiktok_username", ""),
         spotify_artist_url=updated_musician.get("spotify_artist_url", ""),
-        apple_music_artist_url=updated_musician.get("apple_music_artist_url", "")
+        apple_music_artist_url=updated_musician.get("apple_music_artist_url", ""),
+        email_template_subject=updated_musician.get("email_template_subject", "") or "",
+        email_template_body=updated_musician.get("email_template_body", "") or ""
     )
 
 # NEW: Change Email endpoint
@@ -2975,7 +2995,9 @@ async def get_profile_enhanced(musician_id: str = Depends(get_current_musician_e
         facebook_username=musician.get("facebook_username", ""),
         tiktok_username=musician.get("tiktok_username", ""),
         spotify_artist_url=musician.get("spotify_artist_url", ""),
-        apple_music_artist_url=musician.get("apple_music_artist_url", "")
+        apple_music_artist_url=musician.get("apple_music_artist_url", ""),
+        email_template_subject=musician.get("email_template_subject", "") or "",
+        email_template_body=musician.get("email_template_body", "") or ""
     )
 
 # Password Reset endpoints
