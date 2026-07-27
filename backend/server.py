@@ -5205,6 +5205,82 @@ async def export_requesters_csv(
         logger.error(f"Error exporting requesters CSV: {str(e)}")
         raise HTTPException(status_code=500, detail="Error exporting requesters")
 
+@api_router.get("/analytics/export-songs")
+async def export_songs_csv(
+    profile_id: Optional[str] = None,
+    event_id: Optional[str] = None,
+    show_id: Optional[str] = None,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Export requested songs list as CSV.
+
+    Optional query params:
+      - profile_id: scope to a specific profile
+      - event_id: scope to a specific event
+      - show_id: scope to a specific show
+
+    Output CSV columns: title, artist, request_count, requesters.
+    Only non-archived requests are included.
+    """
+    try:
+        match_stage = {
+            "musician_id": musician_id,
+            "status": {"$ne": "archived"}  # match /analytics/requesters consistency
+        }
+        if profile_id:
+            match_stage["profile_id"] = profile_id
+        if event_id:
+            match_stage["event_id"] = event_id
+        if show_id:
+            match_stage["show_id"] = show_id
+
+        # Group by (title, artist) so each row is a requested song with the
+        # number of times it was requested and the set of requester names.
+        pipeline = [
+            {"$match": match_stage},
+            {"$group": {
+                "_id": {
+                    "title": "$song_title",
+                    "artist": "$song_artist",
+                },
+                "request_count": {"$sum": 1},
+                "requesters": {"$addToSet": "$requester_name"},
+            }},
+            {"$sort": {"request_count": -1}},
+        ]
+        grouped = await db.requests.aggregate(pipeline).to_list(5000)
+
+        csv_rows = [["title", "artist", "request_count", "requesters"]]
+        for g in grouped:
+            title = (g["_id"].get("title") or "").strip()
+            artist = (g["_id"].get("artist") or "").strip()
+            request_count = g.get("request_count", 0)
+            requesters = "; ".join(
+                [name.strip() for name in (g.get("requesters") or []) if name and name.strip()]
+            )
+            csv_rows.append([title, artist, str(request_count), requesters])
+
+        csv_content = "\n".join([",".join([f'"{field}"' for field in row]) for row in csv_rows])
+
+        # Use a filter-aware filename so exports are easy to distinguish on disk
+        filename_suffix = ""
+        if show_id:
+            filename_suffix = f"-show-{show_id[:8]}"
+        elif event_id:
+            filename_suffix = f"-event-{event_id[:8]}"
+        elif profile_id:
+            filename_suffix = f"-profile-{profile_id[:8]}"
+
+        return Response(
+            content=csv_content,
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=songs{filename_suffix}-{datetime.now().strftime('%Y%m%d')}.csv"}
+        )
+
+    except Exception as e:
+        logger.error(f"Error exporting songs CSV: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error exporting songs")
+
 @api_router.get("/analytics/show-detail")
 async def get_show_detail_analytics(
     show_id: str,
