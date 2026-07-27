@@ -1127,6 +1127,7 @@ const MusicianDashboard = () => {
   const [editSetlistName, setEditSetlistName] = useState('');
   const [editSetlistSongIds, setEditSetlistSongIds] = useState([]);
   const [setlistSongSearch, setSetlistSongSearch] = useState('');
+  const [showAddSongsSection, setShowAddSongsSection] = useState(true);
   
   // Multi-Profile System state
   const [profiles, setProfiles] = useState([]);
@@ -4917,6 +4918,7 @@ const MusicianDashboard = () => {
       setEditingSetlist(response.data);
       setEditSetlistName(response.data.name);
       setEditSetlistSongIds(response.data.song_ids);
+      setShowAddSongsSection(true);
     } catch (error) {
       alert(error.response?.data?.detail || 'Error creating setlist');
     }
@@ -4932,6 +4934,7 @@ const MusicianDashboard = () => {
       setEditingSetlist(response.data);
       setEditSetlistName(response.data.name);
       setEditSetlistSongIds(response.data.song_ids);
+      setShowAddSongsSection(true);
     } catch (error) {
       alert(error.response?.data?.detail || 'Error creating setlist');
     }
@@ -4940,6 +4943,7 @@ const MusicianDashboard = () => {
     setEditingSetlist(setlist);
     setEditSetlistName(setlist.name);
     setEditSetlistSongIds(setlist.song_ids || []);
+    setShowAddSongsSection((setlist.song_ids || []).length === 0);
   };
   const handleSaveSetlist = async () => {
     if (!editingSetlist) return;
@@ -11853,7 +11857,7 @@ My list:
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-white">Manage Setlists</h2>
                 <button
-                  onClick={() => { setShowManageSetlistsModal(false); setEditingSetlist(null); }}
+                  onClick={() => { setShowManageSetlistsModal(false); setEditingSetlist(null); setShowAddSongsSection(true); }}
                   className="text-gray-400 hover:text-white"
                   data-testid="setlists-modal-close-button"
                 >
@@ -11939,41 +11943,53 @@ My list:
 
                   {/* Add songs from library */}
                   <div>
-                    <label className="block text-gray-400 text-sm mb-1">Add songs from your library</label>
-                    <input
-                      type="text"
-                      value={setlistSongSearch}
-                      onChange={(e) => setSetlistSongSearch(e.target.value)}
-                      placeholder="Search your library..."
-                      className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2"
-                      data-testid="setlist-song-search-input"
-                    />
-                    <div className="mt-2 space-y-2">
-                      {songs.filter(s => (s.title + s.artist).toLowerCase().includes(setlistSongSearch.toLowerCase())).slice(0, 8).map(s => (
-                        <div key={s.id} className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-                          <div className="min-w-0">
-                            <p className="text-white truncate">{s.title}</p>
-                            <p className="text-gray-400 text-sm truncate">{s.artist}</p>
-                          </div>
-                          {editSetlistSongIds.includes(s.id) ? (
-                            <button
-                              disabled
-                              className="bg-gray-600 text-gray-400 rounded-lg px-3 py-1 text-sm font-medium cursor-not-allowed"
-                            >
-                              Added
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => addSetlistSong(s.id)}
-                              className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-3 py-1 text-sm font-medium transition duration-300"
-                              data-testid={`setlist-add-song-${s.id}`}
-                            >
-                              + Add
-                            </button>
-                          )}
+                    <button
+                      type="button"
+                      onClick={() => setShowAddSongsSection(!showAddSongsSection)}
+                      className="w-full flex items-center justify-between text-gray-400 text-sm mb-1 hover:text-white transition duration-200"
+                      data-testid="setlist-add-songs-toggle"
+                    >
+                      <span>Add songs from your library</span>
+                      <span>{showAddSongsSection ? '▾' : '▸'}</span>
+                    </button>
+                    {showAddSongsSection && (
+                      <>
+                        <input
+                          type="text"
+                          value={setlistSongSearch}
+                          onChange={(e) => setSetlistSongSearch(e.target.value)}
+                          placeholder="Search your library..."
+                          className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2"
+                          data-testid="setlist-song-search-input"
+                        />
+                        <div className="mt-2 space-y-2">
+                          {songs.filter(s => (s.title + s.artist).toLowerCase().includes(setlistSongSearch.toLowerCase())).slice(0, 8).map(s => (
+                            <div key={s.id} className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+                              <div className="min-w-0">
+                                <p className="text-white truncate">{s.title}</p>
+                                <p className="text-gray-400 text-sm truncate">{s.artist}</p>
+                              </div>
+                              {editSetlistSongIds.includes(s.id) ? (
+                                <button
+                                  disabled
+                                  className="bg-gray-600 text-gray-400 rounded-lg px-3 py-1 text-sm font-medium cursor-not-allowed"
+                                >
+                                  Added
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => addSetlistSong(s.id)}
+                                  className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-3 py-1 text-sm font-medium transition duration-300"
+                                  data-testid={`setlist-add-song-${s.id}`}
+                                >
+                                  + Add
+                                </button>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Set order */}
@@ -12023,7 +12039,7 @@ My list:
                   {/* Footer */}
                   <div className="flex space-x-3 pt-2">
                     <button
-                      onClick={() => setEditingSetlist(null)}
+                      onClick={() => { setEditingSetlist(null); setShowAddSongsSection(true); }}
                       className="flex-1 bg-gray-600 hover:bg-gray-500 text-white rounded-lg py-2 font-bold transition duration-300"
                       data-testid="setlist-cancel-button"
                     >
