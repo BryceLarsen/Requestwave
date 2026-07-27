@@ -6603,6 +6603,7 @@ async def upload_lst_songs(
     try:
         songs_data = parse_lst_file(file)
         songs_added = 0
+        songs_skipped = 0
         enriched_count = 0
         enrichment_errors = []
         
@@ -6659,6 +6660,16 @@ async def upload_lst_songs(
                         enrichment_errors.append(error_msg)
                         logger.warning(error_msg)
                 
+                # Check for duplicates (same title and artist for this musician)
+                existing = await db.songs.find_one({
+                    "musician_id": musician_id,
+                    "title": {"$regex": f"^{re.escape(song_dict['title'])}$", "$options": "i"},
+                    "artist": {"$regex": f"^{re.escape(song_dict['artist'])}$", "$options": "i"}
+                })
+                if existing:
+                    songs_skipped += 1
+                    continue
+                
                 # Insert song into database
                 await db.songs.insert_one(song_dict)
                 songs_added += 1
@@ -6675,6 +6686,8 @@ async def upload_lst_songs(
                 enrichment_message += f" ({len(enrichment_errors)} enrichment warnings)"
         
         success_message = f"Successfully imported {songs_added} songs from LST file{enrichment_message}"
+        if songs_skipped > 0:
+            success_message += f", {songs_skipped} duplicate(s) skipped"
         
         return LSTUploadResponse(
             success=True,
