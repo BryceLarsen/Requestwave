@@ -8,7 +8,7 @@ import json
 from datetime import datetime, timedelta
 
 # Configuration
-BASE_URL = "https://requests-mailto-flow.preview.emergentagent.com/api"
+BASE_URL = "https://artist-email-studio.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {

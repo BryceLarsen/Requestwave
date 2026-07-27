@@ -8,7 +8,7 @@ import requests
 import json
 
 # Configuration
-BASE_URL = "https://requests-mailto-flow.preview.emergentagent.com/api"
+BASE_URL = "https://artist-email-studio.preview.emergentagent.com/api"
 
 # Pro account credentials
 PRO_MUSICIAN = {

@@ -23,7 +23,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://requests-mailto-flow.preview.emergentagent.com/api"
+BASE_URL = "https://artist-email-studio.preview.emergentagent.com/api"
 
 # Test musician with complete payment and social media info
 TEST_MUSICIAN = {

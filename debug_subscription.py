@@ -6,7 +6,7 @@ Quick test to check both subscription status functions for brycelarsenmusic@gmai
 import requests
 import json
 
-BASE_URL = "https://requests-mailto-flow.preview.emergentagent.com/api"
+BASE_URL = "https://artist-email-studio.preview.emergentagent.com/api"
 PRO_MUSICIAN = {
     "email": "brycelarsenmusic@gmail.com",
     "password": "RequestWave2024!"

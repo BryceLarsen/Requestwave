@@ -608,6 +608,23 @@ class PlaylistResponse(BaseModel):
 class PlaylistUpdate(BaseModel):
     song_ids: List[str]
 
+# NEW: Setlist models (musician-only)
+class SetlistCreate(BaseModel):
+    name: str
+    song_ids: List[str] = []
+
+class Setlist(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    musician_id: str
+    name: str
+    song_ids: List[str] = []
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class SetlistUpdate(BaseModel):
+    name: Optional[str] = None
+    song_ids: Optional[List[str]] = None
+
 # Profile models for Multi-Profile System
 class ProfileCreate(BaseModel):
     name: str
@@ -8150,6 +8167,117 @@ async def delete_playlist(
     except Exception as e:
         logger.error(f"Error deleting playlist: {str(e)}")
         raise HTTPException(status_code=500, detail="Error deleting playlist")
+
+@api_router.post("/setlists", response_model=Setlist)
+async def create_setlist(
+    setlist_data: SetlistCreate,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Create a new setlist for the current musician"""
+    try:
+        now = datetime.utcnow()
+        setlist_dict = {
+            "id": str(uuid.uuid4()),
+            "musician_id": musician_id,
+            "name": setlist_data.name,
+            "song_ids": setlist_data.song_ids,
+            "created_at": now,
+            "updated_at": now
+        }
+
+        await db.setlists.insert_one(setlist_dict)
+
+        logger.info(f"Created setlist {setlist_dict['id']} for musician {musician_id}")
+        return Setlist(**setlist_dict)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating setlist: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error creating setlist")
+
+@api_router.get("/setlists", response_model=List[Setlist])
+async def get_setlists(musician_id: str = Depends(get_current_musician)):
+    """Get all setlists for the current musician, newest first"""
+    try:
+        setlists_cursor = db.setlists.find({"musician_id": musician_id}).sort("created_at", DESCENDING)
+        setlists = await setlists_cursor.to_list(None)
+
+        return [Setlist(**setlist) for setlist in setlists]
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting setlists: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error getting setlists")
+
+@api_router.put("/setlists/{setlist_id}", response_model=Setlist)
+async def update_setlist(
+    setlist_id: str,
+    setlist_data: SetlistUpdate,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Update a setlist (name and/or song_ids) for the current musician"""
+    try:
+        # Verify setlist belongs to musician
+        setlist = await db.setlists.find_one({
+            "id": setlist_id,
+            "musician_id": musician_id
+        })
+        if not setlist:
+            raise HTTPException(status_code=404, detail="Setlist not found")
+
+        # Build update from non-None fields, always update updated_at
+        update_fields = {"updated_at": datetime.utcnow()}
+        if setlist_data.name is not None:
+            update_fields["name"] = setlist_data.name
+        if setlist_data.song_ids is not None:
+            update_fields["song_ids"] = setlist_data.song_ids
+
+        await db.setlists.update_one(
+            {"id": setlist_id, "musician_id": musician_id},
+            {"$set": update_fields}
+        )
+
+        updated_setlist = await db.setlists.find_one({
+            "id": setlist_id,
+            "musician_id": musician_id
+        })
+
+        logger.info(f"Updated setlist {setlist_id} for musician {musician_id}")
+        return Setlist(**updated_setlist)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating setlist: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error updating setlist")
+
+@api_router.delete("/setlists/{setlist_id}")
+async def delete_setlist(
+    setlist_id: str,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Delete a setlist for the current musician"""
+    try:
+        # Verify setlist belongs to musician
+        setlist = await db.setlists.find_one({
+            "id": setlist_id,
+            "musician_id": musician_id
+        })
+        if not setlist:
+            raise HTTPException(status_code=404, detail="Setlist not found")
+
+        await db.setlists.delete_one({"id": setlist_id, "musician_id": musician_id})
+
+        logger.info(f"Deleted setlist {setlist_id} for musician {musician_id}")
+        return {"success": True}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting setlist: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error deleting setlist")
 
 @api_router.get("/playlists/{playlist_id}")
 async def get_playlist_detail(

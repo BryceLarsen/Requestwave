@@ -14,7 +14,7 @@ import concurrent.futures
 from typing import Dict, Any, List, Optional
 
 # Configuration
-BASE_URL = "https://requests-mailto-flow.preview.emergentagent.com/api"
+BASE_URL = "https://artist-email-studio.preview.emergentagent.com/api"
 TEST_MUSICIAN = {
     "name": "Song Deletion Tester",
     "email": "deletion.tester@requestwave.com",

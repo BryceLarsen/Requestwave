@@ -25,7 +25,7 @@ import io
 from typing import Dict, Any, Optional, List
 
 # Configuration
-BASE_URL = "https://requests-mailto-flow.preview.emergentagent.com/api"
+BASE_URL = "https://artist-email-studio.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {
