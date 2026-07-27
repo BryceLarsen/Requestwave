@@ -314,6 +314,10 @@ class ShowCreate(BaseModel):
     venue: Optional[str] = None
     notes: Optional[str] = None
 
+class ShowPlaylistsUpdate(BaseModel):
+    playlist_filter_mode: str  # "all" | "selected"
+    enabled_playlist_ids: List[str] = []
+
 class Show(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     musician_id: str
@@ -7815,6 +7819,36 @@ async def delete_show(
         raise HTTPException(status_code=500, detail="Error deleting show")
 
 # NEW: Show Archive/Restore Management
+@api_router.put("/shows/{show_id}/playlists")
+async def update_show_playlists(
+    show_id: str,
+    update_data: ShowPlaylistsUpdate,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Update which playlists a show is scoped to, after creation."""
+    try:
+        show = await db.shows.find_one({"id": show_id, "musician_id": musician_id})
+        if not show:
+            raise HTTPException(status_code=404, detail="Show not found")
+        if update_data.playlist_filter_mode not in ("all", "selected"):
+            raise HTTPException(status_code=400, detail="playlist_filter_mode must be 'all' or 'selected'")
+        if update_data.playlist_filter_mode == "selected" and not update_data.enabled_playlist_ids:
+            raise HTTPException(status_code=400, detail="Select at least one playlist, or choose 'All songs'")
+        await db.shows.update_one(
+            {"id": show_id},
+            {"$set": {
+                "playlist_filter_mode": update_data.playlist_filter_mode,
+                "enabled_playlist_ids": update_data.enabled_playlist_ids if update_data.playlist_filter_mode == "selected" else []
+            }}
+        )
+        updated_show = await db.shows.find_one({"id": show_id, "musician_id": musician_id})
+        return Show(**updated_show)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating show playlists: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error updating show playlists")
+
 @api_router.put("/shows/{show_id}/archive")
 async def archive_show(
     show_id: str,
