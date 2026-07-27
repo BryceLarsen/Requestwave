@@ -1006,6 +1006,9 @@ const MusicianDashboard = () => {
   const [newShowName, setNewShowName] = useState('');
   const [showPlaylistFilterMode, setShowPlaylistFilterMode] = useState('all'); // 'all' | 'selected'
   const [showEnabledPlaylistIds, setShowEnabledPlaylistIds] = useState([]);
+  const [editingShowPlaylists, setEditingShowPlaylists] = useState(null);
+  const [editShowPlaylistFilterMode, setEditShowPlaylistFilterMode] = useState('all');
+  const [editShowEnabledPlaylistIds, setEditShowEnabledPlaylistIds] = useState([]);
   const [shows, setShows] = useState([]);
   const [groupedRequests, setGroupedRequests] = useState({ unassigned: [], shows: {} });
 
@@ -1747,6 +1750,22 @@ const MusicianDashboard = () => {
   };
 
   // NEW: Show archive management functions with telemetry
+  const handleSaveShowPlaylists = async () => {
+    if (!editingShowPlaylists) return;
+    try {
+      await axios.put(`${API}/shows/${editingShowPlaylists.id}/playlists`, {
+        playlist_filter_mode: editShowPlaylistFilterMode,
+        enabled_playlist_ids: editShowPlaylistFilterMode === 'selected' ? editShowEnabledPlaylistIds : []
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      fetchShows();
+      setEditingShowPlaylists(null);
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Error updating show playlists');
+    }
+  };
+
   const handleArchiveShow = async (showId, showName) => {
     // Telemetry: Archive start
     console.log('show_archive_start', {
@@ -7696,6 +7715,21 @@ My list:
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
+                                  setEditingShowPlaylists(show);
+                                  setEditShowPlaylistFilterMode(show.playlist_filter_mode || 'all');
+                                  setEditShowEnabledPlaylistIds(show.enabled_playlist_ids || []);
+                                }}
+                                data-testid={`edit-playlists-${show.id}`}
+                                className="bg-gray-600 hover:bg-gray-700 text-white text-xs px-2 py-1 rounded transition duration-300"
+                                title={`Edit playlists for "${show.name}"`}
+                                aria-label={`Edit playlists for ${show.name}`}
+                              >
+                                ⚙️
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
                                   exportShowRequestsCSV(show);
                                 }}
                                 data-testid={`export-csv-${show.id}`}
@@ -8443,6 +8477,110 @@ My list:
             </div>
           </div>
         )}
+
+        {/* NEW: Edit Show Playlists Modal */}
+        {editingShowPlaylists && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" data-testid="edit-show-playlists-modal">
+            <div className="bg-gray-800 rounded-2xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto">
+              <h2 className="text-xl font-bold text-white mb-4">
+                Edit playlists for "{editingShowPlaylists?.name}"
+              </h2>
+              <div className="space-y-4">
+                {/* Playlist Filter Mode */}
+                <div>
+                  <label className="block text-gray-300 text-sm font-bold mb-2">Song Selection</label>
+                  <div className="space-y-2">
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="editPlaylistFilterMode"
+                        value="all"
+                        checked={editShowPlaylistFilterMode === 'all'}
+                        onChange={() => setEditShowPlaylistFilterMode('all')}
+                        className="w-4 h-4 text-blue-600"
+                        data-testid="edit-playlist-mode-all"
+                      />
+                      <span className="text-white">All songs</span>
+                    </label>
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="editPlaylistFilterMode"
+                        value="selected"
+                        checked={editShowPlaylistFilterMode === 'selected'}
+                        onChange={() => setEditShowPlaylistFilterMode('selected')}
+                        className="w-4 h-4 text-blue-600"
+                        data-testid="edit-playlist-mode-selected"
+                      />
+                      <span className="text-white">Selected playlists only</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Playlist Checklist (only shown when "selected" mode) */}
+                {editShowPlaylistFilterMode === 'selected' && (
+                  <div className="bg-gray-700/50 rounded-lg p-3 max-h-48 overflow-y-auto">
+                    <label className="block text-gray-400 text-xs font-medium mb-2">
+                      Select playlists to enable for this show:
+                    </label>
+                    {playlists.filter(p => !p.is_deleted).length === 0 ? (
+                      <p className="text-gray-500 text-sm italic">No playlists available. Create playlists in the Songs tab first.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {playlists.filter(p => !p.is_deleted).map(playlist => (
+                          <label key={playlist.id} className="flex items-center space-x-3 cursor-pointer hover:bg-gray-600/50 p-2 rounded">
+                            <input
+                              type="checkbox"
+                              checked={editShowEnabledPlaylistIds.includes(playlist.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setEditShowEnabledPlaylistIds([...editShowEnabledPlaylistIds, playlist.id]);
+                                } else {
+                                  setEditShowEnabledPlaylistIds(editShowEnabledPlaylistIds.filter(id => id !== playlist.id));
+                                }
+                              }}
+                              className="w-4 h-4 text-blue-600 rounded"
+                              data-testid={`edit-playlist-checkbox-${playlist.id}`}
+                            />
+                            <span className="text-white text-sm">{playlist.name}</span>
+                            <span className="text-gray-400 text-xs">({playlist.song_ids?.length || 0} songs)</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    {editShowPlaylistFilterMode === 'selected' && editShowEnabledPlaylistIds.length === 0 && (
+                      <p className="text-yellow-400 text-xs mt-2">⚠️ Select at least one playlist</p>
+                    )}
+                  </div>
+                )}
+
+                <p className="text-gray-400 text-sm">
+                  {editShowPlaylistFilterMode === 'all'
+                    ? 'Audience will see all non-hidden songs.'
+                    : `Audience will only see songs from selected playlist${editShowEnabledPlaylistIds.length !== 1 ? 's' : ''}.`}
+                </p>
+                <div className="flex space-x-3 mt-6">
+                  <button
+                    onClick={() => setEditingShowPlaylists(null)}
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 py-2 rounded-lg font-medium transition duration-300"
+                    data-testid="edit-show-playlists-cancel-btn"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveShowPlaylists}
+                    disabled={editShowPlaylistFilterMode === 'selected' && editShowEnabledPlaylistIds.length === 0}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 py-2 rounded-lg font-medium transition duration-300 disabled:cursor-not-allowed"
+                    data-testid="edit-show-playlists-save-btn"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         
         {/* NEW: Archived Shows Section - Bottom of Requests Tab */}
         {activeTab === 'requests' && shows.filter(show => show.status === 'archived').length > 0 && (
