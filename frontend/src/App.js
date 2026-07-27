@@ -7196,18 +7196,17 @@ My list:
                       </span>
                       <span className="text-xs opacity-80">▾</span>
                     </button>
+                    {/* Setlists pill - opens the manage setlists modal */}
+                    <button
+                      onClick={() => { setShowManageSetlistsModal(true); fetchSetlists(); }}
+                      className="inline-flex items-center space-x-2 bg-gray-800 border border-purple-600 text-purple-300 rounded-full px-4 py-2 text-sm font-medium hover:bg-gray-700 transition duration-300"
+                      title="Build and manage setlists"
+                    >
+                      <span>🎼</span>
+                      <span>Setlists</span>
+                    </button>
                     <span className="text-gray-400 text-xs">tap to filter or manage</span>
                   </div>
-
-                  {/* Setlists pill - opens the manage setlists modal */}
-                  <button
-                    onClick={() => { setShowManageSetlistsModal(true); fetchSetlists(); }}
-                    className="inline-flex items-center space-x-2 bg-gray-800 border border-purple-600 text-purple-300 rounded-full px-4 py-2 text-sm font-medium hover:bg-gray-700 transition duration-300"
-                    title="Build and manage setlists"
-                  >
-                    <span>🎼</span>
-                    <span>Setlists</span>
-                  </button>
 
                   {/* Playlist filter mode toggle - only when a playlist is selected */}
                   {playlistFilter && playlistFilter !== 'all_songs' && (
