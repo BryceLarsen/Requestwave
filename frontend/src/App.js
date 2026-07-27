@@ -14712,7 +14712,7 @@ const AudienceInterface = () => {
                           className="w-full text-gray-500 hover:text-gray-400 py-2 text-sm transition duration-200 mt-2"
                           data-testid="tip-collapse-btn"
                         >
-                          Collapse
+                          Close
                         </button>
                       </div>
                       </div>
