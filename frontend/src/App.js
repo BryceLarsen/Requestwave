@@ -15741,8 +15741,8 @@ const OnStageInterface = () => {
     ];
     
     // Override the state for demo
-    musician = demoMusician;
-    requests = demoRequests;
+    setMusician(demoMusician);
+    setRequests(demoRequests);
   }
   
   // Organize requests into sections
