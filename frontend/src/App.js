@@ -20,6 +20,7 @@ import { useCockpit, UpNextTrigger, UpNextPanel, DedicationBox, PlayedButton, bu
 import { buildMailto, DEFAULT_TEMPLATE } from './mailtoLink';
 import EmailTemplateEditor from './emailTemplateEditor';
 import OnStageBoard from './onStageBoard';
+import { groupOnStageItems } from './onStageGrouping';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -1019,6 +1020,7 @@ const MusicianDashboard = () => {
 
   // Batch selection state for requests
   const [selectedRequests, setSelectedRequests] = useState(new Set());
+  const [requestsGroupByRequester, setRequestsGroupByRequester] = useState(false);
   const [showAllRequests, setShowAllRequests] = useState(true); // For collapsible All Requests
 
   // Requests tab — single/bulk action modals (post-show mobile review)
@@ -7687,6 +7689,16 @@ My list:
             )}
             
             {/* Active Shows Folders (MOVED ABOVE ALL REQUESTS) */}
+            <label className="flex items-center space-x-2 mb-4 cursor-pointer text-sm text-gray-300">
+              <input
+                type="checkbox"
+                checked={requestsGroupByRequester}
+                onChange={(e) => setRequestsGroupByRequester(e.target.checked)}
+                className="rounded bg-gray-600 border-gray-500 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
+                data-testid="requests-group-by-requester-toggle"
+              />
+              <span>Group by requester</span>
+            </label>
             {shows.filter(show => show.status !== 'archived').length > 0 && (
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-4">🎭 Shows</h3>
@@ -7792,6 +7804,64 @@ My list:
                           <div className="p-3 space-y-2">
                             {requests.filter(r => r.show_id === show.id).length === 0 ? (
                               <p className="text-gray-400 text-sm italic">No requests for this show</p>
+                            ) : requestsGroupByRequester ? (
+                              (() => {
+                                const groups = groupOnStageItems(
+                                  requests.filter(r => r.show_id === show.id).map(r => ({ ...r, type: 'request' })),
+                                  { mode: 'requester', order: 'newest' }
+                                );
+                                return groups.map(group => (
+                                  <React.Fragment key={group.key}>
+                                    {group.count > 1 && (
+                                      <div className="text-xs text-gray-400 font-semibold px-1 pt-3 first:pt-0">
+                                        👤 {group.lead.requester_name || 'Anonymous'} — {group.count} requests
+                                      </div>
+                                    )}
+                                    {group.items.map((request) => (
+                                    <div
+                                      key={request.id}
+                                      data-testid={`request-card-${request.id}`}
+                                      className="bg-gray-600 p-3 rounded flex items-center gap-3"
+                                    >
+                                      <label className="flex items-center justify-center p-2 -m-2 cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                                        <input
+                                          type="checkbox"
+                                          checked={selectedRequests.has(request.id)}
+                                          onChange={() => toggleRequestSelection(request.id)}
+                                          className="h-5 w-5 rounded bg-gray-600 border-gray-500 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
+                                          data-testid={`request-checkbox-${request.id}`}
+                                        />
+                                      </label>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          if (selectedRequests.size >= 2) {
+                                            setBulkRequestModalOpen(true);
+                                          } else {
+                                            setSingleRequestModal(request);
+                                          }
+                                        }}
+                                        data-testid={`request-card-body-${request.id}`}
+                                        className="flex-1 min-w-0 flex items-center justify-between gap-2 text-left"
+                                      >
+                                        <div className="min-w-0">
+                                          <div className="font-medium text-blue-400 text-sm truncate">{request.requester_email && <span className="text-gray-400 mr-1" title="Email provided">📧</span>}{request.song_title}</div>
+                                          <div className="text-xs text-gray-300 truncate">From: {request.requester_name}</div>
+                                        </div>
+                                        <span className={`shrink-0 px-2 py-1 rounded text-xs font-medium ${
+                                          request.status === 'pending' ? 'bg-yellow-600/20 text-yellow-400' :
+                                          request.status === 'played' ? 'bg-blue-600/20 text-blue-400' :
+                                          request.status === 'archived' ? 'bg-gray-500/30 text-gray-300' :
+                                          'bg-red-600/20 text-red-400'
+                                        }`}>
+                                          {getStatusLabel(request.status)}
+                                        </span>
+                                      </button>
+                                    </div>
+                                    ))}
+                                  </React.Fragment>
+                                ));
+                              })()
                             ) : (
                               requests.filter(r => r.show_id === show.id)
                                 .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
