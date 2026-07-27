@@ -10272,6 +10272,37 @@ My list:
                       <span>📧</span>
                       <span>Export Email List</span>
                     </button>
+                    <button
+                      data-testid="analytics-export-songs-btn"
+                      onClick={async () => {
+                        try {
+                          const params = buildRequestersFilterParams(requestersFilter);
+                          if (requestersExportShowId && requestersExportShowId !== 'all') {
+                            params.show_id = requestersExportShowId;
+                          }
+                          const response = await axios.get(`${API}/analytics/export-songs`, {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                            responseType: 'blob',
+                            params
+                          });
+                          
+                          const blob = new Blob([response.data], { type: 'text/csv' });
+                          const url = window.URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = `songs-requested-${new Date().toISOString().split('T')[0]}.csv`;
+                          link.click();
+                          window.URL.revokeObjectURL(url);
+                        } catch (error) {
+                          console.error('Error exporting CSV:', error);
+                          alert('Error exporting CSV. Please try again.');
+                        }
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium transition duration-300 flex items-center space-x-2"
+                    >
+                      <span>🎵</span>
+                      <span>Export Songs</span>
+                    </button>
                   </div>
                 </div>
               )}
