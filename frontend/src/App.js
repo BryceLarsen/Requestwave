@@ -9087,6 +9087,7 @@ My list:
               CompletedRequestItem={CompletedRequestItem}
               completedSectionCollapsed={completedSectionCollapsed}
               setCompletedSectionCollapsed={setCompletedSectionCollapsed}
+              onEditSong={handleEditSong}
             />
             </>
             )}
