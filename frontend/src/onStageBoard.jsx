@@ -27,6 +27,9 @@ const MODE_KEY = 'onstage_collapse_mode';
 const DRAWER_KEY = 'onstage_view_options_expanded';
 const SETLIST_ID_KEY = 'onstage_selected_setlist_id';
 const SETLIST_PLAYED_PREFIX = 'onstage_setlist_played_';
+const SETLIST_COLLAPSED_KEY = 'onstage_setlist_collapsed';
+const UPNEXT_COLLAPSED_KEY = 'onstage_upnext_collapsed';
+const LIVE_COLLAPSED_KEY = 'onstage_live_collapsed';
 
 const MODE_HINTS = {
   none: 'Every request shown separately.',
@@ -203,6 +206,15 @@ export default function OnStageBoard({
     try { return localStorage.getItem(SETLIST_ID_KEY) || ''; } catch { return ''; }
   });
   const [playedSetlistSongIds, setPlayedSetlistSongIds] = useState(() => new Set());
+  const [setlistCollapsed, setSetlistCollapsedState] = useState(() => {
+    try { return localStorage.getItem(SETLIST_COLLAPSED_KEY) === 'true'; } catch { return false; }
+  });
+  const [upNextCollapsed, setUpNextCollapsedState] = useState(() => {
+    try { return localStorage.getItem(UPNEXT_COLLAPSED_KEY) === 'true'; } catch { return false; }
+  });
+  const [liveCollapsed, setLiveCollapsedState] = useState(() => {
+    try { return localStorage.getItem(LIVE_COLLAPSED_KEY) === 'true'; } catch { return false; }
+  });
 
   const setMode = (v) => {
     setModeState(v);
@@ -215,6 +227,18 @@ export default function OnStageBoard({
   const setSelectedSetlistId = (id) => {
     setSelectedSetlistIdState(id);
     try { localStorage.setItem(SETLIST_ID_KEY, id); } catch {}
+  };
+  const setSetlistCollapsed = (v) => {
+    setSetlistCollapsedState(v);
+    try { localStorage.setItem(SETLIST_COLLAPSED_KEY, String(v)); } catch {}
+  };
+  const setUpNextCollapsed = (v) => {
+    setUpNextCollapsedState(v);
+    try { localStorage.setItem(UPNEXT_COLLAPSED_KEY, String(v)); } catch {}
+  };
+  const setLiveCollapsed = (v) => {
+    setLiveCollapsedState(v);
+    try { localStorage.setItem(LIVE_COLLAPSED_KEY, String(v)); } catch {}
   };
 
   /* ---------- setlists: self-contained fetch, mirrors this file's own axios pattern ---------- */
@@ -614,56 +638,65 @@ export default function OnStageBoard({
             <h3 className="text-xl font-bold text-violet-300">
               🎼 Setlist{selectedSetlist ? ` (${setlistSongs.length})` : ''}
             </h3>
-            {setlistSongs.length > 0 && (
-              <div className="text-sm text-gray-400">{playedSetlistSongIds.size} played</div>
-            )}
-          </div>
-          <select
-            data-testid="onstage-setlist-picker"
-            value={selectedSetlistId}
-            onChange={(e) => setSelectedSetlistId(e.target.value)}
-            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm mb-3 text-white"
-          >
-            <option value="">Select a setlist…</option>
-            {setlists.map((sl) => (
-              <option key={sl.id} value={sl.id}>{sl.name}</option>
-            ))}
-          </select>
-          {selectedSetlist && setlistSongs.length === 0 && (
-            <div className="text-center py-4 text-gray-400 text-sm">This setlist has no songs yet.</div>
-          )}
-          {setlistSongs.length > 0 && (
-            <div className="space-y-2 max-h-[420px] overflow-y-auto">
-              {setlistSongs.map((song, idx) => {
-                const matchCount = liveSongIdCounts.get(song.id) || 0;
-                const played = playedSetlistSongIds.has(song.id);
-                const rowBg = played
-                  ? 'bg-green-900/20'
-                  : matchCount > 0
-                    ? 'bg-amber-900/30 border border-amber-600'
-                    : 'bg-gray-900/60';
-                return (
-                  <div key={song.id} className={`flex items-center gap-2 rounded-lg p-2 ${rowBg} ${played ? 'opacity-50' : ''}`}>
-                    <span className="text-xs text-gray-500 w-5 text-right shrink-0">{idx + 1}</span>
-                    <button type="button" onClick={() => handleTapSetlistSong(song)} className="flex-1 min-w-0 text-left">
-                      <div className={`text-sm font-semibold truncate ${played ? 'line-through text-gray-400' : 'text-white'}`}>{song.title}</div>
-                      <div className="text-xs text-gray-400 truncate">{song.artist}</div>
-                    </button>
-                    {matchCount > 0 && !played && (
-                      <span className="text-xs bg-amber-800 text-amber-200 font-bold px-2 py-0.5 rounded-full shrink-0">🔥 {matchCount}</span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => toggleSetlistSongPlayed(song.id)}
-                      title={played ? 'Mark not played' : 'Mark played'}
-                      className={`w-6 h-6 rounded-full border shrink-0 flex items-center justify-center text-xs ${played ? 'bg-green-600 border-green-600 text-white' : 'border-gray-600 text-transparent'}`}
-                    >
-                      ✓
-                    </button>
-                  </div>
-                );
-              })}
+            <div className="flex items-center gap-3">
+              {setlistSongs.length > 0 && (
+                <div className="text-sm text-gray-400">{playedSetlistSongIds.size} played</div>
+              )}
+              <button onClick={() => setSetlistCollapsed(!setlistCollapsed)} className="text-gray-400 hover:text-white transition-colors">
+                {setlistCollapsed ? '▼' : '▲'}
+              </button>
             </div>
+          </div>
+          {!setlistCollapsed && (
+            <>
+              <select
+                data-testid="onstage-setlist-picker"
+                value={selectedSetlistId}
+                onChange={(e) => setSelectedSetlistId(e.target.value)}
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm mb-3 text-white"
+              >
+                <option value="">Select a setlist…</option>
+                {setlists.map((sl) => (
+                  <option key={sl.id} value={sl.id}>{sl.name}</option>
+                ))}
+              </select>
+              {selectedSetlist && setlistSongs.length === 0 && (
+                <div className="text-center py-4 text-gray-400 text-sm">This setlist has no songs yet.</div>
+              )}
+              {setlistSongs.length > 0 && (
+                <div className="space-y-2 max-h-[420px] overflow-y-auto">
+                  {setlistSongs.map((song, idx) => {
+                    const matchCount = liveSongIdCounts.get(song.id) || 0;
+                    const played = playedSetlistSongIds.has(song.id);
+                    const rowBg = played
+                      ? 'bg-green-900/20'
+                      : matchCount > 0
+                        ? 'bg-amber-900/30 border border-amber-600'
+                        : 'bg-gray-900/60';
+                    return (
+                      <div key={song.id} className={`flex items-center gap-2 rounded-lg p-2 ${rowBg} ${played ? 'opacity-50' : ''}`}>
+                        <span className="text-xs text-gray-500 w-5 text-right shrink-0">{idx + 1}</span>
+                        <button type="button" onClick={() => handleTapSetlistSong(song)} className="flex-1 min-w-0 text-left">
+                          <div className={`text-sm font-semibold truncate ${played ? 'line-through text-gray-400' : 'text-white'}`}>{song.title}</div>
+                          <div className="text-xs text-gray-400 truncate">{song.artist}</div>
+                        </button>
+                        {matchCount > 0 && !played && (
+                          <span className="text-xs bg-amber-800 text-amber-200 font-bold px-2 py-0.5 rounded-full shrink-0">🔥 {matchCount}</span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => toggleSetlistSongPlayed(song.id)}
+                          title={played ? 'Mark not played' : 'Mark played'}
+                          className={`w-6 h-6 rounded-full border shrink-0 flex items-center justify-center text-xs ${played ? 'bg-green-600 border-green-600 text-white' : 'border-gray-600 text-transparent'}`}
+                        >
+                          ✓
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
@@ -675,11 +708,18 @@ export default function OnStageBoard({
           <div className="bg-blue-900/50 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-blue-300">🎵 Up Next</h3>
-              <div className="text-sm text-gray-400">{upNextCount} songs</div>
+              <div className="flex items-center gap-3">
+                <div className="text-sm text-gray-400">{upNextCount} songs</div>
+                <button onClick={() => setUpNextCollapsed(!upNextCollapsed)} className="text-gray-400 hover:text-white transition-colors">
+                  {upNextCollapsed ? '▼' : '▲'}
+                </button>
+              </div>
             </div>
-            <div className="space-y-3">
-              {upNextGroups.map((g) => renderGroup(g, 'upnext'))}
-            </div>
+            {!upNextCollapsed && (
+              <div className="space-y-3">
+                {upNextGroups.map((g) => renderGroup(g, 'upnext'))}
+              </div>
+            )}
           </div>
         )}
 
@@ -687,17 +727,24 @@ export default function OnStageBoard({
         <div className="bg-purple-900/50 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-bold text-purple-300">🎸 Live Requests</h3>
-            <div className="text-sm text-gray-400">{activeItems.length} active</div>
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-gray-400">{activeItems.length} active</div>
+              <button onClick={() => setLiveCollapsed(!liveCollapsed)} className="text-gray-400 hover:text-white transition-colors">
+                {liveCollapsed ? '▼' : '▲'}
+              </button>
+            </div>
           </div>
-          <div className="space-y-3">
-            {activeGroups.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                <p>No active requests or suggestions</p>
-              </div>
-            ) : (
-              activeGroups.map((g) => renderGroup(g, 'live'))
-            )}
-          </div>
+          {!liveCollapsed && (
+            <div className="space-y-3">
+              {activeGroups.length === 0 ? (
+                <div className="text-center py-8 text-gray-400">
+                  <p>No active requests or suggestions</p>
+                </div>
+              ) : (
+                activeGroups.map((g) => renderGroup(g, 'live'))
+              )}
+            </div>
+          )}
         </div>
 
         {/* Handled Requests Panel - Scoped to current show */}
