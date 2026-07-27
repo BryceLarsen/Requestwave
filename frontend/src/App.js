@@ -1120,6 +1120,14 @@ const MusicianDashboard = () => {
   const [openDropdownId, setOpenDropdownId] = useState(null); // NEW: Track which dropdown is open
   const [playlistsExpanded, setPlaylistsExpanded] = useState(false); // NEW: Track if playlists section is expanded
   
+  // NEW: Setlists state
+  const [setlists, setSetlists] = useState([]);
+  const [showManageSetlistsModal, setShowManageSetlistsModal] = useState(false);
+  const [editingSetlist, setEditingSetlist] = useState(null);
+  const [editSetlistName, setEditSetlistName] = useState('');
+  const [editSetlistSongIds, setEditSetlistSongIds] = useState([]);
+  const [setlistSongSearch, setSetlistSongSearch] = useState('');
+  
   // Multi-Profile System state
   const [profiles, setProfiles] = useState([]);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
@@ -4889,6 +4897,88 @@ const MusicianDashboard = () => {
     }
   };
 
+  // NEW: Setlist handlers
+  const fetchSetlists = async () => {
+    try {
+      const response = await axios.get(`${API}/setlists`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setSetlists(response.data);
+    } catch (error) {
+      console.error('Error fetching setlists:', error);
+    }
+  };
+  const handleCreateBlankSetlist = async () => {
+    try {
+      const response = await axios.post(`${API}/setlists`,
+        { name: 'New Setlist', song_ids: [] },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      await fetchSetlists();
+      setEditingSetlist(response.data);
+      setEditSetlistName(response.data.name);
+      setEditSetlistSongIds(response.data.song_ids);
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Error creating setlist');
+    }
+  };
+  const handleCopyFromPlaylist = async (playlistId) => {
+    const playlist = playlists.find(p => p.id === playlistId);
+    if (!playlist) return;
+    try {
+      const response = await axios.post(`${API}/setlists`,
+        { name: playlist.name, song_ids: playlist.song_ids || [] },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      await fetchSetlists();
+      setEditingSetlist(response.data);
+      setEditSetlistName(response.data.name);
+      setEditSetlistSongIds(response.data.song_ids);
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Error creating setlist');
+    }
+  };
+  const handleOpenEditSetlist = (setlist) => {
+    setEditingSetlist(setlist);
+    setEditSetlistName(setlist.name);
+    setEditSetlistSongIds(setlist.song_ids || []);
+  };
+  const handleSaveSetlist = async () => {
+    if (!editingSetlist) return;
+    try {
+      await axios.put(`${API}/setlists/${editingSetlist.id}`,
+        { name: editSetlistName, song_ids: editSetlistSongIds },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      await fetchSetlists();
+      setEditingSetlist(null);
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Error saving setlist');
+    }
+  };
+  const handleDeleteSetlist = async (setlistId, name) => {
+    if (!confirm(`Delete setlist "${name}"? This cannot be undone.`)) return;
+    try {
+      await axios.delete(`${API}/setlists/${setlistId}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      fetchSetlists();
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Error deleting setlist');
+    }
+  };
+  const moveSetlistSong = (index, direction) => {
+    const newIds = [...editSetlistSongIds];
+    const target = index + direction;
+    if (target < 0 || target >= newIds.length) return;
+    [newIds[index], newIds[target]] = [newIds[target], newIds[index]];
+    setEditSetlistSongIds(newIds);
+  };
+  const removeSetlistSong = (songId) => {
+    setEditSetlistSongIds(editSetlistSongIds.filter(id => id !== songId));
+  };
+  const addSetlistSong = (songId) => {
+    if (!editSetlistSongIds.includes(songId)) {
+      setEditSetlistSongIds([...editSetlistSongIds, songId]);
+    }
+  };
+
   const handleAddNewGenre = () => {
     if (newGenre.trim() && !filterOptions.genres?.includes(newGenre.trim())) {
       // Add to current song form
@@ -7108,6 +7198,16 @@ My list:
                     </button>
                     <span className="text-gray-400 text-xs">tap to filter or manage</span>
                   </div>
+
+                  {/* Setlists pill - opens the manage setlists modal */}
+                  <button
+                    onClick={() => { setShowManageSetlistsModal(true); fetchSetlists(); }}
+                    className="inline-flex items-center space-x-2 bg-gray-800 border border-purple-600 text-purple-300 rounded-full px-4 py-2 text-sm font-medium hover:bg-gray-700 transition duration-300"
+                    title="Build and manage setlists"
+                  >
+                    <span>🎼</span>
+                    <span>Setlists</span>
+                  </button>
 
                   {/* Playlist filter mode toggle - only when a playlist is selected */}
                   {playlistFilter && playlistFilter !== 'all_songs' && (
@@ -11748,6 +11848,202 @@ My list:
         )}
 
         {/* NEW: Manage Playlists Modal */}
+        {showManageSetlistsModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-white">Manage Setlists</h2>
+                <button
+                  onClick={() => { setShowManageSetlistsModal(false); setEditingSetlist(null); }}
+                  className="text-gray-400 hover:text-white"
+                  data-testid="setlists-modal-close-button"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {editingSetlist === null ? (
+                <div className="space-y-4">
+                  {/* Setlist list */}
+                  <div className="space-y-2">
+                    {setlists.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">No setlists yet. Build one below.</p>
+                    ) : (
+                      setlists.map(setlist => (
+                        <div
+                          key={setlist.id}
+                          className="flex items-center justify-between bg-gray-700 rounded-lg p-4"
+                          data-testid={`setlist-row-${setlist.id}`}
+                        >
+                          <div className="min-w-0">
+                            <p className="text-white font-medium truncate">{setlist.name}</p>
+                            <p className="text-gray-400 text-sm">{setlist.song_ids.length} songs</p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => handleOpenEditSetlist(setlist)}
+                              className="text-purple-300 hover:text-purple-200 px-2 py-1"
+                              title="Edit setlist"
+                              data-testid={`setlist-edit-button-${setlist.id}`}
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSetlist(setlist.id, setlist.name)}
+                              className="text-red-400 hover:text-red-300 px-2 py-1"
+                              title="Delete setlist"
+                              data-testid={`setlist-delete-button-${setlist.id}`}
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Build controls */}
+                  <div className="flex items-center gap-3 pt-2 border-t border-gray-700">
+                    <button
+                      onClick={handleCreateBlankSetlist}
+                      className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition duration-300"
+                      data-testid="setlist-create-blank-button"
+                    >
+                      + Blank setlist
+                    </button>
+                    <select
+                      value=""
+                      onChange={(e) => { if (e.target.value) { handleCopyFromPlaylist(e.target.value); e.target.value = ''; } }}
+                      className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm"
+                      data-testid="setlist-copy-from-playlist-select"
+                    >
+                      <option value="" disabled>Copy from playlist</option>
+                      {playlists.filter(p => p.id !== 'all_songs').map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Setlist name */}
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-1">Setlist name</label>
+                    <input
+                      type="text"
+                      value={editSetlistName}
+                      onChange={(e) => setEditSetlistName(e.target.value)}
+                      className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2"
+                      data-testid="setlist-name-input"
+                    />
+                  </div>
+
+                  {/* Add songs from library */}
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-1">Add songs from your library</label>
+                    <input
+                      type="text"
+                      value={setlistSongSearch}
+                      onChange={(e) => setSetlistSongSearch(e.target.value)}
+                      placeholder="Search your library..."
+                      className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2"
+                      data-testid="setlist-song-search-input"
+                    />
+                    <div className="mt-2 space-y-2">
+                      {songs.filter(s => (s.title + s.artist).toLowerCase().includes(setlistSongSearch.toLowerCase())).slice(0, 8).map(s => (
+                        <div key={s.id} className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+                          <div className="min-w-0">
+                            <p className="text-white truncate">{s.title}</p>
+                            <p className="text-gray-400 text-sm truncate">{s.artist}</p>
+                          </div>
+                          {editSetlistSongIds.includes(s.id) ? (
+                            <button
+                              disabled
+                              className="bg-gray-600 text-gray-400 rounded-lg px-3 py-1 text-sm font-medium cursor-not-allowed"
+                            >
+                              Added
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => addSetlistSong(s.id)}
+                              className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-3 py-1 text-sm font-medium transition duration-300"
+                              data-testid={`setlist-add-song-${s.id}`}
+                            >
+                              + Add
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Set order */}
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-2">Set order ({editSetlistSongIds.length} songs)</label>
+                    <div className="space-y-2">
+                      {editSetlistSongIds.map((songId, index) => {
+                        const song = songs.find(s => s.id === songId);
+                        if (!song) return null;
+                        return (
+                          <div key={songId} className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+                            <div className="min-w-0">
+                              <p className="text-white truncate">{song.title}</p>
+                              <p className="text-gray-400 text-sm truncate">{song.artist}</p>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => moveSetlistSong(index, -1)}
+                                disabled={index === 0}
+                                className={`px-2 py-1 rounded ${index === 0 ? 'text-gray-600 cursor-not-allowed' : 'text-purple-300 hover:text-purple-200'}`}
+                                title="Move up"
+                              >
+                                ↑
+                              </button>
+                              <button
+                                onClick={() => moveSetlistSong(index, 1)}
+                                disabled={index === editSetlistSongIds.length - 1}
+                                className={`px-2 py-1 rounded ${index === editSetlistSongIds.length - 1 ? 'text-gray-600 cursor-not-allowed' : 'text-purple-300 hover:text-purple-200'}`}
+                                title="Move down"
+                              >
+                                ↓
+                              </button>
+                              <button
+                                onClick={() => removeSetlistSong(songId)}
+                                className="text-red-400 hover:text-red-300 px-2 py-1"
+                                title="Remove"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="flex space-x-3 pt-2">
+                    <button
+                      onClick={() => setEditingSetlist(null)}
+                      className="flex-1 bg-gray-600 hover:bg-gray-500 text-white rounded-lg py-2 font-bold transition duration-300"
+                      data-testid="setlist-cancel-button"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveSetlist}
+                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-2 font-bold transition duration-300"
+                      data-testid="setlist-save-button"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {showManagePlaylistsModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-gray-800 rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
