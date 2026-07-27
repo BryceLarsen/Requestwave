@@ -1868,17 +1868,33 @@ const MusicianDashboard = () => {
 
   // NEW: Toggle song visibility function
   const handleToggleSongVisibility = async (songId) => {
+    if (!songId) return;
+    // Optimistic update: flip hidden locally so the card and the open edit modal
+    // reflect the change immediately.
+    setSongs((prev) =>
+      prev.map((s) => (s.id === songId ? { ...s, hidden: !s.hidden } : s))
+    );
+    setEditingSong((prev) =>
+      prev && prev.id === songId ? { ...prev, hidden: !prev.hidden } : prev
+    );
     try {
       const response = await axios.put(`${API}/songs/${songId}/toggle-visibility`, {}, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       
       if (response.data.success) {
-        // Refresh songs to show updated visibility
+        // Refresh songs to reconcile with the server's authoritative state
         fetchSongs();
       }
     } catch (error) {
       console.error('Error toggling song visibility:', error);
+      // Revert optimistic update on failure
+      setSongs((prev) =>
+        prev.map((s) => (s.id === songId ? { ...s, hidden: !s.hidden } : s))
+      );
+      setEditingSong((prev) =>
+        prev && prev.id === songId ? { ...prev, hidden: !prev.hidden } : prev
+      );
       alert('Error updating song visibility. Please try again.');
     }
   };
@@ -3479,11 +3495,17 @@ const MusicianDashboard = () => {
     }
   };
 
-  // Update filtered songs when songs or filters change
+  // Update filtered songs when songs, playlists, or filters change
   React.useEffect(() => {
     filterSongs();
+  }, [songs, playlists, songFilter, genreFilter, playlistFilter, playlistFilterMode, moodFilter, yearFilter, decadeFilter, sortOption, randomSeed]);
+
+  // Reset the visible-count only when the user changes a filter or sort — NOT
+  // when songs or playlists mutate, so editing/hiding a song or moving it in/out
+  // of a playlist doesn't throw the user back to the first 100 results.
+  React.useEffect(() => {
     setSongsVisibleCount(100);
-  }, [songs, songFilter, genreFilter, playlistFilter, playlistFilterMode, moodFilter, yearFilter, decadeFilter, sortOption, randomSeed]);
+  }, [songFilter, genreFilter, playlistFilter, playlistFilterMode, moodFilter, yearFilter, decadeFilter, sortOption, randomSeed]);
 
   // Reset playlist filter mode to 'in' whenever the selected playlist changes
   React.useEffect(() => {
