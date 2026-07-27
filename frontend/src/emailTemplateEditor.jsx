@@ -32,7 +32,7 @@ const API = `${BACKEND_URL}/api`;
 
 // Tokens offered in the UI. {venue} is intentionally NOT offered: no surface in
 // the app sets Show.venue, so it would always resolve to its fallback.
-const TOKENS = ['{name}', '{song}', '{show}'];
+const TOKENS = ['{name}', '{song}', '{show}', '{artist}'];
 
 export default function EmailTemplateEditor({ profile, onSaved }) {
   const [subject, setSubject] = useState('');

@@ -8141,6 +8141,7 @@ My list:
                     songTitle: singleRequestModal.song_title,
                     showName: singleRequestModal.show_name,
                     venue: shows.find(s => s.id === singleRequestModal.show_id)?.venue,
+                    artist: profile?.name,
                     template,
                   });
                   if (!mailto) {

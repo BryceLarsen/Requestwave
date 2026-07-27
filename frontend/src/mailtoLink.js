@@ -9,18 +9,16 @@ export const DEFAULT_TEMPLATE = {
     "",
     "Thanks for putting in a request at {show}. Requests actually change what I play, so you had a hand in how it went.",
     "",
-    "I'm Bryce. I run Adventure Sound Live, and I was the guy singing.",
-    "",
     "If you feel like it, reply with a song or an artist you've been listening to lately. I'm always building the repertoire and I get most of my best ideas this way.",
     "",
     "Glad you were there,",
     "",
-    "Bryce",
+    "{artist}",
   ].join("\n"),
 };
 
 // Shown in the editor so you never have to remember what is available.
-export const TEMPLATE_TOKENS = ["{name}", "{show}", "{song}", "{venue}"];
+export const TEMPLATE_TOKENS = ["{name}", "{show}", "{song}", "{venue}", "{artist}"];
 
 // Fallbacks keep a missing value from leaving a raw {token} in the message.
 const FALLBACKS = {
@@ -28,6 +26,7 @@ const FALLBACKS = {
   song: "a song",
   show: "the party",
   venue: "the party",
+  artist: "the artist",
 };
 
 export function cpFirstName(fullName) {
@@ -40,7 +39,7 @@ export function cpFirstName(fullName) {
 export function fillTemplate(text, vars) {
   if (typeof text !== "string") return "";
   const v = vars || {};
-  return text.replace(/\{(name|song|show|venue)\}/g, (match, key) => {
+  return text.replace(/\{(name|song|show|venue|artist)\}/g, (match, key) => {
     const raw = v[key];
     const val = typeof raw === "string" ? raw.trim() : "";
     return val || FALLBACKS[key];
@@ -70,6 +69,7 @@ export function buildMailto(opts) {
     song: o.songTitle,
     show: o.showName,
     venue: o.venue,
+    artist: o.artist,
   };
 
   const subject = fillTemplate(tpl.subject, vars);
