@@ -14597,7 +14597,16 @@ const AudienceInterface = () => {
                         <span className="text-teal-100/80 text-sm block mt-0.5">(totally optional)</span>
                       </button>
                     ) : (
-                      /* Expanded: Inline tip form */
+                      /* Expanded: Tip form in a centered overlay popup */
+                      <div
+                        className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center"
+                        onClick={(e) => {
+                          if (e.target === e.currentTarget) {
+                            handleToggleTipSection();
+                          }
+                        }}
+                        data-testid="tip-overlay"
+                      >
                       <div className="bg-gray-700/40 rounded-xl p-4 border border-gray-600/30">
                         {/* Header */}
                         <div className="text-center mb-4">
@@ -14705,6 +14714,7 @@ const AudienceInterface = () => {
                         >
                           Collapse
                         </button>
+                      </div>
                       </div>
                     )}
                   </div>
