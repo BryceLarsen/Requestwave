@@ -5,7 +5,7 @@ import { groupOnStageItems, requestIdsIn, suggestionIdsIn } from './onStageGroup
 /**
  * onStageBoard.jsx
  *
- * The Dashboard On Stage tab's three-panel board (Up Next / Live Requests / Handled)
+ * The Dashboard On Stage tab's board: Setlist / Up Next / Live Requests / Handled,
  * plus the View Options drawer and the two collapse modals.
  *
  * Self-contained, mirroring AdminPanel.jsx house style: own axios import, own API
@@ -17,14 +17,16 @@ import { groupOnStageItems, requestIdsIn, suggestionIdsIn } from './onStageGroup
  *
  * CONTRACT: renders exactly what App.js rendered between the "Three-Panel Layout"
  * comment and the close of the grid. Single cards behave identically to today,
- * including calling the App.js updateRequestStatus prop. Only the collapsed cards
- * and the drawer are new.
+ * including calling the App.js updateRequestStatus prop. The Setlist panel,
+ * collapsed cards, and the drawer are new.
  */
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const MODE_KEY = 'onstage_collapse_mode';
 const DRAWER_KEY = 'onstage_view_options_expanded';
+const SETLIST_ID_KEY = 'onstage_selected_setlist_id';
+const SETLIST_PLAYED_PREFIX = 'onstage_setlist_played_';
 
 const MODE_HINTS = {
   none: 'Every request shown separately.',
@@ -148,6 +150,20 @@ function ChartButton({ item, songs, setOpenChordpro }) {
   );
 }
 
+/* ------------------------------------------------------------------
+   Small "in setlist" tag shown on Up Next / Live Requests cards when the
+   card's song is on the currently loaded setlist. Purely additive, no
+   change to any existing card behaviour.
+   ------------------------------------------------------------------ */
+function InSetlistTag({ songId, setlistSongIdSet }) {
+  if (!songId || !setlistSongIdSet.has(songId)) return null;
+  return (
+    <span className="text-[10px] bg-amber-900/40 border border-amber-600 text-amber-200 font-bold px-2 py-0.5 rounded-full shrink-0">
+      in setlist
+    </span>
+  );
+}
+
 /* ==================================================================
    MAIN
    ================================================================== */
@@ -167,7 +183,8 @@ export default function OnStageBoard({
   showErrorToast,
   CompletedRequestItem,
   completedSectionCollapsed,
-  setCompletedSectionCollapsed
+  setCompletedSectionCollapsed,
+  onEditSong
 }) {
   const [mode, setModeState] = useState(() => {
     try {
@@ -181,6 +198,12 @@ export default function OnStageBoard({
   const [openGroup, setOpenGroup] = useState(null);
   const [busyKeys, setBusyKeys] = useState({});
 
+  const [setlists, setSetlistsState] = useState([]);
+  const [selectedSetlistId, setSelectedSetlistIdState] = useState(() => {
+    try { return localStorage.getItem(SETLIST_ID_KEY) || ''; } catch { return ''; }
+  });
+  const [playedSetlistSongIds, setPlayedSetlistSongIds] = useState(() => new Set());
+
   const setMode = (v) => {
     setModeState(v);
     try { localStorage.setItem(MODE_KEY, v); } catch {}
@@ -188,6 +211,37 @@ export default function OnStageBoard({
   const setViewOptionsExpanded = (v) => {
     setViewOptionsExpandedState(v);
     try { localStorage.setItem(DRAWER_KEY, String(v)); } catch {}
+  };
+  const setSelectedSetlistId = (id) => {
+    setSelectedSetlistIdState(id);
+    try { localStorage.setItem(SETLIST_ID_KEY, id); } catch {}
+  };
+
+  /* ---------- setlists: self-contained fetch, mirrors this file's own axios pattern ---------- */
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    axios.get(`${API}/setlists`, { headers: { 'Authorization': `Bearer ${token}` } })
+      .then((res) => setSetlistsState(Array.isArray(res.data) ? res.data : []))
+      .catch(() => {});
+  }, []);
+
+  /* ---------- per-setlist local "played" tracking, keyed in localStorage per setlist id ---------- */
+  useEffect(() => {
+    if (!selectedSetlistId) { setPlayedSetlistSongIds(new Set()); return; }
+    try {
+      const raw = localStorage.getItem(SETLIST_PLAYED_PREFIX + selectedSetlistId);
+      setPlayedSetlistSongIds(new Set(raw ? JSON.parse(raw) : []));
+    } catch { setPlayedSetlistSongIds(new Set()); }
+  }, [selectedSetlistId]);
+
+  const toggleSetlistSongPlayed = (songId) => {
+    setPlayedSetlistSongIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(songId)) next.delete(songId); else next.add(songId);
+      try { localStorage.setItem(SETLIST_PLAYED_PREFIX + selectedSetlistId, JSON.stringify(Array.from(next))); } catch {}
+      return next;
+    });
   };
 
   const showId = currentShow ? currentShow.id : null;
@@ -225,6 +279,33 @@ export default function OnStageBoard({
     }));
     return [...completedReqs, ...handledSuggs];
   }, [requests, songSuggestions, showId]);
+
+  /* ---------- setlist derivation ---------- */
+  const selectedSetlist = useMemo(() => setlists.find((s) => s.id === selectedSetlistId) || null, [setlists, selectedSetlistId]);
+  const setlistSongs = useMemo(() => (
+    (selectedSetlist?.song_ids || []).map((id) => songs.find((s) => s.id === id)).filter(Boolean)
+  ), [selectedSetlist, songs]);
+  const setlistSongIdSet = useMemo(() => new Set(selectedSetlist?.song_ids || []), [selectedSetlist]);
+  const liveSongIdCounts = useMemo(() => {
+    const counts = new Map();
+    [...upNextItems, ...activeItems].forEach((it) => {
+      if (it.type !== 'request' || !it.song_id) return;
+      counts.set(it.song_id, (counts.get(it.song_id) || 0) + 1);
+    });
+    return counts;
+  }, [upNextItems, activeItems]);
+
+  const handleTapSetlistSong = (song) => {
+    const hasChordpro = song.chart_type === 'chordpro' && song.chart_chordpro;
+    const hasExternal = (song.chart_type === 'link' || song.chart_type === 'pdf') && song.chart_url;
+    if (hasChordpro) {
+      setOpenChordpro({ chordpro: song.chart_chordpro, title: song.title, id: song.id, transpose: song.transpose || 0 });
+    } else if (hasExternal) {
+      window.open(song.chart_url, '_blank');
+    } else if (onEditSong) {
+      onEditSong(song);
+    }
+  };
 
   /* ---------- grouping ---------- */
   const upNextGroups = useMemo(() => groupOnStageItems(upNextItems, { mode, order: 'oldest', timeField: 'created_at' }), [upNextItems, mode]);
@@ -323,6 +404,7 @@ export default function OnStageBoard({
           <span className="break-words">{item.song_title}</span>
           {renderLearnLaterBookmark({ songId: item.song_id, size: 18 })}
           <ChartButton item={item} songs={songs} setOpenChordpro={setOpenChordpro} />
+          <InSetlistTag songId={item.song_id} setlistSongIdSet={setlistSongIdSet} />
         </h4>
         <p className={`${artistCls} break-words`}>{item.song_artist}</p>
         <p className="text-sm text-gray-300 mt-2">
@@ -370,6 +452,7 @@ export default function OnStageBoard({
               <span className="break-words">{lead.song_title}</span>
               {renderLearnLaterBookmark({ songId: lead.song_id, size: 18 })}
               <ChartButton item={lead} songs={songs} setOpenChordpro={setOpenChordpro} />
+              <InSetlistTag songId={lead.song_id} setlistSongIdSet={setlistSongIdSet} />
             </h4>
             <p className={`${artistCls} break-words`}>{lead.song_artist}</p>
             {tipped > 0 && (
@@ -524,6 +607,66 @@ export default function OnStageBoard({
   return (
     <>
       <ViewOptions mode={mode} setMode={setMode} expanded={viewOptionsExpanded} setExpanded={setViewOptionsExpanded} />
+
+      {setlists.length > 0 && (
+        <div className="bg-gray-800 rounded-xl p-6 mt-6 mb-6">
+          <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
+            <h3 className="text-xl font-bold text-violet-300">
+              🎼 Setlist{selectedSetlist ? ` (${setlistSongs.length})` : ''}
+            </h3>
+            {setlistSongs.length > 0 && (
+              <div className="text-sm text-gray-400">{playedSetlistSongIds.size} played</div>
+            )}
+          </div>
+          <select
+            data-testid="onstage-setlist-picker"
+            value={selectedSetlistId}
+            onChange={(e) => setSelectedSetlistId(e.target.value)}
+            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm mb-3 text-white"
+          >
+            <option value="">Select a setlist…</option>
+            {setlists.map((sl) => (
+              <option key={sl.id} value={sl.id}>{sl.name}</option>
+            ))}
+          </select>
+          {selectedSetlist && setlistSongs.length === 0 && (
+            <div className="text-center py-4 text-gray-400 text-sm">This setlist has no songs yet.</div>
+          )}
+          {setlistSongs.length > 0 && (
+            <div className="space-y-2 max-h-[420px] overflow-y-auto">
+              {setlistSongs.map((song, idx) => {
+                const matchCount = liveSongIdCounts.get(song.id) || 0;
+                const played = playedSetlistSongIds.has(song.id);
+                const rowBg = played
+                  ? 'bg-green-900/20'
+                  : matchCount > 0
+                    ? 'bg-amber-900/30 border border-amber-600'
+                    : 'bg-gray-900/60';
+                return (
+                  <div key={song.id} className={`flex items-center gap-2 rounded-lg p-2 ${rowBg} ${played ? 'opacity-50' : ''}`}>
+                    <span className="text-xs text-gray-500 w-5 text-right shrink-0">{idx + 1}</span>
+                    <button type="button" onClick={() => handleTapSetlistSong(song)} className="flex-1 min-w-0 text-left">
+                      <div className={`text-sm font-semibold truncate ${played ? 'line-through text-gray-400' : 'text-white'}`}>{song.title}</div>
+                      <div className="text-xs text-gray-400 truncate">{song.artist}</div>
+                    </button>
+                    {matchCount > 0 && !played && (
+                      <span className="text-xs bg-amber-800 text-amber-200 font-bold px-2 py-0.5 rounded-full shrink-0">🔥 {matchCount}</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => toggleSetlistSongPlayed(song.id)}
+                      title={played ? 'Mark not played' : 'Mark played'}
+                      className={`w-6 h-6 rounded-full border shrink-0 flex items-center justify-center text-xs ${played ? 'bg-green-600 border-green-600 text-white' : 'border-gray-600 text-transparent'}`}
+                    >
+                      ✓
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className={`grid grid-cols-1 gap-6 ${upNextCount > 0 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}>
 
