@@ -14607,7 +14607,7 @@ const AudienceInterface = () => {
                         }}
                         data-testid="tip-overlay"
                       >
-                      <div className="bg-gray-700/40 rounded-xl p-4 border border-gray-600/30">
+                      <div className="bg-gray-800 rounded-xl p-4 border border-gray-600/30">
                         {/* Header */}
                         <div className="text-center mb-4">
                           <h3 className="text-base font-medium text-white">Leave a tip</h3>
