@@ -5058,7 +5058,11 @@ async def get_musician_requests(
     if show_id is not None:
         query["show_id"] = show_id
     
-    requests = await db.requests.find(query).sort("created_at", DESCENDING).limit(50).to_list(50)
+    cursor = db.requests.find(query).sort("created_at", DESCENDING)
+    if show_id is not None:
+        requests = await cursor.limit(50).to_list(50)
+    else:
+        requests = await cursor.limit(5000).to_list(5000)
     
     # Convert to Request objects for proper serialization
     request_objects = []
