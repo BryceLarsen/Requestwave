@@ -16619,6 +16619,7 @@ const OnStageInterface = () => {
 
 const LandingPage = () => {
   const [authMode, setAuthMode] = useState('login');
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
@@ -16636,66 +16637,73 @@ const LandingPage = () => {
           <p className="text-xl text-purple-200">Live song requests, tips, and audience email capture. Built for musicians who gig.</p>
         </div>
 
-        <div className="max-w-md mx-auto mb-8 bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-xl">
-          <h2 className="text-2xl font-bold text-white text-center mb-2">How It Works</h2>
-          <p className="text-center text-purple-300 text-sm mb-6">No app download for your audience. They just scan and go.</p>
-          <div className="space-y-5">
-            <div className="flex items-start space-x-4">
-              <div className="w-12 h-12 rounded-full bg-purple-800/40 border border-white/10 flex items-center justify-center flex-shrink-0">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#e9d5ff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="6" y="2" width="12" height="20" rx="2.2"></rect>
-                  <rect x="8.5" y="5" width="7" height="7" rx="0.5"></rect>
-                  <rect x="9.7" y="6.2" width="1.6" height="1.6"></rect>
-                  <rect x="12.7" y="6.2" width="1.6" height="1.6"></rect>
-                  <rect x="9.7" y="9.2" width="1.6" height="1.6"></rect>
-                  <line x1="9" y1="17.2" x2="15" y2="17.2"></line>
-                </svg>
-              </div>
-              <div>
-                <p className="text-white font-semibold text-sm">Audience scans a QR code</p>
-                <p className="text-purple-200 text-sm">They browse your song list on their phone, submit a request with a dedication, and <strong className="text-green-400">tip you on the spot</strong>: Venmo, PayPal, CashApp, or Zelle.</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-4">
-              <div className="w-12 h-12 rounded-full bg-purple-800/40 border border-white/10 flex items-center justify-center flex-shrink-0">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#e9d5ff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="6" cy="7" r="1.6" fill="#4ade80" stroke="none"></circle>
-                  <line x1="10" y1="7" x2="20" y2="7"></line>
-                  <circle cx="6" cy="12" r="1.6"></circle>
-                  <line x1="10" y1="12" x2="17" y2="12"></line>
-                  <circle cx="6" cy="17" r="1.6"></circle>
-                  <line x1="10" y1="17" x2="18.5" y2="17"></line>
-                </svg>
-              </div>
-              <div>
-                <p className="text-white font-semibold text-sm">You run the live queue</p>
-                <p className="text-purple-200 text-sm">Every request shows up on your dashboard in real time, sorted and ready. No checking your phone between songs.</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-4">
-              <div className="w-12 h-12 rounded-full bg-purple-800/40 border border-white/10 flex items-center justify-center flex-shrink-0">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#e9d5ff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="5.5" width="18" height="13" rx="1.8"></rect>
-                  <path d="M3.5 6.5 12 13 20.5 6.5"></path>
-                </svg>
-              </div>
-              <div>
-                <p className="text-white font-semibold text-sm">Your email list grows itself</p>
-                <p className="text-purple-200 text-sm">Each request can capture the requester's email automatically, building your audience list with zero extra work.</p>
-              </div>
-            </div>
-          </div>
-          <ul className="mt-6 space-y-2 border-t border-white/10 pt-4">
-            <li className="text-purple-200 text-sm flex items-start"><span className="text-green-400 mr-2">&#10003;</span> Live request queue with tip and dedication tracking</li>
-            <li className="text-purple-200 text-sm flex items-start"><span className="text-green-400 mr-2">&#10003;</span> Built-in ChordPro chart viewer so lyrics/chords travel with the request</li>
-            <li className="text-purple-200 text-sm flex items-start"><span className="text-green-400 mr-2">&#10003;</span> Works across multiple performing identities: one login, separate profiles for each gig type</li>
-            <li className="text-purple-200 text-sm flex items-start"><span className="text-green-400 mr-2">&#10003;</span> Song popularity tracking across your whole gigging history</li>
-          </ul>
-        </div>
-
         {/* Sign In Form - Now at the top */}
         <div className="max-w-md mx-auto mb-12">
           <AuthForm mode={authMode} onSwitch={setAuthMode} />
+        </div>
+
+        <div className="max-w-md mx-auto mb-8 bg-white/10 backdrop-blur-lg rounded-xl p-6 shadow-xl">
+          <button
+            type="button"
+            onClick={() => setShowHowItWorks(!showHowItWorks)}
+            className="w-full flex items-center justify-between text-white font-bold text-lg"
+          >
+            <span>How It Works</span>
+            <span className="text-purple-300 text-sm font-normal">
+              {showHowItWorks ? 'Hide ▲' : 'Tap to expand ▼'}
+            </span>
+          </button>
+          {showHowItWorks && (
+            <div className="mt-6">
+              <p className="text-center text-purple-300 text-sm mb-6">No app download for your audience. They just scan and go.</p>
+              <div className="space-y-5">
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 rounded-full bg-purple-800/40 border border-white/10 flex items-center justify-center flex-shrink-0">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#e9d5ff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="6" y="2" width="12" height="20" rx="2.2"></rect>
+                      <rect x="8.5" y="5" width="7" height="7" rx="0.5"></rect>
+                      <rect x="9.7" y="6.2" width="1.6" height="1.6"></rect>
+                      <rect x="12.7" y="6.2" width="1.6" height="1.6"></rect>
+                      <rect x="9.7" y="9.2" width="1.6" height="1.6"></rect>
+                      <line x1="9" y1="17.2" x2="15" y2="17.2"></line>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-sm">Audience scans a QR code</p>
+                    <p className="text-purple-200 text-sm">They browse your song list on their phone, submit a request with a dedication, and <strong className="text-green-400">tip you on the spot</strong>: Venmo, PayPal, CashApp, or Zelle.</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 rounded-full bg-purple-800/40 border border-white/10 flex items-center justify-center flex-shrink-0">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#e9d5ff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="6" cy="7" r="1.6" fill="#4ade80" stroke="none"></circle>
+                      <line x1="10" y1="7" x2="20" y2="7"></line>
+                      <circle cx="6" cy="12" r="1.6"></circle>
+                      <line x1="10" y1="12" x2="17" y2="12"></line>
+                      <circle cx="6" cy="17" r="1.6"></circle>
+                      <line x1="10" y1="17" x2="18.5" y2="17"></line>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-sm">You run the live queue</p>
+                    <p className="text-purple-200 text-sm">Every request shows up on your dashboard in real time, sorted and ready. No checking your phone between songs.</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 rounded-full bg-purple-800/40 border border-white/10 flex items-center justify-center flex-shrink-0">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#e9d5ff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="5.5" width="18" height="13" rx="1.8"></rect>
+                      <path d="M3.5 6.5 12 13 20.5 6.5"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-sm">Your email list grows itself</p>
+                    <p className="text-purple-200 text-sm">Each request can capture the requester's email automatically, building your audience list with zero extra work.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Story and Information - Now below the login form */}
