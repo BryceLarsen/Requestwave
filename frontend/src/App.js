@@ -16553,8 +16553,6 @@ const OnStageInterface = () => {
 
 const LandingPage = () => {
   const [authMode, setAuthMode] = useState('login');
-  const [showSupport, setShowSupport] = useState(false);
-  const [supportAmount, setSupportAmount] = useState('24');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
@@ -16569,7 +16567,64 @@ const LandingPage = () => {
           <h1 className="text-4xl lg:text-5xl font-bold mb-2">
             <span className="text-purple-400">Request</span><span className="text-green-400">Wave</span>
           </h1>
-          <p className="text-xl text-purple-200">Connect with your audience through music</p>
+          <p className="text-xl text-purple-200">Live song requests, tips, and audience email capture. Built for musicians who gig.</p>
+        </div>
+
+        <div className="max-w-md mx-auto mb-8 bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-xl">
+          <h2 className="text-2xl font-bold text-white text-center mb-2">How It Works</h2>
+          <p className="text-center text-purple-300 text-sm mb-6">No app download for your audience. They just scan and go.</p>
+          <div className="space-y-5">
+            <div className="flex items-start space-x-4">
+              <div className="w-12 h-12 rounded-full bg-purple-800/40 border border-white/10 flex items-center justify-center flex-shrink-0">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#e9d5ff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="6" y="2" width="12" height="20" rx="2.2"></rect>
+                  <rect x="8.5" y="5" width="7" height="7" rx="0.5"></rect>
+                  <rect x="9.7" y="6.2" width="1.6" height="1.6"></rect>
+                  <rect x="12.7" y="6.2" width="1.6" height="1.6"></rect>
+                  <rect x="9.7" y="9.2" width="1.6" height="1.6"></rect>
+                  <line x1="9" y1="17.2" x2="15" y2="17.2"></line>
+                </svg>
+              </div>
+              <div>
+                <p className="text-white font-semibold text-sm">Audience scans a QR code</p>
+                <p className="text-purple-200 text-sm">They browse your song list on their phone, submit a request with a dedication, and <strong className="text-green-400">tip you on the spot</strong>: Venmo, PayPal, CashApp, or Zelle.</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-4">
+              <div className="w-12 h-12 rounded-full bg-purple-800/40 border border-white/10 flex items-center justify-center flex-shrink-0">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#e9d5ff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="6" cy="7" r="1.6" fill="#4ade80" stroke="none"></circle>
+                  <line x1="10" y1="7" x2="20" y2="7"></line>
+                  <circle cx="6" cy="12" r="1.6"></circle>
+                  <line x1="10" y1="12" x2="17" y2="12"></line>
+                  <circle cx="6" cy="17" r="1.6"></circle>
+                  <line x1="10" y1="17" x2="18.5" y2="17"></line>
+                </svg>
+              </div>
+              <div>
+                <p className="text-white font-semibold text-sm">You run the live queue</p>
+                <p className="text-purple-200 text-sm">Every request shows up on your dashboard in real time, sorted and ready. No checking your phone between songs.</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-4">
+              <div className="w-12 h-12 rounded-full bg-purple-800/40 border border-white/10 flex items-center justify-center flex-shrink-0">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#e9d5ff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="5.5" width="18" height="13" rx="1.8"></rect>
+                  <path d="M3.5 6.5 12 13 20.5 6.5"></path>
+                </svg>
+              </div>
+              <div>
+                <p className="text-white font-semibold text-sm">Your email list grows itself</p>
+                <p className="text-purple-200 text-sm">Each request can capture the requester's email automatically, building your audience list with zero extra work.</p>
+              </div>
+            </div>
+          </div>
+          <ul className="mt-6 space-y-2 border-t border-white/10 pt-4">
+            <li className="text-purple-200 text-sm flex items-start"><span className="text-green-400 mr-2">&#10003;</span> Live request queue with tip and dedication tracking</li>
+            <li className="text-purple-200 text-sm flex items-start"><span className="text-green-400 mr-2">&#10003;</span> Built-in ChordPro chart viewer so lyrics/chords travel with the request</li>
+            <li className="text-purple-200 text-sm flex items-start"><span className="text-green-400 mr-2">&#10003;</span> Works across multiple performing identities: one login, separate profiles for each gig type</li>
+            <li className="text-purple-200 text-sm flex items-start"><span className="text-green-400 mr-2">&#10003;</span> Song popularity tracking across your whole gigging history</li>
+          </ul>
         </div>
 
         {/* Sign In Form - Now at the top */}
@@ -16606,128 +16661,8 @@ const LandingPage = () => {
                 </p>
               </div>
             </div>
-
-            {/* About the Subscription */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-xl">
-              <h3 className="text-2xl font-bold text-white mb-4">About the Subscription</h3>
-              <p className="text-purple-200 mb-4">RequestWave will eventually run on a small subscription model:</p>
-              <ul className="list-disc list-inside text-purple-200 space-y-2 mb-4">
-                <li><strong className="text-white">$15</strong> startup fee</li>
-                <li><strong className="text-white">$4</strong> per month if paid annually</li>
-                <li><strong className="text-white">$10</strong> per month if paid monthly</li>
-              </ul>
-              <p className="text-purple-200">
-                For now, my focus has been on making the app as functional and reliable as possible. Subscription coding will come later, but the priority today is giving musicians a tool that works.
-              </p>
-            </div>
-
-            {/* Supporting the Project */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-xl">
-              <h3 className="text-2xl font-bold text-white mb-4">Supporting the Project</h3>
-              <p className="text-purple-200 mb-4">
-                Building and hosting this app comes with ongoing costs. If you would like to support its development, you can Venmo me at <strong className="text-green-400">@adventuresound</strong>. As a thank you, any donation will be credited at twice its value once subscriptions go live. For example, a $25 donation today will receive a coupon for a full year subscription (a $48 value).
-              </p>
-              
-              <button
-                onClick={() => setShowSupport(true)}
-                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-3 rounded-lg transition duration-300 flex items-center justify-center space-x-2 mb-4"
-              >
-                <span>💰</span>
-                <span>Support RequestWave</span>
-              </button>
-              
-              <p className="text-purple-200 text-sm">
-                Thank you for being part of this project. My goal is to make live performance more interactive and enjoyable for both musicians and audiences, and your support helps make that possible.
-              </p>
-            </div>
         </div>
       </div>
-
-      {/* Support Modal */}
-      {showSupport && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-800 rounded-xl p-8 w-full max-w-md">
-            <h2 className="text-2xl font-bold text-white text-center mb-6">
-              Support RequestWave
-            </h2>
-            
-            <p className="text-gray-300 text-center mb-6">
-              Choose your support amount. Your contribution will be credited at 2x value when subscriptions launch!
-            </p>
-            
-            {/* Amount Selection */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              {['24', '48', '96'].map((amount) => (
-                <button
-                  key={amount}
-                  onClick={() => setSupportAmount(amount)}
-                  className={`p-4 rounded-lg border-2 transition duration-300 ${
-                    supportAmount === amount
-                      ? 'border-green-500 bg-green-900/30'
-                      : 'border-gray-600 hover:border-gray-500'
-                  }`}
-                >
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-white">${amount}</div>
-                    <div className="text-sm text-gray-400">
-                      ${parseInt(amount) * 2} credit
-                    </div>
-                  </div>
-                </button>
-              ))}
-              
-              <div className="col-span-2">
-                <input
-                  type="number"
-                  placeholder="Other amount"
-                  value={supportAmount !== '24' && supportAmount !== '48' && supportAmount !== '96' ? supportAmount : ''}
-                  onChange={(e) => setSupportAmount(e.target.value)}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
-                />
-              </div>
-            </div>
-            
-            {/* Payment Options */}
-            <div className="space-y-3 mb-6">
-              <button
-                onClick={() => {
-                  window.open(`https://venmo.com/adventuresound?txn=pay&amount=${supportAmount}&note=RequestWave Support`, '_blank');
-                }}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 flex items-center justify-center space-x-2"
-              >
-                <span>📱</span>
-                <span>Venmo (@adventuresound)</span>
-              </button>
-              
-              <button
-                onClick={() => {
-                  window.open(`https://www.paypal.me/brycelarsenmusic/${supportAmount}`, '_blank');
-                }}
-                className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-lg transition duration-300 flex items-center justify-center space-x-2"
-              >
-                <span>💳</span>
-                <span>PayPal (brycelarsenmusic)</span>
-              </button>
-              
-              <div className="bg-gray-700 rounded-lg p-3 text-center">
-                <p className="text-gray-300 text-sm mb-1">Zelle:</p>
-                <p className="text-white font-medium">brycelarsenmusic@gmail.com</p>
-                <p className="text-white font-medium">(516) 680-0672</p>
-              </div>
-            </div>
-            
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setShowSupport(false)}
-                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg transition duration-300"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-        
     </div>
   );
 };
