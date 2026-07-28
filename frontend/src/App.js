@@ -175,6 +175,10 @@ const AuthForm = ({ mode, onSwitch }) => {
     email: '',
     password: ''
   });
+  const [requestAccessData, setRequestAccessData] = useState({
+    name: '', email: '', phone: '', gigInfo: ''
+  });
+  const isInviteMode = new URLSearchParams(window.location.search).get('invite') === '1';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -237,6 +241,18 @@ const AuthForm = ({ mode, onSwitch }) => {
     }
   };
 
+  const handleRequestAccess = (e) => {
+    e.preventDefault();
+    const subject = encodeURIComponent(`RequestWave access request: ${requestAccessData.name}`);
+    const body = encodeURIComponent(
+      `Name: ${requestAccessData.name}\n` +
+      `Email: ${requestAccessData.email}\n` +
+      `Phone: ${requestAccessData.phone}\n` +
+      `Gigs: ${requestAccessData.gigInfo}\n`
+    );
+    window.location.href = `mailto:requestwave@adventuresoundlive.com?subject=${subject}&body=${body}`;
+  };
+
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -279,9 +295,11 @@ const AuthForm = ({ mode, onSwitch }) => {
         <>
           <h2 className="text-2xl font-bold text-white text-center mb-6">
             {mode === 'login' ? 'Welcome Back' : (
-              <>
-                Join <span className="text-purple-400">Request</span><span className="text-green-400">Wave</span>
-              </>
+              isInviteMode ? (
+                <>
+                  Join <span className="text-purple-400">Request</span><span className="text-green-400">Wave</span>
+                </>
+              ) : 'Request Access'
             )}
           </h2>
 
@@ -297,6 +315,51 @@ const AuthForm = ({ mode, onSwitch }) => {
             </div>
           )}
 
+          {mode === 'register' && !isInviteMode ? (
+            <form onSubmit={handleRequestAccess} className="space-y-4">
+              <p className="text-purple-200 text-sm mb-2">
+                RequestWave is invite-only right now. I set every account up personally
+                so it's ready to use at your first gig. Tell me a bit about you and
+                I'll follow up.
+              </p>
+              <input
+                type="text"
+                placeholder="Your name"
+                value={requestAccessData.name}
+                onChange={(e) => setRequestAccessData({...requestAccessData, name: e.target.value})}
+                className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                required
+              />
+              <input
+                type="email"
+                placeholder="Email Address"
+                value={requestAccessData.email}
+                onChange={(e) => setRequestAccessData({...requestAccessData, email: e.target.value})}
+                className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                required
+              />
+              <input
+                type="tel"
+                placeholder="Phone number"
+                value={requestAccessData.phone}
+                onChange={(e) => setRequestAccessData({...requestAccessData, phone: e.target.value})}
+                className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <textarea
+                placeholder="What kind of gigs do you play? (bars, weddings, restaurants, private events...)"
+                value={requestAccessData.gigInfo}
+                onChange={(e) => setRequestAccessData({...requestAccessData, gigInfo: e.target.value})}
+                className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                rows="3"
+              />
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 rounded-lg transition duration-300"
+              >
+                Send Request
+              </button>
+            </form>
+          ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'register' && (
               <input
@@ -335,8 +398,10 @@ const AuthForm = ({ mode, onSwitch }) => {
               {loading ? 'Please wait...' : (mode === 'login' ? 'Sign In' : 'Create Account')}
             </button>
           </form>
+          )}
 
           {/* NEW: Emergent OAuth Login Option */}
+          {!(mode === 'register' && !isInviteMode) && (
           <div className="mt-4">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -360,13 +425,14 @@ const AuthForm = ({ mode, onSwitch }) => {
               <span>Continue with Google</span>
             </button>
           </div>
+          )}
 
           <div className="text-center mt-6 space-y-2">
             <button
               onClick={() => onSwitch(mode === 'login' ? 'register' : 'login')}
               className="text-purple-300 hover:text-white transition duration-300 block"
             >
-              {mode === 'login' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
+              {mode === 'login' ? (isInviteMode ? 'Need an account? Sign up' : 'New here? Request access') : 'Already have an account? Sign in'}
             </button>
             {mode === 'login' && (
               <button
