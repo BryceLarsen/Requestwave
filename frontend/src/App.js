@@ -16618,7 +16618,9 @@ const OnStageInterface = () => {
 };
 
 const LandingPage = () => {
-  const [authMode, setAuthMode] = useState('login');
+  const [authMode, setAuthMode] = useState(
+    new URLSearchParams(window.location.search).get('invite') === '1' ? 'register' : 'login'
+  );
   const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   return (
