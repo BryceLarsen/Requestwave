@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { groupOnStageItems, requestIdsIn, suggestionIdsIn } from './onStageGrouping';
 
@@ -81,6 +81,69 @@ async function bulkUpdateStatus(requestIds, suggestionIds, status, { fetchReques
   }
 
   return { ok, failed: failed.length };
+}
+
+/* ------------------------------------------------------------------
+   Up Next drag-reorder: pure targeting logic.
+
+   Given the CURRENT upNextGroups (in display order), the key of the group
+   being dragged, and a drop index (an index into the list of every OTHER
+   group, i.e. with the dragged one already removed), work out:
+     - every request id that needs to move (one for a single card, several
+       for a folded song/requester group, all moving together)
+     - the request id immediately before the drop point (null = dropped at
+       the very start of the queue)
+     - the request id immediately after the drop point (null = dropped at
+       the very end)
+
+   A folded group's neighbor id is NOT its lead item: it is whichever member
+   of that group sits closest to the gap being dropped into (the highest
+   queue_position in the group before the gap, the lowest in the group
+   after), since a group can span several requests with different
+   positions.
+
+   Returns null for a genuine no-op drop (dropped back where it already was)
+   so the caller can skip the network call entirely.
+   ------------------------------------------------------------------ */
+function computeReorderTargets(upNextGroups, draggedKey, dropIndex) {
+  const draggedGroup = upNextGroups.find((g) => g.key === draggedKey);
+  if (!draggedGroup) return null;
+
+  const others = upNextGroups.filter((g) => g.key !== draggedKey);
+  const clampedIndex = Math.max(0, Math.min(dropIndex, others.length));
+
+  const hypothetical = [...others.slice(0, clampedIndex), draggedGroup, ...others.slice(clampedIndex)];
+  const isNoOp = hypothetical.map((g) => g.key).join('|') === upNextGroups.map((g) => g.key).join('|');
+  if (isNoOp) return null;
+
+  const prevGroup = clampedIndex > 0 ? others[clampedIndex - 1] : null;
+  const nextGroup = clampedIndex < others.length ? others[clampedIndex] : null;
+
+  const positionOf = (it) => (typeof it.queue_position === 'number' && !isNaN(it.queue_position) ? it.queue_position : null);
+
+  const prevRequestId = prevGroup
+    ? (prevGroup.items.reduce((best, it) => {
+        const p = positionOf(it);
+        if (p === null) return best;
+        if (!best || p > positionOf(best)) return it;
+        return best;
+      }, null) || {}).id || null
+    : null;
+
+  const nextRequestId = nextGroup
+    ? (nextGroup.items.reduce((best, it) => {
+        const p = positionOf(it);
+        if (p === null) return best;
+        if (!best || p < positionOf(best)) return it;
+        return best;
+      }, null) || {}).id || null
+    : null;
+
+  return {
+    requestIds: draggedGroup.items.map((it) => it.id),
+    prevRequestId,
+    nextRequestId
+  };
 }
 
 /* ------------------------------------------------------------------
@@ -200,6 +263,17 @@ export default function OnStageBoard({
   });
   const [openGroup, setOpenGroup] = useState(null);
   const [busyKeys, setBusyKeys] = useState({});
+
+  /* Up Next drag-reorder state. See computeReorderTargets above for the
+     targeting math. cardRefs/dragStartPos/activeDragGroupKey are refs
+     (not state) because they're read inside pointer-move handlers on every
+     movement and must never trigger a re-render themselves. */
+  const [draggingGroupKey, setDraggingGroupKey] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+  const cardRefs = useRef({});
+  const longPressTimer = useRef(null);
+  const dragStartPos = useRef(null);
+  const activeDragGroupKey = useRef(null);
 
   const [setlists, setSetlistsState] = useState([]);
   const [selectedSetlistId, setSelectedSetlistIdState] = useState(() => {
@@ -364,6 +438,110 @@ export default function OnStageBoard({
     }
   };
 
+  /* ---------- Up Next drag-reorder ----------
+     Long-press (not instant-drag-on-touch) so a normal scroll through the
+     queue is unaffected; only a sustained hold engages dragging. Uses
+     native Pointer Events (unifies mouse + touch, no added dependency).
+     The list itself is NOT reordered locally on drop: we wait for the
+     backend PUT to succeed and then call fetchRequests(), so the 3-second
+     live poller can never race a locally-optimistic order and snap it back.
+     Only wired for panel === 'upnext'; Live Requests and Handled are
+     untouched (no queue_position, no drag handlers, chronological as always). */
+  const LONG_PRESS_MS = 350;
+  const MOVE_CANCEL_PX = 10;
+
+  const handleCardPointerDown = (e, group) => {
+    if (e.target.closest('button')) return; // never hijack a tap on Played/Skip/Up Next/the group's count button
+    dragStartPos.current = { x: e.clientX, y: e.clientY };
+    clearTimeout(longPressTimer.current);
+    longPressTimer.current = setTimeout(() => {
+      activeDragGroupKey.current = group.key;
+      setDraggingGroupKey(group.key);
+      try { e.target.closest('[data-upnext-card]')?.setPointerCapture(e.pointerId); } catch {}
+    }, LONG_PRESS_MS);
+  };
+
+  const handleCardPointerMove = (e) => {
+    if (!activeDragGroupKey.current) {
+      if (dragStartPos.current) {
+        const dx = e.clientX - dragStartPos.current.x;
+        const dy = e.clientY - dragStartPos.current.y;
+        if (Math.sqrt(dx * dx + dy * dy) > MOVE_CANCEL_PX) {
+          clearTimeout(longPressTimer.current);
+          dragStartPos.current = null;
+        }
+      }
+      return;
+    }
+    const draggedKey = activeDragGroupKey.current;
+    const others = upNextGroups.filter((g) => g.key !== draggedKey);
+    let index = others.length;
+    for (let i = 0; i < others.length; i++) {
+      const node = cardRefs.current[others[i].key];
+      if (!node) continue;
+      const rect = node.getBoundingClientRect();
+      if (e.clientY < rect.top + rect.height / 2) { index = i; break; }
+    }
+    setDragOverIndex((prev) => (prev === index ? prev : index));
+  };
+
+  const commitReorder = async (draggedKey, dropIndex) => {
+    const targets = computeReorderTargets(upNextGroups, draggedKey, dropIndex);
+    if (!targets) return; // no-op drop, or dragged group vanished mid-drag
+    const token = localStorage.getItem('token');
+    if (!token) { showErrorToast('Please log in again to reorder'); return; }
+    const headers = { 'Authorization': `Bearer ${token}` };
+    try {
+      if (targets.requestIds.length === 1) {
+        await axios.put(`${API}/requests/${targets.requestIds[0]}/reorder`, {
+          prev_request_id: targets.prevRequestId,
+          next_request_id: targets.nextRequestId
+        }, { headers });
+      } else {
+        await axios.put(`${API}/requests/reorder-group`, {
+          request_ids: targets.requestIds,
+          prev_request_id: targets.prevRequestId,
+          next_request_id: targets.nextRequestId
+        }, { headers });
+      }
+      fetchRequests();
+    } catch (error) {
+      showErrorToast(error.response?.data?.detail || 'Could not save the new order. Try again.', error);
+    }
+  };
+
+  const handleCardPointerUp = (e) => {
+    clearTimeout(longPressTimer.current);
+    dragStartPos.current = null;
+    const draggedKey = activeDragGroupKey.current;
+    const dropIndex = dragOverIndex;
+    activeDragGroupKey.current = null;
+    setDraggingGroupKey(null);
+    setDragOverIndex(null);
+    try { e.target.closest('[data-upnext-card]')?.releasePointerCapture(e.pointerId); } catch {}
+    if (draggedKey && dropIndex !== null) commitReorder(draggedKey, dropIndex);
+  };
+
+  const upNextDragProps = (group) => ({
+    'data-upnext-card': true,
+    onPointerDown: (e) => handleCardPointerDown(e, group),
+    onPointerMove: handleCardPointerMove,
+    onPointerUp: handleCardPointerUp,
+    onPointerCancel: handleCardPointerUp,
+    ref: (node) => { cardRefs.current[group.key] = node; },
+    style: draggingGroupKey === group.key
+      ? { boxShadow: '0 8px 20px rgba(0,0,0,0.4)', transform: 'scale(1.02)', opacity: 0.95, touchAction: 'none' }
+      : { touchAction: 'pan-y' }
+  });
+
+  const upNextDropIndicator = (group) => {
+    if (!draggingGroupKey || draggingGroupKey === group.key) return null;
+    const others = upNextGroups.filter((g) => g.key !== draggingGroupKey);
+    const idx = others.findIndex((g) => g.key === group.key);
+    if (idx === -1 || dragOverIndex !== idx) return null;
+    return <div style={{ height: 4, background: 'rgba(147,197,253,0.6)', borderRadius: 4, margin: '2px 4px' }} />;
+  };
+
   /* ---------- suggestion handlers, lifted verbatim from App.js ---------- */
   const suggestionLearnLater = async (item) => {
     try {
@@ -418,11 +596,15 @@ export default function OnStageBoard({
     </div>
   );
 
-  const singleRequestCard = (item, panel) => {
+  const singleRequestCard = (group, panel) => {
+    const item = group.lead;
     const cardBg = panel === 'upnext' ? 'bg-blue-800/50' : 'bg-purple-800/50';
     const artistCls = panel === 'upnext' ? 'text-blue-200' : 'text-purple-200';
+    const dragProps = panel === 'upnext' ? upNextDragProps(group) : {};
     return (
-      <div key={item.id} className={`${cardBg} rounded-lg p-4`}>
+      <React.Fragment key={item.id}>
+      {panel === 'upnext' && upNextDropIndicator(group)}
+      <div {...dragProps} className={`${cardBg} rounded-lg p-4`}>
         <h4 className="font-bold text-lg text-white flex items-center gap-2 flex-wrap">
           {item.requester_email && <span className="text-gray-400" title="Email provided">📧</span>}
           <span className="break-words">{item.song_title}</span>
@@ -457,6 +639,7 @@ export default function OnStageBoard({
           </button>
         </div>
       </div>
+      </React.Fragment>
     );
   };
 
@@ -467,8 +650,11 @@ export default function OnStageBoard({
     const busy = !!busyKeys[group.key];
     const tipped = group.items.filter((i) => i.tip_clicked || i.tip_amount > 0).length;
     const emails = group.items.filter((i) => !!i.requester_email).length;
+    const dragProps = panel === 'upnext' ? upNextDragProps(group) : {};
     return (
-      <div key={group.key} className={`${cardBg} rounded-lg p-4 border-l-4 border-white/30`}>
+      <React.Fragment key={group.key}>
+      {panel === 'upnext' && upNextDropIndicator(group)}
+      <div {...dragProps} className={`${cardBg} rounded-lg p-4 border-l-4 border-white/30`}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h4 className="font-bold text-lg text-white flex items-center gap-2 flex-wrap">
@@ -505,6 +691,7 @@ export default function OnStageBoard({
           </button>
         </div>
       </div>
+      </React.Fragment>
     );
   };
 
@@ -512,8 +699,11 @@ export default function OnStageBoard({
     const cardBg = panel === 'upnext' ? 'bg-blue-800/50' : 'bg-purple-800/50';
     const artistCls = panel === 'upnext' ? 'text-blue-200' : 'text-purple-200';
     const names = group.items.slice(0, 3).map((i) => i.song_title).join(', ');
+    const dragProps = panel === 'upnext' ? upNextDragProps(group) : {};
     return (
-      <div key={group.key} className={`${cardBg} rounded-lg p-4 border-l-4 border-yellow-400`}>
+      <React.Fragment key={group.key}>
+      {panel === 'upnext' && upNextDropIndicator(group)}
+      <div {...dragProps} className={`${cardBg} rounded-lg p-4 border-l-4 border-yellow-400`}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h4 className="font-bold text-lg text-white break-words">{group.lead.requester_name || 'No name'}</h4>
@@ -530,6 +720,7 @@ export default function OnStageBoard({
           </button>
         </div>
       </div>
+      </React.Fragment>
     );
   };
 
@@ -537,7 +728,7 @@ export default function OnStageBoard({
     if (group.kind === 'song') return songGroupCard(group, panel);
     if (group.kind === 'requester') return requesterGroupCard(group, panel);
     if (group.lead.type === 'suggestion') return suggestionCard(group.lead);
-    return singleRequestCard(group.lead, panel);
+    return singleRequestCard(group, panel);
   };
 
   /* ================= MODAL ================= */
