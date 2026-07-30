@@ -5816,6 +5816,11 @@ class ReorderRequest(BaseModel):
     prev_request_id: Optional[str] = None
     next_request_id: Optional[str] = None
 
+class ReorderGroupRequest(BaseModel):
+    request_ids: List[str]
+    prev_request_id: Optional[str] = None
+    next_request_id: Optional[str] = None
+
 @api_router.put("/requests/{request_id}/status")
 async def update_request_status(
     request_id: str, 
@@ -5941,6 +5946,63 @@ async def reorder_request(
             len(queue_items)
         )
     queue_items.insert(target_index, request)
+    renumbered = renumber_queue(queue_items)
+    for item in renumbered:
+        await db.requests.update_one(
+            {"id": item["id"], "musician_id": musician_id},
+            {"$set": {"queue_position": item["queue_position"]}}
+        )
+    return {"success": True, "renumbered": True}
+
+@api_router.put("/requests/reorder-group")
+async def reorder_request_group(
+    reorder_data: ReorderGroupRequest,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Move a folded group of up_next requests (same song or same requester) together
+    to a new position between two neighboring groups. Every request in the group keeps
+    its relative order and lands in the same gap."""
+    if not reorder_data.request_ids:
+        raise HTTPException(status_code=400, detail="request_ids cannot be empty")
+    moved_requests = []
+    for rid in reorder_data.request_ids:
+        req = await db.requests.find_one({"id": rid, "musician_id": musician_id})
+        if not req:
+            raise HTTPException(status_code=404, detail=f"Request not found: {rid}")
+        if req.get("status") != "up_next":
+            raise HTTPException(status_code=400, detail=f"Only up_next requests can be reordered: {rid}")
+        moved_requests.append(req)
+    show_id = moved_requests[0].get("show_id")
+    moved_ids = set(reorder_data.request_ids)
+    prev_position = None
+    if reorder_data.prev_request_id:
+        prev_request = await db.requests.find_one({"id": reorder_data.prev_request_id, "musician_id": musician_id})
+        prev_position = prev_request.get("queue_position") if prev_request else None
+    next_position = None
+    if reorder_data.next_request_id:
+        next_request = await db.requests.find_one({"id": reorder_data.next_request_id, "musician_id": musician_id})
+        next_position = next_request.get("queue_position") if next_request else None
+    result = compute_insert_positions(prev_position, next_position, len(moved_requests))
+    if not result["renumber_needed"]:
+        for req, position in zip(moved_requests, result["positions"]):
+            await db.requests.update_one(
+                {"id": req["id"], "musician_id": musician_id},
+                {"$set": {"queue_position": position}}
+            )
+        return {"success": True, "renumbered": False}
+    # Rare fallback: gap exhausted, renumber this show's entire up_next queue.
+    queue_items = await db.requests.find(
+        {"show_id": show_id, "status": "up_next"}
+    ).sort("queue_position", 1).to_list(1000)
+    queue_items = [item for item in queue_items if item["id"] not in moved_ids]
+    if reorder_data.prev_request_id is None:
+        target_index = 0
+    else:
+        target_index = next(
+            (i + 1 for i, item in enumerate(queue_items) if item["id"] == reorder_data.prev_request_id),
+            len(queue_items)
+        )
+    queue_items[target_index:target_index] = moved_requests
     renumbered = renumber_queue(queue_items)
     for item in renumbered:
         await db.requests.update_one(
