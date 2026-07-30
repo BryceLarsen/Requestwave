@@ -2238,7 +2238,7 @@ const MusicianDashboard = () => {
     
     // Setup real-time updates
     const service = new RealtimeService(musician.id, (data) => {
-      setRequests(data.requests);
+      setRequests(prevRequests => mergeLiveRequestUpdates(prevRequests, data.requests));
     });
     setRealtimeService(service);
     service.startPolling();
