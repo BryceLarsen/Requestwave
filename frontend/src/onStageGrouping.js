@@ -19,13 +19,21 @@ function normalizeKeyText(value) {
 }
 
 /**
- * Read a timestamp off an item as milliseconds since epoch.
+ * Read a sortable stamp off an item.
+ * timeField 'queue_position' reads the manual Up Next order directly (a plain
+ * number, not a date): present values pass through as-is, missing/non-numeric
+ * values return Infinity so an item with no assigned position sorts to the
+ * END of an oldest-first list rather than jumping to the front.
  * timeField 'updated_at' falls back to created_at when absent.
  * Unparseable or missing dates return 0 so they sort to the far end
  * rather than poisoning the comparison with NaN.
  */
 function readTime(item, timeField) {
   if (!item) return 0;
+  if (timeField === 'queue_position') {
+    var pos = item.queue_position;
+    return (typeof pos === 'number' && !isNaN(pos)) ? pos : Infinity;
+  }
   var raw = timeField === 'updated_at'
     ? (item.updated_at || item.created_at)
     : item.created_at;
@@ -80,7 +88,10 @@ function makeGroup(key, kind, items, timeField, order) {
   var times = sorted.map(function (it) { return readTime(it, timeField); });
   // A group sorts by its oldest member when the board is oldest-first, and by
   // its newest member when the board is newest-first. Either way the group sits
-  // where a human would expect to find it.
+  // where a human would expect to find it. For timeField 'queue_position' this
+  // means a group sorts by its lowest (oldest-first) or highest (newest-first)
+  // assigned position, so a dragged group lands using whichever of its members
+  // is closest to the boundary it was dropped at.
   var stamp = order === 'newest' ? Math.max.apply(null, times) : Math.min.apply(null, times);
 
   return {
@@ -102,8 +113,8 @@ function makeGroup(key, kind, items, timeField, order) {
  *                          { type: 'suggestion', ... }.
  * @param {Object} options
  *   @param {String} mode       'none' | 'song' | 'requester'
- *   @param {String} order      'oldest' | 'newest'          (default 'oldest')
- *   @param {String} timeField  'created_at' | 'updated_at'  (default 'created_at')
+ *   @param {String} order      'oldest' | 'newest'                             (default 'oldest')
+ *   @param {String} timeField  'created_at' | 'updated_at' | 'queue_position'  (default 'created_at')
  *   @param {Number} limit      max number of GROUPS returned (default 0 = no cap)
  *
  * @returns {Array} groups, ordered for render.
@@ -124,7 +135,9 @@ function groupOnStageItems(items, options) {
   var opts = options || {};
   var mode = opts.mode || 'none';
   var order = opts.order === 'newest' ? 'newest' : 'oldest';
-  var timeField = opts.timeField === 'updated_at' ? 'updated_at' : 'created_at';
+  var timeField = opts.timeField === 'updated_at' ? 'updated_at'
+    : opts.timeField === 'queue_position' ? 'queue_position'
+    : 'created_at';
   var limit = typeof opts.limit === 'number' && opts.limit > 0 ? opts.limit : 0;
 
   var safeItems = Array.isArray(items) ? items.filter(function (it) { return !!it; }) : [];
@@ -210,13 +223,17 @@ function groupOnStageItems(items, options) {
 /**
  * Order groups by their timestamp. Ties break on key so the order is stable
  * across re-renders and a card never jumps under a thumb mid-tap.
+ * Guards against NaN: two groups that are BOTH entirely missing a
+ * queue_position both stamp Infinity, and Infinity - Infinity is NaN, which
+ * must fall through to the key tiebreak rather than being treated as a
+ * valid (and non-deterministic) sort comparator result.
  */
 function orderGroups(groups, order) {
   return groups.slice().sort(function (a, b) {
     var delta = order === 'newest'
       ? b.timestamp - a.timestamp
       : a.timestamp - b.timestamp;
-    if (delta !== 0) return delta;
+    if (delta !== 0 && !isNaN(delta)) return delta;
     return a.key < b.key ? -1 : (a.key > b.key ? 1 : 0);
   });
 }
