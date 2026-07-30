@@ -799,6 +799,29 @@ def create_slug(name: str) -> str:
     slug = re.sub(r'[-\s]+', '-', slug)
     return slug.strip('-')
 
+def compute_insert_position(prev_position, next_position):
+    MIN_GAP = 1e-9
+    if prev_position is None and next_position is None:
+        return {"position": 1000, "renumber_needed": False}
+    if prev_position is None:
+        return {"position": next_position - 1000, "renumber_needed": False}
+    if next_position is None:
+        return {"position": prev_position + 1000, "renumber_needed": False}
+    gap = next_position - prev_position
+    if gap <= MIN_GAP:
+        return {"position": None, "renumber_needed": True}
+    return {"position": prev_position + gap / 2, "renumber_needed": False}
+
+
+def renumber_queue(sorted_items, spacing=1000):
+    result = []
+    for index, item in enumerate(sorted_items):
+        new_item = dict(item)
+        new_item["queue_position"] = (index + 1) * spacing
+        result.append(new_item)
+    return result
+
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
