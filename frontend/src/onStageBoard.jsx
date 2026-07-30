@@ -332,7 +332,7 @@ export default function OnStageBoard({
   };
 
   /* ---------- grouping ---------- */
-  const upNextGroups = useMemo(() => groupOnStageItems(upNextItems, { mode, order: 'oldest', timeField: 'created_at' }), [upNextItems, mode]);
+  const upNextGroups = useMemo(() => groupOnStageItems(upNextItems, { mode, order: 'oldest', timeField: 'queue_position' }), [upNextItems, mode]);
   const activeGroups = useMemo(() => groupOnStageItems(activeItems, { mode, order: 'oldest', timeField: 'created_at' }), [activeItems, mode]);
   const completedGroups = useMemo(() => groupOnStageItems(completedItems, { mode, order: 'newest', timeField: 'updated_at', limit: 10 }), [completedItems, mode]);
 
