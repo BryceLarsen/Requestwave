@@ -290,6 +290,7 @@ class Request(BaseModel):
     tip_clicked: bool = False
     social_clicks: List[str] = []  # Track which social links were clicked
     status: str = "pending"  # pending, up_next, accepted, played, rejected, archived
+    queue_position: Optional[float] = None  # manual order within a show's up_next queue; null until first set
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class SongSuggestion(BaseModel):
@@ -5792,6 +5793,10 @@ async def search_song_metadata(
 class StatusUpdate(BaseModel):
     status: str
 
+class ReorderRequest(BaseModel):
+    prev_request_id: Optional[str] = None
+    next_request_id: Optional[str] = None
+
 @api_router.put("/requests/{request_id}/status")
 async def update_request_status(
     request_id: str, 
@@ -5812,10 +5817,24 @@ async def update_request_status(
     show_id = request.get("show_id")
     song_id = request.get("song_id")
     
-    # Update the status
+    # Update the status. When a request newly enters up_next, append it to the
+    # end of that show's queue using the same insert-position helper the
+    # reorder endpoint uses, so both paths assign positions the same way.
+    update_fields = {"status": new_status}
+    if new_status == "up_next" and previous_status != "up_next":
+        last_item = await db.requests.find(
+            {"show_id": show_id, "status": "up_next"}
+        ).sort("queue_position", -1).limit(1).to_list(1)
+        current_max = (
+            last_item[0]["queue_position"]
+            if last_item and last_item[0].get("queue_position") is not None
+            else None
+        )
+        append_result = compute_insert_position(current_max, None)
+        update_fields["queue_position"] = append_result["position"]
     await db.requests.update_one(
         {"id": request_id, "musician_id": musician_id},
-        {"$set": {"status": new_status}}
+        {"$set": update_fields}
     )
     
     # Emit analytics events based on status transition
@@ -5861,6 +5880,55 @@ async def update_request_status(
         )
     
     return {"success": True, "message": "Request status updated successfully", "new_status": new_status}
+
+@api_router.put("/requests/{request_id}/reorder")
+async def reorder_request(
+    request_id: str,
+    reorder_data: ReorderRequest,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Move an up_next request to a new position between two neighbors (either may be null for start/end of queue)."""
+    request = await db.requests.find_one({"id": request_id, "musician_id": musician_id})
+    if not request:
+        raise HTTPException(status_code=404, detail="Request not found")
+    if request.get("status") != "up_next":
+        raise HTTPException(status_code=400, detail="Only up_next requests can be reordered")
+    show_id = request.get("show_id")
+    prev_position = None
+    if reorder_data.prev_request_id:
+        prev_request = await db.requests.find_one({"id": reorder_data.prev_request_id, "musician_id": musician_id})
+        prev_position = prev_request.get("queue_position") if prev_request else None
+    next_position = None
+    if reorder_data.next_request_id:
+        next_request = await db.requests.find_one({"id": reorder_data.next_request_id, "musician_id": musician_id})
+        next_position = next_request.get("queue_position") if next_request else None
+    result = compute_insert_position(prev_position, next_position)
+    if not result["renumber_needed"]:
+        await db.requests.update_one(
+            {"id": request_id, "musician_id": musician_id},
+            {"$set": {"queue_position": result["position"]}}
+        )
+        return {"success": True, "renumbered": False}
+    # Rare fallback: gap exhausted, renumber this show's entire up_next queue.
+    queue_items = await db.requests.find(
+        {"show_id": show_id, "status": "up_next"}
+    ).sort("queue_position", 1).to_list(1000)
+    queue_items = [item for item in queue_items if item["id"] != request_id]
+    if reorder_data.prev_request_id is None:
+        target_index = 0
+    else:
+        target_index = next(
+            (i + 1 for i, item in enumerate(queue_items) if item["id"] == reorder_data.prev_request_id),
+            len(queue_items)
+        )
+    queue_items.insert(target_index, request)
+    renumbered = renumber_queue(queue_items)
+    for item in renumbered:
+        await db.requests.update_one(
+            {"id": item["id"], "musician_id": musician_id},
+            {"$set": {"queue_position": item["queue_position"]}}
+        )
+    return {"success": True, "renumbered": True}
 
 @api_router.get("/requests/updates/{musician_id}")
 async def get_request_updates(musician_id: str):
@@ -10313,6 +10381,37 @@ async def migrate_current_show_to_profiles():
             print(f"🛠️  Show-to-profile migration: migrated={migrated}, skipped_no_default_profile={skipped_no_profile}")
     except Exception as e:
         logger.error(f"Show-to-profile migration failed: {e}")
+
+
+@app.on_event("startup")
+async def migrate_up_next_queue_positions():
+    """One-time migration: assign queue_position to existing up_next requests that don't have one.
+    Idempotent: only acts on requests where queue_position is null/missing. Groups by
+    show_id, orders by created_at ascending (today's de facto order), and assigns
+    positions via renumber_queue so existing queues keep their current visible order.
+    """
+    try:
+        migrated_shows = 0
+        cursor = db.requests.find(
+            {"status": "up_next", "queue_position": None},
+            {"_id": 0, "id": 1, "show_id": 1, "created_at": 1}
+        )
+        by_show = {}
+        async for request in cursor:
+            by_show.setdefault(request.get("show_id"), []).append(request)
+        for show_id, items in by_show.items():
+            items.sort(key=lambda r: r["created_at"])
+            renumbered = renumber_queue(items)
+            for item in renumbered:
+                await db.requests.update_one(
+                    {"id": item["id"]},
+                    {"$set": {"queue_position": item["queue_position"]}}
+                )
+            migrated_shows += 1
+        if migrated_shows:
+            print(f"🛠️  Up Next queue-position migration: backfilled {migrated_shows} show(s)")
+    except Exception as e:
+        logger.error(f"Up Next queue-position migration failed: {e}")
 
 
 @app.on_event("startup")
