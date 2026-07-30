@@ -124,6 +124,14 @@ const useAuth = () => {
   return context;
 };
 
+function mergeLiveRequestUpdates(prevRequests, incomingRequests) {
+  const incomingById = new Map(incomingRequests.map(r => [r.id, r]));
+  const merged = prevRequests.map(r => incomingById.has(r.id) ? incomingById.get(r.id) : r);
+  const existingIds = new Set(prevRequests.map(r => r.id));
+  const newOnes = [...incomingById.values()].filter(r => !existingIds.has(r.id));
+  return [...newOnes, ...merged];
+}
+
 // Realtime Service (structured for easy WebSocket upgrade)
 class RealtimeService {
   constructor(musicianId, onUpdate) {
