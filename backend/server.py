@@ -814,6 +814,25 @@ def compute_insert_position(prev_position, next_position):
     return {"position": prev_position + gap / 2, "renumber_needed": False}
 
 
+def compute_insert_positions(prev_position, next_position, count):
+    MIN_GAP = 1e-9
+    if count <= 0:
+        return {"positions": [], "renumber_needed": False}
+    if prev_position is None and next_position is None:
+        return {"positions": [1000 * (i + 1) for i in range(count)], "renumber_needed": False}
+    if prev_position is None:
+        start = next_position - 1000 * count
+        return {"positions": [start + 1000 * i for i in range(count)], "renumber_needed": False}
+    if next_position is None:
+        start = prev_position + 1000
+        return {"positions": [start + 1000 * i for i in range(count)], "renumber_needed": False}
+    gap = next_position - prev_position
+    step = gap / (count + 1)
+    if step <= MIN_GAP:
+        return {"positions": None, "renumber_needed": True}
+    return {"positions": [prev_position + step * (i + 1) for i in range(count)], "renumber_needed": False}
+
+
 def renumber_queue(sorted_items, spacing=1000):
     result = []
     for index, item in enumerate(sorted_items):
