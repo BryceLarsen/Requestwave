@@ -8239,7 +8239,7 @@ My list:
                       .filter(r => !profileFilterId || (profileFilterId === 'main' ? !r.profile_id : r.profile_id === profileFilterId))
                       .filter(r => !eventFilterId || (eventFilterId === '__none__' ? !r.event_id : r.event_id === eventFilterId))
                       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Most recent first
-                      .slice(0, 50).map((request) => (
+                      .map((request) => (
                     <div
                       key={request.id}
                       data-testid={`request-card-${request.id}`}
