@@ -16260,7 +16260,13 @@ const OnStageInterface = () => {
   }
   
   const upNextRequests = requests.filter(r => r.status === 'up_next')
-    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); // oldest first
+    .sort((a, b) => {
+      const aPos = (typeof a.queue_position === 'number' && !isNaN(a.queue_position)) ? a.queue_position : Infinity;
+      const bPos = (typeof b.queue_position === 'number' && !isNaN(b.queue_position)) ? b.queue_position : Infinity;
+      const delta = aPos - bPos;
+      if (delta !== 0 && !isNaN(delta)) return delta;
+      return new Date(a.created_at) - new Date(b.created_at); // tiebreak / fallback when neither has a position yet
+    }); // manual queue order, falls back to oldest-first
   
   // Merge active requests with pending suggestions, sorted by created_at (oldest first)
   const activeRequestsAndSuggestions = [
