@@ -15963,12 +15963,8 @@ const OnStageInterface = () => {
       setMusician(response.data);
       setLoading(false); // Clear loading state once musician is fetched
       
-      // Fetch songs for this musician
-      const token = localStorage.getItem('token');
-      const songsResponse = await axios.get(`${API}/songs`, {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-        params: { musician_id: response.data.id }
-      });
+      // Fetch songs for this musician (public companion-view endpoint, no auth needed)
+      const songsResponse = await axios.get(`${API}/musicians/${slug}/onstage-companion-songs`);
       setSongs(songsResponse.data || []);
     } catch (error) {
       console.error('Error fetching musician:', error);
@@ -15989,11 +15985,19 @@ const OnStageInterface = () => {
       
       console.log('On Stage update received:', data);
       
-      // Fetch suggestions separately
-      const token = localStorage.getItem('token');
-      const suggestionsResponse = await axios.get(`${API}/song-suggestions`, {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      });
+      // Fetch suggestions separately - isolated try/catch: a non-logged-in companion
+      // viewer has no token, this 401s, and that must never block the request merge below.
+      let suggestionsData = null;
+      try {
+        const token = localStorage.getItem('token');
+        const suggestionsResponse = await axios.get(`${API}/song-suggestions`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        suggestionsData = suggestionsResponse.data;
+      } catch (suggestionsError) {
+        // Expected for a non-logged-in companion viewer - just skip suggestions this cycle.
+        suggestionsData = null;
+      }
       
       // Update requests with real data from backend
       if (data.requests) {
@@ -16027,8 +16031,8 @@ const OnStageInterface = () => {
       }
       
       // Update suggestions - only pending and learn_later (not matched/rejected)
-      if (suggestionsResponse.data) {
-        const activeSuggestions = suggestionsResponse.data.filter(s => 
+      if (suggestionsData) {
+        const activeSuggestions = suggestionsData.filter(s => 
           s.status === 'pending' || s.status === 'learn_later'
         );
         setSuggestions(activeSuggestions);
