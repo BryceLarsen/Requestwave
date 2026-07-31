@@ -1924,6 +1924,32 @@ const MusicianDashboard = () => {
     }
   };
 
+  const handleReactivateShow = async (showId, showName) => {
+    console.log('show_reactivate_start', { show_id: showId, show_name: showName, timestamp: new Date().toISOString() });
+    const show = shows.find(s => s.id === showId);
+    const conflictingShow = shows.find(s =>
+      s.id !== showId &&
+      s.status === 'active' &&
+      (show?.event_id ? s.event_id === show.event_id : s.profile_id === show?.profile_id)
+    );
+    const confirmMessage = conflictingShow
+      ? `"${conflictingShow.name}" is currently the active show. Reactivating "${showName}" will end "${conflictingShow.name}" and make "${showName}" the on-stage show again. Continue?`
+      : `Reactivate "${showName}"? It will become the on-stage show again.`;
+    if (confirm(confirmMessage)) {
+      try {
+        await axios.put(`${API}/shows/${showId}/reactivate`);
+        fetchGroupedRequests();
+        fetchShows();
+        fetchCurrentShow();
+        console.log('show_reactivate_success', { show_id: showId, show_name: showName, timestamp: new Date().toISOString() });
+      } catch (error) {
+        console.error('Error reactivating show:', error);
+        showErrorToast(error.response?.data?.detail || 'Error reactivating show. Please try again.', error);
+        console.log('show_reactivate_error', { show_id: showId, show_name: showName, error: error.message, timestamp: new Date().toISOString() });
+      }
+    }
+  };
+
   // NEW: Song suggestions management functions
   const fetchSongSuggestions = async (showId = null) => {
     try {
@@ -7894,6 +7920,14 @@ My list:
                                 {requests.filter(r => r.show_id === show.id && r.status === 'pending').length} open
                               </span>
                             )}
+                            {show.status === 'ended' && (
+                              <span
+                                data-testid={`show-ended-badge-${show.id}`}
+                                className="ml-2 text-gray-400 text-xs"
+                              >
+                                Ended
+                              </span>
+                            )}
                           </div>
                           <div className="flex justify-between items-center gap-3">
                             <span className="text-gray-400 text-sm">
@@ -7928,6 +7962,21 @@ My list:
                               >
                                 📤
                               </button>
+                              {show.status === 'ended' && (
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleReactivateShow(show.id, show.name);
+                                  }}
+                                  data-testid={`reactivate-show-${show.id}`}
+                                  className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 rounded transition duration-300"
+                                  title={`Reactivate show "${show.name}" (makes it the on-stage show again)`}
+                                  aria-label={`Reactivate ${show.name}`}
+                                >
+                                  ▶️
+                                </button>
+                              )}
                               <button
                                 onClick={(e) => {
                                   e.preventDefault();
