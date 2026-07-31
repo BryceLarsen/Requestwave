@@ -15632,37 +15632,12 @@ const SuggestionCard = ({ item, index, onMatchToSong, onLearnLater, onSkip, song
         </div>
       )}
       
-      {/* Actions */}
-      <div className="flex space-x-2">
-        <button
-          onClick={() => setShowSongPicker(true)}
-          className="flex-1 bg-green-600 hover:bg-green-700 py-2 px-3 rounded-lg font-bold text-white text-sm"
-        >
-          Match to Song
-        </button>
-        <button
-          onClick={() => onLearnLater(item.id)}
-          className="flex-1 bg-yellow-600 hover:bg-yellow-700 py-2 px-3 rounded-lg font-bold text-white text-sm inline-flex items-center justify-center gap-1.5"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-          </svg>
-          Learn it later
-        </button>
-        <button
-          onClick={() => onSkip(item.id)}
-          className="bg-red-600 hover:bg-red-700 py-2 px-3 rounded-lg font-bold text-white text-sm"
-          title="Skip"
-        >
-          🗑️
-        </button>
-      </div>
     </div>
   );
 };
 
 // Shared Completed Item Component - Used by both Dashboard On Stage and Standalone On Stage
-const CompletedRequestItem = ({ request, onRestore, compact = false }) => {
+const CompletedRequestItem = ({ request, onRestore, compact = false, viewOnly = false }) => {
   const isSuggestion = request.type === 'suggestion';
   const isLearnLater = isSuggestion && request.status === 'learn_later';
   
@@ -15732,14 +15707,16 @@ const CompletedRequestItem = ({ request, onRestore, compact = false }) => {
       </div>
       
       {/* Restore Button */}
-      <div className="flex space-x-2">
-        <button
-          onClick={() => onRestore(request.id)}
-          className="flex-1 bg-yellow-600 hover:bg-yellow-700 active:bg-yellow-800 py-2 px-4 rounded-lg font-bold text-white transition duration-200"
-        >
-          Restore
-        </button>
-      </div>
+      {!viewOnly && (
+        <div className="flex space-x-2">
+          <button
+            onClick={() => onRestore(request.id)}
+            className="flex-1 bg-yellow-600 hover:bg-yellow-700 active:bg-yellow-800 py-2 px-4 rounded-lg font-bold text-white transition duration-200"
+          >
+            Restore
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -15808,88 +15785,13 @@ const RequestCard = ({ item, index, onAccept, onPlay, onSkip, onRestore, showMov
         <div className={`text-white mb-2 ${isUpNext || isCompleted ? 'text-lg font-bold' : 'text-2xl font-black'}`}>
           <span className="text-gray-300 font-semibold">From:</span> <span className="font-black text-yellow-300">{item.requester_name || 'Anonymous'}</span>
         </div>
-        {(item.requester_email || item.tip_clicked) && (
-          <div className="flex items-center gap-3 mb-2" data-testid="request-status-indicators">
-            {item.requester_email && (
-              <span className="inline-flex items-center gap-1 text-gray-300 text-xs" data-testid="request-email-indicator" title={item.requester_email}>
-                <span>✉️</span>
-                <span className="opacity-70">email</span>
-              </span>
-            )}
-            {item.tip_clicked && (
-              <span className="inline-flex items-center gap-1 text-gray-300 text-xs" data-testid="request-tip-indicator">
-                <span>💰</span>
-                <span className="opacity-70">tapped tip</span>
-              </span>
-            )}
-          </div>
-        )}
         {item.dedication && (
           <div className={`text-purple-200 italic font-bold ${isUpNext || isCompleted ? 'text-base' : 'text-xl'}`}>
             💌 "{item.dedication}"
           </div>
         )}
-        {/* Tip Amount Display */}
-        {item.tip_amount && item.tip_amount > 0 && (
-          <div className={`text-green-400 font-bold mt-2 ${isUpNext || isCompleted ? 'text-sm' : 'text-base'}`}>
-            💰 ${item.tip_amount.toFixed(2)} tip included!
-          </div>
-        )}
       </div>
       
-      {/* Action Buttons */}
-      {showMoveButtons && (!item.status || item.status === 'pending') && (
-        <div className="flex space-x-2">
-          <button
-            onClick={() => onAccept(item.id)}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
-          >
-            ⬆️ Add to Up Next
-          </button>
-          <button
-            onClick={() => onPlay(item.id)}
-            className="flex-1 bg-green-600 hover:bg-green-700 active:bg-green-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
-          >
-            🎵 Play Now
-          </button>
-          <button
-            onClick={() => onSkip(item.id)}
-            className="flex-1 bg-red-600 hover:bg-red-700 active:bg-red-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
-          >
-            ❌ Skip
-          </button>
-        </div>
-      )}
-      
-      {/* Up Next Section Buttons */}
-      {isUpNext && (
-        <div className="flex space-x-2">
-          <button
-            onClick={() => onPlay(item.id)}
-            className="flex-1 bg-green-600 hover:bg-green-700 active:bg-green-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
-          >
-            🎵 Play Now
-          </button>
-          <button
-            onClick={() => onSkip(item.id)}
-            className="flex-1 bg-red-600 hover:bg-red-700 active:bg-red-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
-          >
-            ❌ Remove
-          </button>
-        </div>
-      )}
-      
-      {/* Completed Section - Restore Button */}
-      {isCompleted && onRestore && (
-        <div className="flex space-x-2">
-          <button
-            onClick={() => onRestore(item.id)}
-            className="flex-1 bg-yellow-600 hover:bg-yellow-700 active:bg-yellow-800 py-3 px-4 rounded-lg font-bold text-white transition duration-200 touch-manipulation"
-          >
-            ↩️ Restore to Active
-          </button>
-        </div>
-      )}
     </div>
   );
 };
@@ -16604,6 +16506,7 @@ const OnStageInterface = () => {
                       updateRequestStatus(requestId, 'accepted');
                     }}
                     compact={false}
+                    viewOnly={true}
                   />
                 ))}
               </div>
