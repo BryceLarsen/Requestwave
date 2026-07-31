@@ -8155,6 +8155,115 @@ async def restore_show(
         logger.error(f"Error restoring show: {str(e)}")
         raise HTTPException(status_code=500, detail="Error restoring show")
 
+@api_router.put("/shows/{show_id}/reactivate")
+async def reactivate_show(
+    show_id: str,
+    musician_id: str = Depends(get_current_musician)
+):
+    """Reactivate an ended show, bringing it back to active on its event/profile.
+    Mirrors start_show's defensive-end behavior for any other active show on the owner."""
+    try:
+        # Verify show belongs to musician
+        show = await db.shows.find_one({"id": show_id, "musician_id": musician_id})
+        if not show:
+            raise HTTPException(status_code=404, detail="Show not found")
+        
+        # Only ended shows can be reactivated
+        current_status = show.get("status")
+        if current_status == "active":
+            raise HTTPException(status_code=400, detail="Show is already active")
+        if current_status == "archived":
+            raise HTTPException(status_code=400, detail="Archived shows must be restored, not reactivated")
+        
+        show_name = show.get("name")
+        
+        # Determine the show's owner: event takes precedence, else the profile
+        target_event = None
+        target_profile = None
+        event_id = show.get("event_id")
+        if event_id:
+            target_event = await db.events.find_one(
+                {"id": event_id, "musician_id": musician_id}, {"_id": 0}
+            )
+        else:
+            target_profile = await db.profiles.find_one(
+                {"id": show.get("profile_id"), "musician_id": musician_id}, {"_id": 0}
+            )
+        
+        # Defensively end any DIFFERENT active show on this event or profile first
+        if target_event:
+            previous_show_id = target_event.get("current_show_id")
+        elif target_profile:
+            previous_show_id = target_profile.get("current_show_id")
+        else:
+            previous_show_id = None
+        
+        ended_previous_show_id = None
+        ended_previous_show_name = None
+        if previous_show_id and previous_show_id != show_id:
+            previous_show = await db.shows.find_one({"id": previous_show_id})
+            ended_previous_show_id = previous_show_id
+            ended_previous_show_name = previous_show.get("name") if previous_show else None
+            await db.shows.update_one(
+                {"id": previous_show_id},
+                {"$set": {
+                    "ended_at": datetime.now(timezone.utc),
+                    "status": "ended"
+                }}
+            )
+            logger.info(f"Defensively ended previous show {previous_show_id} before reactivating {show_id}")
+        
+        # Reactivate this show
+        await db.shows.update_one(
+            {"id": show_id},
+            {"$set": {
+                "status": "active",
+                "ended_at": None,
+                "restored_at": datetime.now(timezone.utc)
+            }}
+        )
+        
+        # Point the owner's current active show at this one
+        if target_event:
+            await db.events.update_one(
+                {"id": target_event["id"]},
+                {"$set": {"current_show_id": show_id, "current_show_name": show_name}}
+            )
+        elif target_profile:
+            await db.profiles.update_one(
+                {"id": target_profile["id"]},
+                {"$set": {"current_show_id": show_id, "current_show_name": show_name}}
+            )
+        
+        # Emit analytics event
+        await emit_analytics_event(
+            event_type="musician.show_reactivated",
+            musician_id=musician_id,
+            source="musician",
+            entity_type="show",
+            show_id=show_id,
+            entity_id=show_id,
+            metadata={
+                "show_name": show_name,
+                "previous_show_id": ended_previous_show_id,
+                "previous_show_name": ended_previous_show_name
+            }
+        )
+        
+        logger.info(f"Reactivated show {show_id} for musician {musician_id}")
+        return {
+            "success": True,
+            "message": f"Show '{show['name']}' reactivated",
+            "ended_previous_show_id": ended_previous_show_id,
+            "ended_previous_show_name": ended_previous_show_name
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error reactivating show: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error reactivating show")
+
 # NEW: Playlist endpoints (Pro feature)
 @api_router.post("/playlists", response_model=PlaylistResponse)
 async def create_playlist(
