@@ -4742,6 +4742,8 @@ async def get_onstage_companion_songs(slug: str):
     return [
         {
             "id": song.get("id"),
+            "title": song.get("title"),
+            "artist": song.get("artist"),
             "chart_type": song.get("chart_type"),
             "chart_url": song.get("chart_url"),
             "chart_chordpro": song.get("chart_chordpro"),
