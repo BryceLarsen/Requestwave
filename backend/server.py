@@ -4726,6 +4726,30 @@ async def get_musician_songs(
     
     return updated_songs
 
+@api_router.get("/musicians/{slug}/onstage-companion-songs")
+async def get_onstage_companion_songs(slug: str):
+    """Public, no-auth chart lookup for the standalone /on-stage/:slug companion view.
+
+    Deliberately public (mirrors GET /musicians/{slug}). Returns the musician's TRUE
+    full catalog with no hidden/playlist/audience-link filtering, so no in-progress or
+    up-next song is ever missing its chart. Each item carries ONLY chart-lookup fields.
+    """
+    musician = await db.musicians.find_one({"slug": slug})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+
+    songs = await db.songs.find({"musician_id": musician["id"]}).to_list(length=None)
+    return [
+        {
+            "id": song.get("id"),
+            "chart_type": song.get("chart_type"),
+            "chart_url": song.get("chart_url"),
+            "chart_chordpro": song.get("chart_chordpro"),
+            "transpose": song.get("transpose"),
+        }
+        for song in songs
+    ]
+
 # Request endpoints
 @api_router.post("/requests", response_model=Request)
 async def create_request(request_data: RequestCreate):
