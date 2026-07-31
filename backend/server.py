@@ -4752,6 +4752,29 @@ async def get_onstage_companion_songs(slug: str):
         for song in songs
     ]
 
+@api_router.get("/musicians/{slug}/onstage-companion-setlists")
+async def get_onstage_companion_setlists(slug: str):
+    """Public, no-auth setlist read for the standalone /on-stage/:slug companion view.
+
+    Deliberately public (mirrors GET /musicians/{slug}/onstage-companion-songs). Same
+    query and sort as the authenticated GET /setlists, scoped by slug instead of the
+    JWT's musician_id. Each item carries ONLY minimal fields.
+    """
+    musician = await db.musicians.find_one({"slug": slug})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+
+    setlists_cursor = db.setlists.find({"musician_id": musician["id"]}).sort("created_at", DESCENDING)
+    setlists = await setlists_cursor.to_list(None)
+    return [
+        {
+            "id": setlist.get("id"),
+            "name": setlist.get("name"),
+            "song_ids": setlist.get("song_ids"),
+        }
+        for setlist in setlists
+    ]
+
 # Request endpoints
 @api_router.post("/requests", response_model=Request)
 async def create_request(request_data: RequestCreate):
