@@ -5152,7 +5152,7 @@ async def get_musician_requests(
     
     cursor = db.requests.find(query).sort("created_at", DESCENDING)
     if show_id is not None:
-        requests = await cursor.limit(50).to_list(50)
+        requests = await cursor.limit(5000).to_list(5000)
     else:
         requests = await cursor.limit(5000).to_list(5000)
     
@@ -6067,7 +6067,7 @@ async def get_request_updates(musician_id: str):
     requests = await db.requests.find({
         "musician_id": musician_id,
         "status": {"$ne": "archived"}  # Exclude archived requests
-    }).sort("created_at", DESCENDING).limit(50).to_list(50)
+    }).sort("created_at", DESCENDING).limit(5000).to_list(5000)
     
     # Convert to Request objects for proper serialization
     request_objects = []
