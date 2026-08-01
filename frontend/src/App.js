@@ -1941,6 +1941,8 @@ const MusicianDashboard = () => {
         fetchGroupedRequests();
         fetchShows();
         fetchCurrentShow();
+        fetchEvents();
+        fetchProfiles();
         console.log('show_reactivate_success', { show_id: showId, show_name: showName, timestamp: new Date().toISOString() });
       } catch (error) {
         console.error('Error reactivating show:', error);
