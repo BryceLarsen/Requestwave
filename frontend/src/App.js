@@ -7547,13 +7547,22 @@ My list:
                           const selectedPlaylist = isRealPlaylistFilter ? playlists.find(p => p.id === playlistFilter) : null;
                           if (selectedPlaylist && playlistFilterMode === 'in') {
                             return (
-                              <button
-                                onClick={bulkRemoveFromFilteredPlaylist}
-                                className="bg-orange-600 hover:bg-orange-700 px-3 py-1 rounded text-sm font-medium transition duration-300 flex-shrink-0"
-                                data-testid="bulk-remove-from-playlist-btn"
-                              >
-                                Remove from Playlist ({selectedSongs.size})
-                              </button>
+                              <>
+                                <button
+                                  onClick={bulkRemoveFromFilteredPlaylist}
+                                  className="bg-orange-600 hover:bg-orange-700 px-3 py-1 rounded text-sm font-medium transition duration-300 flex-shrink-0"
+                                  data-testid="bulk-remove-from-playlist-btn"
+                                >
+                                  Remove from Playlist ({selectedSongs.size})
+                                </button>
+                                <button
+                                  onClick={() => setShowPlaylistModal(true)}
+                                  className="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded text-sm font-medium transition duration-300 flex-shrink-0"
+                                  data-testid="bulk-add-to-other-playlist-btn"
+                                >
+                                  Add to Other Playlist ({selectedSongs.size})
+                                </button>
+                              </>
                             );
                           }
                           if (selectedPlaylist && playlistFilterMode === 'not_in') {
