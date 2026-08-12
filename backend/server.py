@@ -8300,14 +8300,16 @@ async def create_playlist(
         # Check Pro access
         await require_pro_access(musician_id)
         
-        # Validate song IDs belong to the musician
+        # Filter out any song_ids that don't belong to this musician (e.g. stale
+        # references to songs removed some other way) instead of rejecting the
+        # whole update. Preserve the original order.
         if playlist_data.song_ids:
-            song_count = await db.songs.count_documents({
-                "id": {"$in": playlist_data.song_ids},
-                "musician_id": musician_id
-            })
-            if song_count != len(playlist_data.song_ids):
-                raise HTTPException(status_code=400, detail="Some songs don't belong to you")
+            valid_docs = await db.songs.find(
+                {"id": {"$in": playlist_data.song_ids}, "musician_id": musician_id},
+                {"_id": 0, "id": 1}
+            ).to_list(None)
+            valid_ids = {d["id"] for d in valid_docs}
+            playlist_data.song_ids = [sid for sid in playlist_data.song_ids if sid in valid_ids]
         
         # Create playlist
         now = datetime.utcnow()
@@ -8439,14 +8441,16 @@ async def update_playlist(
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
         
-        # Validate song IDs belong to the musician
+        # Filter out any song_ids that don't belong to this musician (e.g. stale
+        # references to songs removed some other way) instead of rejecting the
+        # whole update. Preserve the original order.
         if playlist_data.song_ids:
-            song_count = await db.songs.count_documents({
-                "id": {"$in": playlist_data.song_ids},
-                "musician_id": musician_id
-            })
-            if song_count != len(playlist_data.song_ids):
-                raise HTTPException(status_code=400, detail="Some songs don't belong to you")
+            valid_docs = await db.songs.find(
+                {"id": {"$in": playlist_data.song_ids}, "musician_id": musician_id},
+                {"_id": 0, "id": 1}
+            ).to_list(None)
+            valid_ids = {d["id"] for d in valid_docs}
+            playlist_data.song_ids = [sid for sid in playlist_data.song_ids if sid in valid_ids]
         
         # Update playlist
         await db.playlists.update_one(

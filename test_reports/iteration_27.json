@@ -1,0 +1,24 @@
+{
+  "summary": "Verified the self-healing filter fix for playlist song_ids on POST /api/playlists and PUT /api/playlists/{playlist_id}. Wrote 5 pytest cases covering: (1) create with only valid owned songs, (2) create with valid + stale ids (stale filtered, order preserved), (3) update by adding a valid owned song (the reported bug flow) — succeeds 200, no 400 'Some songs don't belong to you', (4) update with stale id merged in — stale silently filtered, valid persisted, (5) update with all valid ids — all stored. All 5 tests PASSED. Login used test@test.com / test (BILLING_ENABLED=false so require_pro_access is bypassed in this env).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_playlist_self_healing.py",
+    "/app/test_reports/pytest/playlist_self_healing.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fix is symmetric and correct in both create_playlist (line ~8306) and update_playlist (line ~8447). Uses $in query with musician_id filter and preserves original order via list comprehension.",
+    "Minor: the filter block is guarded by `if playlist_data.song_ids:` — an empty list is a valid clear operation and correctly falls through untouched. Good.",
+    "Note: BILLING_ENABLED=false in this env means require_pro_access is a no-op; Pro-gating was not exercised end-to-end here but is orthogonal to this fix.",
+    "server.py is >10k lines — long-standing concern; consider splitting (out of scope for this bug)."
+  ],
+  "updated_files": ["/app/backend/tests/test_playlist_self_healing.py"],
+  "success_rate": {"backend": "100% (5/5)", "frontend": "N/A (skipped per request)"},
+  "test_credentials": "test@test.com / test (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Test creates 3 TEST_ prefixed songs (module scope, cleaned up on teardown) and TEST_ prefixed playlists (cleaned up per test).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Regression test file /app/backend/tests/test_playlist_self_healing.py covers create+update playlist self-healing filter behavior. Reusable for future refactors.",
+  "rca of the issue": "Previous code called db.songs.count_documents({id: {$in: song_ids}, musician_id: ...}) and compared to len(song_ids); any stale id already stored in the playlist caused the whole request to 400. Fix queries for owned ids and keeps only those, preserving order — never raises 400 for ownership. Verified via test_update_playlist_add_valid_song_succeeds and test_update_playlist_with_stale_id_is_filtered."
+}

@@ -19,7 +19,7 @@ import time
 from typing import Dict, Any
 
 # Configuration
-BASE_URL = "https://artist-email-studio.preview.emergentagent.com/api"
+BASE_URL = "https://event-analytics-21.preview.emergentagent.com/api"
 
 # Target user credentials
 USER_CREDENTIALS = {

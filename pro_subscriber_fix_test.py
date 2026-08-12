@@ -31,7 +31,7 @@ import pymongo
 from pymongo import MongoClient
 
 # Configuration
-BASE_URL = "https://artist-email-studio.preview.emergentagent.com/api"
+BASE_URL = "https://event-analytics-21.preview.emergentagent.com/api"
 
 # Existing Pro account credentials
 EXISTING_PRO_ACCOUNT = {
