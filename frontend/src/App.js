@@ -3400,12 +3400,16 @@ const MusicianDashboard = () => {
   const applySorting = (songsToSort) => {
     const sorted = [...songsToSort];
     
-    switch (sortOption) {
-      case 'most-popular':
+    switch (sortBy) {
+      case 'popularity':
         return sorted.sort((a, b) => (b.unique_show_count || 0) - (a.unique_show_count || 0));
-      case 'alphabetical':
+      case 'title':
         return sorted.sort((a, b) => a.title.localeCompare(b.title));
-      case 'newest':
+      case 'artist':
+        return sorted.sort((a, b) => (a.artist || '').localeCompare(b.artist || ''));
+      case 'year':
+        return sorted.sort((a, b) => (b.year || 0) - (a.year || 0));
+      case 'created_at':
         return sorted.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
       case 'random':
         // Use seeded random for consistent results
@@ -3630,14 +3634,14 @@ const MusicianDashboard = () => {
   // Update filtered songs when songs, playlists, or filters change
   React.useEffect(() => {
     filterSongs();
-  }, [songs, playlists, songFilter, genreFilter, playlistFilter, playlistFilterMode, moodFilter, yearFilter, decadeFilter, sortOption, randomSeed]);
+  }, [songs, playlists, songFilter, genreFilter, playlistFilter, playlistFilterMode, moodFilter, yearFilter, decadeFilter, sortBy, randomSeed]);
 
   // Reset the visible-count only when the user changes a filter or sort — NOT
   // when songs or playlists mutate, so editing/hiding a song or moving it in/out
   // of a playlist doesn't throw the user back to the first 100 results.
   React.useEffect(() => {
     setSongsVisibleCount(100);
-  }, [songFilter, genreFilter, playlistFilter, playlistFilterMode, moodFilter, yearFilter, decadeFilter, sortOption, randomSeed]);
+  }, [songFilter, genreFilter, playlistFilter, playlistFilterMode, moodFilter, yearFilter, decadeFilter, sortBy, randomSeed]);
 
   // Reset playlist filter mode to 'in' whenever the selected playlist changes
   React.useEffect(() => {
