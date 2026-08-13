@@ -8694,15 +8694,17 @@ async def update_playlist_songs(
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
         
-        # Verify all songs belong to the musician and exist
+        # Filter out any song_ids that don't belong to this musician (e.g. stale
+        # references to songs removed some other way) instead of rejecting the
+        # whole update. Hidden songs are still valid playlist members, "hidden"
+        # only controls audience visibility. Preserve the original order.
         if unique_song_ids:
-            song_check_count = await db.songs.count_documents({
-                "id": {"$in": unique_song_ids},
-                "musician_id": musician_id,
-                "hidden": {"$ne": True}
-            })
-            if song_check_count != len(unique_song_ids):
-                raise HTTPException(status_code=400, detail="Some songs are invalid or don't belong to you")
+            valid_docs = await db.songs.find(
+                {"id": {"$in": unique_song_ids}, "musician_id": musician_id},
+                {"_id": 0, "id": 1}
+            ).to_list(None)
+            valid_ids = {d["id"] for d in valid_docs}
+            unique_song_ids = [sid for sid in unique_song_ids if sid in valid_ids]
         
         # Update playlist with new song order
         now = datetime.utcnow()
