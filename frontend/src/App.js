@@ -14109,7 +14109,27 @@ const AudienceInterface = () => {
         message: ''
       });
       setShowSuggestionModal(false);
-      alert('Thank you for your song suggestion! The artist will review it soon.');
+      // Persist name/email the same way handleRequest and
+      // handleFollowUpComplete do, so a future request doesn't ask again.
+      localStorage.setItem('requestwave_requester_name', suggestionData.requester_name);
+      localStorage.setItem('requestwave_requester_email', suggestionData.requester_email);
+      // Route through the same success + tip screen a normal request gets,
+      // instead of a plain alert(). selectedSong only needs to be truthy to
+      // open the modal here, success_tip's own content doesn't use its
+      // fields, we skip straight past the 'identity' step that does.
+      setSelectedSong({ title: suggestionData.suggested_title, artist: suggestionData.suggested_artist });
+      setTipAmount('');
+      setTipMessage('');
+      if (musician?.venmo_enabled && musician.venmo_username) {
+        setTipPlatform('venmo');
+      } else if (musician?.paypal_enabled && musician.paypal_username) {
+        setTipPlatform('paypal');
+      } else if (musician?.cash_app_enabled && musician.cash_app_username) {
+        setTipPlatform('cashapp');
+      } else if (musician?.zelle_enabled && (musician.zelle_email || musician.zelle_phone)) {
+        setTipPlatform('zelle');
+      }
+      setRequestStep('success_tip');
       
     } catch (error) {
       console.error('Error submitting suggestion:', error);
