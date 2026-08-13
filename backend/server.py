@@ -3858,10 +3858,11 @@ async def match_suggestion_to_song(
         if not song:
             raise HTTPException(status_code=404, detail="Song not found")
         
-        # Get default profile's current show
-        default_profile = await _get_default_profile(musician_id)
-        current_show_id = default_profile.get("current_show_id") if default_profile else None
-        current_show_name = default_profile.get("current_show_name") if default_profile else None
+        # Attach the new request to the show this suggestion actually came
+        # from (captured on the suggestion when it was submitted), not
+        # whatever show happens to be active right now at match time.
+        current_show_id = suggestion.get("show_id")
+        current_show_name = suggestion.get("show_name")
         
         # Create a normal request from the suggestion
         request_dict = {
