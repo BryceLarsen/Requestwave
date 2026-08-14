@@ -5638,7 +5638,25 @@ const MusicianDashboard = () => {
             const songId = openChordpro.id;
             if (!showId || !songId) return null;
             const songReqs = buildSongRequests(requests, songId, showId);
-            if (songReqs.length === 0) return null;
+            if (songReqs.length === 0) {
+              // No live request for this song right now. If the chart was opened
+              // from the On Stage Setlist panel, still show a Played button wired
+              // to that panel's own played toggle (unrelated to requests) instead
+              // of hiding the cockpit entirely.
+              if (openChordpro.setlistOnPlayed) {
+                return {
+                  isOnStage: true,
+                  requests: [],
+                  queue: [],
+                  onPlayed: () => {
+                    openChordpro.setlistOnPlayed();
+                    setOpenChordpro(null);
+                  },
+                  onOpenSong: () => {},
+                };
+              }
+              return null;
+            }
             return {
               isOnStage: true,
               requests: songReqs,

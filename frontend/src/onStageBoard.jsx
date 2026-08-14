@@ -397,7 +397,13 @@ export default function OnStageBoard({
     const hasChordpro = song.chart_type === 'chordpro' && song.chart_chordpro;
     const hasExternal = (song.chart_type === 'link' || song.chart_type === 'pdf') && song.chart_url;
     if (hasChordpro) {
-      setOpenChordpro({ chordpro: song.chart_chordpro, title: song.title, id: song.id, transpose: song.transpose || 0 });
+      setOpenChordpro({
+        chordpro: song.chart_chordpro,
+        title: song.title,
+        id: song.id,
+        transpose: song.transpose || 0,
+        setlistOnPlayed: () => toggleSetlistSongPlayed(song.id),
+      });
     } else if (hasExternal) {
       window.open(song.chart_url, '_blank');
     } else if (onEditSong) {
