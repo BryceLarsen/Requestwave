@@ -12905,6 +12905,7 @@ const AudienceInterface = () => {
   });
   const [requestForm, setRequestForm] = useState({
     requester_name: localStorage.getItem('requestwave_requester_name') || '',
+    requester_email: '',
     dedication: ''
   });
   const [selectedSong, setSelectedSong] = useState(null);
@@ -13532,7 +13533,6 @@ const AudienceInterface = () => {
         setRequestForm(prev => ({ ...prev, dedication: '' }));
         
         // Branch on profile email_capture_mode ("optional" | "off" | "required")
-        const captureMode = profileData?.email_capture_mode || 'optional';
         const savedEmail = localStorage.getItem('requestwave_requester_email');
 
         const goStraightToSuccessTip = () => {
@@ -13551,20 +13551,22 @@ const AudienceInterface = () => {
           setRequestStep('success_tip');
         };
 
-        if (captureMode === 'off') {
+        if (captureMode === 'required') {
+          // Email was already collected on the identity step itself and sent
+          // with the request in submitRequestWithTip - nothing left to attach,
+          // no followup step needed.
+          localStorage.setItem('requestwave_requester_email', requestForm.requester_email);
+          goStraightToSuccessTip();
+        } else if (captureMode === 'off') {
           // Email capture disabled - never show the followup step
           goStraightToSuccessTip();
         } else if (savedEmail) {
           // A previously captured email exists -> attach it to this request and skip
-          // the followup step (applies to both 'optional' and 'required' modes).
+          // the followup step (applies to 'optional' mode).
           try {
             await axios.post(`${API}/requests/${submittedRequest.id}/email`, { email: savedEmail, audience_id: audienceId });
           } catch (e) { console.error('Background email attach failed', e); }
           goStraightToSuccessTip();
-        } else if (captureMode === 'required') {
-          // Email is required and none saved yet - show the followup step
-          setRequestStep('followup');
-          setFollowUpEmail('');
         } else {
           // 'optional' + no saved email -> show followup step
           setRequestStep('followup');
@@ -13822,7 +13824,7 @@ const AudienceInterface = () => {
       const response = await axios.post(`${API}/requests`, {
         song_id: song.id,
         requester_name: requestForm.requester_name,
-        requester_email: '', // Email now captured in Moment 3, not at submission
+        requester_email: requestForm.requester_email || '', // Blank for optional/off (unchanged); populated for required (collected on this same screen now)
         dedication: requestForm.dedication || '',
         tip_amount: parseFloat(tipAmount) || 0.0,
         audience_id: audienceId,  // Phase 2: Include stable audience identifier
@@ -14539,7 +14541,9 @@ const AudienceInterface = () => {
             <div className="bg-gray-800 rounded-t-xl md:rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
               
               {/* Moment 2: Identity + Dedication */}
-              {requestStep === 'identity' && (
+              {requestStep === 'identity' && (() => {
+                const captureMode = profileData?.email_capture_mode || 'optional';
+                return (
                 <>
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1 min-w-0 mr-4">
@@ -14566,6 +14570,22 @@ const AudienceInterface = () => {
                         data-testid="request-name-input"
                       />
                     </div>
+                    {captureMode === 'required' && (
+                      <div>
+                        <input
+                          type="email"
+                          placeholder="Your Email"
+                          value={requestForm.requester_email}
+                          onChange={(e) => setRequestForm({...requestForm, requester_email: e.target.value})}
+                          className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400"
+                          required
+                          data-testid="request-email-input"
+                        />
+                        <p className="text-xs text-gray-500 mt-1.5">
+                          *By sending this request you agree to receiving periodic emails from {musician?.name || 'the artist'}.
+                        </p>
+                      </div>
+                    )}
                     
                     <div>
                       <textarea
@@ -14596,7 +14616,8 @@ const AudienceInterface = () => {
                     </button>
                   </div>
                 </>
-              )}
+                );
+              })()}
               
               {/* Email Step: Identity moment (optional/required, hidden when off) */}
               {requestStep === 'followup' && (() => {
@@ -14638,6 +14659,9 @@ const AudienceInterface = () => {
                           You'll only need to enter this once. We remember you on this device.
                         </p>
                       )}
+                      <p className="text-xs text-gray-500 mt-1.5">
+                        *By sending this request you agree to receiving periodic emails from {musician?.name || 'the artist'}.
+                      </p>
                     </div>
                     {followUpError && (
                       <p className="text-red-400 text-sm" data-testid="followup-error">
@@ -15049,6 +15073,9 @@ const AudienceInterface = () => {
                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400"
                     required
                   />
+                  <p className="text-xs text-gray-500 mt-1.5">
+                    *By sending this suggestion you agree to receiving periodic emails from {musician?.name || 'the artist'}.
+                  </p>
                 </div>
                 
                 <div>
