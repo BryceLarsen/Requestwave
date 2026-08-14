@@ -16043,8 +16043,6 @@ const OnStageInterface = () => {
               console.log('New requests detected:', newRequests);
               showNotification(newRequests);
               playNotificationSound();
-              // Refresh the shows list so a newly-active show's card appears live
-              fetchShows();
             }
           }
           
