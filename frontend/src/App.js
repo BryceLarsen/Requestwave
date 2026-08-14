@@ -2957,6 +2957,41 @@ const MusicianDashboard = () => {
       showErrorToast(err.response?.data?.detail || 'Error updating event status');
     }
   };
+  // Go Live: starts (or restarts) the show for this event in one action,
+  // instead of just flipping event status. /shows/start already defensively
+  // ends any show previously active on this event/profile before creating the
+  // new one, so this is safe to call directly - no separate stop call needed.
+  // If another show is already running on this event's profile, confirm
+  // before swapping (a silent mid-set context swap can brick a gig).
+  const handleGoLiveEvent = async (event) => {
+    const eventProfile = profiles.find(p => p.id === event.profile_id);
+    const activeShowName = eventProfile?.current_show_id ? eventProfile.current_show_name : null;
+    if (activeShowName) {
+      const ok = window.confirm(`Stop the current show "${activeShowName}" and start "${event.name}"?`);
+      if (!ok) return;
+    }
+    try {
+      const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      await axios.post(`${API}/shows/start`, {
+        name: event.name,
+        timezone: browserTimezone,
+        event_id: event.id
+      }, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (event.status !== 'live') {
+        await handleEventStatusChange(event, 'live');
+      }
+      fetchProfiles();
+      fetchEvents();
+      fetchShows();
+      fetchCurrentShow();
+      setOnstageSelection(`event:${event.id}`);
+    } catch (error) {
+      console.error('Error going live:', error);
+      showErrorToast(error.response?.data?.detail || 'Error going live. Please try again.', error);
+    }
+  };
 
   const buildEventUrl = (event) => {
     const profile = profiles.find(p => p.id === event.profile_id);
@@ -9953,11 +9988,11 @@ My list:
                           }
                         }} className="text-xs px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded">Copy URL</button>
                         <button data-testid={`event-edit-${ev.id}`} onClick={() => openEventEditor(ev)} className="text-xs px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded">Edit</button>
+                        {(ev.status === 'upcoming' || ev.status === 'live') && (
+                          <button data-testid={`event-go-live-${ev.id}`} onClick={() => handleGoLiveEvent(ev)} className="text-xs px-3 py-1 bg-green-700 hover:bg-green-600 rounded">Go Live</button>
+                        )}
                         {ev.status === 'upcoming' && (
-                          <>
-                            <button data-testid={`event-go-live-${ev.id}`} onClick={() => handleEventStatusChange(ev, 'live')} className="text-xs px-3 py-1 bg-green-700 hover:bg-green-600 rounded">Go Live</button>
-                            <button data-testid={`event-delete-${ev.id}`} onClick={() => handleDeleteEvent(ev)} className="text-xs px-3 py-1 bg-red-700 hover:bg-red-600 rounded">Delete</button>
-                          </>
+                          <button data-testid={`event-delete-${ev.id}`} onClick={() => handleDeleteEvent(ev)} className="text-xs px-3 py-1 bg-red-700 hover:bg-red-600 rounded">Delete</button>
                         )}
                         {ev.status === 'live' && (
                           <button data-testid={`event-end-${ev.id}`} onClick={() => { setMergeForEventId(ev.id); setMergeDestProfileId(ev.profile_id); setShowMergeDialog(true); }} className="text-xs px-3 py-1 bg-yellow-700 hover:bg-yellow-600 rounded">End Event</button>
