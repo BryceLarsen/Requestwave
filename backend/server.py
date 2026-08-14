@@ -8641,7 +8641,9 @@ async def get_playlist_detail(
         songs = []
         if playlist.get("song_ids"):
             for song_id in playlist["song_ids"]:
-                song = await db.songs.find_one({"id": song_id, "musician_id": musician_id, "hidden": {"$ne": True}})
+                # Hidden only controls audience visibility, not playlist membership -
+                # a hidden song must still show up here so it can be viewed/managed.
+                song = await db.songs.find_one({"id": song_id, "musician_id": musician_id})
                 if song:  # Only include songs that still exist
                     songs.append(Song(**song))
         
