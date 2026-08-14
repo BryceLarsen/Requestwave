@@ -13508,11 +13508,20 @@ const AudienceInterface = () => {
   };
 
   const handleRequest = async (song) => {
+    const captureMode = profileData?.email_capture_mode || 'optional';
     if (!requestForm.requester_name) {
       alert('Please enter your name');
       return;
     }
-
+    // Required-mode email lives on the identity screen now - validate it
+    // here, same alert pattern as the name check above.
+    if (captureMode === 'required') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!requestForm.requester_email || !emailRegex.test(requestForm.requester_email)) {
+        alert('Please enter a valid email address');
+        return;
+      }
+    }
     // Check if requests are disabled
     if (musician.requests_enabled === false) {
       alert('Song requests are currently disabled. Please try again later.');
