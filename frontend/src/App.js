@@ -1805,6 +1805,37 @@ const MusicianDashboard = () => {
       showErrorToast(error.response?.data?.detail || 'Error stopping show. Please try again.', error);
     }
   };
+  // Per-event stop: mirrors handleStopShowForProfile, for shows running on a
+  // specific event rather than a profile (Go Live starts event-scoped shows).
+  const handleStopShowForEvent = async (eventId, showName) => {
+    if (!eventId) return;
+    if (!confirm(`Stop this show "${showName || ''}"?`)) return;
+    try {
+      const response = await axios.post(`${API}/shows/stop`, { event_id: eventId });
+      if (response.data?.musician) {
+        setMusician(prev => ({
+          ...prev,
+          current_show_id: response.data.musician.current_show_id,
+          current_show_name: response.data.musician.current_show_name
+        }));
+        const storedMusician = JSON.parse(localStorage.getItem('musician') || '{}');
+        localStorage.setItem('musician', JSON.stringify({
+          ...storedMusician,
+          current_show_id: response.data.musician.current_show_id,
+          current_show_name: response.data.musician.current_show_name
+        }));
+      }
+      // Refresh everything that depends on per-event current_show state
+      await fetchProfiles();
+      await fetchEvents();
+      await fetchCurrentShow();
+      await fetchShows();
+      fetchGroupedRequests();
+    } catch (error) {
+      console.error('Error stopping show for event:', error);
+      showErrorToast(error.response?.data?.detail || 'Error stopping show. Please try again.', error);
+    }
+  };
 
   // NEW: Delete individual request from history
   const handleDeleteRequest = async (requestId, requestTitle) => {
@@ -2279,10 +2310,26 @@ const MusicianDashboard = () => {
   // Set default show based on musician's current_show_id - backend is source of truth
   useEffect(() => {
     if ((activeTab === 'requests' || activeTab === 'onstage') && shows.length > 0 && musician) {
+      // On the Requests tab, if a specific event or profile filter is selected,
+      // that context's own current_show_id is the source of truth - the
+      // musician-level field only ever mirrors the DEFAULT profile, so it was
+      // blind to shows running on a non-default profile or a specific event.
+      let scopedShowId = null;
+      let scopedShowFound = false;
+      if (activeTab === 'requests') {
+        if (eventFilterId && eventFilterId !== '__none__') {
+          const ev = events.find(e => e.id === eventFilterId);
+          if (ev) { scopedShowId = ev.current_show_id || null; scopedShowFound = true; }
+        } else if (profileFilterId && profileFilterId !== 'main') {
+          const p = profiles.find(pr => pr.id === profileFilterId);
+          if (p) { scopedShowId = p.current_show_id || null; scopedShowFound = true; }
+        }
+      }
+      const targetShowId = scopedShowFound ? scopedShowId : musician.current_show_id;
       // Backend is the single source of truth for active show
       // If current_show_id is null, there is NO active show - do not infer from shows list
-      if (musician.current_show_id) {
-        const backendCurrentShow = shows.find(show => show.id === musician.current_show_id);
+      if (targetShowId) {
+        const backendCurrentShow = shows.find(show => show.id === targetShowId);
         if (backendCurrentShow) {
           setCurrentShow(backendCurrentShow);
         } else {
@@ -2294,7 +2341,7 @@ const MusicianDashboard = () => {
         setCurrentShow(null);
       }
     }
-  }, [activeTab, shows, musician]);
+  }, [activeTab, shows, musician, eventFilterId, profileFilterId, events, profiles]);
 
   // On Stage tab: Re-fetch data scoped by show_id when currentShow changes
   // This ensures API-level filtering, not just frontend filtering
@@ -7825,10 +7872,11 @@ My list:
                   )}
                 </button>
                 
-                {/* Start/Stop Show Button — per-profile live banners (Sprint 2: shows are profile-scoped) */}
+                {/* Start/Stop Show Button — per-profile and per-event live banners (Sprint 2: shows are profile-or-event-scoped) */}
                 {(() => {
                   const liveProfiles = (profiles || []).filter(p => p && p.current_show_id);
-                  if (liveProfiles.length === 0) {
+                  const liveEvents = (events || []).filter(ev => ev && ev.current_show_id);
+                  if (liveProfiles.length === 0 && liveEvents.length === 0) {
                     return (
                       <button
                         onClick={() => setShowStartModal(true)}
@@ -7857,6 +7905,26 @@ My list:
                             onClick={() => handleStopShowForProfile(p.id, p.current_show_name)}
                             className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm font-medium transition duration-300 shrink-0 ml-3"
                             data-testid={`stop-show-btn-${p.id}`}
+                          >
+                            Stop Show
+                          </button>
+                        </div>
+                      ))}
+                      {liveEvents.map(ev => (
+                        <div
+                          key={ev.id}
+                          data-testid={`live-show-banner-event-${ev.id}`}
+                          className="flex items-center justify-between bg-green-600 px-4 py-3 rounded-lg"
+                        >
+                          <div className="flex items-center space-x-2 min-w-0">
+                            <span className="text-sm font-medium truncate">
+                              🎤 Live: {ev.name} ({ev.current_show_name})
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => handleStopShowForEvent(ev.id, ev.current_show_name)}
+                            className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm font-medium transition duration-300 shrink-0 ml-3"
+                            data-testid={`stop-show-btn-event-${ev.id}`}
                           >
                             Stop Show
                           </button>
