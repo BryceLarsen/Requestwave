@@ -271,6 +271,10 @@ class RequestEmailAttach(BaseModel):
     email: str
     audience_id: Optional[str] = None  # For security validation
 
+class RequestStatusCheck(BaseModel):
+    """Body for POST /requests/status-check"""
+    request_ids: List[str]
+
 class Request(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     musician_id: str
@@ -7672,6 +7676,22 @@ async def delete_request(
     except Exception as e:
         logger.error(f"Error deleting request: {str(e)}")
         raise HTTPException(status_code=500, detail="Error deleting request")
+
+@api_router.post("/requests/status-check")
+async def check_request_statuses(payload: RequestStatusCheck):
+    """Public, no-auth polling endpoint for the audience-facing "song was played"
+    thanks prompt (useThanksTracking.js). Given a list of request ids an audience
+    member's browser is tracking locally, returns each one's current status so
+    the frontend can detect a transition to "played" without any auth token.
+    Deliberately public and read-only, same posture as GET /requests/updates/{musician_id}.
+    """
+    if not payload.request_ids:
+        return {"requests": []}
+    requests = await db.requests.find(
+        {"id": {"$in": payload.request_ids}},
+        {"_id": 0, "id": 1, "status": 1}
+    ).to_list(len(payload.request_ids))
+    return {"requests": [{"id": r["id"], "status": r["status"]} for r in requests]}
 
 @api_router.post("/requests/bulk-action")
 async def bulk_request_action(
