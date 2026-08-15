@@ -2469,6 +2469,65 @@ async def get_musician_by_slug(slug: str):
         current_show_name=(default_profile.get("current_show_name") if default_profile else None) or musician.get("current_show_name")
     )
 
+async def _resolve_onstage_live_contexts(musician_id: str, default_profile: Optional[dict]):
+    """
+    For the band-member companion link: find every profile and event under
+    this musician that currently has a live show. If exactly one is live,
+    the companion view can go straight to it. If two or more are live at
+    once (e.g. two bands performing simultaneously off one account), this
+    never guesses which one the link means - it hands back the full list so
+    the person actually standing at a specific show can pick. Zero live
+    shows just means there's nothing to show yet.
+    """
+    contexts = []
+    if default_profile and default_profile.get("current_show_id"):
+        contexts.append({
+            "kind": "profile",
+            "id": default_profile["id"],
+            "name": default_profile.get("musician_name") or default_profile.get("name") or "Default",
+            "current_show_id": default_profile["current_show_id"],
+            "current_show_name": default_profile.get("current_show_name")
+        })
+    other_profiles = await db.profiles.find({
+        "musician_id": musician_id,
+        "is_default": {"$ne": True},
+        "current_show_id": {"$ne": None}
+    }, {"_id": 0}).to_list(length=None)
+    for p in other_profiles:
+        contexts.append({
+            "kind": "profile",
+            "id": p["id"],
+            "name": p.get("name") or "Profile",
+            "current_show_id": p["current_show_id"],
+            "current_show_name": p.get("current_show_name")
+        })
+    live_events = await db.events.find({
+        "musician_id": musician_id,
+        "status": "live",
+        "current_show_id": {"$ne": None}
+    }, {"_id": 0}).to_list(length=None)
+    for ev in live_events:
+        contexts.append({
+            "kind": "event",
+            "id": ev["id"],
+            "name": ev.get("name") or "Event",
+            "current_show_id": ev["current_show_id"],
+            "current_show_name": ev.get("current_show_name")
+        })
+    if len(contexts) == 1:
+        only = contexts[0]
+        return {
+            "resolved_show_id": only["current_show_id"],
+            "resolved_show_name": only["current_show_name"],
+            "resolved_context": {"kind": only["kind"], "id": only["id"], "name": only["name"]},
+            "live_contexts": contexts
+        }
+    return {
+        "resolved_show_id": None,
+        "resolved_show_name": None,
+        "resolved_context": None,
+        "live_contexts": contexts
+    }
 @api_router.get("/onstage/{onstage_slug}", response_model=None)
 async def get_musician_by_onstage_slug(onstage_slug: str):
     """
@@ -2478,7 +2537,8 @@ async def get_musician_by_onstage_slug(onstage_slug: str):
     exactly as before. Mirrors get_musician_by_slug's response shape exactly;
     the returned `slug` field is always the musician's REAL account slug
     (not the onstage_slug used in the URL), so callers can use it to fetch
-    companion songs/setlists.
+    companion songs/setlists. Also attaches `onstage_resolution`, describing
+    which show (if any) this link should currently point to.
     """
     musician = await db.musicians.find_one({"onstage_slug": onstage_slug})
     if not musician:
@@ -2487,12 +2547,14 @@ async def get_musician_by_onstage_slug(onstage_slug: str):
         raise HTTPException(status_code=404, detail="Musician not found")
     # Check for a default profile and merge its settings
     default_profile = await db.profiles.find_one({"musician_id": musician["id"], "is_default": True})
+    resolution = await _resolve_onstage_live_contexts(musician["id"], default_profile)
     if default_profile:
         songs_list = await _get_profile_songs(default_profile, musician)
         response = _build_profile_public_response(musician, default_profile, songs_list)
+        response["onstage_resolution"] = resolution
         return response
     # No default profile — return standard musician public data (same shape as /musicians/{slug})
-    return MusicianPublic(
+    response = MusicianPublic(
         id=musician["id"],
         name=musician["name"],
         slug=musician["slug"],
@@ -2513,7 +2575,9 @@ async def get_musician_by_onstage_slug(onstage_slug: str):
         tips_enabled=musician.get("tips_enabled", True),
         requests_enabled=musician.get("requests_enabled", True),
         current_show_name=(default_profile.get("current_show_name") if default_profile else None) or musician.get("current_show_name")
-    )
+    ).dict()
+    response["onstage_resolution"] = resolution
+    return response
 
 
 @api_router.get("/musicians/{slug}/design")
