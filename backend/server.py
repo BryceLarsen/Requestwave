@@ -179,6 +179,7 @@ class Musician(BaseModel):
     name: str
     email: str
     slug: str  # URL-friendly unique identifier
+    onstage_slug: Optional[str] = None  # NEW: Optional private slug for the band-member companion view (/on-stage/:slug). When unset, the companion view falls back to using `slug`.
     # Payment information for tips
     paypal_username: Optional[str] = None  # PayPal.me username (without @)
     venmo_username: Optional[str] = None   # Venmo username (without @)
@@ -412,6 +413,7 @@ class MusicianProfile(BaseModel):
     name: str
     email: str
     slug: Optional[str] = None  # Add slug for audience link
+    onstage_slug: Optional[str] = None  # NEW: Private on-stage companion link slug (falls back to `slug` when not set)
     bio: Optional[str] = ""
     website: Optional[str] = ""
     # Payment fields
@@ -447,6 +449,7 @@ class ProfileUpdate(BaseModel):
     name: Optional[str] = None
     bio: Optional[str] = None
     website: Optional[str] = None
+    onstage_slug: Optional[str] = None  # NEW: Private on-stage companion link slug. Empty string clears the override.
     # Payment fields
     paypal_username: Optional[str] = None
     venmo_username: Optional[str] = None
@@ -2466,6 +2469,53 @@ async def get_musician_by_slug(slug: str):
         current_show_name=(default_profile.get("current_show_name") if default_profile else None) or musician.get("current_show_name")
     )
 
+@api_router.get("/onstage/{onstage_slug}", response_model=None)
+async def get_musician_by_onstage_slug(onstage_slug: str):
+    """
+    Public, no-auth lookup for the band-member companion view (/on-stage/:slug).
+    Resolves by onstage_slug (the private link) first, falling back to the main
+    slug so any musician who has never set a custom onstage_slug keeps working
+    exactly as before. Mirrors get_musician_by_slug's response shape exactly;
+    the returned `slug` field is always the musician's REAL account slug
+    (not the onstage_slug used in the URL), so callers can use it to fetch
+    companion songs/setlists.
+    """
+    musician = await db.musicians.find_one({"onstage_slug": onstage_slug})
+    if not musician:
+        musician = await db.musicians.find_one({"slug": onstage_slug})
+    if not musician:
+        raise HTTPException(status_code=404, detail="Musician not found")
+    # Check for a default profile and merge its settings
+    default_profile = await db.profiles.find_one({"musician_id": musician["id"], "is_default": True})
+    if default_profile:
+        songs_list = await _get_profile_songs(default_profile, musician)
+        response = _build_profile_public_response(musician, default_profile, songs_list)
+        return response
+    # No default profile — return standard musician public data (same shape as /musicians/{slug})
+    return MusicianPublic(
+        id=musician["id"],
+        name=musician["name"],
+        slug=musician["slug"],
+        paypal_username=musician.get("paypal_username"),
+        venmo_username=musician.get("venmo_username"),
+        cash_app_username=musician.get("cash_app_username"),
+        zelle_email=musician.get("zelle_email"),
+        zelle_phone=musician.get("zelle_phone"),
+        paypal_enabled=musician.get("paypal_enabled", True),
+        venmo_enabled=musician.get("venmo_enabled", True),
+        cash_app_enabled=musician.get("cash_app_enabled", True),
+        zelle_enabled=musician.get("zelle_enabled", True),
+        instagram_username=musician.get("instagram_username"),
+        facebook_username=musician.get("facebook_username"),
+        tiktok_username=musician.get("tiktok_username"),
+        spotify_artist_url=musician.get("spotify_artist_url"),
+        apple_music_artist_url=musician.get("apple_music_artist_url"),
+        tips_enabled=musician.get("tips_enabled", True),
+        requests_enabled=musician.get("requests_enabled", True),
+        current_show_name=(default_profile.get("current_show_name") if default_profile else None) or musician.get("current_show_name")
+    )
+
+
 @api_router.get("/musicians/{slug}/design")
 async def get_musician_design(slug: str):
     """Get musician's public design settings. Checks default profile first, falls back to global."""
@@ -2513,6 +2563,7 @@ async def get_profile(musician_id: str = Depends(get_current_musician)):
         name=musician["name"],
         email=musician["email"],
         slug=musician.get("slug"),  # Add slug for audience link
+        onstage_slug=musician.get("onstage_slug"),
         bio=musician.get("bio", ""),
         website=musician.get("website", ""),
         # Payment usernames
@@ -2567,6 +2618,21 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
                 counter += 1
             update_data["slug"] = new_slug
         update_data["name"] = profile_data.name
+    
+    if profile_data.onstage_slug is not None:
+        # Empty string means "clear the override, fall back to the main slug"
+        onstage_slug_value = profile_data.onstage_slug.strip()
+        if onstage_slug_value == "":
+            update_data["onstage_slug"] = None
+        else:
+            cleaned_onstage_slug = create_slug(onstage_slug_value)
+            # Ensure uniqueness against both slug and onstage_slug fields, excluding this musician
+            counter = 1
+            original_onstage_slug = cleaned_onstage_slug
+            while await db.musicians.find_one({"$or": [{"slug": cleaned_onstage_slug}, {"onstage_slug": cleaned_onstage_slug}], "id": {"$ne": musician_id}}):
+                cleaned_onstage_slug = f"{original_onstage_slug}-{counter}"
+                counter += 1
+            update_data["onstage_slug"] = cleaned_onstage_slug
     
     if profile_data.bio is not None:
         update_data["bio"] = profile_data.bio
@@ -2657,6 +2723,7 @@ async def update_profile(profile_data: ProfileUpdate, musician_id: str = Depends
         name=updated_musician["name"],
         email=updated_musician["email"],
         slug=updated_musician.get("slug"),  # Add slug for audience link
+        onstage_slug=updated_musician.get("onstage_slug"),
         bio=updated_musician.get("bio", ""),
         website=updated_musician.get("website", ""),
         # Payment usernames
