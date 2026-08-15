@@ -25,7 +25,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://event-analytics-21.preview.emergentagent.com/api"
+BASE_URL = "https://playlist-validator.preview.emergentagent.com/api"
 
 # Pro account for testing
 PRO_MUSICIAN = {

@@ -6,7 +6,7 @@ Edge case testing for search functionality
 import requests
 import json
 
-BASE_URL = "https://event-analytics-21.preview.emergentagent.com/api"
+BASE_URL = "https://playlist-validator.preview.emergentagent.com/api"
 
 def test_search_edge_cases():
     """Test search functionality edge cases"""

@@ -978,8 +978,10 @@ export default function OnStageBoard({
                       <div key={g.key} className={`bg-gray-700/50 rounded-lg p-4 border-l-4 ${g.kind === 'requester' ? 'border-yellow-400' : 'border-white/30'}`}>
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <h4 className="font-bold text-white break-words">
-                              {g.kind === 'requester' ? (g.lead.requester_name || 'No name') : g.lead.song_title}
+                            <h4 className="font-bold text-white break-words flex items-center gap-2 flex-wrap">
+                              <span className="break-words">{g.kind === 'requester' ? (g.lead.requester_name || 'No name') : g.lead.song_title}</span>
+                              {g.kind === 'song' && renderLearnLaterBookmark({ songId: g.lead.song_id, size: 18 })}
+                              {g.kind === 'song' && <ChartButton item={g.lead} songs={songs} setOpenChordpro={setOpenChordpro} />}
                             </h4>
                             <p className="text-sm text-gray-400 break-words">
                               {g.kind === 'requester'
@@ -1030,6 +1032,9 @@ export default function OnStageBoard({
                         }
                       }}
                       compact={true}
+                      songs={songs}
+                      setOpenChordpro={setOpenChordpro}
+                      renderLearnLaterBookmark={renderLearnLaterBookmark}
                     />
                   );
                 })

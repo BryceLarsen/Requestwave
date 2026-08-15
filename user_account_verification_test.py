@@ -31,7 +31,7 @@ from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 
 # Configuration
-BASE_URL = "https://event-analytics-21.preview.emergentagent.com/api"
+BASE_URL = "https://playlist-validator.preview.emergentagent.com/api"
 
 # Target user account details
 TARGET_USER = {

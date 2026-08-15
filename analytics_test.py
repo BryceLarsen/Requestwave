@@ -13,7 +13,7 @@ import time
 
 # Configuration
 INTERNAL_BASE_URL = "http://localhost:8001/api"
-EXTERNAL_BASE_URL = "https://event-analytics-21.preview.emergentagent.com/api"
+EXTERNAL_BASE_URL = "https://playlist-validator.preview.emergentagent.com/api"
 TEST_EMAIL = "brycelarsenmusic@gmail.com"
 TEST_PASSWORD = "RequestWave2024!"
 

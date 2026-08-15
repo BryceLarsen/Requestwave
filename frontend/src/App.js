@@ -15878,7 +15878,7 @@ const SuggestionCard = ({ item, index, onMatchToSong, onLearnLater, onSkip, song
 };
 
 // Shared Completed Item Component - Used by both Dashboard On Stage and Standalone On Stage
-const CompletedRequestItem = ({ request, onRestore, compact = false, viewOnly = false }) => {
+const CompletedRequestItem = ({ request, onRestore, compact = false, viewOnly = false, songs = null, setOpenChordpro = null, renderLearnLaterBookmark = null }) => {
   const isSuggestion = request.type === 'suggestion';
   const isLearnLater = isSuggestion && request.status === 'learn_later';
   
@@ -15920,8 +15920,31 @@ const CompletedRequestItem = ({ request, onRestore, compact = false, viewOnly = 
       </div>
       
       <div className="mb-4">
-        <h4 className={`font-bold ${compact ? 'text-lg' : 'text-xl'} text-white mb-2`}>
-          {request.song_title}
+        <h4 className={`font-bold ${compact ? 'text-lg' : 'text-xl'} text-white mb-2 flex items-center gap-2 flex-wrap`}>
+          <span className="break-words">{request.song_title}</span>
+          {!isSuggestion && request.song_id && renderLearnLaterBookmark && renderLearnLaterBookmark({ songId: request.song_id, size: 18 })}
+          {!isSuggestion && request.song_id && songs && setOpenChordpro && (() => {
+            const chartSong = songs.find((s) => s.id === request.song_id) || {};
+            const hasChart = ((chartSong.chart_type === 'link' || chartSong.chart_type === 'pdf') && chartSong.chart_url) || (chartSong.chart_type === 'chordpro' && chartSong.chart_chordpro);
+            if (!hasChart) return null;
+            return (
+              <button
+                type="button"
+                data-testid="onstage-charts-button"
+                onClick={() => {
+                  if (chartSong.chart_type === 'chordpro') {
+                    setOpenChordpro({ chordpro: chartSong.chart_chordpro, title: chartSong.song_title || chartSong.title || request.song_title, id: chartSong.id, transpose: chartSong.transpose || 0 });
+                  } else {
+                    window.open(chartSong.chart_url, '_blank');
+                  }
+                }}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs transition duration-300"
+                title="Open chart"
+              >
+                📄 Charts
+              </button>
+            );
+          })()}
         </h4>
         <p className={`${compact ? 'text-base' : 'text-base'} ${
           request.status === 'played' 

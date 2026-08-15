@@ -6,7 +6,7 @@ Test to understand why check_pro_access is allowing access when it shouldn't
 import requests
 import json
 
-BASE_URL = "https://event-analytics-21.preview.emergentagent.com/api"
+BASE_URL = "https://playlist-validator.preview.emergentagent.com/api"
 PRO_MUSICIAN = {
     "email": "brycelarsenmusic@gmail.com",
     "password": "RequestWave2024!"

@@ -19,7 +19,7 @@ MONGO_URL = "mongodb://localhost:27017"
 DB_NAME = "test_database"
 
 # Get API URL from environment or use default
-API_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://event-analytics-21.preview.emergentagent.com")
+API_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://playlist-validator.preview.emergentagent.com")
 
 
 @pytest.fixture(scope="module")
