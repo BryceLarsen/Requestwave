@@ -2362,6 +2362,14 @@ const MusicianDashboard = () => {
     }
   }, [showProfile]);
 
+  // NEW: Also fetch profile when the On Stage tab is active, so the on-stage
+  // companion link box always reflects the saved onstage_slug value.
+  useEffect(() => {
+    if (activeTab === 'onstage') {
+      fetchProfile();
+    }
+  }, [activeTab]);
+
   // NEW: Also fetch profile when activeTab is 'profile' to populate the Profile tab form
   useEffect(() => {
     if (activeTab === 'profile') {
@@ -9312,6 +9320,63 @@ My list:
                 );
               })()}
             </div>
+            {/* On Stage companion link — private/editable slug for the band-member view */}
+            <div data-testid="onstage-link-box" className="bg-gray-800 rounded-xl p-4">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-gray-400 text-sm">Band member on-stage link</span>
+                <button
+                  type="button"
+                  data-testid="onstage-link-copy-btn"
+                  onClick={(e) => {
+                    const btn = e.currentTarget;
+                    const url = `${AUDIENCE_BASE_URL}/on-stage/${profile.onstage_slug || musician.slug || ''}`;
+                    navigator.clipboard.writeText(url).then(() => {
+                      btn.textContent = 'Copied!';
+                      setTimeout(() => { btn.textContent = 'Copy Link'; }, 2000);
+                    }).catch(() => {});
+                  }}
+                  className="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg text-xs transition duration-300 shrink-0"
+                >
+                  Copy Link
+                </button>
+              </div>
+              <a
+                href={`${AUDIENCE_BASE_URL}/on-stage/${profile.onstage_slug || musician.slug || ''}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-400 hover:text-purple-300 text-xs break-all underline block mb-3"
+              >
+                {`${AUDIENCE_BASE_URL}/on-stage/${profile.onstage_slug || musician.slug || ''}`}
+              </a>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  data-testid="onstage-slug-input"
+                  value={profile.onstage_slug || ''}
+                  placeholder={musician.slug || ''}
+                  onChange={(e) => setProfile({ ...profile, onstage_slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                  className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+                />
+                <button
+                  type="button"
+                  data-testid="onstage-slug-save-btn"
+                  onClick={async () => {
+                    try {
+                      const response = await axios.put(`${API}/profile`, { onstage_slug: profile.onstage_slug || '' });
+                      setProfile(response.data);
+                      showErrorToast('On stage link saved');
+                    } catch (error) {
+                      showErrorToast(error.response?.data?.detail || 'Failed to save on stage link', error);
+                    }
+                  }}
+                  className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg text-sm font-bold transition duration-300 shrink-0"
+                >
+                  Save
+                </button>
+              </div>
+              <p className="text-gray-500 text-xs mt-2">Leave blank to keep using your regular link. Set a custom link here to keep large or high-visibility shows private.</p>
+            </div>
+
 
             {/* Show empty state if no active show */}
             {!currentShow ? (
