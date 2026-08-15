@@ -4719,7 +4719,14 @@ async def get_musician_songs(
     if active_show and active_show.get("playlist_filter_mode") == "selected":
         # Show-scoped filtering: union of enabled playlists
         enabled_ids = active_show.get("enabled_playlist_ids", [])
-        if enabled_ids:
+        # "all_songs" is a synthetic id GET /playlists injects only for display (it is
+        # never a real db.playlists document) meaning "no restriction". A show saved
+        # with it in enabled_playlist_ids used to look it up as a real playlist, find
+        # nothing, and silently return zero songs - treat it the same as picking the
+        # "All songs" radio button instead.
+        if "all_songs" in enabled_ids:
+            pass  # no restriction - fall through to the unfiltered query below
+        elif enabled_ids:
             # Fetch all enabled playlists (exclude deleted)
             playlists_cursor = db.playlists.find({
                 "id": {"$in": enabled_ids},

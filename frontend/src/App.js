@@ -8851,11 +8851,11 @@ My list:
                     <label className="block text-gray-400 text-xs font-medium mb-2">
                       Select playlists to enable for this show:
                     </label>
-                    {playlists.filter(p => !p.is_deleted).length === 0 ? (
+                    {playlists.filter(p => !p.is_deleted && p.id !== 'all_songs').length === 0 ? (
                       <p className="text-gray-500 text-sm italic">No playlists available. Create playlists in the Songs tab first.</p>
                     ) : (
                       <div className="space-y-2">
-                        {playlists.filter(p => !p.is_deleted).map(playlist => (
+                        {playlists.filter(p => !p.is_deleted && p.id !== 'all_songs').map(playlist => (
                           <label key={playlist.id} className="flex items-center space-x-3 cursor-pointer hover:bg-gray-600/50 p-2 rounded">
                             <input
                               type="checkbox"
@@ -8958,11 +8958,11 @@ My list:
                     <label className="block text-gray-400 text-xs font-medium mb-2">
                       Select playlists to enable for this show:
                     </label>
-                    {playlists.filter(p => !p.is_deleted).length === 0 ? (
+                    {playlists.filter(p => !p.is_deleted && p.id !== 'all_songs').length === 0 ? (
                       <p className="text-gray-500 text-sm italic">No playlists available. Create playlists in the Songs tab first.</p>
                     ) : (
                       <div className="space-y-2">
-                        {playlists.filter(p => !p.is_deleted).map(playlist => (
+                        {playlists.filter(p => !p.is_deleted && p.id !== 'all_songs').map(playlist => (
                           <label key={playlist.id} className="flex items-center space-x-3 cursor-pointer hover:bg-gray-600/50 p-2 rounded">
                             <input
                               type="checkbox"
