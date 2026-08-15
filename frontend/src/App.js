@@ -21,6 +21,8 @@ import { buildMailto, DEFAULT_TEMPLATE } from './mailtoLink';
 import EmailTemplateEditor from './emailTemplateEditor';
 import OnStageBoard from './onStageBoard';
 import OnStageCompanionBoard from './onStageCompanionBoard';
+import useThanksTracking from './useThanksTracking';
+import SongPlayedThanksModal from './songPlayedThanksModal';
 import { groupOnStageItems } from './onStageGrouping';
 import './App.css';
 
@@ -13108,7 +13110,9 @@ const AudienceInterface = () => {
     }
     return id;
   });
-  
+  // Tracks this device's own submitted requests and surfaces a "how would
+  // you like to say thanks?" prompt when one of them gets marked played.
+  const { trackRequest, pendingThanks, dismissPendingThanks } = useThanksTracking(effectiveSlug);
   // NEW: Multi-step post-request flow
   const [showTipChoiceModal, setShowTipChoiceModal] = useState(false);
   const [showSocialFollowModal, setShowSocialFollowModal] = useState(false);
@@ -14010,6 +14014,7 @@ const AudienceInterface = () => {
       
       // Store request ID for analytics
       setCurrentRequestId(response.data.id);
+      trackRequest(response.data);
       
       // Don't reset form here - keep the data for potential tip flow
       // Form will be reset later after tip/social flow completes
@@ -14027,6 +14032,31 @@ const AudienceInterface = () => {
       }
       throw error;
     }
+  };
+
+  // Handlers for the "song was played" thanks prompt (useThanksTracking).
+  // Tip and Follow both route into the real, currently-live "About the
+  // Artist" Orientation sheet (showOrientation/orientationMode) - this app
+  // has no separate standalone tip/follow modal anymore. A dedicated
+  // 'played_thanks' mode value is used so the sheet does not show the
+  // unrelated "thanks, your request was sent" line that 'post_request' mode
+  // shows, or the 'default'-only website link.
+  const handleThanksTip = () => {
+    if (!pendingThanks) return;
+    dismissPendingThanks(pendingThanks.id);
+    setOrientationMode('played_thanks');
+    setShowOrientation(true);
+    setTipSectionExpanded(true);
+  };
+  const handleThanksFollow = () => {
+    if (!pendingThanks) return;
+    dismissPendingThanks(pendingThanks.id);
+    setOrientationMode('played_thanks');
+    setShowOrientation(true);
+  };
+  const handleThanksDismiss = () => {
+    if (!pendingThanks) return;
+    dismissPendingThanks(pendingThanks.id);
   };
 
   const clearFilters = () => {
@@ -15821,6 +15851,16 @@ const AudienceInterface = () => {
             </div>
           </div>
         )}
+        <SongPlayedThanksModal
+          visible={!!pendingThanks}
+          songTitle={pendingThanks?.song_title}
+          songArtist={pendingThanks?.song_artist}
+          showTip={musician?.tips_enabled !== false && !!(musician?.venmo_username || musician?.paypal_username || musician?.cash_app_username || (musician?.zelle_enabled && (musician?.zelle_email || musician?.zelle_phone)))}
+          showFollow={!!(musician?.instagram_username || musician?.facebook_username || musician?.tiktok_username)}
+          onTip={handleThanksTip}
+          onFollow={handleThanksFollow}
+          onDismiss={handleThanksDismiss}
+        />
       </div>
     </div>
   );
