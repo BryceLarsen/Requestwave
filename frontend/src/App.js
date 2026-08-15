@@ -20,6 +20,7 @@ import { useCockpit, UpNextTrigger, UpNextPanel, DedicationBox, PlayedButton, bu
 import { buildMailto, DEFAULT_TEMPLATE } from './mailtoLink';
 import EmailTemplateEditor from './emailTemplateEditor';
 import OnStageBoard from './onStageBoard';
+import OnStageCompanionBoard from './onStageCompanionBoard';
 import { groupOnStageItems } from './onStageGrouping';
 import './App.css';
 
@@ -16110,18 +16111,19 @@ const OnStageInterface = () => {
   const { slug } = useParams();
   useWakeLock(true);
   const [musician, setMusician] = useState(null);
+  const [realSlug, setRealSlug] = useState(null);
   const [requests, setRequests] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newRequestCount, setNewRequestCount] = useState(0);
-  const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [completedSectionCollapsed, setCompletedSectionCollapsed] = useState(false);
   const [errorToast, setErrorToast] = useState({ show: false, message: '' });
   // ChordPro viewer state for the standalone On Stage view ({ chordpro, title } | null)
   const [openChordpro, setOpenChordpro] = useState(null);
-  
+  // Live-show resolution, from GET /onstage/{slug}'s onstage_resolution field.
+  const [liveContexts, setLiveContexts] = useState([]);
+  const [resolvedShow, setResolvedShow] = useState(null); // { id, name } | null - set when exactly one show is live
+  const [selectedContextKey, setSelectedContextKey] = useState(null); // "kind:id" the viewer picked, when 2+ shows are live at once
   // Helper function to show error toast
   const showErrorToast = (message, error = null) => {
     // Detect network/offline errors
@@ -16134,68 +16136,92 @@ const OnStageInterface = () => {
     setErrorToast({ show: true, message: displayMessage });
     setTimeout(() => setErrorToast({ show: false, message: '' }), 5000);
   };
-  
   // Audio for notifications
   const notificationSound = useRef(null);
-  
   useEffect(() => {
     // Create notification sound
     notificationSound.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmUgBSuK1/LBayUHLIHO8tiJOQgZZrnr65lEFAxOo+H0v2EcBSuK2Oy1YSMGGHfh9LZoFwcKSY7Z6GROC9OgUBCFQxWFdTyqp+3tPnxH3b/7PKXw95cZggHfyOvkxFkcCzhPztuuaB0JLHTP8seKRAgUX7jr1qRUEg5Kme7xvWEaBiB8x/a7YCUJKnvH7daXOQgZZrfh9bpmFgkEUY3O8dGINQcUYbLL5ZdBBgpKgdFyMWMTOxbT7tqIMw0YXrLl1qBRDQdHg9PjkCQFMXXP8s2LOAwOYaWw4qlaUg4LZq7G9s2OSQMNYazJ6JNEAxOp+T+mVlwb9Uu12ddPKq1DzuaOc8QYXbTu');
-    
     // Start initialization
     fetchMusician();
     requestNotificationPermission();
   }, [slug]);
-  
   useEffect(() => {
-    // FIXED: Set up polling only after musician is loaded
+    // Set up polling only after musician is loaded
     if (musician) {
       console.log('Starting On Stage polling for musician:', musician.name);
-      
       // Initial fetch
       fetchUpdates();
-      
       // Set up continuous polling
       const interval = setInterval(() => {
         console.log('On Stage polling tick...');
         fetchUpdates();
       }, 5000); // Poll every 5 seconds
-      
       return () => {
         console.log('Stopping On Stage polling');
         clearInterval(interval);
       };
     }
   }, [musician]); // Depend on musician, not slug
-  
+  // Applies a freshly-fetched onstage_resolution to state, and drops a
+  // remembered show-picker choice if that context is no longer live.
+  const applyResolution = (resolution) => {
+    const safeResolution = resolution || { resolved_show_id: null, resolved_show_name: null, resolved_context: null, live_contexts: [] };
+    const contexts = safeResolution.live_contexts || [];
+    setLiveContexts(contexts);
+    setResolvedShow(safeResolution.resolved_show_id ? { id: safeResolution.resolved_show_id, name: safeResolution.resolved_show_name } : null);
+    setSelectedContextKey((prevKey) => {
+      if (!prevKey) return prevKey;
+      const stillLive = contexts.some((c) => `${c.kind}:${c.id}` === prevKey);
+      if (!stillLive) {
+        try { localStorage.removeItem(`onstage_selected_context_${slug}`); } catch (e) { /* localStorage unavailable */ }
+        return null;
+      }
+      return prevKey;
+    });
+  };
   const fetchMusician = async () => {
     try {
-      const response = await axios.get(`${API}/musicians/${slug}`);
-      setMusician(response.data);
+      const response = await axios.get(`${API}/onstage/${slug}`);
+      const data = response.data;
+      setMusician(data);
+      setRealSlug(data.slug); // GET /onstage/{slug} always returns the REAL account slug here, even when the URL used an onstage_slug override
       setLoading(false); // Clear loading state once musician is fetched
-      
+      applyResolution(data.onstage_resolution);
+      try {
+        const savedKey = localStorage.getItem(`onstage_selected_context_${slug}`);
+        if (savedKey && (data.onstage_resolution?.live_contexts || []).some((c) => `${c.kind}:${c.id}` === savedKey)) {
+          setSelectedContextKey(savedKey);
+        }
+      } catch (e) { /* localStorage unavailable - ignore, picker will just show again */ }
       // Fetch songs for this musician (public companion-view endpoint, no auth needed)
-      const songsResponse = await axios.get(`${API}/musicians/${slug}/onstage-companion-songs`);
+      const songsResponse = await axios.get(`${API}/musicians/${data.slug}/onstage-companion-songs`);
       setSongs(songsResponse.data || []);
     } catch (error) {
       console.error('Error fetching musician:', error);
       setLoading(false); // Clear loading state even on error
     }
   };
-  
+  // Lightweight re-check of which show is live, run on every polling tick so
+  // the page reacts automatically if a show starts/ends/switches while it's open.
+  const refreshOnstageResolution = async () => {
+    try {
+      const response = await axios.get(`${API}/onstage/${slug}`);
+      applyResolution(response.data.onstage_resolution);
+    } catch (error) {
+      console.error('Error refreshing on-stage resolution:', error);
+    }
+  };
   const fetchUpdates = async () => {
     if (!musician) {
       console.log('No musician loaded yet, skipping update');
       return;
     }
-    
+    refreshOnstageResolution(); // fire-and-forget alongside the requests fetch below
     try {
       // FIXED: Use real API endpoint instead of demo data
       const response = await axios.get(`${API}/requests/updates/${musician.id}`);
       const data = response.data;
-      
       console.log('On Stage update received:', data);
-      
       // Fetch suggestions separately - isolated try/catch: a non-logged-in companion
       // viewer has no token, this 401s, and that must never block the request merge below.
       let suggestionsData = null;
@@ -16209,7 +16235,6 @@ const OnStageInterface = () => {
         // Expected for a non-logged-in companion viewer - just skip suggestions this cycle.
         suggestionsData = null;
       }
-      
       // Update requests with real data from backend
       if (data.requests) {
         // Keep existing request statuses if they were updated locally
@@ -16221,37 +16246,30 @@ const OnStageInterface = () => {
               ? { ...apiRequest, status: existingReq.status }
               : apiRequest;
           });
-          
           // Check for new requests and show notifications
           if (prevRequests.length > 0) {
-            const newRequests = updatedRequests.filter(newReq => 
+            const newRequests = updatedRequests.filter(newReq =>
               !prevRequests.find(existingReq => existingReq.id === newReq.id)
             );
-            
             if (newRequests.length > 0) {
               console.log('New requests detected:', newRequests);
               showNotification(newRequests);
               playNotificationSound();
             }
           }
-          
           return updatedRequests;
         });
       }
-      
       // Update suggestions - only pending and learn_later (not matched/rejected)
       if (suggestionsData) {
-        const activeSuggestions = suggestionsData.filter(s => 
+        const activeSuggestions = suggestionsData.filter(s =>
           s.status === 'pending' || s.status === 'learn_later'
         );
         setSuggestions(activeSuggestions);
       }
-      
       setLoading(false);
-      
     } catch (error) {
       console.error('Error fetching real-time updates:', error);
-      
       // DON'T set loading to false on error - let polling continue
       // Only fall back to demo data if this is a complete API failure
       if (error.response?.status >= 500 || error.code === 'NETWORK_ERROR') {
@@ -16273,22 +16291,18 @@ const OnStageInterface = () => {
       // For other errors (like 404, 401), continue polling without updating data
     }
   };
-  
   const requestNotificationPermission = async () => {
     if ('Notification' in window) {
       const permission = await Notification.requestPermission();
       setNotificationsEnabled(permission === 'granted');
     }
   };
-  
   const showNotification = (newItems) => {
     if (!notificationsEnabled) return;
-    
     const title = `🎵 New ${newItems.length > 1 ? 'Requests' : 'Request'}!`;
-    const body = newItems.length === 1 
+    const body = newItems.length === 1
       ? `${newItems[0].song_title || newItems[0].title} - ${newItems[0].requester_name || 'Anonymous'}`
       : `${newItems.length} new requests received`;
-    
     new Notification(title, {
       body,
       icon: 'https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png',
@@ -16297,7 +16311,6 @@ const OnStageInterface = () => {
       requireInteraction: true
     });
   };
-  
   const playNotificationSound = () => {
     if (notificationSound.current) {
       notificationSound.current.play().catch(() => {
@@ -16305,174 +16318,17 @@ const OnStageInterface = () => {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
-        
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
-        
         oscillator.frequency.value = 800;
         oscillator.type = 'sine';
         gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-        
         oscillator.start(audioContext.currentTime);
         oscillator.stop(audioContext.currentTime + 0.5);
       });
     }
   };
-  
-  const clearNewCount = () => {
-    setNewRequestCount(0);
-  };
-  
-  // UNIFIED: On Stage request management (matching main dashboard pattern)
-  const updateRequestStatus = async (requestId, status) => {
-    // Validate status (archived handled by separate endpoint)
-    const validStatuses = ['pending', 'up_next', 'accepted', 'played', 'rejected'];
-    if (!validStatuses.includes(status)) {
-      const errorMsg = `Invalid status "${status}". Use archiveRequest() for archiving.`;
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[On Stage Status Update] Invalid status:', { requestId, status });
-      }
-      showErrorToast(errorMsg, error);
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        showErrorToast('Please log in again to update request status');
-        return;
-      }
-
-      const payload = { status };
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[On Stage Status Update] Request:', { requestId, status });
-      }
-      
-      const response = await axios.put(
-        `${API}/requests/${requestId}/status`, 
-        payload,
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      );
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[On Stage Status Update] Success:', { requestId, newStatus: response.data.new_status });
-      }
-      
-      // Refetch to ensure consistency
-      fetchUpdates();
-      
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[On Stage Status Update] Error:', {
-          requestId,
-          status,
-          error: error.response?.data || error.message,
-          statusCode: error.response?.status
-        });
-      }
-      
-      const errorMsg = error.response?.data?.detail || 
-                       error.response?.data?.message || 
-                       `Failed to update request status to "${status}"`;
-      showErrorToast(errorMsg, error);
-    }
-  };
-
-  // UNIFIED: Archive request function (separate endpoint from status updates)
-  const archiveRequest = async (requestId) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        showErrorToast('Please log in again to archive request');
-        return;
-      }
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[On Stage Archive] Request:', requestId);
-      }
-      
-      const response = await axios.put(
-        `${API}/requests/${requestId}/archive`,
-        {},
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      );
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[On Stage Archive] Success:', requestId);
-      }
-      
-      // Refetch to ensure consistency
-      fetchUpdates();
-      
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[On Stage Archive] Error:', {
-          requestId,
-          error: error.response?.data || error.message,
-          statusCode: error.response?.status
-        });
-      }
-      
-      const errorMsg = error.response?.data?.detail || 
-                       error.response?.data?.message || 
-                       'Failed to archive request';
-      showErrorToast(errorMsg, error);
-    }
-  };
-  
-  // Request action handlers
-  const handleAccept = (requestId) => updateRequestStatus(requestId, 'up_next');
-  const handlePlay = (requestId) => updateRequestStatus(requestId, 'played');
-  const handleSkip = (requestId) => updateRequestStatus(requestId, 'rejected');
-  const handleRestore = (requestId) => updateRequestStatus(requestId, 'accepted');
-  
-  // Suggestion action handlers
-  const handleMatchToSong = async (suggestionId, songId) => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.put(
-        `${API}/song-suggestions/${suggestionId}/match`,
-        { song_id: songId },
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      );
-      fetchUpdates(); // Refresh to show new request
-    } catch (error) {
-      const errorMsg = error.response?.data?.detail || 'Failed to match suggestion';
-      showErrorToast(errorMsg, error);
-    }
-  };
-  
-  const handleLearnLater = async (suggestionId) => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.put(
-        `${API}/song-suggestions/${suggestionId}/learn-later`,
-        {},
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      );
-      fetchUpdates(); // Refresh to move to handled
-    } catch (error) {
-      const errorMsg = error.response?.data?.detail || 'Failed to mark as learn later';
-      showErrorToast(errorMsg, error);
-    }
-  };
-  
-  const handleSkipSuggestion = async (suggestionId) => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.put(
-        `${API}/song-suggestions/${suggestionId}/status`,
-        { status: 'rejected' },
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      );
-      fetchUpdates(); // Refresh to move to handled
-    } catch (error) {
-      const errorMsg = error.response?.data?.detail || 'Failed to skip suggestion';
-      showErrorToast(errorMsg, error);
-    }
-  };
-  
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -16480,132 +16336,25 @@ const OnStageInterface = () => {
       </div>
     );
   }
-  
-  if (!musician) {
-    // Demo mode for testing the new UI structure
-    const demoMusician = { name: "Demo Artist", slug: "demo" };
-    const demoRequests = [
-      {
-        id: 'demo-up-next-1',
-        song_title: 'Sweet Child O Mine',
-        song_artist: 'Guns N Roses',
-        requester_name: 'Sarah M.',
-        dedication: 'For my anniversary!',
-        created_at: new Date(Date.now() - 300000).toISOString(), // 5 mins ago
-        status: 'up_next',
-        type: 'request'
-      },
-      {
-        id: 'demo-up-next-2',
-        song_title: 'Bohemian Rhapsody',
-        song_artist: 'Queen',
-        requester_name: 'Mike D.',
-        dedication: '',
-        created_at: new Date(Date.now() - 240000).toISOString(), // 4 mins ago
-        status: 'up_next',
-        type: 'request'
-      },
-      {
-        id: 'demo-active-1',
-        song_title: 'Wonderwall',
-        song_artist: 'Oasis',
-        requester_name: 'Emily R.',
-        dedication: 'First dance song!',
-        created_at: new Date(Date.now() - 120000).toISOString(), // 2 mins ago
-        status: 'pending',
-        type: 'request'
-      },
-      {
-        id: 'demo-active-2',
-        song_title: 'Hotel California',
-        song_artist: 'Eagles',
-        requester_name: 'John K.',
-        dedication: '',
-        created_at: new Date(Date.now() - 60000).toISOString(), // 1 min ago
-        status: 'pending',
-        type: 'request'
-      },
-      {
-        id: 'demo-completed-1',
-        song_title: 'Stairway to Heaven',
-        song_artist: 'Led Zeppelin',
-        requester_name: 'Lisa P.',
-        dedication: 'Amazing performance!',
-        created_at: new Date(Date.now() - 600000).toISOString(), // 10 mins ago
-        status: 'played',
-        type: 'request'
-      },
-      {
-        id: 'demo-completed-2',
-        song_title: 'Freebird',
-        song_artist: 'Lynyrd Skynyrd',
-        requester_name: 'Tom S.',
-        dedication: '',
-        created_at: new Date(Date.now() - 900000).toISOString(), // 15 mins ago
-        status: 'rejected',
-        type: 'request'
-      }
-    ];
-    
-    // Override the state for demo
-    setMusician(demoMusician);
-    setRequests(demoRequests);
-  }
-  
-  // Organize requests into sections
-  // Organize requests into sections
-  
   if (!musician) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Demo Mode - Testing On Stage Interface</h1>
-          <p>This shows the new three-section layout with demo data</p>
+        <div className="text-center px-4">
+          <div className="text-6xl mb-4">🎤</div>
+          <h1 className="text-2xl font-bold mb-2">Link not found</h1>
+          <p className="text-gray-400">This on-stage link doesn't match an active RequestWave account.</p>
         </div>
       </div>
     );
   }
-  
-  const upNextRequests = requests.filter(r => r.status === 'up_next')
-    .sort((a, b) => {
-      const aPos = (typeof a.queue_position === 'number' && !isNaN(a.queue_position)) ? a.queue_position : Infinity;
-      const bPos = (typeof b.queue_position === 'number' && !isNaN(b.queue_position)) ? b.queue_position : Infinity;
-      const delta = aPos - bPos;
-      if (delta !== 0 && !isNaN(delta)) return delta;
-      return new Date(a.created_at) - new Date(b.created_at); // tiebreak / fallback when neither has a position yet
-    }); // manual queue order, falls back to oldest-first
-  
-  // Merge active requests with pending suggestions, sorted by created_at (oldest first)
-  const activeRequestsAndSuggestions = [
-    ...requests.filter(r => !r.status || r.status === 'pending').map(r => ({ ...r, type: 'request' })),
-    ...suggestions.filter(s => s.status === 'pending').map(s => ({ 
-      ...s, 
-      type: 'suggestion',
-      song_title: s.suggested_title,
-      song_artist: s.suggested_artist,
-      dedication: s.message
-    }))
-  ].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); // oldest first
-  
-  // Backwards compatibility - keep activeRequests for other code
-  const activeRequests = activeRequestsAndSuggestions;
-    
-  const completedRequests = [
-    ...requests.filter(r => r.status === 'played' || r.status === 'rejected').map(r => ({ ...r, type: 'request' })),
-    ...suggestions.filter(s => s.status === 'learn_later' || s.status === 'rejected').map(s => ({ 
-      ...s, 
-      type: 'suggestion',
-      song_title: s.suggested_title,
-      song_artist: s.suggested_artist,
-      dedication: s.message
-    }))
-  ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // newest first
-  
-  const allItems = [
-    ...requests.map(r => ({ ...r, type: 'request' })),
-    ...suggestions.map(s => ({ ...s, type: 'suggestion' }))
-  ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  
+  // Resolve which show to display: automatic when 0 or 1 shows are live
+  // account-wide, otherwise from whichever context the viewer already picked.
+  const activeContext = (liveContexts.length >= 2 && selectedContextKey)
+    ? liveContexts.find((c) => `${c.kind}:${c.id}` === selectedContextKey)
+    : null;
+  const effectiveShow = resolvedShow
+    ? resolvedShow
+    : (activeContext ? { id: activeContext.current_show_id, name: activeContext.current_show_name } : null);
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
       {/* ChordPro chart viewer */}
@@ -16639,7 +16388,6 @@ const OnStageInterface = () => {
           </div>
         </div>
       )}
-      
       {/* Header */}
       <div className="bg-gray-800 rounded-xl p-4 mb-6 sticky top-4 z-10">
         <div className="flex items-center justify-between">
@@ -16655,141 +16403,62 @@ const OnStageInterface = () => {
             </div>
           </div>
           <div className="flex items-center space-x-4">
+            {liveContexts.length >= 2 && effectiveShow && (
+              <button
+                onClick={() => setSelectedContextKey(null)}
+                className="text-purple-400 hover:text-purple-300 text-sm underline"
+                data-testid="onstage-companion-switch-show-btn"
+              >
+                Switch show
+              </button>
+            )}
             {/* Notification Indicator */}
             <div className={`w-3 h-3 rounded-full ${notificationsEnabled ? 'bg-green-500' : 'bg-red-500'}`}></div>
           </div>
         </div>
       </div>
-      
-      {/* Live Requests - Three Section Layout */}
-      <div className="space-y-6">
-        
-        {/* UP NEXT Section */}
-        {upNextRequests.length > 0 && (
-          <div className="bg-gradient-to-r from-blue-900 to-purple-900 rounded-xl p-4 border-2 border-blue-500">
-            <div className="flex items-center space-x-2 mb-4">
-              <span className="text-2xl">⬆️</span>
-              <h2 className="text-xl font-bold text-blue-200">Up Next ({upNextRequests.length})</h2>
-            </div>
-            <div className="space-y-3">
-              {upNextRequests.map((item, index) => (
-                <RequestCard 
-                  key={item.id} 
-                  item={item} 
-                  index={index}
-                  onPlay={handlePlay}
-                  onSkip={handleSkip}
-                  showMoveButtons={false}
-                  isUpNext={true}
-                  chartType={(songs.find(s => s.id === item.song_id) || {}).chart_type}
-                  chartUrl={(songs.find(s => s.id === item.song_id) || {}).chart_url}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ACTIVE REQUESTS Section */}
-        <div className="bg-gray-800 rounded-xl p-4 border-2 border-purple-500">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl">🎵</span>
-              <h2 className="text-xl font-bold text-purple-200">Active Requests ({activeRequests.length})</h2>
-            </div>
-            {newRequestCount > 0 && (
-              <div 
-                onClick={clearNewCount}
-                className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold animate-pulse cursor-pointer"
-              >
-                +{newRequestCount} New!
-              </div>
-            )}
-          </div>
-          
-          {activeRequests.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="text-6xl mb-4">🎵</div>
-              <h3 className="text-lg font-bold mb-2 text-gray-300">No active requests</h3>
-              <p className="text-gray-400">New requests will appear here in real-time</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {activeRequests.map((item, index) => (
-                item.type === 'suggestion' ? (
-                  <SuggestionCard
-                    key={item.id}
-                    item={item}
-                    index={index}
-                    onMatchToSong={handleMatchToSong}
-                    onLearnLater={handleLearnLater}
-                    onSkip={handleSkipSuggestion}
-                    songs={songs}
-                  />
-                ) : (
-                  <RequestCard 
-                    key={item.id} 
-                    item={item} 
-                    index={index}
-                    onAccept={handleAccept}
-                    onPlay={handlePlay}
-                    onSkip={handleSkip}
-                    showMoveButtons={true}
-                    isUpNext={false}
-                    chartType={(songs.find(s => s.id === item.song_id) || {}).chart_type}
-                    chartUrl={(songs.find(s => s.id === item.song_id) || {}).chart_url}
-                    chartChordpro={(songs.find(s => s.id === item.song_id) || {}).chart_chordpro}
-                    onOpenChordpro={(title, cp) => { const s = songs.find((x) => x.id === item.song_id) || {}; setOpenChordpro({ chordpro: cp, title, id: item.song_id, transpose: s.transpose || 0 }); }}
-                  />
-                )
-              ))}
-            </div>
-          )}
+      {liveContexts.length === 0 ? (
+        <div className="text-center py-16 bg-gray-800/50 rounded-xl">
+          <div className="text-6xl mb-4">🎤</div>
+          <h2 className="text-2xl font-bold text-white mb-2">No Live Show Right Now</h2>
+          <p className="text-gray-400">This page updates automatically once the show goes live.</p>
         </div>
-
-        {/* HANDLED REQUESTS Section */}
-        {completedRequests.length > 0 && (
-          <div className="bg-gray-800 rounded-xl border-2 border-gray-600">
-            <div 
-              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-700 transition-colors rounded-t-xl"
-              onClick={() => setCompletedSectionCollapsed(!completedSectionCollapsed)}
-            >
-              <div className="flex items-center space-x-2">
-                <span className="text-2xl">✅</span>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-300">Handled ({completedRequests.length})</h2>
-                  <p className="text-sm text-gray-400">Played, skipped, or saved for later.</p>
-                </div>
-              </div>
-              <span className={`text-xl transition-transform ${completedSectionCollapsed ? 'rotate-90' : 'rotate-0'}`}>
-                ▶️
-              </span>
-            </div>
-            
-            {!completedSectionCollapsed && (
-              <div className="p-4 pt-0 space-y-3 max-h-96 overflow-y-auto">
-                {completedRequests.map((item, index) => (
-                  <CompletedRequestItem
-                    key={item.id}
-                    request={item}
-                    onRestore={(requestId) => {
-                      updateRequestStatus(requestId, 'accepted');
-                    }}
-                    compact={false}
-                    viewOnly={true}
-                  />
-                ))}
-              </div>
-            )}
+      ) : (liveContexts.length >= 2 && !effectiveShow) ? (
+        <div className="bg-gray-800 rounded-xl p-6" data-testid="onstage-companion-show-picker">
+          <h2 className="text-xl font-bold mb-4">Which show are you at?</h2>
+          <div className="space-y-3">
+            {liveContexts.map((ctx) => (
+              <button
+                key={`${ctx.kind}:${ctx.id}`}
+                onClick={() => {
+                  const key = `${ctx.kind}:${ctx.id}`;
+                  setSelectedContextKey(key);
+                  try { localStorage.setItem(`onstage_selected_context_${slug}`, key); } catch (e) { /* localStorage unavailable */ }
+                }}
+                className="w-full text-left bg-gray-700 hover:bg-gray-600 rounded-lg p-4 transition-colors"
+                data-testid={`onstage-companion-picker-option-${ctx.kind}-${ctx.id}`}
+              >
+                <div className="font-bold">{ctx.name}</div>
+                <div className="text-sm text-gray-400">{ctx.current_show_name || 'Live now'}</div>
+              </button>
+            ))}
           </div>
-        )}
-        
-      </div>
-      
+        </div>
+      ) : (
+        <OnStageCompanionBoard
+          requests={requests}
+          songSuggestions={suggestions}
+          songs={songs}
+          currentShow={effectiveShow}
+          slug={realSlug}
+          setOpenChordpro={setOpenChordpro}
+        />
+      )}
       {/* Footer */}
       <div className="mt-8 text-center text-gray-500 text-sm">
         <p>Updates automatically • Keep this tab open during your performance</p>
         {!notificationsEnabled && (
-          <button 
+          <button
             onClick={requestNotificationPermission}
             className="mt-2 text-purple-400 hover:text-purple-300 underline"
           >
