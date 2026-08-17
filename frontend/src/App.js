@@ -7230,7 +7230,7 @@ My list:
                 
                 {/* Dropdown Menu */}
                 {showSongManagementDropdown && (
-                  <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50">
+                  <div className="absolute right-0 mt-2 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50 max-h-[70vh] overflow-y-auto">
                     <div className="py-2">
                       {/* Add New Song - First */}
                       <button
@@ -7241,7 +7241,10 @@ My list:
                         className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
                       >
                         <span className="text-lg">➕</span>
-                        <span>Add New Song</span>
+                        <div className="flex flex-col text-left">
+                          <span>Add New Song</span>
+                          <span className="text-xs text-gray-400 font-normal">Type in one song by hand</span>
+                        </div>
                       </button>
                       
                       {/* Import Playlist - Second */}
@@ -7253,7 +7256,10 @@ My list:
                         className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
                       >
                         <span className="text-lg">🎵</span>
-                        <span>Import Playlist</span>
+                        <div className="flex flex-col text-left">
+                          <span>Import Playlist</span>
+                          <span className="text-xs text-gray-400 font-normal">From a Spotify or Apple Music link</span>
+                        </div>
                       </button>
 
                       {/* Build playlist from a file */}
@@ -7266,7 +7272,10 @@ My list:
                         className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
                       >
                         <span className="text-lg">🗂️</span>
-                        <span>Build playlist from a file</span>
+                        <div className="flex flex-col text-left">
+                          <span>Turn a List into a Playlist</span>
+                          <span className="text-xs text-gray-400 font-normal">Matches songs you already have, adds anything new</span>
+                        </div>
                       </button>
                       
                       {/* Upload CSV - Third */}
@@ -7278,7 +7287,10 @@ My list:
                         className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
                       >
                         <span className="text-lg">📄</span>
-                        <span>Upload CSV</span>
+                        <div className="flex flex-col text-left">
+                          <span>Upload CSV</span>
+                          <span className="text-xs text-gray-400 font-normal">Bulk add from a spreadsheet</span>
+                        </div>
                       </button>
                       
                       {/* Upload LST - Fourth */}
@@ -7290,7 +7302,10 @@ My list:
                         className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
                       >
                         <span className="text-lg">📝</span>
-                        <span>Upload LST</span>
+                        <div className="flex flex-col text-left">
+                          <span>Upload LST</span>
+                          <span className="text-xs text-gray-400 font-normal">From a Songbook Pro export</span>
+                        </div>
                       </button>
 
                       {/* Import ChordPro (zip) - PREVIEW ONLY */}
@@ -7303,22 +7318,10 @@ My list:
                         className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
                       >
                         <span className="text-lg">🎼</span>
-                        <span>Import ChordPro (zip)</span>
-                      </button>
-                      
-                      {/* Auto-fill All - Fifth */}
-                      <button
-                        onClick={() => {
-                          handleBatchEnrich();
-                          setShowSongManagementDropdown(false);
-                        }}
-                        disabled={batchEnrichLoading}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-700 disabled:bg-gray-600 disabled:opacity-50 flex items-center space-x-3"
-                      >
-                        <span className="text-lg">✨</span>
-                        <span>
-                          {batchEnrichLoading ? 'Auto-filling...' : 'Auto-fill All'}
-                        </span>
+                        <div className="flex flex-col text-left">
+                          <span>Import ChordPro (zip)</span>
+                          <span className="text-xs text-gray-400 font-normal">A zipped folder of chord chart files</span>
+                        </div>
                       </button>
                       
                       {/* Divider */}
@@ -7333,7 +7336,10 @@ My list:
                         className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center space-x-3"
                       >
                         <span className="text-lg">💾</span>
-                        <span>Export CSV</span>
+                        <div className="flex flex-col text-left">
+                          <span>Export CSV</span>
+                          <span className="text-xs text-gray-400 font-normal">Download your list as a spreadsheet</span>
+                        </div>
                       </button>
                     </div>
                   </div>
