@@ -925,7 +925,8 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
 const MusicianDashboard = () => {
   const { musician, token, logout, setMusician } = useAuth();
   const [activeTab, setActiveTab] = useState('songs');
-  useWakeLock(activeTab === 'onstage');
+  const [onStageOpen, setOnStageOpen] = useState(false);
+  useWakeLock(onStageOpen);
   
   // Debug activeTab changes
   useEffect(() => {
@@ -2305,7 +2306,7 @@ const MusicianDashboard = () => {
 
   // Set default show based on musician's current_show_id - backend is source of truth
   useEffect(() => {
-    if ((activeTab === 'requests' || activeTab === 'onstage') && shows.length > 0 && musician) {
+    if ((activeTab === 'requests' || onStageOpen) && shows.length > 0 && musician) {
       // On the Requests tab, if a specific event or profile filter is selected,
       // that context's own current_show_id is the source of truth - the
       // musician-level field only ever mirrors the DEFAULT profile, so it was
@@ -2337,12 +2338,12 @@ const MusicianDashboard = () => {
         setCurrentShow(null);
       }
     }
-  }, [activeTab, shows, musician, eventFilterId, profileFilterId, events, profiles]);
+  }, [activeTab, onStageOpen, shows, musician, eventFilterId, profileFilterId, events, profiles]);
 
   // On Stage tab: Re-fetch data scoped by show_id when currentShow changes
   // This ensures API-level filtering, not just frontend filtering
   useEffect(() => {
-    if (activeTab === 'onstage' && currentShow) {
+    if (onStageOpen && currentShow) {
       // Fetch requests and suggestions scoped to the current show
       fetchRequests(currentShow.id);
       fetchSongSuggestions(currentShow.id);
@@ -2350,7 +2351,7 @@ const MusicianDashboard = () => {
         console.log('[On Stage] Fetching data scoped to show:', currentShow.id, currentShow.name);
       }
     }
-  }, [activeTab, currentShow]);
+  }, [onStageOpen, currentShow]);
 
   useEffect(() => {
     if (showProfile) {
@@ -2373,12 +2374,12 @@ const MusicianDashboard = () => {
       // NEW: Refresh orphaned/unassigned requests panel when the Requests tab is opened
       fetchUnassignedRequests();
     }
-    if (activeTab === 'onstage') {
+    if (onStageOpen) {
       // On-Stage selector needs profiles + events populated
       if (profiles.length === 0) fetchProfiles();
       fetchEvents();
     }
-  }, [activeTab]);
+  }, [activeTab, onStageOpen]);
 
   // On-Stage selector: persist + react to changes (Sprint 2 Prompt 4)
   useEffect(() => {
@@ -2392,7 +2393,7 @@ const MusicianDashboard = () => {
   // Homes to the default profile when the selection is empty OR when a stored
   // selection no longer resolves to a current profile or event.
   useEffect(() => {
-    if (activeTab !== 'onstage') return;
+    if (!onStageOpen) return;
     if (profiles.length === 0) return; // wait until profiles are loaded
     const [kind, id] = onstageSelection ? onstageSelection.split(':') : [];
     const resolves =
@@ -2401,11 +2402,11 @@ const MusicianDashboard = () => {
     if (resolves) return;
     const dp = profiles.find(p => p.is_default) || profiles[0];
     if (dp) setOnstageSelection(`profile:${dp.id}`);
-  }, [activeTab, profiles, events, onstageSelection]);
+  }, [onStageOpen, profiles, events, onstageSelection]);
 
   // When selection changes, point currentShow at the selected context's show
   useEffect(() => {
-    if (activeTab !== 'onstage') return;
+    if (!onStageOpen) return;
     if (!onstageSelection) return;
     const [kind, id] = onstageSelection.split(':');
     let ref = null;
@@ -2416,7 +2417,7 @@ const MusicianDashboard = () => {
     } else {
       setCurrentShow(null);
     }
-  }, [activeTab, onstageSelection, profiles, events]);
+  }, [onStageOpen, onstageSelection, profiles, events]);
 
   // Requests tab — auto-dismiss bulk modal when fewer than 2 cards are selected
   useEffect(() => {
@@ -5807,6 +5808,13 @@ const MusicianDashboard = () => {
                 <span className="text-purple-400">Request</span><span className="text-green-400">Wave</span>
               </h1>
             </div>
+            <button
+              onClick={() => setOnStageOpen(true)}
+              className="bg-gradient-to-br from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold text-sm px-5 py-2 rounded-full shadow-lg transition duration-300 flex items-center gap-2"
+            >
+              <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+              On Stage
+            </button>
             <div className="flex items-center space-x-4">
               <span className="text-gray-300">Welcome, {musician.name}</span>
               <button
@@ -5820,30 +5828,29 @@ const MusicianDashboard = () => {
 
           {/* Mobile Layout */}
           <div className="md:hidden py-4">
-            <div className="flex justify-between items-start">
-              {/* Left side: Logo and Welcome */}
-              <div className="flex flex-col space-y-2">
-                <div className="flex items-center space-x-3">
-                  <img
-                    src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png"
-                    alt="RequestWave"
-                    className="w-8 h-8 object-contain"
-                  />
-                  <h1 className="text-xl font-bold">
-                    <span className="text-purple-400">Request</span><span className="text-green-400">Wave</span>
-                  </h1>
-                </div>
-                <span className="text-gray-300 text-sm ml-1">Welcome, {musician.name}</span>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-3">
+                <img
+                  src="https://customer-assets.emergentagent.com/job_bandbridge/artifacts/x5k3yeey_RequestWave%20Logo.png"
+                  alt="RequestWave"
+                  className="w-8 h-8 object-contain"
+                />
+                <h1 className="text-xl font-bold">
+                  <span className="text-purple-400">Request</span><span className="text-green-400">Wave</span>
+                </h1>
               </div>
-
-              {/* Right side: Logout */}
               <button
-                onClick={logout}
-                className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg transition duration-300 text-sm"
+                onClick={() => setOnStageOpen(true)}
+                className="bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold text-xs px-4 py-1.5 rounded-full shadow-lg flex items-center gap-1.5"
               >
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                On Stage
+              </button>
+              <button onClick={logout} className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg transition duration-300 text-sm">
                 Logout
               </button>
             </div>
+            <span className="text-gray-300 text-sm mt-2 block">Welcome, {musician.name}</span>
           </div>
         </div>
       </header>
@@ -5852,7 +5859,7 @@ const MusicianDashboard = () => {
 
         {/* Desktop Tabs (hidden on mobile) */}
         <div className="hidden md:flex flex-wrap gap-1 bg-gray-800 rounded-lg p-1 mb-8">
-          {['onstage', 'songs', 'requests', 'analytics', 'profile', 'events', ...(BILLING_ENABLED ? ['subscription'] : [])].map((tab) => (
+          {['songs', 'requests', 'analytics', 'profile', 'events', ...(BILLING_ENABLED ? ['subscription'] : [])].map((tab) => (
             <button
               key={tab}
               onClick={() => {
@@ -5876,7 +5883,6 @@ const MusicianDashboard = () => {
             >
               {tab === 'analytics' ? 'Analytics' : 
                tab === 'design' ? 'Design' : 
-               tab === 'onstage' ? 'On Stage' : 
                tab === 'profile' ? 'Profiles' :
                tab === 'events' ? 'Events' :
                tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -5909,7 +5915,6 @@ const MusicianDashboard = () => {
                 <span className="font-medium">
                   {activeTab === 'analytics' ? 'Analytics' : 
                    activeTab === 'design' ? 'Design' : 
-                   activeTab === 'onstage' ? 'On Stage' : 
                    activeTab === 'profile' ? 'Profiles' :
                    activeTab === 'events' ? 'Events' :
                    activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
@@ -5929,7 +5934,7 @@ const MusicianDashboard = () => {
             {showMobileNav && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50">
                 <div className="py-2">
-                  {['onstage', 'songs', 'requests', 'analytics', 'profile', 'events', ...(BILLING_ENABLED ? ['subscription'] : [])].map((tab) => (
+                  {['songs', 'requests', 'analytics', 'profile', 'events', ...(BILLING_ENABLED ? ['subscription'] : [])].map((tab) => (
                     <button
                       key={tab}
                       onClick={() => {
@@ -5944,7 +5949,6 @@ const MusicianDashboard = () => {
                       <span>
                         {tab === 'analytics' ? 'Analytics' : 
                          tab === 'design' ? 'Design' : 
-                         tab === 'onstage' ? 'On Stage' : 
                          tab === 'profile' ? 'Profiles' :
                          tab === 'events' ? 'Events' :
                          tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -9241,8 +9245,18 @@ My list:
 
 
         {/* On Stage Tab - Dedicated tab for live performance management */}
-        {activeTab === 'onstage' && (
-          <div className="space-y-6">
+        {onStageOpen && (
+          <div className="fixed inset-0 z-50 bg-gray-900 overflow-y-auto">
+            <div className="flex justify-end p-4 sticky top-0 bg-gray-900 z-10">
+              <button
+                onClick={() => setOnStageOpen(false)}
+                className="w-9 h-9 rounded-full bg-gray-800 hover:bg-gray-700 text-white text-lg flex items-center justify-center"
+                aria-label="Close On Stage"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="max-w-4xl mx-auto px-4 pb-8 space-y-6">
             {/* Sprint 2 Prompt 4: Profile/Event selector (collapsible) */}
             <div data-testid="onstage-context-selector" className="bg-gray-800 rounded-xl">
               {(() => {
@@ -9354,6 +9368,7 @@ My list:
             />
             </>
             )}
+          </div>
           </div>
         )}
 
