@@ -1105,7 +1105,7 @@ const MusicianDashboard = () => {
   const [showSongManagementDropdown, setShowSongManagementDropdown] = useState(false);
   
   // Mobile Navigation Dropdown State
-  const [showMobileNav, setShowMobileNav] = useState(false);
+  const [showDesktopMoreMenu, setShowDesktopMoreMenu] = useState(false);
   
   // Quick Start Guide (manual access only)
   const [showQuickStart, setShowQuickStart] = useState(false);
@@ -2505,19 +2505,19 @@ const MusicianDashboard = () => {
       if (showSongManagementDropdown && !event.target.closest('.song-management-dropdown')) {
         setShowSongManagementDropdown(false);
       }
-      if (showMobileNav && !event.target.closest('.mobile-nav-dropdown')) {
-        setShowMobileNav(false);
+      if (showDesktopMoreMenu && !event.target.closest('.desktop-more-dropdown')) {
+        setShowDesktopMoreMenu(false);
       }
     };
 
     const handleEscapeKey = (event) => {
       if (event.key === 'Escape') {
         if (showSongManagementDropdown) setShowSongManagementDropdown(false);
-        if (showMobileNav) setShowMobileNav(false);
+        if (showDesktopMoreMenu) setShowDesktopMoreMenu(false);
       }
     };
 
-    if (showSongManagementDropdown || showMobileNav) {
+    if (showSongManagementDropdown || showDesktopMoreMenu) {
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('keydown', handleEscapeKey);
     }
@@ -2526,7 +2526,7 @@ const MusicianDashboard = () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscapeKey);
     };
-  }, [showSongManagementDropdown, showMobileNav]);
+  }, [showSongManagementDropdown, showDesktopMoreMenu]);
 
   const fetchSongs = async () => {
     try {
@@ -5858,42 +5858,112 @@ const MusicianDashboard = () => {
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-8">
 
         {/* Desktop Tabs (hidden on mobile) */}
-        <div className="hidden md:flex flex-wrap gap-1 bg-gray-800 rounded-lg p-1 mb-8">
-          {['songs', 'requests', 'analytics', 'profile', 'events', ...(BILLING_ENABLED ? ['subscription'] : [])].map((tab) => (
+        <div className="flex flex-wrap gap-1 bg-gray-800 rounded-lg p-1 mb-8 items-center">
+          <button
+            onClick={() => setActiveTab('songs')}
+            className={`px-3 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0 ${
+              activeTab === 'songs' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Songs
+          </button>
+          <button
+            onClick={() => setActiveTab('requests')}
+            className={`hidden min-[350px]:inline-flex items-center px-3 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0 ${
+              activeTab === 'requests' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Requests
+            {filteredPendingCount > 0 && (
+              <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-xs">{filteredPendingCount}</span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={`hidden min-[400px]:inline-flex px-3 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0 ${
+              activeTab === 'profile' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Profiles
+          </button>
+          <button
+            onClick={() => { setActiveTab('events'); fetchEvents(); }}
+            className={`hidden sm:inline-flex px-3 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0 ${
+              activeTab === 'events' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Events
+          </button>
+          <button
+            onClick={() => { setActiveTab('analytics'); console.log('Analytics tab clicked - fetching data immediately'); fetchAnalytics(); fetchRequesters(); }}
+            className={`hidden md:inline-flex px-3 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0 ${
+              activeTab === 'analytics' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Analytics
+          </button>
+          <div className="relative desktop-more-dropdown">
             <button
-              key={tab}
-              onClick={() => {
-                setActiveTab(tab);
-                
-                // Directly trigger analytics fetch when analytics tab is clicked
-                if (tab === 'analytics') {
-                  console.log('Analytics tab clicked - fetching data immediately');
-                  fetchAnalytics();
-                  fetchRequesters();
-                }
-                if (tab === 'events') {
-                  fetchEvents();
-                }
-              }}
+              onClick={() => setShowDesktopMoreMenu(!showDesktopMoreMenu)}
               className={`px-3 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0 ${
-                activeTab === tab
+                (activeTab === 'analytics' || activeTab === 'events' || activeTab === 'subscription')
                   ? 'bg-purple-600 text-white'
                   : 'text-gray-400 hover:text-white'
               }`}
+              title="More"
             >
-              {tab === 'analytics' ? 'Analytics' : 
-               tab === 'design' ? 'Design' : 
-               tab === 'profile' ? 'Profiles' :
-               tab === 'events' ? 'Events' :
-               tab.charAt(0).toUpperCase() + tab.slice(1)}
-              {tab === 'requests' && filteredPendingCount > 0 && (
-                <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-xs">
-                  {filteredPendingCount}
-                </span>
-              )}
+              ⋯
             </button>
-          ))}
-          
+            {showDesktopMoreMenu && (
+              <div className="absolute left-0 top-full mt-1 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50 w-44">
+                <button
+                  onClick={() => { setActiveTab('requests'); setShowDesktopMoreMenu(false); }}
+                  className={`min-[350px]:hidden w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center justify-between rounded-t-lg ${
+                    activeTab === 'requests' ? 'bg-purple-600 text-white' : 'text-gray-300'
+                  }`}
+                >
+                  <span>Requests</span>
+                  {filteredPendingCount > 0 && (
+                    <span className="bg-red-500 text-white rounded-full px-2 py-1 text-xs">{filteredPendingCount}</span>
+                  )}
+                </button>
+                <button
+                  onClick={() => { setActiveTab('profile'); setShowDesktopMoreMenu(false); }}
+                  className={`min-[400px]:hidden w-full text-left px-4 py-3 hover:bg-gray-700 ${
+                    activeTab === 'profile' ? 'bg-purple-600 text-white' : 'text-gray-300'
+                  }`}
+                >
+                  Profiles
+                </button>
+                <button
+                  onClick={() => { setActiveTab('events'); fetchEvents(); setShowDesktopMoreMenu(false); }}
+                  className={`sm:hidden w-full text-left px-4 py-3 hover:bg-gray-700 ${
+                    activeTab === 'events' ? 'bg-purple-600 text-white' : 'text-gray-300'
+                  }`}
+                >
+                  Events
+                </button>
+                <button
+                  onClick={() => { setActiveTab('analytics'); console.log('Analytics tab clicked - fetching data immediately'); fetchAnalytics(); fetchRequesters(); setShowDesktopMoreMenu(false); }}
+                  className={`md:hidden w-full text-left px-4 py-3 hover:bg-gray-700 ${
+                    activeTab === 'analytics' ? 'bg-purple-600 text-white' : 'text-gray-300'
+                  }`}
+                >
+                  Analytics
+                </button>
+                {BILLING_ENABLED && (
+                  <button
+                    onClick={() => { setActiveTab('subscription'); setShowDesktopMoreMenu(false); }}
+                    className={`w-full text-left px-4 py-3 hover:bg-gray-700 rounded-b-lg ${
+                      activeTab === 'subscription' ? 'bg-purple-600 text-white' : 'text-gray-300'
+                    }`}
+                  >
+                    Subscription
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
           {/* Help/Quick Start Button */}
           <button
             onClick={() => setShowQuickStart(true)}
@@ -5902,80 +5972,6 @@ const MusicianDashboard = () => {
           >
             ?
           </button>
-        </div>
-
-        {/* Mobile Navigation Dropdown (visible on mobile only) */}
-        <div className="md:hidden mb-8">
-          <div className="relative mobile-nav-dropdown">
-            <button
-              onClick={() => setShowMobileNav(!showMobileNav)}
-              className="w-full bg-gray-800 rounded-lg p-3 flex justify-between items-center"
-            >
-              <div className="flex items-center space-x-2">
-                <span className="font-medium">
-                  {activeTab === 'analytics' ? 'Analytics' : 
-                   activeTab === 'design' ? 'Design' : 
-                   activeTab === 'profile' ? 'Profiles' :
-                   activeTab === 'events' ? 'Events' :
-                   activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-                </span>
-                {activeTab === 'requests' && filteredPendingCount > 0 && (
-                  <span className="bg-red-500 text-white rounded-full px-2 py-1 text-xs">
-                    {filteredPendingCount}
-                  </span>
-                )}
-              </div>
-              <svg className={`w-5 h-5 transition-transform ${showMobileNav ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            
-            {/* Mobile Dropdown Menu */}
-            {showMobileNav && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50">
-                <div className="py-2">
-                  {['songs', 'requests', 'analytics', 'profile', 'events', ...(BILLING_ENABLED ? ['subscription'] : [])].map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => {
-                        setActiveTab(tab);
-                        setShowMobileNav(false);
-                        if (tab === 'events') fetchEvents();
-                      }}
-                      className={`w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center justify-between ${
-                        activeTab === tab ? 'bg-purple-600 text-white' : 'text-gray-300'
-                      }`}
-                    >
-                      <span>
-                        {tab === 'analytics' ? 'Analytics' : 
-                         tab === 'design' ? 'Design' : 
-                         tab === 'profile' ? 'Profiles' :
-                         tab === 'events' ? 'Events' :
-                         tab.charAt(0).toUpperCase() + tab.slice(1)}
-                      </span>
-                      {tab === 'requests' && filteredPendingCount > 0 && (
-                        <span className="bg-red-500 text-white rounded-full px-2 py-1 text-xs">
-                          {filteredPendingCount}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                  
-                  <div className="border-t border-gray-700 mt-2 pt-2">
-                    <button
-                      onClick={() => {
-                        setShowQuickStart(true);
-                        setShowMobileNav(false);
-                      }}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-700 text-gray-300"
-                    >
-                      📖 Quick Start Guide
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Songs Tab */}
