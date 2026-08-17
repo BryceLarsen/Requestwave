@@ -924,14 +924,7 @@ const ChordProViewer = ({ chordpro, songTitle, onClose, songId, initialTranspose
 
 const MusicianDashboard = () => {
   const { musician, token, logout, setMusician } = useAuth();
-  const [activeTab, setActiveTab] = useState(() => {
-    try {
-      return localStorage.getItem('rw_has_songs') === 'true' ? 'onstage' : 'songs';
-    } catch {
-      return 'songs';
-    }
-  });
-  const initialTabRoutedRef = useRef(false);
+  const [activeTab, setActiveTab] = useState('songs');
   useWakeLock(activeTab === 'onstage');
   
   // Debug activeTab changes
@@ -2538,15 +2531,6 @@ const MusicianDashboard = () => {
     try {
       const response = await axios.get(`${API}/songs?sort_by=${sortBy}`);
       setSongs(response.data);
-      // Landing-tab logic: remember whether the library is non-empty so the next load can
-      // pick the initial tab synchronously with no flash. On the first fetch this load,
-      // promote to On Stage only if songs exist. Never demote, never trap manual navigation.
-      const rwHasSongs = response.data.length > 0;
-      try { localStorage.setItem('rw_has_songs', rwHasSongs ? 'true' : 'false'); } catch {}
-      if (!initialTabRoutedRef.current) {
-        initialTabRoutedRef.current = true;
-        if (rwHasSongs) setActiveTab('onstage');
-      }
       
       // Extract available genres and moods from loaded songs - UPDATE FILTER OPTIONS
       setTimeout(() => {
