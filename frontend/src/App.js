@@ -7511,6 +7511,18 @@ My list:
                   </div>
                 </div>
 
+                <div className="mt-3">
+                  <button
+                    onClick={handleBatchEnrich}
+                    disabled={batchEnrichLoading}
+                    className="w-full sm:w-auto bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-sm text-gray-200 px-3 py-2 rounded-lg flex items-center justify-center space-x-2"
+                  >
+                    <span>🔍</span>
+                    <span>{batchEnrichLoading ? 'Cleaning up...' : 'Clean Up Song Details (Spotify)'}</span>
+                  </button>
+                  <p className="text-xs text-gray-500 mt-1">Fills in missing genre, mood, and year for songs you already have.</p>
+                </div>
+
                 {/* Learn Later Toggle and Section */}
                 <div className="mb-4">
                   <button
