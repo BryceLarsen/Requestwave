@@ -5905,7 +5905,7 @@ const MusicianDashboard = () => {
           <div className="relative desktop-more-dropdown">
             <button
               onClick={() => setShowDesktopMoreMenu(!showDesktopMoreMenu)}
-              className={`px-3 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0 ${
+              className={`px-3 py-2 rounded-lg font-medium transition duration-300 text-sm sm:text-base flex-shrink-0 ${!BILLING_ENABLED ? 'md:hidden' : ''} ${
                 (activeTab === 'analytics' || activeTab === 'events' || activeTab === 'subscription')
                   ? 'bg-purple-600 text-white'
                   : 'text-gray-400 hover:text-white'
